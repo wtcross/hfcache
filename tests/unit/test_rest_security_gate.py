@@ -72,8 +72,24 @@ WRITER_POSTS = (
 )
 # A REST reader/writer has no internal Basic administrative capability. Keep
 # this inventory separate so route-complete role tests cannot silently promote it.
-ADMIN_READ_PATHS = ("/host/status", "/config", "/config/applications/{operation_id}")
-ADMIN_POST_PATHS = ("/config/applications",)
+NEW_HOST_READ_PATHS = (
+    "/host/sync-observer",
+    "/host/sync-schedule/changes/{operation_id}",
+    "/host/sync-observer/stops/{operation_id}",
+    "/host/journal",
+)
+NEW_HOST_POST_PATHS = (
+    "/host/sync-schedule/validations",
+    "/host/sync-schedule/changes",
+    "/host/sync-observer/stops",
+)
+ADMIN_READ_PATHS = (
+    "/host/status",
+    "/config",
+    "/config/applications/{operation_id}",
+    *NEW_HOST_READ_PATHS,
+)
+ADMIN_POST_PATHS = ("/config/applications", *NEW_HOST_POST_PATHS)
 ROUTES = (
     tuple(("GET", PREFIX + path) for path in READ_PATHS)
     + tuple(("GET", PREFIX + path) for path in ADMIN_READ_PATHS)
@@ -181,7 +197,7 @@ def test_every_registered_rest_method_has_an_independent_security_case(configure
     if not docs_enabled:
         expected.remove(("GET", PREFIX + "/docs"))
     assert actual == expected
-    assert len(actual) == (44 if docs_enabled else 43)
+    assert len(actual) == (51 if docs_enabled else 50)
     documented = {
         (row[0].split(" ", 1)[0], PREFIX + row[0].split(" ", 1)[1])
         for row in matrix_rows()
@@ -199,6 +215,9 @@ def test_documented_post_routes_use_the_strict_named_request_models(configured):
     models = {
         "/config/validate": "ValidationSubmission",
         "/config/applications": "ConfigApplicationSubmission",
+        "/host/sync-schedule/validations": "ScheduleValidationRequest",
+        "/host/sync-schedule/changes": "ScheduleChangeRequest",
+        "/host/sync-observer/stops": "ObserverStopRequest",
         "/plans": "PlanSubmission",
         "/diagnostics": "DiagnosticsSubmission",
         "/syncs": "SyncSubmission",
@@ -224,6 +243,115 @@ def test_documented_post_routes_use_the_strict_named_request_models(configured):
         assert schema["components"]["schemas"][model]["additionalProperties"] is False
     assert not archive.exists()
     assert not lock.exists()
+
+
+def test_new_host_post_schemas_preserve_exact_fixed_variants(configured):
+    server, archive, lock = configured
+    schema = create_app(server, instance_lock_path=lock).openapi()["components"]["schemas"]
+    validation = schema["ScheduleValidationRequest"]
+    assert validation["additionalProperties"] is False
+    assert (
+        set(validation["properties"])
+        == set(validation["required"])
+        == {"on_calendar", "randomized_delay_sec"}
+    )
+    assert validation["properties"]["on_calendar"]["maxLength"] == 4096
+    change = schema["ScheduleChangeRequest"]
+    assert change["additionalProperties"] is False
+    assert set(change["properties"]) == {
+        "action",
+        "expected_revision",
+        "on_calendar",
+        "randomized_delay_sec",
+    }
+    assert set(change["required"]) == {"action", "expected_revision"}
+    assert set(change["properties"]["action"]["enum"]) == {"pause", "resume", "replace", "reset"}
+    stop = schema["ObserverStopRequest"]
+    assert stop["additionalProperties"] is False
+    assert set(stop["properties"]) == set(stop["required"]) == {"expected"}
+    assert stop["properties"]["expected"] == {"$ref": "#/components/schemas/ObserverExpected"}
+    expected = schema["ObserverExpected"]
+    assert expected["additionalProperties"] is False
+    assert (
+        set(expected["properties"])
+        == set(expected["required"])
+        == {"boot_id", "invocation_id", "main_pid", "start_ticks"}
+    )
+    assert expected["properties"]["main_pid"]["minimum"] == 2
+    assert expected["properties"]["start_ticks"]["maximum"] == 9007199254740991
+    assert not archive.exists()
+    assert not lock.exists()
+
+
+@pytest.mark.parametrize("token", [READER, WRITER, MCP])
+@pytest.mark.parametrize(
+    ("method", "path"),
+    [("GET", path) for path in NEW_HOST_READ_PATHS]
+    + [("POST", path) for path in NEW_HOST_POST_PATHS],
+)
+def test_new_host_routes_never_promote_bearers_or_touch_helper_state(
+    configured, token, method, path
+):
+    server, archive, lock = configured
+    closed = []
+
+    class ForbiddenHelper:
+        def __getattr__(self, _name):
+            pytest.fail("REST bearer reached a fixed host helper operation")
+
+        def status(self):
+            pytest.fail("REST bearer reached host status")
+
+        async def async_status(self):
+            pytest.fail("REST bearer reached host status")
+
+        def close(self, *, timeout=24):
+            closed.append(timeout)
+            return True
+
+    app = create_app(server, instance_lock_path=lock, host_helper=ForbiddenHelper())
+
+    async def exercise():
+        async with app.router.lifespan_context(app):
+            status, payload, received, _ = await raw_request(
+                app,
+                method,
+                concrete(PREFIX + path),
+                (f"Bearer {token}".encode(),),
+                body=b"{" if method == "POST" else b"",
+            )
+            assert status == (401 if token == MCP else 403)
+            assert json.loads(payload)["code"] == ("HFAPI001" if token == MCP else "HFAPI002")
+            assert received == (1 if token != MCP and method == "GET" else 0)
+            assert all(value not in payload for value in (WRITER, READER, MCP, OPAQUE))
+            assert app.state.operations.list() == ()
+            assert app.state.runner.active_operation_id is None
+            assert app.state.host_runner.active_operation_id is None
+
+    asyncio.run(exercise())
+    assert len(closed) == 1
+    assert not archive.exists()
+
+
+@pytest.mark.parametrize(
+    ("method", "path"),
+    [("POST", path) for path in NEW_HOST_READ_PATHS]
+    + [("GET", path) for path in NEW_HOST_POST_PATHS],
+)
+def test_fixed_host_route_verbs_have_no_fallback_or_admission(configured, method, path):
+    server, archive, lock = configured
+    app = create_app(server, instance_lock_path=lock)
+
+    async def exercise():
+        async with app.router.lifespan_context(app):
+            status, _payload, _received, _ = await raw_request(
+                app, method, concrete(PREFIX + path), (f"Bearer {WRITER}".encode(),)
+            )
+            assert status == 405
+            assert app.state.operations.list() == ()
+
+    asyncio.run(exercise())
+    assert not archive.exists()
 
 
 @pytest.mark.parametrize(

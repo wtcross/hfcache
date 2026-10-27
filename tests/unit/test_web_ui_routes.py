@@ -18,6 +18,7 @@ from hfcache.errors import ConfigurationError, SafetyError
 from hfcache.logging import reset
 from hfcache.server_config import WebConfig
 from hfcache.url_paths import uri_path
+from tests.fixtures.host_examples import host_status
 from tests.fixtures.web_ui import WIRE_DIGEST, WRITER, make_profile
 
 
@@ -42,12 +43,14 @@ def basic(profile):
         frozenset({AdminCapability.CONFIG_READ}),
         frozenset({AdminCapability.CONFIG_WRITE}),
         frozenset({AdminCapability.CONFIG_READ, AdminCapability.CONFIG_WRITE}),
+        frozenset({AdminCapability.SCHEDULE_WRITE}),
+        frozenset({AdminCapability.OBSERVER_STOP}),
         frozenset({AdminCapability.HOST_READ}),
         frozenset(AdminCapability),
     ],
 )
 def test_configuration_ui_availability_preserves_independent_explicit_grants(grants):
-    """INV019/020: shipped forms do not invent grants or require host-read."""
+    """Implemented API availability does not invent grants or require host-read."""
     profile = make_profile()
     app = create_app(profile.server, instance_lock_path=profile.lock)
 
@@ -68,7 +71,13 @@ def test_configuration_ui_availability_preserves_independent_explicit_grants(gra
                     effective_prefix="",
                 )
             )
-            shipped = {"config-read", "config-write", "host-read"}
+            shipped = {
+                "config-read",
+                "config-write",
+                "host-read",
+                "schedule-write",
+                "observer-stop",
+            }
             for item in payload["user"]["admin_permissions"]:
                 granted = AdminCapability(item["capability"]) in grants
                 assert item["granted"] is granted
@@ -113,7 +122,13 @@ def test_actual_bootstrap_navigation_alias_assets_and_exact_headers(prefix):
                 assert payload["paths"]["effective_prefix"] == prefix
                 assert payload["paths"]["ui_base"] == uri_path(prefix + "/ui/")
                 for item in payload["user"]["admin_permissions"]:
-                    available = item["capability"] in {"host-read", "config-read", "config-write"}
+                    available = item["capability"] in {
+                        "host-read",
+                        "config-read",
+                        "config-write",
+                        "schedule-write",
+                        "observer-stop",
+                    }
                     assert item["effective"] is available
                     assert item["reason"] == ("allowed" if available else "feature_unavailable")
                 assert not profile.policy.root.exists()
@@ -151,6 +166,95 @@ def test_actual_bootstrap_navigation_alias_assets_and_exact_headers(prefix):
         assert app.state.ui_streams is None
         with pytest.raises(OSError, match="Bad file descriptor"):
             os.fstat(fd)
+
+    asyncio.run(exercise())
+
+
+def test_host_api_availability_does_not_inspect_or_grant_independent_helper_permissions():
+    profile = make_profile()
+    binding = host_status().binding
+    assert binding is not None
+    bound_host = binding.model_dump(mode="json")
+    bound_host["archive_id"] = profile.policy.archive_id
+    calls = []
+
+    class DeniedHelper:
+        def status(self):
+            pytest.fail("bootstrap inspected protected host status")
+
+        async def async_status(self):
+            pytest.fail("bootstrap inspected protected host status")
+
+        async def async_observer_status(self):
+            calls.append("fresh protected authority")
+            return {
+                "schema_version": 1,
+                "archive_id": profile.policy.archive_id,
+                "profile": "native",
+                "host_binding": bound_host,
+                "permissions": {"schedule": False, "observer": False},
+                "permission_reasons": {"schedule": "policy-denied", "observer": "policy-denied"},
+                "state": "inactive",
+                "reason": None,
+                "unit": "hfcache-sync.service",
+                "expected": None,
+            }
+
+        def close(self, *, timeout=24):
+            return True
+
+    app = create_app(profile.server, instance_lock_path=profile.lock, host_helper=DeniedHelper())
+
+    async def exercise():
+        async with (
+            app.router.lifespan_context(app),
+            httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=app),
+                base_url="https://testserver",
+                headers={"Authorization": basic(profile)},
+            ) as client,
+        ):
+            response = await client.get("/ui/bootstrap.json")
+            assert response.status_code == 200
+            permissions = {
+                row["capability"]: row for row in response.json()["user"]["admin_permissions"]
+            }
+            for name in ("schedule-write", "observer-stop"):
+                assert permissions[name]["effective"] is True
+                assert permissions[name]["reason"] == "allowed"
+            assert calls == []
+            for route, body in (
+                (
+                    "/host/sync-schedule/validations",
+                    {"on_calendar": "daily", "randomized_delay_sec": None},
+                ),
+                ("/host/sync-schedule/changes", {"action": "pause", "expected_revision": "a" * 64}),
+                (
+                    "/host/sync-observer/stops",
+                    {
+                        "expected": {
+                            "boot_id": "cf68ba1d-153b-41bc-8f0b-b0414512dc03",
+                            "invocation_id": "1" * 32,
+                            "main_pid": 123,
+                            "start_ticks": 456,
+                        }
+                    },
+                ),
+            ):
+                denied = await client.post(
+                    "/api/v1" + route,
+                    json=body,
+                    headers={
+                        "Origin": "https://testserver",
+                        "X-Hfcache-Request": "1",
+                        "Idempotency-Key": "must-not-admit",
+                    },
+                )
+                assert denied.status_code == 403
+                assert denied.json()["code"] == "HFAPI002"
+            assert calls == ["fresh protected authority"] * 3
+            assert app.state.operations.list() == ()
+            assert not profile.policy.root.exists()
 
     asyncio.run(exercise())
 

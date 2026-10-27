@@ -53,6 +53,7 @@ def test_policy_has_no_optional_global_or_permissive_escape():
         "init_t",
         "container_t",
         "container_runtime_t",
+        "hfcache_sync_observer_t",
     }
     forbidden_targets = {"domain", "file_type", "exec_type", "unconfined_domain_type", "*", "all"}
     assert all(target not in forbidden_targets for _, target, _, _ in access_rules("allow"))
@@ -608,6 +609,29 @@ def test_trusted_manager_explicit_rights_are_closed_and_do_not_expand_helper_acc
         ("hfcache_host_helper_secret_t", "file", frozenset({"read", "open"})),
         ("hfcache_host_helper_runtime_t", "dir", frozenset({"mounton"})),
         ("hfcache_host_helper_configuration_dir_t", "dir", frozenset({"mounton"})),
+        (
+            "hfcache_host_helper_schedule_dir_t",
+            "dir",
+            frozenset({"mounton", "getattr", "search", "open", "read"}),
+        ),
+        (
+            "hfcache_host_helper_schedule_file_t",
+            "file",
+            frozenset({"getattr", "open", "read", "map"}),
+        ),
+        (
+            "hfcache_host_helper_sync_timer_unit_t",
+            "file",
+            frozenset({"getattr", "open", "read", "map"}),
+        ),
+        ("hfcache_sync_observer_t", "process", frozenset({"transition"})),
+        ("hfcache_sync_observer_t", "process2", frozenset({"nnp_transition"})),
+        (
+            "hfcache_sync_observer_state_t",
+            "dir",
+            frozenset({"getattr", "search", "open", "read", "setattr", "mounton"}),
+        ),
+        ("hfcache_sync_observer_state_t", "file", frozenset({"getattr", "setattr"})),
     ]
     for target in ("hfcache_host_helper_secret_t", "hfcache_host_helper_hub_state_t"):
         assert not any(source == SUBJECT and found == target for source, found, _, _ in rules)
@@ -633,6 +657,17 @@ def test_manager_mask_mounton_never_becomes_helper_mount_or_payload_authority():
             "hfcache_host_helper_runtime_t",
             "hfcache_host_helper_configuration_dir_t",
         )
+    } | {
+        (
+            "hfcache_host_helper_schedule_dir_t",
+            "dir",
+            frozenset({"mounton", "getattr", "search", "open", "read"}),
+        ),
+        (
+            "hfcache_sync_observer_state_t",
+            "dir",
+            frozenset({"getattr", "search", "open", "read", "setattr", "mounton"}),
+        ),
     }
     assert not any(
         source == SUBJECT and "mounton" in rights
@@ -687,7 +722,7 @@ def test_existing_general_tmpfs_type_receives_no_read_write_map_grant():
     )
 
 
-def test_fixed_manager_authorization_is_status_only():
+def test_fixed_manager_control_is_only_reload_and_the_dedicated_sync_timer_type():
     # Contextless units use the manager SID/system class; known fragments use
     # their file SID/service class. Neither authorization is a property selector.
     metadata = {
@@ -698,9 +733,19 @@ def test_fixed_manager_authorization_is_status_only():
     assert metadata == {
         (SUBJECT, "init_t", "system", frozenset({"status"})),
         (SUBJECT, "systemd_unit_file_t", "service", frozenset({"status"})),
+        (SUBJECT, "init_t", "system", frozenset({"reload"})),
+        (
+            SUBJECT,
+            "hfcache_host_helper_sync_timer_unit_t",
+            "service",
+            frozenset({"status", "start", "stop"}),
+        ),
     }
-    control = {"start", "stop", "reload", "enable", "disable", "kill", "load"}
-    assert all(not (permissions & control) for _source, _target, _cls, permissions in metadata)
+    assert not any(rights & {"enable", "disable", "kill", "load"} for _, _, _, rights in metadata)
+    assert not any(
+        target == "systemd_unit_file_t" and rights & {"start", "stop", "reload"}
+        for _, target, _, rights in metadata
+    )
 
 
 def test_configuration_creation_transitions_and_writes_are_closed():
@@ -711,7 +756,7 @@ def test_configuration_creation_transitions_and_writes_are_closed():
     transitions = [
         form[1:] for form in forms() if form[0] == "typetransition" and form[3] != "process"
     ]
-    assert transitions == [
+    assert transitions[:9] == [
         [SUBJECT, directory, "file", application],
         [SUBJECT, directory, "file", '".configuration.lock"', guard],
         [SUBJECT, directory, "file", '".configuration.pending"', guard],
@@ -721,6 +766,28 @@ def test_configuration_creation_transitions_and_writes_are_closed():
         [SUBJECT, directory, "dir", state],
         [SUBJECT, state, "dir", state],
         [SUBJECT, state, "file", state],
+    ]
+    host_state = "hfcache_host_helper_host_action_state_t"
+    schedule = "hfcache_host_helper_schedule_dir_t"
+    schedule_file = "hfcache_host_helper_schedule_file_t"
+    assert transitions[9:] == [
+        [SUBJECT, schedule, "file", schedule_file],
+        ["unconfined_t", schedule, "file", schedule_file],
+        [SUBJECT, schedule, "dir", '".hfcache-actions"', host_state],
+        [SUBJECT, directory, "dir", '".host-actions"', host_state],
+        [SUBJECT, directory, "file", '".host-actions.lock"', guard],
+        [SUBJECT, directory, "file", '".host-actions.pending"', guard],
+        ["unconfined_t", directory, "file", '".host-actions.lock"', guard],
+        ["unconfined_t", directory, "file", '".host-actions.pending"', guard],
+        [SUBJECT, host_state, "dir", host_state],
+        [SUBJECT, host_state, "file", host_state],
+        [SUBJECT, host_state, "file", '"staged.conf"', schedule_file],
+        [
+            "hfcache_sync_observer_t",
+            "hfcache_sync_observer_state_t",
+            "file",
+            "hfcache_sync_observer_state_t",
+        ],
     ]
     rules = access_rules("allow")
     assert (
@@ -762,4 +829,215 @@ def test_private_outcome_tmpfiles_never_create_pending_or_replace_lock():
         ".configuration.pending" in line or ".configuration.lock" in line
         for line in source.splitlines()
         if line and not line.startswith("#")
+    )
+
+
+def test_optional_host_action_tmpfiles_only_provision_fixed_empty_directories():
+    source = (ROOT / "packaging/tmpfiles.d/hfcache-host-actions.conf").read_text()
+    assert [line for line in source.splitlines() if line and not line.startswith("#")] == [
+        "d /etc/hfcache/.host-actions 0700 root root -",
+        "d /etc/systemd/system/hfcache-sync.timer.d 0755 root root -",
+        "d /etc/systemd/system/hfcache-sync.timer.d/.hfcache-actions 0700 root root -",
+    ]
+    unit = (ROOT / "packaging/systemd/hfcache-host-helper.service").read_text()
+    assert "ReadWritePaths=-/etc/systemd/system/hfcache-sync.timer.d\n" in unit
+    assert "ReadWritePaths=/etc/systemd/system\n" not in unit
+
+
+def test_observer_signal_has_one_native_target_and_no_extra_signal_or_capability():
+    signals = {
+        (target, frozenset(rights & {"signal", "sigkill", "sigstop", "signull"}))
+        for source, target, cls, rights in access_rules("allow")
+        if source == SUBJECT
+        and cls == "process"
+        and rights & {"signal", "sigkill", "sigstop", "signull"}
+    }
+    assert signals == {
+        ("self", frozenset({"sigkill"})),
+        ("hfcache_sync_observer_t", frozenset({"signal"})),
+    }
+    assert not any(
+        source == SUBJECT and cls == "capability" and "kill" in rights
+        for source, _, cls, rights in access_rules("allow")
+    )
+
+
+def test_optional_sync_observer_is_confined_to_its_state_and_unix_transport():
+    observer = "hfcache_sync_observer_t"
+    state = "hfcache_sync_observer_state_t"
+    rules = [row for row in access_rules("allow") if row[0] == observer]
+    assert ["typeattributeset", "domain", [observer]] in forms()
+    assert ["roletype", "system_r", observer] in forms()
+    assert not any(
+        form[0] == "typeattributeset"
+        and form[1] in {"unconfined_domain_type", "unconfined_service_type"}
+        and observer in form[2]
+        for form in forms()
+    )
+    assert not any(
+        cls in {"capability", "capability2", "cap_userns", "cap2_userns"}
+        or cls in {"tcp_socket", "udp_socket", "rawip_socket", "netlink_route_socket"}
+        or "execute_no_trans" in rights
+        for _source, _target, cls, rights in rules
+    )
+    write = {"write", "append", "create", "setattr", "rename", "unlink", "add_name", "remove_name"}
+    assert {
+        target
+        for _source, target, cls, rights in rules
+        if cls in {"file", "dir"} and rights & write
+    } == {state}
+    assert (
+        observer,
+        "bin_t",
+        "file",
+        frozenset({"entrypoint", "getattr", "open", "read", "map", "execute"}),
+    ) in rules
+    assert not any(
+        form[0] == "typetransition" and form[3] == "process" and form[-1] == observer
+        for form in forms()
+    )
+    forbidden = {
+        "nfs_t",
+        "hfcache_archive_t",
+        "hfcache_host_helper_secret_t",
+        "hfcache_host_helper_hub_state_t",
+        "hfcache_host_helper_host_action_state_t",
+        "hfcache_host_helper_application_state_t",
+        "hfcache_host_helper_configuration_guard_t",
+        "shell_exec_t",
+    }
+    assert not any(target in forbidden for _source, target, _cls, _rights in rules)
+    assert [row for row in access_rules("allow") if row[0] == SUBJECT and row[1] == state] == [
+        (SUBJECT, state, "dir", frozenset({"getattr"}))
+    ]
+
+
+def test_optional_context_fragment_is_exact_and_base_scheduling_does_not_select_it():
+    fragment = ROOT / "packaging/systemd/hfcache-sync.service.d/50-hfcache-observer.conf"
+    assert (
+        fragment.read_bytes()
+        == b"[Service]\nSELinuxContext=system_u:system_r:hfcache_sync_observer_t:s0\n"
+    )
+    unit = (ROOT / "packaging/systemd/hfcache-sync.service").read_text()
+    assert "SELinuxContext=" not in unit
+    assert "-m hfcache.scheduled_client " in unit
+    assert "CapabilityBoundingSet=\n" in unit
+    assert "RestrictAddressFamilies=AF_UNIX\n" in unit
+
+
+def test_observer_native_ancestor_and_delivered_credential_types_are_readonly():
+    observer = "hfcache_sync_observer_t"
+    rules = access_rules("allow")
+    assert [row for row in rules if row[:2] == (observer, "init_var_lib_t")] == [
+        (observer, "init_var_lib_t", "dir", frozenset({"getattr", "search", "open", "read"}))
+    ]
+    assert [row for row in rules if row[:2] == (SUBJECT, "init_var_lib_t")] == [
+        (SUBJECT, "init_var_lib_t", "dir", frozenset({"getattr", "search", "open", "read"}))
+    ]
+    assert [row for row in rules if row[:2] == (observer, "init_var_run_t")] == [
+        (observer, "init_var_run_t", "dir", frozenset({"getattr", "search", "open", "read"})),
+        (observer, "init_var_run_t", "file", frozenset({"getattr", "open", "read"})),
+    ]
+    assert [row for row in rules if row[:3] == (observer, "var_run_t", "sock_file")] == [
+        (observer, "var_run_t", "sock_file", frozenset({"getattr", "write"}))
+    ]
+    assert not any(
+        source == observer and target == "var_run_t" and cls == "file"
+        for source, target, cls, _rights in rules
+    )
+
+
+def _assert_observer_api_peer_permissions():
+    observer = "hfcache_sync_observer_t"
+    rules = access_rules("allow")
+    assert [row for row in rules if row[:2] == (observer, "unconfined_service_t")] == [
+        (observer, "unconfined_service_t", "unix_stream_socket", frozenset({"connectto"}))
+    ]
+    assert {
+        (target, rights)
+        for source, target, cls, rights in rules
+        if source == observer and target != "self" and cls == "unix_stream_socket"
+    } == {
+        ("init_t", frozenset({"getattr", "read", "write", "getopt", "setopt", "shutdown"})),
+        ("unconfined_service_t", frozenset({"connectto"})),
+    }
+
+
+def test_observer_api_connection_targets_only_the_measured_unix_listener_domain():
+    _assert_observer_api_peer_permissions()
+
+
+@pytest.mark.parametrize(
+    "replacement",
+    [
+        "",
+        "(allow hfcache_sync_observer_t init_t (unix_stream_socket (connectto)))",
+        "(allow hfcache_sync_observer_t unconfined_service_t (file (read)))",
+        (
+            "(allow hfcache_sync_observer_t unconfined_service_t "
+            "(unix_stream_socket (connectto read)))"
+        ),
+        (
+            "(allow hfcache_sync_observer_t unconfined_service_t "
+            "(unix_stream_socket (connectto)))\n"
+            "(allow hfcache_sync_observer_t init_t (unix_stream_socket (connectto)))"
+        ),
+        (
+            "(allow hfcache_sync_observer_t unconfined_service_t "
+            "(unix_stream_socket (connectto)))\n"
+            "(allow hfcache_sync_observer_t unconfined_service_t (process (signal)))"
+        ),
+    ],
+    ids=["missing", "wrong-peer", "wrong-class", "extra-right", "extra-peer", "signal"],
+)
+def test_observer_api_peer_rejects_missing_or_broader_rights(replacement, tmp_path, monkeypatch):
+    rule = "(allow hfcache_sync_observer_t unconfined_service_t (unix_stream_socket (connectto)))"
+    source = POLICY.read_text()
+    assert source.count(rule) == 1
+    candidate = tmp_path / "candidate.cil"
+    candidate.write_text(source.replace(rule, replacement))
+    monkeypatch.setitem(globals(), "POLICY", candidate)
+    with pytest.raises(AssertionError):
+        _assert_observer_api_peer_permissions()
+
+
+def test_journal_types_are_readonly_and_have_no_domain_or_filter_authority():
+    for target in ("syslogd_var_run_t", "var_log_t"):
+        assert {
+            (cls, rights)
+            for source, selected, cls, rights in access_rules("allow")
+            if source == SUBJECT and selected == target and cls in {"dir", "file"}
+        } == {
+            ("dir", frozenset({"getattr", "search", "open", "read"})),
+            ("file", frozenset({"getattr", "open", "read", "map"})),
+        }
+    assert (
+        SUBJECT,
+        "journalctl_exec_t",
+        "file",
+        frozenset({"getattr", "open", "read", "map", "execute", "execute_no_trans"}),
+    ) in access_rules("allow")
+    assert not any(
+        source == SUBJECT and selected == "journalctl_t"
+        for source, selected, _, _ in access_rules("allow")
+    )
+
+
+def test_native_state_is_private_and_timer_unit_is_immutable_to_helper():
+    state = "hfcache_host_helper_host_action_state_t"
+    rules = access_rules("allow")
+    assert not any(source == "container_t" and target == state for source, target, _, _ in rules)
+    assert (
+        "container_t",
+        state,
+        "file",
+        frozenset({"open", "read", "write", "map", "execute"}),
+    ) in access_rules("neverallow")
+    unit = "hfcache_host_helper_sync_timer_unit_t"
+    assert not any(
+        source == SUBJECT
+        and target == unit
+        and cls == "file"
+        and rights & {"write", "append", "create", "setattr", "unlink", "rename", "link"}
+        for source, target, cls, rights in rules
     )

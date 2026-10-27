@@ -27,6 +27,13 @@ from hfcache.config_models import (
     ManagedAssessment,
     ManagedValidation,
 )
+from hfcache.host_actions_models import (
+    HostJournalPage,
+    HostObserverStatus,
+    ObserverStopOutcome,
+    ScheduleChangeOutcome,
+    ScheduleValidation,
+)
 from hfcache.host_models import HostStatus
 from hfcache.reporting import RunReport, VerificationReport
 
@@ -45,6 +52,11 @@ AUTHORITIES: dict[str, Any] = {
     "ApiProblem": ClientProblem,
     "Capabilities": Capabilities,
     "HostStatus": HostStatus,
+    "HostObserverStatus": HostObserverStatus,
+    "HostJournalPage": HostJournalPage,
+    "ObserverStopOutcome": ObserverStopOutcome,
+    "ScheduleChangeOutcome": ScheduleChangeOutcome,
+    "ScheduleValidation": ScheduleValidation,
     "RepositoryCardRead": RepositoryCardRead,
     "ConfigRead": ConfigRead,
     "ConfigApplicationOutcome": ConfigApplicationOutcome,
@@ -149,6 +161,36 @@ READ_ROUTES = (
     _read("capabilities", "/capabilities", "capabilities", "Capabilities"),
     _read("health", "/health", "health", "HealthPayload"),
     _read("host_status", "/host/status", "host status", "HostStatus", bindings=("host.status",)),
+    _read(
+        "host_observer",
+        "/host/sync-observer",
+        "host observer status",
+        "HostObserverStatus",
+        bindings=("host.observer",),
+    ),
+    _read(
+        "schedule_outcome",
+        "/host/sync-schedule/changes/{operation_id}",
+        "host schedule outcome",
+        "ScheduleChangeOutcome",
+        bindings=("host.outcome",),
+    ),
+    _read(
+        "observer_outcome",
+        "/host/sync-observer/stops/{operation_id}",
+        "host observer outcome",
+        "ObserverStopOutcome",
+        bindings=("host.outcome",),
+    ),
+    _read(
+        "host_journal",
+        "/host/journal",
+        "host journal",
+        "HostJournalPage",
+        paged=True,
+        query="journal",
+        bindings=("host.journal",),
+    ),
     _read("config_read", "/config", "config read", "ConfigRead"),
     _read(
         "config_outcome",
@@ -306,6 +348,10 @@ REQUEST_MODELS = (
         )
     }
     | {"ConfigApplicationSubmission": "hfcache.config_models:ConfigApplicationSubmission"}
+    | {
+        name: "hfcache.host_actions_models:" + name
+        for name in ("ScheduleValidationRequest", "ScheduleChangeRequest", "ObserverStopRequest")
+    }
 )
 
 
@@ -368,6 +414,22 @@ def request_authorities() -> dict[str, type[BaseModel]]:
 
 
 _JOBS = (
+    (
+        "schedule_change",
+        "/host/sync-schedule/changes",
+        "host schedule change",
+        "ScheduleChangeRequest",
+        "ScheduleChangeOutcome",
+        ("ScheduleChangeOutcome",),
+    ),
+    (
+        "observer_stop",
+        "/host/sync-observer/stops",
+        "host observer stop",
+        "ObserverStopRequest",
+        "ObserverStopOutcome",
+        ("ObserverStopOutcome",),
+    ),
     (
         "config_apply",
         "/config/applications",
@@ -490,6 +552,17 @@ ROUTES = (
     READ_ROUTES
     + job_routes()
     + (
+        Route(
+            "schedule_validate",
+            "POST",
+            PREFIX + "/host/sync-schedule/validations",
+            "default",
+            "read",
+            ("host schedule validate",),
+            "ScheduleValidation",
+            binding_ids=("host.validation",),
+            request_body="ScheduleValidationRequest",
+        ),
         Route(
             "config_validate",
             "POST",

@@ -1,6 +1,6 @@
-/** Generated from source digest 476acbbbb8fa88b010d8ae14244fe3b90fa4cc1f5972ef4b25f54328ea49b43b. Run generate:wire; do not edit. */
+/** Generated from source digest 02b01232bb236efbb10ed213b1a148d17f30b9522a74b22443fd8b72d6b30a4e. Run generate:wire; do not edit. */
 export const WIRE_SOURCE_DIGEST =
-    "476acbbbb8fa88b010d8ae14244fe3b90fa4cc1f5972ef4b25f54328ea49b43b";
+    "02b01232bb236efbb10ed213b1a148d17f30b9522a74b22443fd8b72d6b30a4e";
 import {
     wireObject,
     wireRequestObject,
@@ -337,6 +337,26 @@ export type HashReuse = {
     readonly ["publication_id"]: string;
 };
 export type HealthPayload = ReadyHealthPayload | UnavailableHealthPayload;
+export type HostActionPermissionReasons = {
+    readonly ["schedule"]:
+        | "granted"
+        | "policy-denied"
+        | "guard-held"
+        | "profile-unproved"
+        | "authority-unknown"
+        | "helper-unavailable";
+    readonly ["observer"]:
+        | "granted"
+        | "policy-denied"
+        | "guard-held"
+        | "profile-unproved"
+        | "authority-unknown"
+        | "helper-unavailable";
+};
+export type HostActionPermissions = {
+    readonly ["schedule"]: boolean;
+    readonly ["observer"]: boolean;
+};
 export type HostBinding = {
     readonly ["deployment_sha256"]: string;
     readonly ["policy_sha256"]: string;
@@ -358,6 +378,50 @@ export type HostFacts = {
         readonly ["hfcache-verify.timer"]: HostUnitState;
     };
     readonly ["sync_schedule"]: HostSyncSchedule;
+};
+export type HostJournalEntry = {
+    readonly ["at"]: string | null;
+    readonly ["message"]: string;
+};
+export type HostJournalPage = {
+    readonly ["schema_version"]: 1;
+    readonly ["archive_id"]: string;
+    readonly ["source"]: "sync-observer" | "verify-observer";
+    readonly ["entries"]: readonly HostJournalEntry[];
+    readonly ["next_cursor"]: string | null;
+    readonly ["gap"]: boolean;
+    readonly ["truncated"]: boolean;
+};
+export type HostObserverStatus = {
+    readonly ["schema_version"]: 1;
+    readonly ["archive_id"]: string;
+    readonly ["profile"]: ("native" | "rootless") | null;
+    readonly ["host_binding"]: HostBinding | null;
+    readonly ["permissions"]: HostActionPermissions;
+    readonly ["permission_reasons"]: HostActionPermissionReasons;
+    readonly ["state"]: "observed" | "inactive" | "unavailable";
+    readonly ["reason"]:
+        | (
+              | (
+                    | "helper-disabled"
+                    | "helper-unavailable"
+                    | "helper-timeout"
+                    | "helper-refused"
+                    | "helper-busy"
+                    | "policy-missing"
+                    | "policy-invalid"
+                    | "deployment-unverified"
+                    | "facts-unavailable"
+                    | "guard-unconfirmed"
+                    | "key-missing"
+                    | "key-invalid"
+                    | "config-unavailable"
+                )
+              | "profile-unproved"
+          )
+        | null;
+    readonly ["unit"]: "hfcache-sync.service";
+    readonly ["expected"]: ObserverExpected | null;
 };
 export type HostPermissionReasons = {
     readonly ["archive"]:
@@ -542,6 +606,29 @@ export type ObservationSummary = {
     readonly ["sources"]: readonly SourceObservation[];
     readonly ["dataset_formats"]: readonly string[];
     readonly ["diagnostics"]: readonly string[];
+};
+export type ObserverExpected = {
+    readonly ["boot_id"]: string;
+    readonly ["invocation_id"]: string;
+    readonly ["main_pid"]: number;
+    readonly ["start_ticks"]: number;
+};
+export type ObserverStopOutcome = {
+    readonly ["schema_version"]: 1;
+    readonly ["archive_id"]: string;
+    readonly ["operation_id"]: string;
+    readonly ["request_digest"]: string;
+    readonly ["state"]:
+        | "prepared"
+        | "unchanged"
+        | "effect_unconfirmed"
+        | "confirmed"
+        | "conflict"
+        | "unknown";
+    readonly ["pending"]: boolean;
+    readonly ["expected"]: ObserverExpected | null;
+    readonly ["stop_state"]:
+        "not_sent" | "acknowledged" | "exit_confirmed" | "unknown";
 };
 export type OperationPayload = { readonly ["operation"]: ClientOperation };
 export type OperationsPayload = {
@@ -969,6 +1056,15 @@ export type RequestNewVerification = {
     readonly ["revision"]?: null;
     readonly ["run_id"]?: string | null;
 };
+export type RequestObserverExpected = {
+    readonly ["boot_id"]: string;
+    readonly ["invocation_id"]: string;
+    readonly ["main_pid"]: number;
+    readonly ["start_ticks"]: number;
+};
+export type RequestObserverStopRequest = {
+    readonly ["expected"]: RequestObserverExpected;
+};
 export type RequestPlanSubmission = {
     readonly ["selectors"]?: readonly string[];
     readonly ["candidate"]?: string | null;
@@ -1015,6 +1111,16 @@ export type RequestRevisionVerification = {
     readonly ["mode"]: "revision";
     readonly ["revision"]: string;
     readonly ["run_id"]?: null;
+};
+export type RequestScheduleChangeRequest = {
+    readonly ["action"]: "pause" | "resume" | "replace" | "reset";
+    readonly ["expected_revision"]: string;
+    readonly ["on_calendar"]?: string | null;
+    readonly ["randomized_delay_sec"]?: string | null;
+};
+export type RequestScheduleValidationRequest = {
+    readonly ["on_calendar"]: string;
+    readonly ["randomized_delay_sec"]: string | null;
 };
 export type RequestSettingsReplace = {
     readonly ["kind"]: "settings-replace";
@@ -1148,6 +1254,37 @@ export type RunTotals = {
     readonly ["xet_cache_peak_bytes"]: number;
 };
 export type RunsPayload = { readonly ["runs"]: readonly string[] };
+export type ScheduleChangeOutcome = {
+    readonly ["schema_version"]: 1;
+    readonly ["archive_id"]: string;
+    readonly ["operation_id"]: string;
+    readonly ["request_digest"]: string;
+    readonly ["state"]:
+        | "prepared"
+        | "unchanged"
+        | "effect_unconfirmed"
+        | "confirmed"
+        | "conflict"
+        | "unknown";
+    readonly ["pending"]: boolean;
+    readonly ["action"]: ("pause" | "resume" | "replace" | "reset") | null;
+    readonly ["expected_revision"]: string | null;
+    readonly ["stored_revision"]: string | null;
+    readonly ["file_state"]: "unchanged" | "installed" | "removed" | "unknown";
+    readonly ["manager_state"]:
+        "not_sent" | "reload_acknowledged" | "timer_acknowledged" | "unknown";
+    readonly ["timer_was_active"]: boolean | null;
+    readonly ["timer_is_active"]: boolean | null;
+};
+export type ScheduleValidation = {
+    readonly ["schema_version"]: 1;
+    readonly ["archive_id"]: string;
+    readonly ["on_calendar"]: string;
+    readonly ["randomized_delay_sec"]: string | null;
+    readonly ["normalized_on_calendar"]: string;
+    readonly ["normalized_randomized_delay_sec"]: string | null;
+    readonly ["next_elapse"]: string | null;
+};
 export type SourceObservation = {
     readonly ["path"]: string;
     readonly ["sha256"]: string;
@@ -2891,6 +3028,56 @@ export function decodeHealthPayload(value: unknown): HealthPayload {
         (member: unknown) => decodeUnavailableHealthPayload(member),
     ]);
 }
+export function decodeHostActionPermissionReasons(
+    value: unknown,
+): HostActionPermissionReasons {
+    return ((input: unknown) => {
+        const object = wireObject(input, ["schedule", "observer"]);
+        return Object.freeze({
+            ["schedule"]: wireUnion<
+                | "granted"
+                | "policy-denied"
+                | "guard-held"
+                | "profile-unproved"
+                | "authority-unknown"
+                | "helper-unavailable"
+            >(object["schedule"], [
+                (member: unknown) => wireLiteral(member, "granted"),
+                (member: unknown) => wireLiteral(member, "policy-denied"),
+                (member: unknown) => wireLiteral(member, "guard-held"),
+                (member: unknown) => wireLiteral(member, "profile-unproved"),
+                (member: unknown) => wireLiteral(member, "authority-unknown"),
+                (member: unknown) => wireLiteral(member, "helper-unavailable"),
+            ]),
+            ["observer"]: wireUnion<
+                | "granted"
+                | "policy-denied"
+                | "guard-held"
+                | "profile-unproved"
+                | "authority-unknown"
+                | "helper-unavailable"
+            >(object["observer"], [
+                (member: unknown) => wireLiteral(member, "granted"),
+                (member: unknown) => wireLiteral(member, "policy-denied"),
+                (member: unknown) => wireLiteral(member, "guard-held"),
+                (member: unknown) => wireLiteral(member, "profile-unproved"),
+                (member: unknown) => wireLiteral(member, "authority-unknown"),
+                (member: unknown) => wireLiteral(member, "helper-unavailable"),
+            ]),
+        });
+    })(value);
+}
+export function decodeHostActionPermissions(
+    value: unknown,
+): HostActionPermissions {
+    return ((input: unknown) => {
+        const object = wireObject(input, ["schedule", "observer"]);
+        return Object.freeze({
+            ["schedule"]: wireBoolean(object["schedule"]),
+            ["observer"]: wireBoolean(object["observer"]),
+        });
+    })(value);
+}
 export function decodeHostBinding(value: unknown): HostBinding {
     return ((input: unknown) => {
         const object = wireObject(input, [
@@ -2991,6 +3178,251 @@ export function decodeHostFacts(value: unknown): HostFacts {
             });
         })(value),
         ["hfcache.host_models.HostFacts.exact_units"],
+    );
+}
+export function decodeHostJournalEntry(value: unknown): HostJournalEntry {
+    return ((input: unknown) => {
+        const object = wireObject(input, ["at", "message"]);
+        return Object.freeze({
+            ["at"]: wireUnion<string | null>(object["at"], [
+                (member: unknown) =>
+                    checked(wireString(member, null, null, null), [
+                        "timestamp.serialized",
+                    ]),
+                (member: unknown) => wireNull(member),
+            ]),
+            ["message"]: checked(
+                wireString(object["message"], null, 8192, null),
+                ["hfcache.host_actions_models._journal_message"],
+            ),
+        });
+    })(value);
+}
+export function decodeHostJournalPage(value: unknown): HostJournalPage {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "schema_version",
+                "archive_id",
+                "source",
+                "entries",
+                "next_cursor",
+                "gap",
+                "truncated",
+            ]);
+            return Object.freeze({
+                ["schema_version"]: checked(
+                    wireLiteral(object["schema_version"], 1),
+                    ["hfcache.host_models._one"],
+                ),
+                ["archive_id"]: checked(
+                    wireString(object["archive_id"], null, null, null),
+                    ["hfcache.models._parse_archive_id"],
+                ),
+                ["source"]: wireUnion<"sync-observer" | "verify-observer">(
+                    object["source"],
+                    [
+                        (member: unknown) =>
+                            wireLiteral(member, "sync-observer"),
+                        (member: unknown) =>
+                            wireLiteral(member, "verify-observer"),
+                    ],
+                ),
+                ["entries"]: wireArray(
+                    object["entries"],
+                    (member: unknown) => decodeHostJournalEntry(member),
+                    null,
+                    80,
+                ),
+                ["next_cursor"]: wireUnion<string | null>(
+                    object["next_cursor"],
+                    [
+                        (member: unknown) =>
+                            checked(wireString(member, 1, 2048, null), [
+                                "hfcache.host_actions_models._printable",
+                            ]),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["gap"]: wireBoolean(object["gap"]),
+                ["truncated"]: wireBoolean(object["truncated"]),
+            });
+        })(value),
+        ["hfcache.host_actions_models.HostJournalPage.bounded_page"],
+    );
+}
+export function decodeHostObserverStatus(value: unknown): HostObserverStatus {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "schema_version",
+                "archive_id",
+                "profile",
+                "host_binding",
+                "permissions",
+                "permission_reasons",
+                "state",
+                "reason",
+                "unit",
+                "expected",
+            ]);
+            return Object.freeze({
+                ["schema_version"]: checked(
+                    wireLiteral(object["schema_version"], 1),
+                    ["hfcache.host_models._one"],
+                ),
+                ["archive_id"]: checked(
+                    wireString(object["archive_id"], null, null, null),
+                    ["hfcache.models._parse_archive_id"],
+                ),
+                ["profile"]: wireUnion<("native" | "rootless") | null>(
+                    object["profile"],
+                    [
+                        (member: unknown) =>
+                            wireUnion<"native" | "rootless">(member, [
+                                (member: unknown) =>
+                                    wireLiteral(member, "native"),
+                                (member: unknown) =>
+                                    wireLiteral(member, "rootless"),
+                            ]),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["host_binding"]: wireUnion<HostBinding | null>(
+                    object["host_binding"],
+                    [
+                        (member: unknown) => decodeHostBinding(member),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["permissions"]: decodeHostActionPermissions(
+                    object["permissions"],
+                ),
+                ["permission_reasons"]: decodeHostActionPermissionReasons(
+                    object["permission_reasons"],
+                ),
+                ["state"]: wireUnion<"observed" | "inactive" | "unavailable">(
+                    object["state"],
+                    [
+                        (member: unknown) => wireLiteral(member, "observed"),
+                        (member: unknown) => wireLiteral(member, "inactive"),
+                        (member: unknown) => wireLiteral(member, "unavailable"),
+                    ],
+                ),
+                ["reason"]: wireUnion<
+                    | (
+                          | (
+                                | "helper-disabled"
+                                | "helper-unavailable"
+                                | "helper-timeout"
+                                | "helper-refused"
+                                | "helper-busy"
+                                | "policy-missing"
+                                | "policy-invalid"
+                                | "deployment-unverified"
+                                | "facts-unavailable"
+                                | "guard-unconfirmed"
+                                | "key-missing"
+                                | "key-invalid"
+                                | "config-unavailable"
+                            )
+                          | "profile-unproved"
+                      )
+                    | null
+                >(object["reason"], [
+                    (member: unknown) =>
+                        wireUnion<
+                            | (
+                                  | "helper-disabled"
+                                  | "helper-unavailable"
+                                  | "helper-timeout"
+                                  | "helper-refused"
+                                  | "helper-busy"
+                                  | "policy-missing"
+                                  | "policy-invalid"
+                                  | "deployment-unverified"
+                                  | "facts-unavailable"
+                                  | "guard-unconfirmed"
+                                  | "key-missing"
+                                  | "key-invalid"
+                                  | "config-unavailable"
+                              )
+                            | "profile-unproved"
+                        >(member, [
+                            (member: unknown) =>
+                                wireUnion<
+                                    | "helper-disabled"
+                                    | "helper-unavailable"
+                                    | "helper-timeout"
+                                    | "helper-refused"
+                                    | "helper-busy"
+                                    | "policy-missing"
+                                    | "policy-invalid"
+                                    | "deployment-unverified"
+                                    | "facts-unavailable"
+                                    | "guard-unconfirmed"
+                                    | "key-missing"
+                                    | "key-invalid"
+                                    | "config-unavailable"
+                                >(member, [
+                                    (member: unknown) =>
+                                        wireLiteral(member, "helper-disabled"),
+                                    (member: unknown) =>
+                                        wireLiteral(
+                                            member,
+                                            "helper-unavailable",
+                                        ),
+                                    (member: unknown) =>
+                                        wireLiteral(member, "helper-timeout"),
+                                    (member: unknown) =>
+                                        wireLiteral(member, "helper-refused"),
+                                    (member: unknown) =>
+                                        wireLiteral(member, "helper-busy"),
+                                    (member: unknown) =>
+                                        wireLiteral(member, "policy-missing"),
+                                    (member: unknown) =>
+                                        wireLiteral(member, "policy-invalid"),
+                                    (member: unknown) =>
+                                        wireLiteral(
+                                            member,
+                                            "deployment-unverified",
+                                        ),
+                                    (member: unknown) =>
+                                        wireLiteral(
+                                            member,
+                                            "facts-unavailable",
+                                        ),
+                                    (member: unknown) =>
+                                        wireLiteral(
+                                            member,
+                                            "guard-unconfirmed",
+                                        ),
+                                    (member: unknown) =>
+                                        wireLiteral(member, "key-missing"),
+                                    (member: unknown) =>
+                                        wireLiteral(member, "key-invalid"),
+                                    (member: unknown) =>
+                                        wireLiteral(
+                                            member,
+                                            "config-unavailable",
+                                        ),
+                                ]),
+                            (member: unknown) =>
+                                wireLiteral(member, "profile-unproved"),
+                        ]),
+                    (member: unknown) => wireNull(member),
+                ]),
+                ["unit"]: wireLiteral(object["unit"], "hfcache-sync.service"),
+                ["expected"]: wireUnion<ObserverExpected | null>(
+                    object["expected"],
+                    [
+                        (member: unknown) => decodeObserverExpected(member),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+            });
+        })(value),
+        ["hfcache.host_actions_models.HostObserverStatus.coherent_authority"],
     );
 }
 export function decodeHostPermissionReasons(
@@ -3831,6 +4263,99 @@ export function decodeObservationSummary(value: unknown): ObservationSummary {
             });
         })(value),
         ["hfcache.catalog_query_models.ObservationSummary._ordered"],
+    );
+}
+export function decodeObserverExpected(value: unknown): ObserverExpected {
+    return ((input: unknown) => {
+        const object = wireObject(input, [
+            "boot_id",
+            "invocation_id",
+            "main_pid",
+            "start_ticks",
+        ]);
+        return Object.freeze({
+            ["boot_id"]: checked(
+                wireString(object["boot_id"], null, null, null),
+                ["hfcache.models._parse_archive_id"],
+            ),
+            ["invocation_id"]: checked(
+                wireString(object["invocation_id"], null, null, null),
+                ["hfcache.identity.parse_run_id"],
+            ),
+            ["main_pid"]: wireInteger(object["main_pid"], "2", "2147483647"),
+            ["start_ticks"]: wireInteger(
+                object["start_ticks"],
+                "1",
+                "9007199254740991",
+            ),
+        });
+    })(value);
+}
+export function decodeObserverStopOutcome(value: unknown): ObserverStopOutcome {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "schema_version",
+                "archive_id",
+                "operation_id",
+                "request_digest",
+                "state",
+                "pending",
+                "expected",
+                "stop_state",
+            ]);
+            return Object.freeze({
+                ["schema_version"]: checked(
+                    wireLiteral(object["schema_version"], 1),
+                    ["hfcache.host_models._one"],
+                ),
+                ["archive_id"]: checked(
+                    wireString(object["archive_id"], null, null, null),
+                    ["hfcache.models._parse_archive_id"],
+                ),
+                ["operation_id"]: checked(
+                    wireString(object["operation_id"], null, null, null),
+                    ["hfcache.identity.parse_run_id"],
+                ),
+                ["request_digest"]: checked(
+                    wireString(object["request_digest"], null, null, null),
+                    ["hfcache.models._parse_sha256"],
+                ),
+                ["state"]: wireUnion<
+                    | "prepared"
+                    | "unchanged"
+                    | "effect_unconfirmed"
+                    | "confirmed"
+                    | "conflict"
+                    | "unknown"
+                >(object["state"], [
+                    (member: unknown) => wireLiteral(member, "prepared"),
+                    (member: unknown) => wireLiteral(member, "unchanged"),
+                    (member: unknown) =>
+                        wireLiteral(member, "effect_unconfirmed"),
+                    (member: unknown) => wireLiteral(member, "confirmed"),
+                    (member: unknown) => wireLiteral(member, "conflict"),
+                    (member: unknown) => wireLiteral(member, "unknown"),
+                ]),
+                ["pending"]: wireBoolean(object["pending"]),
+                ["expected"]: wireUnion<ObserverExpected | null>(
+                    object["expected"],
+                    [
+                        (member: unknown) => decodeObserverExpected(member),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["stop_state"]: wireUnion<
+                    "not_sent" | "acknowledged" | "exit_confirmed" | "unknown"
+                >(object["stop_state"], [
+                    (member: unknown) => wireLiteral(member, "not_sent"),
+                    (member: unknown) => wireLiteral(member, "acknowledged"),
+                    (member: unknown) => wireLiteral(member, "exit_confirmed"),
+                    (member: unknown) => wireLiteral(member, "unknown"),
+                ]),
+            });
+        })(value),
+        ["hfcache.host_actions_models.ObserverStopOutcome.coherent_effect"],
     );
 }
 export function decodeOperationPayload(value: unknown): OperationPayload {
@@ -5987,6 +6512,44 @@ export function decodeRequestNewVerification(
         ["hfcache.api.command_models.VerificationSubmission.scope"],
     );
 }
+export function decodeRequestObserverExpected(
+    value: unknown,
+): RequestObserverExpected {
+    return ((input: unknown) => {
+        const object = wireObject(input, [
+            "boot_id",
+            "invocation_id",
+            "main_pid",
+            "start_ticks",
+        ]);
+        return Object.freeze({
+            ["boot_id"]: checked(
+                wireString(object["boot_id"], null, null, null),
+                ["hfcache.models._parse_archive_id"],
+            ),
+            ["invocation_id"]: checked(
+                wireString(object["invocation_id"], null, null, null),
+                ["hfcache.identity.parse_run_id"],
+            ),
+            ["main_pid"]: wireInteger(object["main_pid"], "2", "2147483647"),
+            ["start_ticks"]: wireInteger(
+                object["start_ticks"],
+                "1",
+                "9007199254740991",
+            ),
+        });
+    })(value);
+}
+export function decodeRequestObserverStopRequest(
+    value: unknown,
+): RequestObserverStopRequest {
+    return ((input: unknown) => {
+        const object = wireObject(input, ["expected"]);
+        return Object.freeze({
+            ["expected"]: decodeRequestObserverExpected(object["expected"]),
+        });
+    })(value);
+}
 export function decodeRequestPlanSubmission(
     value: unknown,
 ): RequestPlanSubmission {
@@ -6329,6 +6892,95 @@ export function decodeRequestRevisionVerification(
         })(value),
         ["hfcache.api.command_models.VerificationSubmission.scope"],
     );
+}
+export function decodeRequestScheduleChangeRequest(
+    value: unknown,
+): RequestScheduleChangeRequest {
+    return checked(
+        ((input: unknown) => {
+            const object = wireRequestObject(
+                input,
+                ["action", "expected_revision"],
+                ["on_calendar", "randomized_delay_sec"],
+            );
+            return Object.freeze({
+                ["action"]: wireUnion<"pause" | "resume" | "replace" | "reset">(
+                    object["action"],
+                    [
+                        (member: unknown) => wireLiteral(member, "pause"),
+                        (member: unknown) => wireLiteral(member, "resume"),
+                        (member: unknown) => wireLiteral(member, "replace"),
+                        (member: unknown) => wireLiteral(member, "reset"),
+                    ],
+                ),
+                ["expected_revision"]: checked(
+                    wireString(object["expected_revision"], null, null, null),
+                    ["hfcache.models._parse_sha256"],
+                ),
+                ...(Object.hasOwn(object, "on_calendar")
+                    ? {
+                          ["on_calendar"]: wireUnion<string | null>(
+                              object["on_calendar"],
+                              [
+                                  (member: unknown) =>
+                                      checked(
+                                          wireString(member, 1, 4096, null),
+                                          [
+                                              "hfcache.host_actions_models._schedule_text",
+                                          ],
+                                      ),
+                                  (member: unknown) => wireNull(member),
+                              ],
+                          ),
+                      }
+                    : {}),
+                ...(Object.hasOwn(object, "randomized_delay_sec")
+                    ? {
+                          ["randomized_delay_sec"]: wireUnion<string | null>(
+                              object["randomized_delay_sec"],
+                              [
+                                  (member: unknown) =>
+                                      checked(
+                                          wireString(member, 1, 256, null),
+                                          [
+                                              "hfcache.host_actions_models._schedule_text",
+                                          ],
+                                      ),
+                                  (member: unknown) => wireNull(member),
+                              ],
+                          ),
+                      }
+                    : {}),
+            });
+        })(value),
+        ["hfcache.host_actions_models.ScheduleChangeRequest.exact_action"],
+    );
+}
+export function decodeRequestScheduleValidationRequest(
+    value: unknown,
+): RequestScheduleValidationRequest {
+    return ((input: unknown) => {
+        const object = wireObject(input, [
+            "on_calendar",
+            "randomized_delay_sec",
+        ]);
+        return Object.freeze({
+            ["on_calendar"]: checked(
+                wireString(object["on_calendar"], 1, 4096, null),
+                ["hfcache.host_actions_models._schedule_text"],
+            ),
+            ["randomized_delay_sec"]: wireUnion<string | null>(
+                object["randomized_delay_sec"],
+                [
+                    (member: unknown) =>
+                        checked(wireString(member, 1, 256, null), [
+                            "hfcache.host_actions_models._schedule_text",
+                        ]),
+                    (member: unknown) => wireNull(member),
+                ],
+            ),
+        });
+    })(value);
 }
 export function decodeRequestSettingsReplace(
     value: unknown,
@@ -7248,6 +7900,203 @@ export function decodeRunsPayload(value: unknown): RunsPayload {
             ),
         });
     })(value);
+}
+export function decodeScheduleChangeOutcome(
+    value: unknown,
+): ScheduleChangeOutcome {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "schema_version",
+                "archive_id",
+                "operation_id",
+                "request_digest",
+                "state",
+                "pending",
+                "action",
+                "expected_revision",
+                "stored_revision",
+                "file_state",
+                "manager_state",
+                "timer_was_active",
+                "timer_is_active",
+            ]);
+            return Object.freeze({
+                ["schema_version"]: checked(
+                    wireLiteral(object["schema_version"], 1),
+                    ["hfcache.host_models._one"],
+                ),
+                ["archive_id"]: checked(
+                    wireString(object["archive_id"], null, null, null),
+                    ["hfcache.models._parse_archive_id"],
+                ),
+                ["operation_id"]: checked(
+                    wireString(object["operation_id"], null, null, null),
+                    ["hfcache.identity.parse_run_id"],
+                ),
+                ["request_digest"]: checked(
+                    wireString(object["request_digest"], null, null, null),
+                    ["hfcache.models._parse_sha256"],
+                ),
+                ["state"]: wireUnion<
+                    | "prepared"
+                    | "unchanged"
+                    | "effect_unconfirmed"
+                    | "confirmed"
+                    | "conflict"
+                    | "unknown"
+                >(object["state"], [
+                    (member: unknown) => wireLiteral(member, "prepared"),
+                    (member: unknown) => wireLiteral(member, "unchanged"),
+                    (member: unknown) =>
+                        wireLiteral(member, "effect_unconfirmed"),
+                    (member: unknown) => wireLiteral(member, "confirmed"),
+                    (member: unknown) => wireLiteral(member, "conflict"),
+                    (member: unknown) => wireLiteral(member, "unknown"),
+                ]),
+                ["pending"]: wireBoolean(object["pending"]),
+                ["action"]: wireUnion<
+                    ("pause" | "resume" | "replace" | "reset") | null
+                >(object["action"], [
+                    (member: unknown) =>
+                        wireUnion<"pause" | "resume" | "replace" | "reset">(
+                            member,
+                            [
+                                (member: unknown) =>
+                                    wireLiteral(member, "pause"),
+                                (member: unknown) =>
+                                    wireLiteral(member, "resume"),
+                                (member: unknown) =>
+                                    wireLiteral(member, "replace"),
+                                (member: unknown) =>
+                                    wireLiteral(member, "reset"),
+                            ],
+                        ),
+                    (member: unknown) => wireNull(member),
+                ]),
+                ["expected_revision"]: wireUnion<string | null>(
+                    object["expected_revision"],
+                    [
+                        (member: unknown) =>
+                            checked(wireString(member, null, null, null), [
+                                "hfcache.models._parse_sha256",
+                            ]),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["stored_revision"]: wireUnion<string | null>(
+                    object["stored_revision"],
+                    [
+                        (member: unknown) =>
+                            checked(wireString(member, null, null, null), [
+                                "hfcache.models._parse_sha256",
+                            ]),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["file_state"]: wireUnion<
+                    "unchanged" | "installed" | "removed" | "unknown"
+                >(object["file_state"], [
+                    (member: unknown) => wireLiteral(member, "unchanged"),
+                    (member: unknown) => wireLiteral(member, "installed"),
+                    (member: unknown) => wireLiteral(member, "removed"),
+                    (member: unknown) => wireLiteral(member, "unknown"),
+                ]),
+                ["manager_state"]: wireUnion<
+                    | "not_sent"
+                    | "reload_acknowledged"
+                    | "timer_acknowledged"
+                    | "unknown"
+                >(object["manager_state"], [
+                    (member: unknown) => wireLiteral(member, "not_sent"),
+                    (member: unknown) =>
+                        wireLiteral(member, "reload_acknowledged"),
+                    (member: unknown) =>
+                        wireLiteral(member, "timer_acknowledged"),
+                    (member: unknown) => wireLiteral(member, "unknown"),
+                ]),
+                ["timer_was_active"]: wireUnion<boolean | null>(
+                    object["timer_was_active"],
+                    [
+                        (member: unknown) => wireBoolean(member),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["timer_is_active"]: wireUnion<boolean | null>(
+                    object["timer_is_active"],
+                    [
+                        (member: unknown) => wireBoolean(member),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+            });
+        })(value),
+        ["hfcache.host_actions_models.ScheduleChangeOutcome.coherent_effect"],
+    );
+}
+export function decodeScheduleValidation(value: unknown): ScheduleValidation {
+    return checked(
+        ((input: unknown) => {
+            const object = wireObject(input, [
+                "schema_version",
+                "archive_id",
+                "on_calendar",
+                "randomized_delay_sec",
+                "normalized_on_calendar",
+                "normalized_randomized_delay_sec",
+                "next_elapse",
+            ]);
+            return Object.freeze({
+                ["schema_version"]: checked(
+                    wireLiteral(object["schema_version"], 1),
+                    ["hfcache.host_models._one"],
+                ),
+                ["archive_id"]: checked(
+                    wireString(object["archive_id"], null, null, null),
+                    ["hfcache.models._parse_archive_id"],
+                ),
+                ["on_calendar"]: checked(
+                    wireString(object["on_calendar"], 1, 4096, null),
+                    ["hfcache.host_actions_models._schedule_text"],
+                ),
+                ["randomized_delay_sec"]: wireUnion<string | null>(
+                    object["randomized_delay_sec"],
+                    [
+                        (member: unknown) =>
+                            checked(wireString(member, 1, 256, null), [
+                                "hfcache.host_actions_models._schedule_text",
+                            ]),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["normalized_on_calendar"]: checked(
+                    wireString(object["normalized_on_calendar"], 1, 4096, null),
+                    ["hfcache.host_actions_models._schedule_text"],
+                ),
+                ["normalized_randomized_delay_sec"]: wireUnion<string | null>(
+                    object["normalized_randomized_delay_sec"],
+                    [
+                        (member: unknown) =>
+                            checked(wireString(member, 1, 256, null), [
+                                "hfcache.host_actions_models._schedule_text",
+                            ]),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+                ["next_elapse"]: wireUnion<string | null>(
+                    object["next_elapse"],
+                    [
+                        (member: unknown) =>
+                            checked(wireString(member, 1, 512, null), [
+                                "hfcache.host_actions_models._printable",
+                            ]),
+                        (member: unknown) => wireNull(member),
+                    ],
+                ),
+            });
+        })(value),
+        ["hfcache.host_actions_models.ScheduleValidation.coherent_delay"],
+    );
 }
 export function decodeSourceObservation(value: unknown): SourceObservation {
     return checked(
@@ -8288,10 +9137,20 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeHashReuse(value);
         case "HealthPayload":
             return decodeHealthPayload(value);
+        case "HostActionPermissionReasons":
+            return decodeHostActionPermissionReasons(value);
+        case "HostActionPermissions":
+            return decodeHostActionPermissions(value);
         case "HostBinding":
             return decodeHostBinding(value);
         case "HostFacts":
             return decodeHostFacts(value);
+        case "HostJournalEntry":
+            return decodeHostJournalEntry(value);
+        case "HostJournalPage":
+            return decodeHostJournalPage(value);
+        case "HostObserverStatus":
+            return decodeHostObserverStatus(value);
         case "HostPermissionReasons":
             return decodeHostPermissionReasons(value);
         case "HostPermissions":
@@ -8320,6 +9179,10 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeMountPayload(value);
         case "ObservationSummary":
             return decodeObservationSummary(value);
+        case "ObserverExpected":
+            return decodeObserverExpected(value);
+        case "ObserverStopOutcome":
+            return decodeObserverStopOutcome(value);
         case "OperationPayload":
             return decodeOperationPayload(value);
         case "OperationsPayload":
@@ -8430,6 +9293,10 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeRequestManagedValidationRequest(value);
         case "RequestNewVerification":
             return decodeRequestNewVerification(value);
+        case "RequestObserverExpected":
+            return decodeRequestObserverExpected(value);
+        case "RequestObserverStopRequest":
+            return decodeRequestObserverStopRequest(value);
         case "RequestPlanSubmission":
             return decodeRequestPlanSubmission(value);
         case "RequestProbeDiagnostics":
@@ -8456,6 +9323,10 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeRequestRepositoryUpsert(value);
         case "RequestRevisionVerification":
             return decodeRequestRevisionVerification(value);
+        case "RequestScheduleChangeRequest":
+            return decodeRequestScheduleChangeRequest(value);
+        case "RequestScheduleValidationRequest":
+            return decodeRequestScheduleValidationRequest(value);
         case "RequestSettingsReplace":
             return decodeRequestSettingsReplace(value);
         case "RequestSettingsReplacement":
@@ -8488,6 +9359,10 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeRunTotals(value);
         case "RunsPayload":
             return decodeRunsPayload(value);
+        case "ScheduleChangeOutcome":
+            return decodeScheduleChangeOutcome(value);
+        case "ScheduleValidation":
+            return decodeScheduleValidation(value);
         case "SourceObservation":
             return decodeSourceObservation(value);
         case "StatusPayload":
@@ -8650,6 +9525,142 @@ export const routeContracts = {
             })(value),
         repeated: [],
         decodeSuccess: decodeHostStatus,
+        decodeFailure: (value: unknown): EmptyPayload =>
+            wireUnion<EmptyPayload>(value, [decodeEmptyPayload]),
+        decodeBody: wireNull,
+    },
+    host_observer_default: {
+        method: "GET",
+        path: "/api/v1/host/sync-observer",
+        commands: ["host observer status"],
+        bindingIds: ["host.observer"],
+        responseKind: "read",
+        cursor: "none",
+        decodePath: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        decodeQuery: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        repeated: [],
+        decodeSuccess: decodeHostObserverStatus,
+        decodeFailure: (value: unknown): EmptyPayload =>
+            wireUnion<EmptyPayload>(value, [decodeEmptyPayload]),
+        decodeBody: wireNull,
+    },
+    schedule_outcome_default: {
+        method: "GET",
+        path: "/api/v1/host/sync-schedule/changes/{operation_id}",
+        commands: ["host schedule outcome"],
+        bindingIds: ["host.outcome"],
+        responseKind: "read",
+        cursor: "none",
+        decodePath: (value: unknown): { readonly ["operation_id"]: string } =>
+            ((input: unknown) => {
+                const object = wireObject(input, ["operation_id"]);
+                return Object.freeze({
+                    ["operation_id"]: checked(
+                        wireString(object["operation_id"], 1, 256, null),
+                        ["hfcache.identity.parse_run_id"],
+                    ),
+                });
+            })(value),
+        decodeQuery: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        repeated: [],
+        decodeSuccess: decodeScheduleChangeOutcome,
+        decodeFailure: (value: unknown): EmptyPayload =>
+            wireUnion<EmptyPayload>(value, [decodeEmptyPayload]),
+        decodeBody: wireNull,
+    },
+    observer_outcome_default: {
+        method: "GET",
+        path: "/api/v1/host/sync-observer/stops/{operation_id}",
+        commands: ["host observer outcome"],
+        bindingIds: ["host.outcome"],
+        responseKind: "read",
+        cursor: "none",
+        decodePath: (value: unknown): { readonly ["operation_id"]: string } =>
+            ((input: unknown) => {
+                const object = wireObject(input, ["operation_id"]);
+                return Object.freeze({
+                    ["operation_id"]: checked(
+                        wireString(object["operation_id"], 1, 256, null),
+                        ["hfcache.identity.parse_run_id"],
+                    ),
+                });
+            })(value),
+        decodeQuery: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        repeated: [],
+        decodeSuccess: decodeObserverStopOutcome,
+        decodeFailure: (value: unknown): EmptyPayload =>
+            wireUnion<EmptyPayload>(value, [decodeEmptyPayload]),
+        decodeBody: wireNull,
+    },
+    host_journal_default: {
+        method: "GET",
+        path: "/api/v1/host/journal",
+        commands: ["host journal"],
+        bindingIds: ["host.journal"],
+        responseKind: "read",
+        cursor: "opaque",
+        decodePath: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        decodeQuery: (
+            value: unknown,
+        ): {
+            readonly ["source"]?: "sync-observer" | "verify-observer";
+            readonly ["cursor"]?: string;
+            readonly ["limit"]?: number;
+        } =>
+            ((input: unknown) => {
+                const object = wireRequestObject(
+                    input,
+                    [],
+                    ["source", "cursor", "limit"],
+                );
+                return Object.freeze({
+                    ...(Object.hasOwn(object, "source")
+                        ? {
+                              ["source"]: wireUnion<
+                                  "sync-observer" | "verify-observer"
+                              >(object["source"], [
+                                  (member: unknown) =>
+                                      wireLiteral(member, "sync-observer"),
+                                  (member: unknown) =>
+                                      wireLiteral(member, "verify-observer"),
+                              ]),
+                          }
+                        : {}),
+                    ...(Object.hasOwn(object, "cursor")
+                        ? {
+                              ["cursor"]: checked(
+                                  wireString(object["cursor"], 1, 2048, null),
+                                  ["hfcache.host_actions_models._printable"],
+                              ),
+                          }
+                        : {}),
+                    ...(Object.hasOwn(object, "limit")
+                        ? { ["limit"]: wireInteger(object["limit"], "1", "80") }
+                        : {}),
+                });
+            })(value),
+        repeated: [],
+        decodeSuccess: decodeHostJournalPage,
         decodeFailure: (value: unknown): EmptyPayload =>
             wireUnion<EmptyPayload>(value, [decodeEmptyPayload]),
         decodeBody: wireNull,
@@ -10072,6 +11083,56 @@ export const routeContracts = {
             wireUnion<EmptyPayload>(value, [decodeEmptyPayload]),
         decodeBody: wireNull,
     },
+    schedule_change_default: {
+        method: "POST",
+        path: "/api/v1/host/sync-schedule/changes",
+        commands: ["host schedule change"],
+        bindingIds: [],
+        responseKind: "acceptance",
+        cursor: "none",
+        decodePath: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        decodeQuery: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        repeated: [],
+        decodeSuccess: decodeAcceptance,
+        decodeFailure: (_value: unknown): never => {
+            void _value;
+            throw new WireError("schema");
+        },
+        decodeBody: decodeRequestScheduleChangeRequest,
+    },
+    observer_stop_default: {
+        method: "POST",
+        path: "/api/v1/host/sync-observer/stops",
+        commands: ["host observer stop"],
+        bindingIds: [],
+        responseKind: "acceptance",
+        cursor: "none",
+        decodePath: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        decodeQuery: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        repeated: [],
+        decodeSuccess: decodeAcceptance,
+        decodeFailure: (_value: unknown): never => {
+            void _value;
+            throw new WireError("schema");
+        },
+        decodeBody: decodeRequestObserverStopRequest,
+    },
     config_apply_default: {
         method: "POST",
         path: "/api/v1/config/applications",
@@ -10597,6 +11658,29 @@ export const routeContracts = {
         },
         decodeBody: decodeRequestCatalogRefreshSubmission,
     },
+    schedule_validate_default: {
+        method: "POST",
+        path: "/api/v1/host/sync-schedule/validations",
+        commands: ["host schedule validate"],
+        bindingIds: ["host.validation"],
+        responseKind: "read",
+        cursor: "none",
+        decodePath: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        decodeQuery: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        repeated: [],
+        decodeSuccess: decodeScheduleValidation,
+        decodeFailure: (value: unknown): EmptyPayload =>
+            wireUnion<EmptyPayload>(value, [decodeEmptyPayload]),
+        decodeBody: decodeRequestScheduleValidationRequest,
+    },
     config_validate_installed: {
         method: "POST",
         path: "/api/v1/config/validate",
@@ -10670,6 +11754,8 @@ export const routeContracts = {
     },
 } as const;
 export type OperationSuccess =
+    | ScheduleChangeOutcome
+    | ObserverStopOutcome
     | ConfigApplicationOutcome
     | RunResultPayload
     | PlanResultPayload
@@ -10684,8 +11770,10 @@ export type OperationSuccess =
     | InitializationPayload
     | CatalogRefreshResult;
 export type OperationFailure =
-    | ConfigApplicationOutcome
+    | ScheduleChangeOutcome
     | EmptyPayload
+    | ObserverStopOutcome
+    | ConfigApplicationOutcome
     | RunResultPayload
     | PlanResultPayload
     | DiagnosticsPayload
@@ -10713,6 +11801,28 @@ export function decodeOriginalOperationPayload(
     failed: boolean,
     value: unknown,
 ): OperationSuccess | OperationFailure {
+    if (
+        origin === "/api/v1/host/sync-schedule/changes" &&
+        ["host schedule change"].includes(command)
+    )
+        return failed
+            ? ((value: unknown): ScheduleChangeOutcome | EmptyPayload =>
+                  wireUnion<ScheduleChangeOutcome | EmptyPayload>(value, [
+                      decodeScheduleChangeOutcome,
+                      decodeEmptyPayload,
+                  ]))(value)
+            : decodeScheduleChangeOutcome(value);
+    if (
+        origin === "/api/v1/host/sync-observer/stops" &&
+        ["host observer stop"].includes(command)
+    )
+        return failed
+            ? ((value: unknown): ObserverStopOutcome | EmptyPayload =>
+                  wireUnion<ObserverStopOutcome | EmptyPayload>(value, [
+                      decodeObserverStopOutcome,
+                      decodeEmptyPayload,
+                  ]))(value)
+            : decodeObserverStopOutcome(value);
     if (
         origin === "/api/v1/config/applications" &&
         ["config apply"].includes(command)
@@ -10986,6 +12096,130 @@ export const routeDefinitions = [
         request_body: null,
         response_kind: "read",
         success: "HostStatus",
+    },
+    {
+        binding_ids: ["host.observer"],
+        commands: ["host observer status"],
+        cursor: "none",
+        failure: ["EmptyPayload"],
+        id: "host_observer",
+        method: "GET",
+        mode: "default",
+        path: "/api/v1/host/sync-observer",
+        path_parameters: [],
+        query_parameters: [],
+        request_body: null,
+        response_kind: "read",
+        success: "HostObserverStatus",
+    },
+    {
+        binding_ids: ["host.outcome"],
+        commands: ["host schedule outcome"],
+        cursor: "none",
+        failure: ["EmptyPayload"],
+        id: "schedule_outcome",
+        method: "GET",
+        mode: "default",
+        path: "/api/v1/host/sync-schedule/changes/{operation_id}",
+        path_parameters: [
+            {
+                name: "operation_id",
+                node: {
+                    kind: "string",
+                    max_codepoints: 256,
+                    min_codepoints: 1,
+                    pattern: null,
+                    semantic_ids: ["hfcache.identity.parse_run_id"],
+                },
+            },
+        ],
+        query_parameters: [],
+        request_body: null,
+        response_kind: "read",
+        success: "ScheduleChangeOutcome",
+    },
+    {
+        binding_ids: ["host.outcome"],
+        commands: ["host observer outcome"],
+        cursor: "none",
+        failure: ["EmptyPayload"],
+        id: "observer_outcome",
+        method: "GET",
+        mode: "default",
+        path: "/api/v1/host/sync-observer/stops/{operation_id}",
+        path_parameters: [
+            {
+                name: "operation_id",
+                node: {
+                    kind: "string",
+                    max_codepoints: 256,
+                    min_codepoints: 1,
+                    pattern: null,
+                    semantic_ids: ["hfcache.identity.parse_run_id"],
+                },
+            },
+        ],
+        query_parameters: [],
+        request_body: null,
+        response_kind: "read",
+        success: "ObserverStopOutcome",
+    },
+    {
+        binding_ids: ["host.journal"],
+        commands: ["host journal"],
+        cursor: "opaque",
+        failure: ["EmptyPayload"],
+        id: "host_journal",
+        method: "GET",
+        mode: "default",
+        path: "/api/v1/host/journal",
+        path_parameters: [],
+        query_parameters: [
+            {
+                name: "source",
+                node: {
+                    choices: [
+                        {
+                            kind: "literal",
+                            semantic_ids: [],
+                            value: "sync-observer",
+                        },
+                        {
+                            kind: "literal",
+                            semantic_ids: [],
+                            value: "verify-observer",
+                        },
+                    ],
+                    kind: "union",
+                    semantic_ids: [],
+                },
+                repeated: false,
+            },
+            {
+                name: "cursor",
+                node: {
+                    kind: "string",
+                    max_codepoints: 2048,
+                    min_codepoints: 1,
+                    pattern: null,
+                    semantic_ids: ["hfcache.host_actions_models._printable"],
+                },
+                repeated: false,
+            },
+            {
+                name: "limit",
+                node: {
+                    kind: "integer",
+                    maximum: "80",
+                    minimum: "1",
+                    semantic_ids: [],
+                },
+                repeated: false,
+            },
+        ],
+        request_body: null,
+        response_kind: "read",
+        success: "HostJournalPage",
     },
     {
         binding_ids: [],
@@ -12288,6 +13522,36 @@ export const routeDefinitions = [
     },
     {
         binding_ids: [],
+        commands: ["host schedule change"],
+        cursor: "none",
+        failure: [],
+        id: "schedule_change",
+        method: "POST",
+        mode: "default",
+        path: "/api/v1/host/sync-schedule/changes",
+        path_parameters: [],
+        query_parameters: [],
+        request_body: "RequestScheduleChangeRequest",
+        response_kind: "acceptance",
+        success: "Acceptance",
+    },
+    {
+        binding_ids: [],
+        commands: ["host observer stop"],
+        cursor: "none",
+        failure: [],
+        id: "observer_stop",
+        method: "POST",
+        mode: "default",
+        path: "/api/v1/host/sync-observer/stops",
+        path_parameters: [],
+        query_parameters: [],
+        request_body: "RequestObserverStopRequest",
+        response_kind: "acceptance",
+        success: "Acceptance",
+    },
+    {
+        binding_ids: [],
         commands: ["config apply"],
         cursor: "none",
         failure: [],
@@ -12602,6 +13866,21 @@ export const routeDefinitions = [
         success: "Acceptance",
     },
     {
+        binding_ids: ["host.validation"],
+        commands: ["host schedule validate"],
+        cursor: "none",
+        failure: ["EmptyPayload"],
+        id: "schedule_validate",
+        method: "POST",
+        mode: "default",
+        path: "/api/v1/host/sync-schedule/validations",
+        path_parameters: [],
+        query_parameters: [],
+        request_body: "RequestScheduleValidationRequest",
+        response_kind: "read",
+        success: "ScheduleValidation",
+    },
+    {
         binding_ids: [],
         commands: ["config validate"],
         cursor: "none",
@@ -12648,6 +13927,20 @@ export const routeDefinitions = [
     },
 ] as const;
 export const operationResultDefinitions = [
+    {
+        binding_ids: ["operation.result"],
+        commands: ["host schedule change"],
+        failure: ["ScheduleChangeOutcome", "EmptyPayload"],
+        origin_path: "/api/v1/host/sync-schedule/changes",
+        success: "ScheduleChangeOutcome",
+    },
+    {
+        binding_ids: ["operation.result"],
+        commands: ["host observer stop"],
+        failure: ["ObserverStopOutcome", "EmptyPayload"],
+        origin_path: "/api/v1/host/sync-observer/stops",
+        success: "ObserverStopOutcome",
+    },
     {
         binding_ids: ["operation.result"],
         commands: ["config apply"],

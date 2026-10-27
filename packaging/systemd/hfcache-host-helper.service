@@ -1,4 +1,4 @@
-# Protected host administration; decisions150/154. No archive/Hub authority.
+# Protected host administration; decisions150/154/156. No archive/Hub authority.
 # Provision the independent policy/index/key and protected bootstrap copies first.
 [Unit]
 Description=hfcache protected host administration helper
@@ -46,6 +46,8 @@ RestrictAddressFamilies=AF_UNIX
 IPAddressDeny=any
 InaccessiblePaths=-/srv/hfcache -/run/credentials -/run/secrets -/etc/credstore -/etc/credstore.encrypted -/etc/hfcache/credentials -/var/lib/hfcache/hf-home -/var/cache/hfcache -/var/lib/hfcache/.local/share/containers/storage/secrets
 ReadWritePaths=/etc/hfcache /run/hfcache-host-helper -/run/user -/var/lib/hfcache/.local/share/containers
+# Optional native-only provisioning; old read/configuration profiles omit it.
+ReadWritePaths=-/etc/systemd/system/hfcache-sync.timer.d
 
 [Install]
 WantedBy=hfcache.target

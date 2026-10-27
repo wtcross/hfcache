@@ -29,6 +29,8 @@ JOB_ROUTES = frozenset(
         "archive/initializations",
         "catalog/refreshes",
         "config/applications",
+        "host/sync-schedule/changes",
+        "host/sync-observer/stops",
     )
 )
 

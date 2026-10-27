@@ -10,11 +10,16 @@ import {
     releaseChanged,
     InterfaceUpdateRequiredError,
 } from "../bootstrap";
-import { decodeConfigApplicationOutcome } from "../wire/generated";
+import {
+    decodeConfigApplicationOutcome,
+    decodeScheduleChangeOutcome,
+    decodeObserverStopOutcome,
+} from "../wire/generated";
 import type {
     ClientOperation,
     UiBootstrap,
     RequestManagedValidationRequest,
+    RequestScheduleValidationRequest,
 } from "../wire/generated";
 import type { ReadOptions } from "../api/types";
 import { parseWireJson, WireError } from "../wire/json";
@@ -74,6 +79,10 @@ function dispatch(
                 intent.request,
                 options,
             );
+        case "scheduleChange":
+            return client.submitScheduleChange(intent.request, options);
+        case "observerStop":
+            return client.submitObserverStop(intent.request, options);
         case "readOnlyDiagnostics":
             return client.submitReadOnlyDiagnostics(intent.request, options);
         case "probeDiagnostics":
@@ -136,6 +145,18 @@ export type ConfigurationOutcomeObservation =
           readonly kind: "lookup";
           readonly result: Awaited<ReturnType<ApiClient["lookupOperation"]>>;
       };
+export type HostActionOutcomeObservation =
+    | {
+          readonly kind: "outcome";
+          readonly receipt: ClientOperation;
+          readonly result:
+              | Awaited<ReturnType<ApiClient["readScheduleOutcome"]>>
+              | Awaited<ReturnType<ApiClient["readObserverStopOutcome"]>>;
+      }
+    | {
+          readonly kind: "lookup";
+          readonly result: Awaited<ReturnType<ApiClient["lookupOperation"]>>;
+      };
 
 export function resultCertainty(
     receipt: ClientOperation,
@@ -143,10 +164,21 @@ export function resultCertainty(
 ): "known" | "unknown-effects" {
     if (result.kind !== "success" && result.kind !== "domain_failure")
         return "unknown-effects";
-    if (receipt.route !== "/api/v1/config/applications") return "known";
-    const outcome = decodeConfigApplicationOutcome(
-        parseWireJson(JSON.stringify(result.payload)),
-    );
+    const decode =
+        receipt.route === "/api/v1/config/applications"
+            ? decodeConfigApplicationOutcome
+            : receipt.route === "/api/v1/host/sync-schedule/changes"
+              ? decodeScheduleChangeOutcome
+              : receipt.route === "/api/v1/host/sync-observer/stops"
+                ? decodeObserverStopOutcome
+                : null;
+    if (decode === null) return "known";
+    let outcome;
+    try {
+        outcome = decode(parseWireJson(JSON.stringify(result.payload)));
+    } catch {
+        return "unknown-effects";
+    }
     return !outcome.pending &&
         (outcome.state === "confirmed" || outcome.state === "unchanged")
         ? "known"
@@ -427,6 +459,64 @@ export function createSessionController(options: SessionControllerOptions) {
                 controlledReads.delete(controller);
             }
         },
+        async validateSchedule(
+            request: RequestScheduleValidationRequest,
+            options: ReadOptions = {},
+        ) {
+            if (
+                disposed ||
+                connection !== "connected" ||
+                !bootstrap.user.admin_permissions.some(
+                    (permission) =>
+                        permission.capability === "schedule-write" &&
+                        permission.effective,
+                )
+            )
+                throw new OperationRegistryError("scope");
+            const generation = session.authGeneration;
+            const originalClient = client;
+            const controller = new AbortController();
+            const abort = () => {
+                controller.abort();
+            };
+            options.signal?.addEventListener("abort", abort, { once: true });
+            if (options.signal?.aborted === true) controller.abort();
+            controlledReads.add(controller);
+            const owner = "schedule-validation";
+            try {
+                return await reads.run(owner, controller.signal, async () => {
+                    if (!retention.claim(owner, READ_RESERVATION_BYTES))
+                        throw new StateCapacityError();
+                    try {
+                        const result = await originalClient.validateSchedule(
+                            request,
+                            {
+                                signal: controller.signal,
+                                responseByteLimit: SESSION_RESPONSE_BYTES,
+                            },
+                        );
+                        if (
+                            disposed ||
+                            controller.signal.aborted ||
+                            generation !== session.authGeneration ||
+                            connection !== "connected"
+                        )
+                            return { kind: "aborted" } as const;
+                        if (
+                            result.kind === "api_problem" &&
+                            result.status === 401
+                        )
+                            unauthorized();
+                        return result;
+                    } finally {
+                        retention.release(owner);
+                    }
+                });
+            } finally {
+                options.signal?.removeEventListener("abort", abort);
+                controlledReads.delete(controller);
+            }
+        },
         async observeConfigurationOutcome(
             id: RecordId,
             expected?: {
@@ -533,6 +623,111 @@ export function createSessionController(options: SessionControllerOptions) {
                 controlledReads.delete(controller);
             }
         },
+        async observeHostActionOutcome(
+            id: RecordId,
+        ): Promise<HostActionOutcomeObservation> {
+            if (
+                disposed ||
+                connection !== "connected" ||
+                !bootstrap.user.admin_permissions.some(
+                    (permission) =>
+                        permission.capability === "host-read" &&
+                        permission.effective,
+                )
+            )
+                throw new OperationRegistryError("scope");
+            const record = registry
+                .snapshot()
+                .records.find((row) => row.recordId === id);
+            if (record?.handles.kind !== "basic-key")
+                throw new OperationRegistryError("namespace");
+            const originalKey = record.handles.key;
+            const originalClient = client;
+            const auth = registry.authorizeObservation(id, session, {
+                reconnect: true,
+            });
+            const controller = new AbortController();
+            controlledReads.add(controller);
+            const owner = "host-action-outcome:" + id;
+            try {
+                return await reads.run(owner, controller.signal, async () => {
+                    if (!retention.claim(owner, READ_RESERVATION_BYTES))
+                        throw new StateCapacityError();
+                    try {
+                        // Always prove the original subject/key association, also after restore.
+                        const lookup = await originalClient.lookupOperation(
+                            originalKey,
+                            {
+                                signal: controller.signal,
+                                responseByteLimit: SESSION_RESPONSE_BYTES,
+                            },
+                        );
+                        if (!current(auth))
+                            throw new OperationRegistryError("scope");
+                        if (lookup.kind !== "success") {
+                            if (
+                                lookup.kind === "api_problem" &&
+                                lookup.status === 401
+                            )
+                                unauthorized();
+                            return { kind: "lookup", result: lookup };
+                        }
+                        const receipt = lookup.payload.operation;
+                        if (
+                            receipt.route !==
+                                "/api/v1/host/sync-schedule/changes" &&
+                            receipt.route !== "/api/v1/host/sync-observer/stops"
+                        )
+                            throw new WireError("semantic");
+                        registry.observed(auth, receipt);
+                        const proven = registry.authorizeObservation(
+                            id,
+                            session,
+                        );
+                        const result = await (
+                            receipt.route ===
+                                "/api/v1/host/sync-schedule/changes"
+                                ? originalClient.readScheduleOutcome.bind(
+                                      originalClient,
+                                  )
+                                : originalClient.readObserverStopOutcome.bind(
+                                      originalClient,
+                                  )
+                        )(receipt.operation_id, originalKey, {
+                            signal: controller.signal,
+                            responseByteLimit: SESSION_RESPONSE_BYTES,
+                        });
+                        if (!current(proven))
+                            throw new OperationRegistryError("scope");
+                        if (
+                            result.kind === "api_problem" &&
+                            result.status === 401
+                        )
+                            unauthorized();
+                        if (result.kind === "success") {
+                            registry.hostActionOutcome(proven, result.payload);
+                            if (
+                                !result.payload.pending &&
+                                (result.payload.state === "confirmed" ||
+                                    result.payload.state === "unchanged")
+                            )
+                                queries.invalidate((identity) =>
+                                    [
+                                        "host_status_default",
+                                        "host_observer_default",
+                                        "host_journal_default",
+                                    ].includes(identity.routeId),
+                                );
+                        }
+                        return { kind: "outcome", receipt, result };
+                    } finally {
+                        retention.release(owner);
+                    }
+                });
+            } finally {
+                controlledReads.delete(controller);
+            }
+        },
         observer,
         importHandle(input: ManualImport): RecoveryRecord {
             if (disposed || connection !== "connected")
@@ -562,6 +757,21 @@ export function createSessionController(options: SessionControllerOptions) {
                 otherTabChanged
             )
                 throw new OperationRegistryError("blocked");
+            const hostCapability =
+                intent.action === "scheduleChange"
+                    ? "schedule-write"
+                    : intent.action === "observerStop"
+                      ? "observer-stop"
+                      : null;
+            if (
+                hostCapability !== null &&
+                !bootstrap.user.admin_permissions.some(
+                    (permission) =>
+                        permission.capability === hostCapability &&
+                        permission.effective,
+                )
+            )
+                throw new OperationRegistryError("scope");
             const originalSession = session;
             const originalClient = client;
             const record = registry.prepare(intent.action, originalSession);

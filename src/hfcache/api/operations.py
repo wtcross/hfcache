@@ -27,6 +27,7 @@ from hfcache.api.auth import (
     Principal,
     require_capability,
 )
+from hfcache.api.host_routes import HOST_EFFECT_ROUTES
 from hfcache.api.lifecycle import open_directory
 from hfcache.config import ArchiveId  # noqa: TC001 - runtime Pydantic field validation
 from hfcache.errors import OperationError, RequestError
@@ -765,6 +766,7 @@ class OperationStore:
                 if (
                     record.state in _TERMINAL
                     and record.route != "/api/v1/config/applications"
+                    and record.route not in HOST_EFFECT_ROUTES
                     and record.completed_at is not None
                     and record.completed_at <= cutoff
                 ):

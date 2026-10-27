@@ -281,6 +281,15 @@ verification calendar disabled. Do not enable them as a documentation check.
 Native scheduled services retain observation handles and repeat finite windows;
 stopping an observer preserves lookup-only recovery, never replay authority.
 
+The separately provisioned native [host APIs](api.md#fixed-host-actions-and-original-outcomes)
+operate only the sync timer and the proven original scheduled sync observer.
+Replace/reset reload the manager and restart only a previously active timer;
+pause/resume change activation without changing enablement. Resume can trigger
+Persistent catch-up. A stopped observer leaves accepted API/worker work and its
+pending observation handle intact. After a lost reply, read the original keyed
+host outcome; do not replay changes or infer manager certainty from stored bytes.
+The current rootless deployment remains denied. See [Administration](web-ui/administration.md#schedule-observer-and-diagnostic-apis).
+
 | Native timer | Calendar in America/New_York | Persistent | Random delay | Accuracy |
 | --- | --- | --- | --- | --- |
 | Sync | Daily 02:00 | true | 30m | 1m |

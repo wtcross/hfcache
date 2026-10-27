@@ -394,3 +394,19 @@ client can fail validation in Firefox even when reads work. Preserve any origina
 operation handle before reconnecting or reloading. Do not relax Origin checks,
 add a Caddy authentication gate or resubmit an uncertain Apply. See
 [configuration recovery](configuration-and-tags.md#observe-an-interrupted-application).
+
+## Schedule, observer and journal diagnostics
+
+| Problem | Meaning and safe next step |
+| --- | --- |
+| Schedule or observer denied on guarded rootless | Expected for the current unproved system-manager binding. Retain the denial; do not choose a user manager or operate on same-name user units. |
+| Native host-effect labels or receipt unavailable | Keep existing read/configuration use. A host administrator must provision the exact optional version2 labels, original host-action lock and fresh receipt/index; a true policy bit alone cannot supply them. |
+| Native schedule allowed but observer stop reports profile-unproved | Check the optional fixed `50-hfcache-observer.conf` binding, effective manager context and dedicated scheduled-state label. Default units and journal stream context cannot attest the live SDK domain; init_t is not a supported signal target. Preserve the real running/inactive fact and original handle; do not grant init_t signals, choose an unconfined context or relabel automatically. |
+| Verification timer reports linked and inactive | Immutable unit symlinks can produce linked without calendar enablement. Preserve the exact installed state and verify no enablement links; do not remove unit links or enable the timer to alter the display. |
+| Legacy schedule/observer exclusion refuses | Preserve the old policy and admitted handles. Activation needs a safely absent policy or both strict legacy host-control bits false, plus independently proven quiescence of older privileged calls. Do not rewrite old source/index provenance or bypass the gate. |
+| Schedule revision changed | Read the installed schedule again and deliberately review a new change. Do not overwrite concurrent edits or treat an old preview as authority. |
+| File changed but manager state unconfirmed | Observe the original keyed host outcome. Preserve backups and pending evidence; do not replay reload/restart, reset or a replacement POST automatically. |
+| Original observer binding changed | The requested original process is no longer proved. Refuse stop rather than signal a replacement invocation or numeric PID. Observe accepted backend work by its own original handle. |
+| Observer stopped but job still running | Expected: client observation and server execution have separate lifetimes. Stop observation never cancels accepted API/worker work. |
+| Journal gap, truncation or expired cursor | Read a deliberately new bounded page if needed. Logs are incomplete diagnostics, never completion evidence or authority for a command. |
+| Private host history quota or pending marker blocks effects | Preserve the complete records and original lock inode. No GET, UI reset or receipt expiry deletes uncertain evidence. |

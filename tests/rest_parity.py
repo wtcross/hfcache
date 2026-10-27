@@ -67,6 +67,60 @@ PAGINATION = Evidence(
     "test_all_size_one_pages_match_local_truth_and_preserve_empty_unmanaged_and_exact_ids",
 )
 
+# Host-only HTTP effects deliberately have no CLI semantic mode. Route, grant
+# and effect tuples are independently reviewed in tests/rest_reference.py.
+HOST_HTTP_EVIDENCE = {
+    "GET /host/sync-observer": (
+        Evidence(
+            "test_host_fixed_routes",
+            "test_host_admin_authentication_precedes_body_decode_or_helper_work",
+        ),
+    ),
+    "POST /host/sync-schedule/validations": (
+        Evidence(
+            "test_rest_security_gate", "test_new_host_post_schemas_preserve_exact_fixed_variants"
+        ),
+        Evidence(
+            "test_host_fixed_routes",
+            "test_host_admin_authentication_precedes_body_decode_or_helper_work",
+        ),
+    ),
+    "POST /host/sync-schedule/changes": (
+        Evidence(
+            "test_host_fixed_routes",
+            "test_exact_duplicate_is_observe_only_and_original_outcome_read_needs_no_effect_grant",
+        ),
+        Evidence(
+            "test_host_fixed_routes",
+            "test_known_stale_refusal_retains_actual_revision_and_does_not_poison_host_lane",
+        ),
+    ),
+    "GET /host/sync-schedule/changes/{operation_id}": (
+        Evidence(
+            "test_host_fixed_routes",
+            "test_lost_helper_reply_keeps_original_interrupted_and_gets_confirmed_without_replay",
+        ),
+    ),
+    "POST /host/sync-observer/stops": (
+        Evidence(
+            "test_host_fixed_routes",
+            "test_revoked_dispatch_grant_refuses_before_transmission_and_original_tuple_is_required",
+        ),
+    ),
+    "GET /host/sync-observer/stops/{operation_id}": (
+        Evidence(
+            "test_rest_security_gate",
+            "test_new_host_routes_never_promote_bearers_or_touch_helper_state",
+        ),
+    ),
+    "GET /host/journal": (
+        Evidence(
+            "test_rest_security_gate",
+            "test_new_host_routes_never_promote_bearers_or_touch_helper_state",
+        ),
+    ),
+}
+
 
 PARITY = (
     ParityMode(

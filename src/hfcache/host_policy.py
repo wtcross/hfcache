@@ -25,7 +25,7 @@ from copy import copy
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterator
@@ -38,6 +38,14 @@ CONFIGURATION = Path("/etc/hfcache/config.toml")
 REVISION_KEY = Path("/etc/hfcache/host-helper.key")
 SELINUX_INSTALLATION = Path("/etc/hfcache/host-helper-selinux.json")
 SELINUX_CONTEXT = "system_u:system_r:hfcache_host_helper_t:s0"
+SYNC_OBSERVER_CONTEXT = "system_u:system_r:hfcache_sync_observer_t:s0"
+SYNC_OBSERVER_STATE_TYPE = "hfcache_sync_observer_state_t"
+SYNC_OBSERVER_STATE = Path("/var/lib/hfcache/scheduled/sync")
+SYNC_OBSERVER_DROP_IN = Path("/etc/systemd/system/hfcache-sync.service.d/50-hfcache-observer.conf")
+SYNC_OBSERVER_RELATIVE = "packaging/systemd/hfcache-sync.service.d/50-hfcache-observer.conf"
+SYNC_OBSERVER_BINDING = "sync_observer_context"
+SYNC_OBSERVER_DIRECTORY_MODE = 0o700
+SYSTEMD_DROP_IN_DIRECTORY_MODE = 0o755
 MAX_SELINUX_INSTALLATION = 16384
 MAX_SELINUX_CONTEXT = 4096
 SELINUX_CONTEXT_FIELDS = 4
@@ -91,6 +99,7 @@ MAX_DELAY_CHARS = 256
 KEY_BYTES = 32
 START_TICKS_FIELD = 19
 LOCK_MODE = 0o600
+SCHEDULE_HISTORY_MODE = 0o700
 ACTIONS = ("archive", "hub", "control", "schedule", "configuration", "observer")
 UNITS = (
     "hfcache-sync.service",
@@ -237,9 +246,10 @@ def _json(body: bytes) -> dict[str, Any]:
     return value
 
 
-def binding_paths(profile: str) -> dict[str, tuple[Path, str]]:
+def binding_paths(profile: str, *, observer_context: bool = False) -> dict[str, tuple[Path, str]]:
     """Closed packaging names; this is not a caller-selected path interface."""
     _need(profile in {"native", "rootless"})
+    _need(type(observer_context) is bool and (not observer_context or profile == "native"))
     ordinary = "host-helper/" if profile == "rootless" else "src/hfcache/"
     paths = dict(ROOTLESS_BINDINGS if profile == "rootless" else NATIVE_BINDINGS)
     paths.update(
@@ -266,6 +276,14 @@ def binding_paths(profile: str) -> dict[str, tuple[Path, str]]:
                 Path("/usr/local/lib/hfcache-host-helper/host_configuration.py"),
                 ordinary + "host_configuration.py",
             ),
+            "helper_actions_module": (
+                Path("/usr/local/lib/hfcache-host-helper/host_actions.py"),
+                ordinary + "host_actions.py",
+            ),
+            "helper_selinux_module": (
+                Path("/usr/local/lib/hfcache-host-helper/host_selinux.py"),
+                ordinary + "host_selinux.py",
+            ),
             "helper_peer_module": (
                 Path("/usr/local/lib/hfcache-host-helper/host_peer.py"),
                 ordinary + "host_peer.py",
@@ -278,6 +296,8 @@ def binding_paths(profile: str) -> dict[str, tuple[Path, str]]:
             ),
         }
     )
+    if observer_context:
+        paths[SYNC_OBSERVER_BINDING] = (SYNC_OBSERVER_DROP_IN, SYNC_OBSERVER_RELATIVE)
     return paths
 
 
@@ -327,6 +347,7 @@ class _Capture:
         self.absent: set[Path] = set()
         self.labels: dict[Path, tuple[tuple[int, ...], str, str]] = {}
         self.mounts: list[tuple[Path, str, set[str], set[str]]] = []
+        self.observer_principal: tuple[int, int] | None = None
 
     def accounting(self, path: Path) -> str:
         _need(path in {MOUNTINFO, LOCKS}, "facts-unavailable")
@@ -502,14 +523,27 @@ class _Capture:
             for name in leaves
         }
 
-    def label(self, path: Path, expected_type: str) -> None:
+    def label(
+        self, path: Path, expected_type: str, *, owner: tuple[int, int] | None = None
+    ) -> None:
         """Capture visible fixed-object label metadata without reading its body."""
         self.budget.consume(files=1)
-        parent = self.parent(path)
+        observer_state = path == SYNC_OBSERVER_STATE and expected_type == SYNC_OBSERVER_STATE_TYPE
+        _need(owner is None or (observer_state and owner == self.observer_principal))
+        if observer_state:
+            _need(self.observer_principal is not None)
+        principal = self.observer_principal if observer_state else None
+        parent = self.parent(path, owners={OWNER, principal[0]} if principal else None)
         try:
             before = os.stat(path.name, dir_fd=parent, follow_symlinks=False)
             _need(stat.S_ISREG(before.st_mode) or stat.S_ISDIR(before.st_mode))
-            _need(before.st_uid == OWNER and not before.st_mode & 0o022)
+            if principal is None:
+                _need(before.st_uid == OWNER and not before.st_mode & 0o022)
+            else:
+                _need(
+                    (before.st_uid, before.st_gid) == principal
+                    and stat.S_IMODE(before.st_mode) == SYNC_OBSERVER_DIRECTORY_MODE
+                )
             value = os.getxattr(path, "security.selinux", follow_symlinks=False)
             self.budget.consume(size=len(value))
             _need(0 < len(value) <= MAX_SELINUX_CONTEXT)
@@ -525,8 +559,24 @@ class _Capture:
             # entry timestamps/link count; its identity, ownership/mode and full SID
             # stay pinned. All file labels retain the complete metadata comparison.
             mutable_directory = (
-                path == CONFIGURATION.parent
-                and expected_type == SELINUX_LABELS["configuration_directory"]
+                observer_state
+                or (
+                    path == CONFIGURATION.parent
+                    and expected_type == SELINUX_LABELS["configuration_directory"]
+                )
+                or (
+                    path
+                    in {
+                        SCHEDULE_DIRECTORY,
+                        SCHEDULE_DIRECTORY / ".hfcache-actions",
+                        CONFIGURATION.parent / ".host-actions",
+                    }
+                    and expected_type
+                    in {
+                        "hfcache_host_helper_schedule_dir_t",
+                        "hfcache_host_helper_host_action_state_t",
+                    }
+                )
             )
             if mutable_directory:
                 _need(stat.S_ISDIR(before.st_mode))
@@ -636,13 +686,15 @@ def _policy(body: bytes) -> dict[str, Any]:
     return value
 
 
-def _selinux_installation(body: bytes, source_sha256: str) -> dict[str, Any]:
+def _selinux_installation(
+    body: bytes, source_sha256: str, host_labels: object | None = None
+) -> dict[str, Any]:
     """Root provisioning attestation; never accept paths or runtime policy grants."""
     _need(0 < len(body) <= MAX_SELINUX_INSTALLATION)
     value = _object(
         _json(body), {"schema_version", "module", "domain", "kernel_policy_sha256", "labels"}
     )
-    _need(type(value["schema_version"]) is int and value["schema_version"] == 1)
+    _need(type(value["schema_version"]) is int and value["schema_version"] in {1, 2})
     _need(value["domain"] == SELINUX_CONTEXT)
     _digest(value["kernel_policy_sha256"])
     module = _object(
@@ -653,9 +705,17 @@ def _selinux_installation(body: bytes, source_sha256: str) -> dict[str, Any]:
     _need(type(module["priority"]) is int and module["priority"] == SELINUX_MODULE_PRIORITY)
     _need(_digest(module["source_sha256"]) == _digest(source_sha256))
     _digest(module["loaded_sha256"])
-    labels = _object(value["labels"], {*SELINUX_LABELS, "archive"})
-    _need(all(labels[role] == expected for role, expected in SELINUX_LABELS.items()))
-    _need(type(labels["archive"]) is str and labels["archive"] in {"nfs_t", "hfcache_archive_t"})
+    if host_labels is not None:
+        cast("Any", host_labels).installation_labels(
+            value["schema_version"], value["labels"], SELINUX_LABELS, _need
+        )
+    else:
+        _need(value["schema_version"] == 1)
+        labels = _object(value["labels"], {*SELINUX_LABELS, "archive"})
+        _need(all(labels[role] == expected for role, expected in SELINUX_LABELS.items()))
+        _need(
+            type(labels["archive"]) is str and labels["archive"] in {"nfs_t", "hfcache_archive_t"}
+        )
     return value
 
 
@@ -712,7 +772,14 @@ def _deployment(body: bytes) -> dict[str, Any]:
     _need(type(source["dirty"]) is bool)
     principal = _object(value["api_principal"], {"host_uid", "host_gid"})
     _need(all(type(x) is int and 0 < x <= MAX_ID and x != UNMAPPED_ID for x in principal.values()))
-    bindings = _object(value["bindings"], set(binding_paths(profile)))
+    _need(type(value["bindings"]) is dict)
+    optional_observer = SYNC_OBSERVER_BINDING in value["bindings"]
+    paths = (
+        binding_paths(profile, observer_context=True)
+        if optional_observer
+        else binding_paths(profile)
+    )
+    bindings = _object(value["bindings"], set(paths))
     for item in bindings.values():
         _digest(item)
     files = value["authority_files"]
@@ -731,7 +798,7 @@ def _deployment(body: bytes) -> dict[str, Any]:
             and 0 <= record["mode"] <= MODE_BITS
             and not record["mode"] & 0o022
         )
-    for name, (_host, relative) in binding_paths(profile).items():
+    for name, (_host, relative) in paths.items():
         _need(relative in files and files[relative]["sha256"] == bindings[name])
     if profile == "native":
         evidence = _object(
@@ -792,20 +859,68 @@ class AuthoritySnapshot:
     def budget(self) -> InspectionBudget:
         return self._inspection.capture.budget
 
+    def host_action_status(self) -> dict[str, Any]:
+        """Dedicated authority; internal transient states never widen HostStatus1."""
+        value = _json(self._status_body)
+        if self.profile == "native" and any(
+            value["permissions"][action] for action in ("schedule", "observer")
+        ):
+            try:
+                require_host_actions(self)
+            except (InspectionError, OSError, ValueError, TimeoutError):
+                for action in ("schedule", "observer"):
+                    if value["permissions"][action]:
+                        value["permissions"][action] = False
+                        value["permission_reasons"][action] = "authority-unknown"
+            if value["permissions"]["observer"]:
+                try:
+                    observed = require_sync_observer_context(self)
+                    pid = int(observed["MainPID"])
+                    _need(
+                        pid == 0
+                        or observer_process_context(pid, self.budget) == SYNC_OBSERVER_CONTEXT
+                    )
+                except (InspectionError, OSError, ValueError, TimeoutError):
+                    value["permissions"]["observer"] = False
+                    value["permission_reasons"]["observer"] = "profile-unproved"
+        return value
+
     def status(self) -> dict[str, Any]:
-        """A nonsecret body for the daemon's independent strict DTO validation."""
-        return _json(self._status_body)
+        """Keep the original public enum closed while a oneshot is starting."""
+        value = self.host_action_status()
+        if any(
+            unit["active"] not in {"active", "inactive", "failed"}
+            for unit in value["facts"]["units"].values()
+        ):
+            return {
+                "schema_version": 1,
+                "state": "unavailable",
+                "reason": "facts-unavailable",
+                "profile": None,
+                "binding": None,
+                "facts": None,
+                "permissions": dict.fromkeys(ACTIONS, False),
+                "permission_reasons": dict.fromkeys(ACTIONS, "helper-unavailable"),
+            }
+        return value
 
 
-def _show(
-    unit: str, budget: InspectionBudget, *, include_invocation: bool = False
+def _show(  # noqa: PLR0915 - one closed manager query and its owned-child drain
+    unit: str,
+    budget: InspectionBudget,
+    *,
+    include_invocation: bool = False,
+    include_observer_context: bool = False,
 ) -> dict[str, str]:
     _need(unit in {*UNITS, GUARD}, "facts-unavailable")
-    _need(not include_invocation or unit == GUARD, "facts-unavailable")
+    _need(not include_invocation or unit in {GUARD, "hfcache-sync.service"}, "facts-unavailable")
+    _need(not include_observer_context or unit == "hfcache-sync.service", "facts-unavailable")
     timer = unit.endswith(".timer")
     properties = ["Id", "LoadState", "ActiveState", "SubState", "UnitFileState"]
     if not timer:
         properties.append("MainPID")
+    if include_observer_context:
+        properties.extend(("SELinuxContext", "DropInPaths"))
     if include_invocation:
         properties.append("InvocationID")
     argv = [
@@ -873,7 +988,7 @@ def _show(
         result["MainPID"] = "0"
     _need(
         result["LoadState"] in {"loaded", "masked", "not-found"}
-        and result["ActiveState"] in {"active", "inactive", "failed"},
+        and result["ActiveState"] in {"active", "inactive", "failed", "activating", "deactivating"},
         "facts-unavailable",
     )
     _need(re.fullmatch(r"[0-9]+", result["MainPID"]) is not None, "facts-unavailable")
@@ -990,7 +1105,8 @@ def _guard_child(budget: InspectionBudget) -> dict[str, Any]:
 
 
 class _Inspection:
-    def __init__(self, budget: InspectionBudget) -> None:
+    def __init__(self, budget: InspectionBudget, host_labels: object | None = None) -> None:
+        self.host_labels = cast("Any", host_labels)
         self.capture = _Capture(budget)
         self.capture.mounts = self.capture.mount_rows()
         self.policy_body = b""
@@ -1005,6 +1121,8 @@ class _Inspection:
         self.schedule_files: tuple[bytes, bytes | None] | None = None
         self.package_files: set[str] | None = None
         self.unit_states: dict[str, dict[str, str]] = {}
+        self.observer_configuration: dict[str, str] | None = None
+        self.observer_loaded_dropins: str | None = None
 
     def authority_read(self, path: Path, maximum: int = 16777216) -> bytes:
         relative = path.relative_to(self.selected).as_posix()
@@ -1057,17 +1175,64 @@ class _Inspection:
 
     def bindings(self) -> None:
         profile = self.deployment["profile"]
-        for name, (host, relative) in binding_paths(profile).items():
+        principal = self.deployment["api_principal"]
+        self.capture.observer_principal = (principal["host_uid"], principal["host_gid"])
+        paths = (
+            binding_paths(profile, observer_context=True)
+            if SYNC_OBSERVER_BINDING in self.deployment["bindings"]
+            else binding_paths(profile)
+        )
+        for name, (host, relative) in paths.items():
             expected = self.deployment["bindings"][name]
             _need(expected == self.deployment["authority_files"][relative]["sha256"])
             if (profile == "rootless" and name in ROOTLESS_BINDINGS) or (
-                stat.S_ISLNK(host.lstat().st_mode) and not name.startswith("helper_")
+                stat.S_ISLNK(host.lstat().st_mode)
+                and not name.startswith("helper_")
+                and name != SYNC_OBSERVER_BINDING
             ):
                 self.capture.link(host, str(PREFIX / "current" / relative))
             else:
                 mode = 0o755 if name == "helper_daemon" else 0o644
                 body = self.capture.read(host, mode=mode, gid=OWNER_GID)
                 _need(hashlib.sha256(body).hexdigest() == expected)
+
+    def observer_dropins(self) -> None:
+        """Do not let a schedule reload adopt an unindexed service override."""
+        optional = SYNC_OBSERVER_BINDING in self.deployment["bindings"]
+        loaded = _show("hfcache-sync.service", self.capture.budget, include_observer_context=True)[
+            "DropInPaths"
+        ]
+        _need(loaded == (str(SYNC_OBSERVER_DROP_IN) if optional else ""))
+        _need(self.observer_loaded_dropins is None or self.observer_loaded_dropins == loaded)
+        self.observer_loaded_dropins = loaded
+        directory = SYNC_OBSERVER_DROP_IN.parent
+        parent = self.capture.parent(directory)
+        try:
+            try:
+                os.stat(directory.name, dir_fd=parent, follow_symlinks=False)
+            except FileNotFoundError:
+                _need(not optional and directory not in self.capture.labels)
+                self.capture.absent.add(directory)
+                return
+        finally:
+            os.close(parent)
+        _need(directory not in self.capture.absent)
+        self.capture.label(directory, "systemd_unit_file_t")
+        info = directory.lstat()
+        _need(
+            stat.S_IMODE(info.st_mode) == SYSTEMD_DROP_IN_DIRECTORY_MODE
+            and info.st_gid == OWNER_GID
+        )
+        names = [name for name, _info in self.capture.entries(directory)]
+        _need(names == ([SYNC_OBSERVER_DROP_IN.name] if optional else []))
+        if optional:
+            body = self.authority_read(self.selected / SYNC_OBSERVER_RELATIVE, 4096)
+            _need(body == ("[Service]\nSELinuxContext=" + SYNC_OBSERVER_CONTEXT + "\n").encode())
+            _need(
+                self.capture.read(SYNC_OBSERVER_DROP_IN, maximum=4096, mode=0o644, gid=OWNER_GID)
+                == body
+            )
+            self.capture.label(SYNC_OBSERVER_DROP_IN, "systemd_unit_file_t")
 
     def selinux(self) -> None:
         """Bind visible labels and the independent hidden-object provisioning receipt.
@@ -1081,7 +1246,9 @@ class _Inspection:
             SELINUX_INSTALLATION, maximum=MAX_SELINUX_INSTALLATION, mode=0o644, gid=OWNER_GID
         )
         _need(hashlib.sha256(body).hexdigest() == self.deployment["selinux_installation_sha256"])
-        _selinux_installation(body, self.deployment["bindings"]["helper_selinux_policy"])
+        _selinux_installation(
+            body, self.deployment["bindings"]["helper_selinux_policy"], self.host_labels
+        )
         paths = binding_paths(self.deployment["profile"])
         self.capture.label(paths["helper_daemon"][0], SELINUX_LABELS["helper_exec"])
         library = paths["helper_policy_module"][0].parent
@@ -1091,6 +1258,8 @@ class _Inspection:
             "helper_protocol_module",
             "helper_peer_module",
             "helper_configuration_module",
+            "helper_actions_module",
+            "helper_selinux_module",
             "helper_selinux_policy",
         ):
             self.capture.label(paths[role][0], SELINUX_LABELS["helper_code"])
@@ -1439,7 +1608,16 @@ class _Inspection:
         with os.scandir(SCHEDULE_DIRECTORY) as children:
             for child in children:
                 self.capture.budget.remaining()
-                entries.append(SCHEDULE_DIRECTORY / child.name)
+                path = SCHEDULE_DIRECTORY / child.name
+                if child.name == ".hfcache-actions":
+                    _need(self.host_labels is not None, "facts-unavailable")
+                    self.capture.label(path, "hfcache_host_helper_host_action_state_t")
+                    _need(
+                        stat.S_IMODE(path.lstat().st_mode) == SCHEDULE_HISTORY_MODE,
+                        "facts-unavailable",
+                    )
+                    continue
+                entries.append(path)
                 _need(len(entries) <= 1, "facts-unavailable")
         return entries
 
@@ -1491,6 +1669,28 @@ class _Inspection:
                     == expected,
                     "facts-unavailable",
                 )
+        if self.observer_loaded_dropins is not None:
+            observed = _show(
+                "hfcache-sync.service", self.capture.budget, include_observer_context=True
+            )
+            _need(
+                observed["DropInPaths"] == self.observer_loaded_dropins,
+                "facts-unavailable",
+            )
+        if self.observer_configuration is not None:
+            _need(
+                [name for name, _info in self.capture.entries(SYNC_OBSERVER_DROP_IN.parent)]
+                == [SYNC_OBSERVER_DROP_IN.name],
+                "facts-unavailable",
+            )
+            observed = _show(
+                "hfcache-sync.service", self.capture.budget, include_observer_context=True
+            )
+            _need(
+                {name: observed[name] for name in ("SELinuxContext", "DropInPaths")}
+                == self.observer_configuration,
+                "facts-unavailable",
+            )
         self.capture.revalidate()
 
     def snapshot(self) -> AuthoritySnapshot:
@@ -1550,11 +1750,13 @@ class _Inspection:
         )
 
 
-def inspect_authority(*, budget: InspectionBudget | None = None) -> AuthoritySnapshot:
+def inspect_authority(
+    *, budget: InspectionBudget | None = None, host_labels: object | None = None
+) -> AuthoritySnapshot:
     """Inspect fixed administrator authority; absence/uncertainty never grants."""
     _need(os.geteuid() == OWNER, "deployment-unverified")
     try:
-        inspection = _Inspection(budget if budget is not None else InspectionBudget())
+        inspection = _Inspection(budget if budget is not None else InspectionBudget(), host_labels)
         inspection.load()
         return inspection.snapshot()
     except INSPECTION_ERRORS:
@@ -2134,3 +2336,110 @@ def prepare_configuration(snapshot: AuthoritySnapshot, managed: object) -> dict[
     _configuration_reply_limit(result, "config-prepare")
     revalidate(snapshot)
     return result
+
+
+def require_host_actions(snapshot: AuthoritySnapshot) -> None:
+    """Optional v2 provisioning is independently necessary, never a policy grant."""
+    inspection = snapshot._inspection  # noqa: SLF001 - same protected capture
+    _need(snapshot.profile == "native" and inspection.host_labels is not None, "operation-denied")
+    receipt = _json(
+        inspection.capture.read(
+            SELINUX_INSTALLATION, maximum=MAX_SELINUX_INSTALLATION, mode=0o644, gid=OWNER_GID
+        )
+    )
+    inspection.host_labels.host_action_labels(inspection, receipt, _need)
+    inspection.observer_dropins()
+
+
+def observer_process_context(pid: int, budget: InspectionBudget) -> str:
+    """Bounded original-process SID observation; this grants no signal authority."""
+    _need(type(pid) is int and 1 < pid <= MAX_ID)
+    budget.consume(files=1)
+    descriptor = os.open(
+        Path("/proc") / str(pid) / "attr/current",
+        os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK,
+    )
+    try:
+        raw = os.read(descriptor, MAX_SELINUX_CONTEXT + 1)
+        budget.consume(size=len(raw))
+        _need(0 < len(raw) <= MAX_SELINUX_CONTEXT)
+        context = raw.removesuffix(b"\0").removesuffix(b"\n").decode("ascii")
+        _need(
+            re.fullmatch(
+                r"[A-Za-z0-9_]+:[A-Za-z0-9_]+:[A-Za-z0-9_]+:s[0-9]+[A-Za-z0-9_:.,-]*",
+                context,
+            )
+        )
+        _need(raw in {context.encode(), context.encode() + b"\0", context.encode() + b"\n"})
+        return context
+    finally:
+        os.close(descriptor)
+
+
+def require_sync_observer_context(snapshot: AuthoritySnapshot) -> dict[str, str]:
+    """Optional native stop eligibility; base read/schedule profiles remain valid."""
+    inspection = snapshot._inspection  # noqa: SLF001 - original protected capture
+    _need(
+        snapshot.profile == "native"
+        and SYNC_OBSERVER_BINDING in inspection.deployment["bindings"]
+        and inspection.host_labels is not None,
+        "operation-denied",
+    )
+    receipt = _json(
+        inspection.capture.read(
+            SELINUX_INSTALLATION, maximum=MAX_SELINUX_INSTALLATION, mode=0o644, gid=OWNER_GID
+        )
+    )
+    inspection.host_labels.observer_state_labels(inspection, receipt, _need)
+    inspection.observer_dropins()
+    observed = _show("hfcache-sync.service", snapshot.budget, include_observer_context=True)
+    configured = {name: observed[name] for name in ("SELinuxContext", "DropInPaths")}
+    _need(
+        configured
+        == {"SELinuxContext": SYNC_OBSERVER_CONTEXT, "DropInPaths": str(SYNC_OBSERVER_DROP_IN)}
+    )
+    _need(
+        inspection.observer_configuration is None or inspection.observer_configuration == configured
+    )
+    inspection.observer_configuration = configured
+    return observed
+
+
+def confirm_schedule(
+    snapshot: AuthoritySnapshot,
+    managed: bytes | None,
+    *,
+    action: str,
+    timer_was_active: bool | None = None,
+) -> None:
+    """Rebase only this operation's verified fixed leaf and timer/observer observations."""
+    _need(
+        type(snapshot) is AuthoritySnapshot
+        and action in {"pause", "resume", "replace", "reset", "observer"}
+    )
+    original = snapshot._inspection  # noqa: SLF001 - same protected capture
+    inspection, capture = copy(original), copy(original.capture)
+    inspection.capture = capture
+    for name in ("parents", "files", "links", "labels"):
+        setattr(capture, name, getattr(original.capture, name).copy())
+    capture.absent = original.capture.absent.copy()
+    capture.mounts = original.capture.mounts.copy()
+    inspection.unit_states = original.unit_states.copy()
+    if action != "observer":
+        capture.files.pop(SCHEDULE, None)
+        capture.labels.pop(SCHEDULE, None)
+        capture.absent.discard(SCHEDULE)
+        if managed is None:
+            _need(not os.path.lexists(SCHEDULE), "facts-unavailable")
+            capture.absent.add(SCHEDULE)
+        else:
+            _need(capture.read(SCHEDULE, maximum=16384, mode=0o644, gid=OWNER_GID) == managed)
+            capture.label(SCHEDULE, "hfcache_host_helper_schedule_file_t")
+        inspection.schedule_files = (original.schedule_files[0], managed)
+        timer = _show("hfcache-sync.timer", capture.budget)
+        expected = action == "resume" if action in {"pause", "resume"} else timer_was_active
+        _need(timer["ActiveState"] == ("active" if expected else "inactive"), "facts-unavailable")
+        inspection.unit_states["hfcache-sync.timer"] = timer
+    inspection.unit_states["hfcache-sync.service"] = _show("hfcache-sync.service", capture.budget)
+    inspection.legacy = inspection.legacy_namespace()
+    inspection.validate()

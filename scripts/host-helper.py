@@ -276,7 +276,14 @@ def load_modules():
     """Root protection precedes import; selected-index hashes precede admission."""
     modules, hashes = {}, {}
     work = {"files": 0, "bytes": 0}
-    for name in ("host_protocol", "host_policy", "host_peer", "host_configuration"):
+    for name in (
+        "host_protocol",
+        "host_selinux",
+        "host_policy",
+        "host_peer",
+        "host_configuration",
+        "host_actions",
+    ):
         path = LIBRARY / (name + ".py")
         body = trusted_read(path)
         work["files"] += 1
@@ -302,6 +309,8 @@ def verify_bootstrap(snapshot, hashes):
         "host_protocol": "helper_protocol_module",
         "host_peer": "helper_peer_module",
         "host_configuration": "helper_configuration_module",
+        "host_actions": "helper_actions_module",
+        "host_selinux": "helper_selinux_module",
     }
     refuse(all(hashes[name] == bindings[role] for name, role in expected.items()))
 
@@ -435,9 +444,12 @@ class HostDaemon:
         self.policy = modules["host_policy"]
         self.peers = modules["host_peer"]
         self.configuration = modules["host_configuration"]
+        self.actions = modules["host_actions"]
+        self.labels = modules["host_selinux"]
         self.hashes = hashes
         self.stop = threading.Event()
         self.capacity = threading.BoundedSemaphore(MAX_EXCHANGES)
+        self.journal_capacity = threading.BoundedSemaphore(2)
         self.executor = ThreadPoolExecutor(
             max_workers=MAX_EXCHANGES, thread_name_prefix="hfcache-host-read"
         )
@@ -445,6 +457,41 @@ class HostDaemon:
         self.deployment_sha256: str | None = None
         self.socket_identity: tuple[int, int] | None = None
         self.binding_identity: tuple[int, int] | None = None
+
+    def dispatch_operation(self, request, authority):
+        plain = {
+            "status": authority.status,
+            "config-read": lambda: self.policy.read_config_base(authority),
+            "config-prepare": lambda: self.policy.prepare_configuration(authority, request.body),
+            "observer-status": lambda: self.actions.read_sync_observer(
+                self.policy, authority, request.body
+            ),
+        }
+        methods = {
+            "config-apply": self.configuration.apply_configuration,
+            "config-outcome": self.configuration.read_configuration_outcome,
+            "schedule-validate": self.actions.validate_schedule,
+            "schedule-change": self.actions.change_schedule,
+            "schedule-outcome": self.actions.read_schedule_outcome,
+            "observer-stop": self.actions.stop_sync_observer,
+            "observer-outcome": self.actions.read_observer_outcome,
+        }
+        if request.operation in plain:
+            return plain[request.operation]()
+        if request.operation in methods:
+            return methods[request.operation](self.policy, authority, request.body)
+        if request.operation == "journal-read":
+            return self.read_journal(authority, request.body)
+        raise self.protocol.HostProtocolError(_OPERATION_DENIED)
+
+    def read_journal(self, authority, body):
+        if not self.journal_capacity.acquire(blocking=False):
+            reason = "busy"
+            raise self.policy.InspectionError(reason)
+        try:
+            return self.actions.read_journal(self.policy, authority, body)
+        finally:
+            self.journal_capacity.release()
 
     def exchange(self, connection):
         snapshot: Any = None
@@ -457,7 +504,7 @@ class HostDaemon:
                     budget = self.policy.InspectionBudget(
                         deadline_ns=time.monotonic_ns() + int(seconds * 1_000_000_000)
                     )
-                    snapshot = self.policy.inspect_authority(budget=budget)
+                    snapshot = self.policy.inspect_authority(budget=budget, host_labels=self.labels)
                     refuse(snapshot.deployment_sha256 == self.deployment_sha256)
                     verify_bootstrap(snapshot, self.hashes)
                     first_peer = self.peers.authenticate(
@@ -485,21 +532,7 @@ class HostDaemon:
                     authority.budget.deadline_ns, time.monotonic_ns() + int(seconds * 1_000_000_000)
                 )
                 self.policy.revalidate(authority)
-                if request.operation == "status":
-                    return authority.status()
-                if request.operation == "config-read":
-                    return self.policy.read_config_base(authority)
-                if request.operation == "config-prepare":
-                    return self.policy.prepare_configuration(authority, request.body)
-                if request.operation == "config-apply":
-                    return self.configuration.apply_configuration(
-                        self.policy, authority, request.body
-                    )
-                if request.operation == "config-outcome":
-                    return self.configuration.read_configuration_outcome(
-                        self.policy, authority, request.body
-                    )
-                raise self.protocol.HostProtocolError(_OPERATION_DENIED)  # noqa: TRY301 - closed dispatch boundary
+                return self.dispatch_operation(request, authority)
 
             with connection:
                 with self.protocol.receive_exchange(connection, authenticate) as exchange:
@@ -510,9 +543,15 @@ class HostDaemon:
                             _OPERATION_DENIED,
                             "config-conflict",
                             "invalid-request",
+                            "host-conflict",
+                            "busy",
                         }:
                             raise
-                        exchange.respond(outcome="denied", body={}, reason=error.reason)
+                        exchange.respond(
+                            outcome="unavailable" if error.reason == "busy" else "denied",
+                            body={},
+                            reason=error.reason,
+                        )
                     else:
                         exchange.respond(outcome="ok", body=body)
         except Exception as error:  # noqa: BLE001 - unknown failures close; safe operator metadata only
@@ -529,7 +568,7 @@ class HostDaemon:
 
     def serve(self):
         refuse(os.getuid() == os.geteuid() == 0 and os.getgid() == os.getegid() == 0)
-        startup = self.policy.inspect_authority()
+        startup = self.policy.inspect_authority(host_labels=self.labels)
         verify_bootstrap(startup, self.hashes)
         self.deployment_sha256 = startup.deployment_sha256
         gid = startup.api_principal[1]
@@ -599,13 +638,26 @@ class HostDaemon:
 
 def failure_metadata(error, operation):
     """Decision150: bounded code locations only, including suppressed contexts."""
-    if operation not in {"serve", "observe-peer", "observe-guard", "observe-engine"}:
+    if operation not in {
+        "serve",
+        "observe-peer",
+        "observe-guard",
+        "observe-engine",
+        "observer-stop-child",
+    }:
         operation = "unknown"
     protected = {str(Path(__file__)): "host-helper"}
     protected.update(
         {
             str(LIBRARY / (name + ".py")): name
-            for name in ("host_peer", "host_policy", "host_protocol", "host_configuration")
+            for name in (
+                "host_peer",
+                "host_policy",
+                "host_protocol",
+                "host_configuration",
+                "host_actions",
+                "host_selinux",
+            )
         }
     )
     classes = {
@@ -675,12 +727,16 @@ def log_failure(error, operation):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "operation", choices=("serve", "observe-peer", "observe-guard", "observe-engine")
+        "operation", nargs="?", choices=("serve", "observe-peer", "observe-guard", "observe-engine")
     )
+    parser.add_argument("--observer-stop-child", action="store_true")
     args = parser.parse_args()
+    if args.observer_stop_child == (args.operation is not None):
+        parser.error("choose exactly one fixed helper operation")
+    operation = "observer-stop-child" if args.observer_stop_child else args.operation
     try:
         started_at = time.monotonic()
-        if args.operation in {"serve", "observe-guard"}:
+        if operation in {"serve", "observe-guard", "observer-stop-child"}:
             refuse(os.getuid() == os.geteuid() == 0)
         security_work = require_startup_domain()
         startup_work = clear_startup_capabilities()
@@ -689,15 +745,27 @@ def main():
         modules, hashes, bootstrap_work = load_modules()
         for key in ("files", "bytes"):
             bootstrap_work[key] += startup_work[key]
-        if args.operation == "observe-engine":
+        if operation == "observer-stop-child":
+            result = modules["host_actions"].observer_signal_child(
+                modules["host_policy"],
+                host_labels=modules["host_selinux"],
+                bootstrap_hashes=hashes,
+                bootstrap_work=bootstrap_work,
+                started_at=started_at,
+            )
+            body = modules["host_protocol"].encode_object(result)
+            refuse(len(body) <= MAX_OBSERVER_BYTES)
+            sys.stdout.buffer.write(body + b"\n")
+            return 0
+        if operation == "observe-engine":
             modules["host_peer"].observe_engine(
                 bootstrap_work=bootstrap_work, started_at=started_at
             )
             refuse(False)  # noqa: FBT003 - a fixed exec must replace this child
-        if args.operation in {"observe-peer", "observe-guard"}:
+        if operation in {"observe-peer", "observe-guard"}:
             observer = (
                 modules["host_peer"].observe_peer
-                if args.operation == "observe-peer"
+                if operation == "observe-peer"
                 else modules["host_policy"].observe_guard
             )
             result = observer(bootstrap_work=bootstrap_work, started_at=started_at)
@@ -710,7 +778,7 @@ def main():
         signal.signal(signal.SIGINT, lambda _signum, _frame: daemon.stop.set())
         daemon.serve()
     except Exception as error:  # noqa: BLE001 - fixed redacted operator diagnostic only
-        log_failure(error, args.operation)
+        log_failure(error, operation)
         return 20
     return 0
 

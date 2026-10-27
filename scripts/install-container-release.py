@@ -72,6 +72,8 @@ _HOST_HELPER_COPIES = frozenset(
         "host-helper/host_protocol.py",
         "host-helper/host_peer.py",
         "host-helper/host_configuration.py",
+        "host-helper/host_actions.py",
+        "host-helper/host_selinux.py",
         "host-helper/hfcache-host-helper.cil",
     }
 )

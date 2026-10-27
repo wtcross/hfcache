@@ -304,7 +304,9 @@ else:raise AssertionError('help did not exit')
     assert b"usage:" in result.stdout
 
 
-@pytest.mark.parametrize("operation", ["serve", "observe-peer", "observe-guard"])
+@pytest.mark.parametrize(
+    "operation", ["serve", "observe-peer", "observe-guard", "--observer-stop-child"]
+)
 def test_main_repairs_before_module_loading_and_preserves_original_budget_clock(
     monkeypatch, operation
 ):
@@ -326,24 +328,52 @@ def test_main_repairs_before_module_loading_and_preserves_original_budget_clock(
         events.append("cleared")
         return {"files": 4, "bytes": 214}
 
-    def observed(*, bootstrap_work, started_at):
+    labels = SimpleNamespace()
+    hashes = {
+        name: name
+        for name in (
+            "helper_daemon",
+            "host_protocol",
+            "host_selinux",
+            "host_policy",
+            "host_peer",
+            "host_configuration",
+            "host_actions",
+        )
+    }
+
+    def observed(
+        policy=None, *, bootstrap_work, started_at, host_labels=None, bootstrap_hashes=None
+    ):
         assert events == ["clock", "cleared", "loaded"]
-        assert bootstrap_work == {"files": 10, "bytes": 344}
+        assert bootstrap_work == {"files": 13, "bytes": 344}
         assert started_at == 12.0
+        if operation == "--observer-stop-child":
+            assert policy is protected_policy
+            assert host_labels is labels
+            assert bootstrap_hashes is hashes
+        else:
+            assert policy is None
+            assert host_labels is None
+            assert bootstrap_hashes is None
         events.append("observed")
         return {"observed": True}
+
+    protected_policy = SimpleNamespace(observe_guard=observed)
 
     def loaded():
         assert events == ["clock", "cleared"]
         events.append("loaded")
         modules = {
             "host_peer": SimpleNamespace(observe_peer=observed),
-            "host_policy": SimpleNamespace(observe_guard=observed),
+            "host_policy": protected_policy,
             "host_protocol": SimpleNamespace(
                 encode_object=lambda value: json.dumps(value).encode()
             ),
+            "host_selinux": labels,
+            "host_actions": SimpleNamespace(observer_signal_child=observed),
         }
-        return modules, {}, {"files": 4, "bytes": 100}
+        return modules, hashes, {"files": 7, "bytes": 100}
 
     monkeypatch.setattr(daemon, "clear_startup_capabilities", cleared)
     monkeypatch.setattr(daemon, "load_modules", loaded)
@@ -360,6 +390,31 @@ def test_main_repairs_before_module_loading_and_preserves_original_budget_clock(
         "loaded",
         "served" if operation == "serve" else "observed",
     ]
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        [],
+        ["--observer-stop-child", "serve"],
+        ["--observer-stop-child", "observe-peer"],
+        ["--observer-stop-child", "--pid", "123"],
+        ["observer-stop-child"],
+        ["serve", "--unit", "hfcache-api.service"],
+    ],
+)
+def test_observer_child_flag_has_no_selector_or_ambiguous_operation_fallback(
+    monkeypatch, arguments
+):
+    def forbidden():
+        pytest.fail("invalid child arguments reached privileged startup")
+
+    monkeypatch.setattr(sys, "argv", [str(SCRIPT), *arguments])
+    monkeypatch.setattr(daemon, "require_startup_domain", forbidden)
+    monkeypatch.setattr(daemon, "load_modules", forbidden)
+    with pytest.raises(SystemExit) as result:
+        daemon.main()
+    assert result.value.code == 2
 
 
 def test_failed_capability_repair_does_not_load_modules_or_delegated_code(monkeypatch):

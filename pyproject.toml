@@ -74,6 +74,8 @@ src = ["src", "tests"]
 "src/hfcache/host_protocol.py" = "py312"
 "src/hfcache/host_policy.py" = "py312"
 "src/hfcache/host_configuration.py" = "py312"
+"src/hfcache/host_actions.py" = "py312"
+"src/hfcache/host_selinux.py" = "py312"
 "src/hfcache/host_peer.py" = "py312"
 "src/hfcache/host_helper_client.py" = "py312"
 

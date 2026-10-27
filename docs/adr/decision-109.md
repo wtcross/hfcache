@@ -35,3 +35,12 @@ configured retention. There is no crash-proof exactly-once claim.
 
 Recorded installed scope and remaining acceptance are described in
 [deployment status](../deployment-status.md).
+
+
+## Fixed host-effect amendment (2026-10-27)
+
+[Decision156](decision-156.md) adds a bounded fixed-route host-action lane,
+original-process observer stop, independent durable outcomes and finite diagnostic
+reads. It preserves archive serialization, original operation identity and this
+record's unrelated requirements. Implementation and actual installed conformance
+are separately required.

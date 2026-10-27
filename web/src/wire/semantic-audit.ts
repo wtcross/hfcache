@@ -1,6 +1,33 @@
 /** Reviewed Python semantic source pins. Deliberately NOT rewritten by code generation. */
 export const semanticSourceHashes: Readonly<Record<string, string>> =
     Object.freeze({
+        "hfcache.host_actions_models.HostJournalPage.bounded_page":
+            "6f7cf998b55f5dc9f4fd5d0c8ffbc3f5b7b820d07bc364263b895a26ed70ec39",
+        "hfcache.host_actions_models.HostObserverStatus.coherent_authority":
+            "acfcf705d44d998b125d6add770816069c0733658d575b1f021a6f5144666f50",
+        "hfcache.host_actions_models.ObserverStopOutcome.coherent_effect":
+            "9c7bca3075cf5144e0ce4679c43a3f3d4629a23bf2874e6472986b04fb42abcb",
+        "hfcache.host_actions_models.ScheduleChangeOutcome.coherent_effect":
+            "122a2e8ad5b5306172daa3594fa3ab9508655bff7989b0eda54759c03464f993",
+        "hfcache.host_actions_models.ScheduleChangeRequest.exact_action":
+            "5cfc75b9494dc68d190d2a759526b0440c3a470a9c484c187e51a3d9c885528e",
+        "hfcache.host_actions_models.ScheduleValidation.coherent_delay":
+            "0991e15f02be67d74565ceded096ed62e9594072decbe1090784f1dfe790f065",
+        "hfcache.host_actions_models._journal_message":
+            "bc29e503de080fa2d2504fba70e0860febf1319aaf5e060d507a5fcdd2b0fa4c",
+        "hfcache.host_actions_models._printable":
+            "e7d35af8987dfd44ac6df126a8cc7064511c8fd4fe7fdbebaaeebba2c5a1c35c",
+        "hfcache.host_actions_models._schedule_text":
+            "869291d9ab2e4422c0ac9f544760fa5ffff31bdb274cddadec8c120edbd1f51c",
+        "host.journal":
+            "46c7289bb90e5a07af9fb94fc418a3adcc4333d1ec973baa3e79df84bf63bc16",
+        "host.observer":
+            "a23bbbb6fc75b3b1fa0646009a003fe2ee34bd442905b81fcadc8b270a58b1be",
+        "host.outcome":
+            "a23bbbb6fc75b3b1fa0646009a003fe2ee34bd442905b81fcadc8b270a58b1be",
+        "host.validation":
+            "a23bbbb6fc75b3b1fa0646009a003fe2ee34bd442905b81fcadc8b270a58b1be",
+
         "hfcache.card_models.RepositoryCardRead.strict_version":
             "b2083bfe255ff6b73c72bb70e0478b6241b4c7c828ef3b77b520b0b063132d84",
         "hfcache.card_models.RepositoryCardRead.coherent":
@@ -58,7 +85,7 @@ export const semanticSourceHashes: Readonly<Record<string, string>> =
         // WEB013 registers strict repository presentation routes in the reviewed
         // server context; bootstrap JSON, permissions and decoder rules are unchanged.
         "ui.bootstrap":
-            "3b98fea784b4814d37b05f4d2d6945a251d771b2336000d7afaa2b37e7a2f4cd",
+            "448ed463bc818a08453e2f1238da12a1ad32977a8e99941bb1bbfceeb19c9abb",
         "hfcache.ui_models._subject":
             "95f069e06fd22ae562ee1796f9ce50868994ae13c79c56261f76d2835e732d44",
         "hfcache.ui_models._prefix":
@@ -94,11 +121,11 @@ export const semanticSourceHashes: Readonly<Record<string, string>> =
         "catalog.response":
             "f4a756a1d6b5b777c4d4397ac7d3fe01a565968f307ed1305b69059d74774417",
         "operation.events":
-            "4e6e7373fe7a3016eb7d5f40c57bcbb0a35a9b14d25b89bab2110135ad83e02d",
+            "9feafe4e9e08e49cb05933232a7bfbee63e9dbd2fe2bf1cba2b2494dac5f694c",
         "operation.identity":
-            "4e6e7373fe7a3016eb7d5f40c57bcbb0a35a9b14d25b89bab2110135ad83e02d",
+            "9feafe4e9e08e49cb05933232a7bfbee63e9dbd2fe2bf1cba2b2494dac5f694c",
         "operation.result":
-            "4e6e7373fe7a3016eb7d5f40c57bcbb0a35a9b14d25b89bab2110135ad83e02d",
+            "9feafe4e9e08e49cb05933232a7bfbee63e9dbd2fe2bf1cba2b2494dac5f694c",
         // WEB009 adds a separate card namespace; existing manifest/reference
         // path construction and public validation behavior are unchanged.
         "publication.manifest":

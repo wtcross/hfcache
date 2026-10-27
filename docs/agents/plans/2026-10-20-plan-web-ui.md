@@ -8,7 +8,7 @@
 | Tracker | `docs/agents/plans/current.md` — sole active selector; intentionally not overwritten by extraction |
 | Baseline | `6b8fae2e0997403ae5c716a2e92148af0a972af9` — main reviewed October 20, 2026 |
 | Branch | `feat/web-ui` |
-| Latest completed package | WEB-017, this commit; WEB-018 is pending next |
+| Latest completed package | WEB-018, this commit; WEB-019 is next |
 | Work-package family | WEB, deliberately introduced for this feature after collision check; one task = one work package = one implementation commit |
 | References | [Bundle entrypoint](support/web-ui/README.md), [kickoff](support/web-ui/KICKOFF.md), [source review](support/web-ui/source-review.md) |
 
@@ -3805,3 +3805,24 @@ Matching shared .42 fixture artifacts retain pinned UBI 10 micro without runtime
 Node. MAINT01–06 and human guides are complete. Task017 owns exact evidence and
 limits. WEB-018 is pending next; production/NAS/new rootless/platform/parity/final
 acceptance and rollout remain separate. No merge, push, Git tag or live Cockpit removal.
+
+
+2026-10-27: WEB-018 activated after WEB-017 committed at `bcde0dd` with a clean
+checkout. Decision156/INV022 specify fixed independently observable host effects,
+exact original-process stop and disjoint host/domain runner ownership. Source,
+strict typed browser ports, narrow optional native labels and human guidance are
+in progress. Existing guest/Caddy/engine will be reused; no production or new
+engine framework is authorized. Task018 owns actual gates and acceptance.
+
+
+2026-10-27: WEB-018 completes fixed schedule, exact observer and bounded journal
+APIs. Strict gate6 passes1813.441s on unchanged source5 `415d9b73…`/1500 inputs;
+all48 scoped installed cases pass across three engines:33 native (separately
+qualified original collector failure, never replayed) and15 normal rootless
+cases. Two unshipped assertion corrections leave runtime/artifact source2 exact.
+The shared images retain verified pinned UBI10micro with no runtime Node.
+HOST04–09, human guides and living contracts are complete. Existing engine/Caddy
+and all original pending/failed/damaged evidence remain preserved. Task018 owns
+exact proofs and limits. Continue WEB-019 forms; later platform, compatibility,
+retirement, final acceptance and production rollout remain separate. No merge,
+push, Git tag, NAS or live Cockpit action occurred.

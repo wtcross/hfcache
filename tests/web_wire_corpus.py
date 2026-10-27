@@ -53,6 +53,7 @@ from hfcache.config_models import (
 )
 from hfcache.errors import Problem
 from hfcache.hashing import ObjectIdentity
+from hfcache.host_actions_models import HostActionRequest, ObserverStopRequest
 from hfcache.identity import CommitSha, PublicationId, RunId, TransactionId
 from hfcache.preflight import Check
 from hfcache.quarantine import QuarantineCleanupPlan, QuarantineFile
@@ -74,6 +75,7 @@ from hfcache.verification import VerificationEstimate
 from hfcache.wire_registry import AUTHORITIES, ROUTES, request_authorities, validate_payload
 from hfcache.wire_schema import build_contracts
 from tests.fixtures import examples
+from tests.fixtures.host_actions_examples import EXPECTED, host_action_examples
 from tests.unit.test_hub import Entry, FakeApi, client
 
 
@@ -82,6 +84,14 @@ def request_samples() -> dict[str, dict[str, Any]]:
     selector = f"model:{examples.REPOSITORY_ID}"
     candidate = "schema_version=1\n# exact literal candidate fixture\n"
     bodies = {
+        "ScheduleValidationRequest": {"on_calendar": "daily", "randomized_delay_sec": None},
+        "ScheduleChangeRequest": {
+            "action": "replace",
+            "expected_revision": "a" * 64,
+            "on_calendar": "daily",
+            "randomized_delay_sec": None,
+        },
+        "ObserverStopRequest": {"expected": EXPECTED},
         "SyncSubmission": {"selectors": [selector]},
         "PlanSubmission": {"selectors": [selector]},
         "DiagnosticsSubmission": {"read_only": True},
@@ -121,7 +131,7 @@ def request_samples() -> dict[str, dict[str, Any]]:
     result = {}
     for name, model in request_authorities().items():
         parsed = model.model_validate(bodies[name])
-        if not isinstance(parsed, (CommandModel, ConfigApplicationSubmission)):
+        if not isinstance(parsed, (CommandModel, ConfigApplicationSubmission, HostActionRequest)):
             message = "request authority is not an original command model"
             raise TypeError(message)
         body = parsed.canonical_body()
@@ -521,6 +531,8 @@ def serialized_corpus() -> list[dict[str, Any]]:  # noqa: PLR0915 - explicit ind
     model(RecoveryReport.model_validate(recovery_fields))
     for value in _catalog_samples():
         model(value)
+    for value in host_action_examples():
+        model(value)
     model(examples.repository_card_read())
     missing_card = examples.repository_card().to_payload()
     missing_card.update(
@@ -624,6 +636,7 @@ def serialized_corpus() -> list[dict[str, Any]]:  # noqa: PLR0915 - explicit ind
 
     request_model(managed_request())
     request_model(ConfigPreviewReference(operation_id=examples.RUN, key="owned-preview"))
+    request_model(ObserverStopRequest.model_validate({"expected": EXPECTED}).expected)
     add("PlanResultPayload", examples.managed_assessment().model_dump(mode="json"))
     for name, report in (
         ("RunResultPayload", examples.run_report()),
@@ -683,6 +696,13 @@ def covered_route_modes() -> set[tuple[str, str, str]]:
         "capabilities",
         "health",
         "host_status",
+        "host_observer",
+        "schedule_outcome",
+        "observer_outcome",
+        "host_journal",
+        "schedule_validate",
+        "schedule_change",
+        "observer_stop",
         "config_read",
         "config_outcome",
         "config_apply",
@@ -759,6 +779,7 @@ def _original_models() -> dict[str, type[BaseModel]]:
         "hfcache.wire_models",
         "hfcache.ui_models",
         "hfcache.host_models",
+        "hfcache.host_actions_models",
         "hfcache.config_models",
         "hfcache.config",
     ):

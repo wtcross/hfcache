@@ -472,6 +472,13 @@ return the original operation and never add another queue item. The pending
 count is bounded by `max_queued_operations`; saturation and drain refuse new
 admission rather than creating an unbounded executor queue.
 
+A separate fixed host-action lane reuses the same operation store/runner lifecycle
+for schedule changes and original scheduled-observer stops: one executing and at
+most one queued action. Its route ownership is disjoint from the domain lane at
+admission and startup reconciliation. It never acquires the archive flock or runs
+archive/verification work. A long accepted backend job therefore cannot prevent
+stopping its original client observer. Journal reads use neither effect lane.
+
 Admission captures one absolute host-monotonic waiting deadline. Queue residence,
 private delegation and archive-lock acquisition consume that budget without
 resetting it. Domain execution may outlast its waiting deadline after safely
@@ -493,7 +500,7 @@ the callable and frozen policy remain in memory, while only the receipt/digests
 are durable. `start(reconcile=...)`, `stop_admission()`, `drain()`/`close()` and
 `wait()` define lifecycle/observation. A wait timeout never cancels or requeues.
 Trusted `delegated=True` forbids parent archive-lock acquisition; the verifier
-acquires in its own process. `requires_lock=False` is only for a genuine
+acquires in its own process. In this domain lane, `requires_lock=False` is only for a genuine
 non-mutating heavy read, which validates its snapshot before execution. These
 flags are not caller-selectable request fields. A successful locking task must
 prove that its service-owned guard ran; an arbitrary unlocked callback cannot
@@ -589,8 +596,10 @@ active producer before the archive lock is released. Client disconnect/Ctrl-C
 stops observation; it does not cancel the real writer. Forced process death
 leaves receipts/journals for diagnosis. Recovery must identify the actual
 executor and operation, preserving the narrow supervised-cancellation checks.
-The app drains the heavyweight runner before closing metadata workers, control
-store descriptors and the daemon-instance lock. A blocked/heavy item does not
+The app stops admission to both domain and fixed host-action lanes before draining
+either, and keeps the helper client available until both have drained. Only then
+does it close helper/metadata workers, control store descriptors and the
+daemon-instance lock. A blocked/heavy item does not
 occupy the metadata pool; lightweight HTTP reads remain responsive while it runs.
 Lifespan cleanup shields the entire runner/metadata drain against repeated task
 cancellation before releasing store/instance ownership. This is joined graceful
@@ -907,3 +916,30 @@ history or pending state blocks another apply. Private retention has fixed
 64-operation/16MiB refusal limits; original receipts are conservatively retained.
 See [application wire contract](api.md#guarded-configuration-application-and-original-outcomes)
 and [interruption handling](web-ui/configuration-and-tags.md#observe-an-interrupted-application).
+
+### Fixed host-action lifecycle
+
+The independent host lane admits only the two keyed host-effect routes defined
+in the [host API](api.md#fixed-host-actions-and-original-outcomes). Restart marks
+unfinished host receipts interrupted without replay, while domain reconciliation
+continues to own only its own routes. No store/admission lock is held during a
+helper exchange. Original subject/key lookup and authenticated outcome reads are
+available independently of a new effect grant.
+
+Known pre-effect refusals, including stale expected schedule revision, return a
+normal failed receipt and bounded typed evidence; exit10 alone never proves host
+certainty. An unclassified post-handoff failure preserves interruption and holds
+the host lane, rather than manufacturing a failed Envelope or replaying the
+request. That hold does not cancel or take ownership of accepted domain work.
+Stored-file, manager-acknowledgement and original-process evidence remain separate
+in the host outcome. Private pending/history and original API handles are retained
+for read-only reconciliation. See [decision156](adr/decision-156.md) and the
+[fixed host contract](host-administration.md#fixed-schedule-observer-and-journal-operations).
+
+New native grants/effects also require a safely absent fixed legacy Cockpit policy
+or its strict protected schedule/observer bits both false. Capture and revalidate
+that file or absence; its old source/index identity is not replaced by the new
+release. This read-only exclusion does not establish that an earlier privileged
+call has drained. Quiescent activation is a separate operator prerequisite, with
+all original records preserved. Existing version1 read/configuration profiles do
+not acquire this new effect gate or any new permission.

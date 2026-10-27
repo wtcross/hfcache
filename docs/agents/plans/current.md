@@ -4,18 +4,18 @@
 | --- | --- |
 | State | active |
 | Active plan | [Web UI replacement](2026-10-20-plan-web-ui.md) |
-| Next task | [WEB-018 — Schedule, observer and journal](tasks/web-018-schedule-observer-and-journal.md) (pending) |
-| Branch / completed package | feat/web-ui / WEB-017 (this commit) |
-| Blockers | None; WEB-018 is ready after the WEB-017 commit. |
+| Next task | [WEB-019 — Administration and diagnostics UI](tasks/web-019-administration-and-diagnostics-ui.md) (pending after WEB-018 commit) |
+| Branch / completed package | feat/web-ui / WEB-018, this commit |
+| Blockers | None for WEB-018; task018 records original failed collectors and separate exact qualifications. WEB-019 and later plan acceptance remain. |
 | Last completed plan | [Cockpit repair local rollout](2026-10-20-plan-cockpit-rest-rollout.md) |
 | Updated | 2026-10-27 |
 
-WEB001–017 are complete. [Task017](tasks/web-017-maintenance-ui.md) records the
-strict S2 gate, all 39 current installed browser cases, separate repair collector
-qualification and preserved original failures. The owned guest, existing shared
-Caddy and browser engine remain available for later scoped tests.
+WEB001–018 are complete. [Task018](tasks/web-018-schedule-observer-and-journal.md)
+records the strict source5 gate,33 actual native/15 actual rootless browser cases,
+verified UBI10micro shared API/UI images and exact preserved original evidence.
+The existing guest, Caddy and engines remain quiet and reusable; no new engine
+or frontend server was introduced. Full Administration forms are WEB-019.
 
-The shared API/UI image remains pinned UBI 10 micro without runtime Node.
 Production, NAS, live Cockpit, rollout, merge, push and Git tags remain outside
 this authorization. Preserve all pending handles, unknown journals, damaged
-predecessors and prior fixture evidence; observation never authorizes replay.
+predecessors and failed fixture evidence; observation never authorizes replay.

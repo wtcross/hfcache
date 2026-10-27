@@ -1463,3 +1463,30 @@ Detailed required behavior and fixed bounds: [server](server.md#web-ui-design-an
 [security](security.md#browser-administration-design),
 [record families](schemas.md#18-web-ui-and-administration-design-records).
 No enforcement or acceptance is claimed from these new register entries alone.
+
+
+## Fixed host effects
+
+- **`INV-022` — Host effects retain exact original intent independently of archive work.**
+  Only the fixed sync timer and proven original scheduled-observer process may
+  be controlled through independently protected native grants. A separate bounded
+  lane owns only those two routes; startup and drain cannot claim another lane's
+  receipts or resume requests. The original archive lane/flock remains single.
+  Exact schedule revision, original boot/invocation/pidfd/start proof and durable
+  HMAC-authenticated intent precede effects. Missing outcomes stay unknown;
+  original-key reads never replay or clean up. Stored file, manager ACK, original
+  process exit and backend completion are distinct facts. Rootless unproved
+  controls remain denied. Native activation requires protected legacy schedule/
+  observer permissions disabled or safely absent, with fresh drift checks and
+  operator drainage of older admitted privileged calls. Observer control also
+  requires its optional exact indexed system-unit context fragment, dedicated
+  confined domain and scheduled-state label, with fresh manager/original-process
+  SID joins before admission and signaling. Missing observer provisioning denies
+  only that control; it cannot disable a separately proved schedule grant or
+  misreport a running original observer as inactive. No init_t signal grant,
+  unconfined fallback or automatic context/label installation is permitted.
+  Journal sources, cursor,
+  time, bytes and concurrency
+  are finite; logs never establish job completion. Preserve HostStatus schema1
+  and existing bearer/MCP/receipt schemas. See [decision156](adr/decision-156.md)
+  and [host administration](host-administration.md).

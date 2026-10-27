@@ -19,6 +19,7 @@ for (const [relative, exportName] of [
     ["ui-semantics.ts", "uiSemanticIds"],
     ["ui-semantics.ts", "uiContextSemanticIds"],
     ["host-semantics.ts", "hostSemanticIds"],
+    ["host-actions-semantics.ts", "hostActionSemanticIds"],
     ["config-semantics.ts", "configSemanticIds"],
     ["card-semantics.ts", "cardSemanticIds"],
 ]) {

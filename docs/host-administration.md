@@ -37,9 +37,10 @@ Read-only `config-prepare` accepts exactly `{base_revision,edits}`, using the
 closed managed edit grammar and bounds in the [API contract](api.md#managed-configuration-form).
 Fixed `config-apply` accepts only the bound application identity/managed edits
 specified below; `config-outcome` accepts only operation ID and request digest.
-Unknown keys, versions and operations refuse. Reserved `schedule-validate`,
-`schedule-change`, `observer-stop`, `journal-read` confer no authority and remain
-denied. No descriptor passing is supported.
+Unknown keys, versions and operations refuse. Fixed `schedule-validate`,
+`schedule-change`, `schedule-outcome`, `observer-status`, `observer-stop`,
+`observer-outcome` and `journal-read` use the separately specified strict bodies
+and independent protected grants below. No descriptor passing is supported.
 
 Response keys are exactly `schema_version`, `request_id`, `operation`, `outcome`,
 `body`, `reason`; identity equals the original request. Outcomes are `ok`,
@@ -628,7 +629,9 @@ The neutral deployment1 index additionally requires exact
 
 Fixed `/etc/hfcache/host-helper-selinux.json` is root-owned0644, single-link,
 local and at most16384 bytes. Its closed keys are `schema_version`, `module`,
-`domain`, `kernel_policy_sha256`, `labels`. Version is integer1; domain is the
+`domain`, `kernel_policy_sha256`, `labels`. Version is integer1 for existing
+read/configuration provisioning or integer2 for optional native host-effect
+labels below; domain is the
 exact context above. Module has exactly `name`, `version`, `priority`,
 `source_sha256`, `loaded_sha256`: name `hfcache_host_helper`, integer policy
 version1, integer priority400 and two SHA256 strings. Source digest matches the
@@ -641,7 +644,7 @@ Labels has exactly these role/type entries; it contains no path selector:
 | Role | Required type | Fixed objects |
 | --- | --- | --- |
 | `helper_exec` | `hfcache_host_helper_exec_t` | `/usr/local/libexec/hfcache-host-helper` |
-| `helper_code` | `hfcache_host_helper_code_t` | `/usr/local/lib/hfcache-host-helper` and its four modules/CIL |
+| `helper_code` | `hfcache_host_helper_code_t` | `/usr/local/lib/hfcache-host-helper` and its six modules/CIL |
 | `application_config` | `hfcache_host_helper_application_conf_t` | Installed configuration, owned fixed candidate/backup and preserved original predecessor/backup leaves; helper guarded write, application read-only |
 | `configuration_directory` | `hfcache_host_helper_configuration_dir_t` | Exactly `/etc/hfcache`, helper fixed-name publication; application directory reads only |
 | `application_state` | `hfcache_host_helper_application_state_t` | Root0700 `.configuration-applications` directories and newly created root0600 private files |
@@ -655,6 +658,41 @@ Labels has exactly these role/type entries; it contains no path selector:
 | `engine_locks` | `hfcache_host_helper_engine_lock_t` | Only the existing rootless image/layer locks under the fixed graphroot, `/run/user/<protected host UID>/libpod/tmp/alive.lck` and `/run/user/<protected host UID>/containers/overlay-layers/mountpoints.lock`;64B/64B/0B/64B, unused for native |
 | `engine_shared_memory` | `hfcache_host_helper_engine_shm_t` | Only the existing stock2048-lock0600/82488B `/dev/shm/libpod_rootless_lock_<protected host UID>` segment; unused for native |
 | `archive` | `nfs_t` or `hfcache_archive_t` | `/srv/hfcache` |
+
+Version1 has exactly those fifteen base roles. Version2 has the same base roles
+plus all four roles below. It may additionally contain exactly `observer_state`
+for the separate optional observer profile; partial groups, other roles and
+boolean versions refuse:
+
+| Additional version2 role | Required type | Fixed objects |
+| --- | --- | --- |
+| `schedule_directory` | `hfcache_host_helper_schedule_dir_t` | `/etc/systemd/system/hfcache-sync.timer.d`, root:root0755 |
+| `schedule_file` | `hfcache_host_helper_schedule_file_t` | Only managed `50-cockpit.conf`, its staged replacement and retained original schedule inodes |
+| `host_action_state` | `hfcache_host_helper_host_action_state_t` | Root0700 `/etc/hfcache/.host-actions` and same-bind `.hfcache-actions` schedule history; root0600 private records |
+| `sync_timer_unit` | `hfcache_host_helper_sync_timer_unit_t` | Selected immutable `packaging/systemd/hfcache-sync.timer` ordinary file, root:root0644 |
+
+The optional version2 `observer_state` role is exactly
+`hfcache_sync_observer_state_t`, for the indexed native account's0700 fixed
+`/var/lib/hfcache/scheduled/sync` directory and its newly created SDK state.
+Inspection checks its owner/mode/label without reading observation handles or
+changing the directory. Schedule-only version2 provisioning omits this role.
+
+New native effects require version2, fresh live fixed-object labels and independent
+schedule/observer permission. Version1 read/configuration-only profiles remain
+valid without these objects or labels. Neither a newer receipt nor installed type
+permissions grants an action. The selected timer's dedicated label permits only
+timer start/stop, while generic unit types retain status-only service rights.
+Manager reload is a separate type-level right; protected code fixes every argv.
+The helper has no CAP_KILL and grants only SIGTERM's process permission to
+`hfcache_sync_observer_t`. Stock native units do not explicitly provision this
+domain, and journal stream metadata cannot attest a live SDK process SID.
+`init_t` is not a supported signal target. Observer opt-in requires
+the exact context fragment described below and its dedicated state label. Missing
+proof denies observer permission before admission without changing a separately
+proved schedule grant. Actual manager and original process context/pidfd joins
+remain required before use. Journal executable and volatile/persistent log types
+receive read-only access; their whole-type permissions are not source filters.
+Only the helper's fixed source enum and closed projection select exposed events.
 
 No role accepts another path or arbitrary type from the receipt. Root provisioning
 captures the loaded module and original object labels without reading secret
@@ -740,6 +778,20 @@ runtime_profile_sha256, app_image_sha256 and caddy_image_sha256. Rootless
 retains the captured indexed original stage verification and all nine execution
 bindings, in addition to new helper bindings. Exact branch schemas are validated
 before any grants and documented with provisioning examples.
+
+Native bindings may additionally contain only the optional
+`sync_observer_context` role. It binds the root:root0644, single-link ordinary
+`/etc/systemd/system/hfcache-sync.service.d/50-hfcache-observer.conf` to selected
+`packaging/systemd/hfcache-sync.service.d/50-hfcache-observer.conf`, with its exact
+authority-file digest. Its protected root0755 parent contains only that fixed
+fragment; unknown entries, symlinks, altered bytes or labels refuse observer
+authority. The fixed fragment selects
+`system_u:system_r:hfcache_sync_observer_t:s0` without an ignore-failure prefix.
+Read-only preparation captures it only when safely present and never installs
+or adopts a fragment. Old native indexes without the role remain valid for
+independent read/configuration/schedule use. Rootless never accepts the role.
+Fresh effective manager context and original process SID checks precede observer
+authority and signal; the native base units require no context opt-in.
 
 Read parents through pinned no-follow descriptors, require root-owned
 nonwritable ancestors, stable leaf metadata and exact modes. Recheck original
@@ -939,3 +991,61 @@ and remains blocking. No unknown backup or candidate is adopted. History
 records, original inodes and ambiguous outcomes are never evicted or repaired by
 reads. See [private schema](schemas.md#182-private-helper-protocol-and-outcomes)
 and [operator workflow](web-ui/configuration-and-tags.md#observe-an-interrupted-application).
+
+
+## Fixed schedule, observer and journal operations
+
+[Decision156](adr/decision-156.md) specifies the independently bounded fixed host
+lane, exact original-process stop, native schedule semantics, private state,
+confinement and outcome rules. New public DTOs are independent of HostStatus1;
+its existing enum remains closed. Internal inspection retains truthful transient
+oneshot state and new host-action authorization uses dedicated observer authority.
+The protected stdlib `host_actions.py` module is indexed as
+`helper_actions_module`, from native `src/hfcache/` or rootless `host-helper/`.
+It accepts only the seven fixed operations above. Its signal child uses the same
+protected helper entry and one inherited original pidfd, never a process selector.
+
+Only schedule changes and observer stops use the host lane: one executing plus
+one queued action, no archive flock. Startup reconciles only that lane's receipts
+as interrupted, never as executable requests. Domain startup excludes those two
+routes. Stop both admissions and drain both lanes before closing helper/store.
+No API store, runner-condition, archive or configuration lock is held during IPC.
+Host outcomes use a separate root-provisioned original `.host-actions.lock`,
+root0600 authenticated `.host-actions.pending` and root0700 `.host-actions` under
+`/etc/hfcache`. No read creates, repairs or removes these objects. Maximum128
+history records/8MiB refuses new effects without eviction. Schedule predecessors
+are retained under the same-bind private `.hfcache-actions` directory inside the
+fixed timer drop-in parent. Unknown entries, marker-only history and mismatched
+ID/digest remain blocking and cannot be adopted. The supported legacy inspector already refuses schedule/observer effects; its
+historical separate file/D-Bus operations do not share this new guard. Require
+safe absence or a strict protected `/etc/hfcache/cockpit-policy.json` with both
+legacy schedule and observer permissions false before new native host grants.
+Capture/revalidate its bytes or absence before effects. Unsafe, malformed or
+enabled legacy policy refuses new activation, without rewriting that policy.
+Drain older already-authorized Cockpit privileged calls before provisioning;
+this operator prerequisite is not proved by a disabled policy. Legacy read and
+configuration behavior is unchanged.
+
+Validation allows printable ASCII calendar1..4096 and optional delay1..256,
+without backslash/control characters or all-whitespace values. Fixed
+systemd-analyze children have at most2 seconds and16KiB output each, capped by the
+existing15-second aggregate inspection/20-second exchange limits. No shell,
+network, arbitrary executable or caller unit is involved. Schedule changes
+independently revalidate exact revision and protected grant before effects.
+Reload follows replace/reset; restart follows only if the timer was active.
+Pause/resume never enable/disable a timer. Observer stop uses one original pidfd
+and SIGTERM; a replacement invocation is untouched. Accepted API/worker jobs and
+pending observer handles are preserved independently.
+
+Journal defaults to80 entries, maximum80,8KiB/entry and64KiB displayed bytes,
+256KiB raw output and a4-second child window within the existing inspection
+budget. At most two journal jobs share the existing eight unqueued exchanges.
+Opaque cursors have at most2048 ASCII characters, source/boot/archive/deployment
+HMAC binding and a five-minute expiry. Invalid bindings refuse; authenticated
+expired/vanished history produces an explicit gap. Newest-to-oldest continuation
+must exclude the last returned record; never silently skip an unavailable cursor.
+Return only closed event/level/run-ID diagnostic projection, never arbitrary
+MESSAGE prose, credentials, exception text, argv or environments. The two fixed
+sources are system sync and verification observers; no user-manager control or
+unbounded journal follower is introduced. Journal evidence cannot settle an API
+operation. See [schemas](schemas.md) for exact required fields and coherence.

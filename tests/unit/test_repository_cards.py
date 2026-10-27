@@ -26,6 +26,21 @@ archive = storage.archive
 writer = storage.writer
 
 
+def _preserved_stat(value):
+    """Reads may advance atime; identity and every change field remain checked."""
+    return (
+        value.st_dev,
+        value.st_ino,
+        value.st_mode,
+        value.st_uid,
+        value.st_gid,
+        value.st_nlink,
+        value.st_size,
+        value.st_mtime_ns,
+        value.st_ctime_ns,
+    )
+
+
 def present(markdown="# Archived fixture\n", **updates):
     payload = examples.repository_card().to_payload()
     payload.update(
@@ -281,7 +296,7 @@ def test_prior_unsupported_unsafe_or_oversize_card_is_preserved(archive, change)
     raw = path.read_bytes()
     with pytest.raises((IntegrityError, QueryLimitError)), writer(archive) as store:
         store.write(card)
-    assert path.lstat() == before
+    assert _preserved_stat(path.lstat()) == _preserved_stat(before)
     assert path.read_bytes() == raw
 
 
@@ -359,7 +374,7 @@ def test_matching_digest_does_not_authorize_unsafe_new_or_existing_presentation(
         assert markdown not in str(failure.value)
         with pytest.raises(IntegrityError), writer(archive) as store:
             store.write(safe)
-        assert path.lstat() == before
+        assert _preserved_stat(path.lstat()) == _preserved_stat(before)
         assert path.read_bytes() == raw
     finally:
         clear_registered_secrets()
@@ -388,7 +403,7 @@ def test_card_work_budget_is_shared_across_writer_new_and_prior_record_reads(arc
             store.write(card)
         assert failure.value.problems[0].code == "HFAPI005"
     assert path.read_bytes() == raw
-    assert path.lstat() == before
+    assert _preserved_stat(path.lstat()) == _preserved_stat(before)
     with pytest.raises(QueryLimitError):
         read_card(archive[0], manifest, card_budget=ExtractionBudget(maximum_work=1))
     assert read_card(archive[0], manifest) == card

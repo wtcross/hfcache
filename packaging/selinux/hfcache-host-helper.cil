@@ -14,6 +14,15 @@
 (type hfcache_host_helper_configuration_dir_t)
 (type hfcache_host_helper_application_state_t)
 (type hfcache_host_helper_configuration_guard_t)
+(type hfcache_host_helper_schedule_dir_t)
+(type hfcache_host_helper_schedule_file_t)
+(type hfcache_host_helper_host_action_state_t)
+(type hfcache_host_helper_sync_timer_unit_t)
+(type hfcache_sync_observer_t)
+(typeattributeset domain (hfcache_sync_observer_t))
+(roletype system_r hfcache_sync_observer_t)
+(type hfcache_sync_observer_state_t)
+(typeattributeset file_type (hfcache_sync_observer_state_t))
 (type hfcache_host_helper_hub_state_t)
 (type hfcache_host_helper_runtime_t)
 (type hfcache_host_helper_secret_t)
@@ -22,6 +31,7 @@
 (type hfcache_archive_t)
 (typeattributeset file_type (hfcache_host_helper_exec_t hfcache_host_helper_code_t hfcache_host_helper_conf_t hfcache_host_helper_application_conf_t hfcache_host_helper_configuration_dir_t hfcache_host_helper_application_state_t hfcache_host_helper_configuration_guard_t hfcache_host_helper_hub_state_t hfcache_host_helper_runtime_t hfcache_host_helper_secret_t hfcache_host_helper_engine_lock_t hfcache_host_helper_engine_shm_t hfcache_archive_t))
 (typeattributeset exec_type (hfcache_host_helper_exec_t))
+(typeattributeset file_type (hfcache_host_helper_schedule_dir_t hfcache_host_helper_schedule_file_t hfcache_host_helper_host_action_state_t hfcache_host_helper_sync_timer_unit_t))
 
 ; Enter once from the system manager and stay confined across all children.
 (allow init_t hfcache_host_helper_t (process (transition)))
@@ -44,6 +54,10 @@
 (allow init_t hfcache_host_helper_runtime_t (dir (mounton)))
 ; Fixed /etc/hfcache writable bind; no generic etc write permission.
 (allow init_t hfcache_host_helper_configuration_dir_t (dir (mounton)))
+; ADR156: the sole additional native writable bind, provisioned independently.
+(allow init_t hfcache_host_helper_schedule_dir_t (dir (mounton getattr search open read)))
+(allow init_t hfcache_host_helper_schedule_file_t (file (getattr open read map)))
+(allow init_t hfcache_host_helper_sync_timer_unit_t (file (getattr open read map)))
 (typetransition init_t hfcache_host_helper_exec_t process hfcache_host_helper_t)
 (allow hfcache_host_helper_t hfcache_host_helper_exec_t (file (entrypoint getattr open read execute execute_no_trans map)))
 
@@ -86,6 +100,27 @@
 (typetransition hfcache_host_helper_t hfcache_host_helper_configuration_dir_t dir hfcache_host_helper_application_state_t)
 (typetransition hfcache_host_helper_t hfcache_host_helper_application_state_t dir hfcache_host_helper_application_state_t)
 (typetransition hfcache_host_helper_t hfcache_host_helper_application_state_t file hfcache_host_helper_application_state_t)
+; Optional native host effects have independent private history and fixed guards.
+; Predecessors retain schedule_file_t under the same-bind private0700 directory.
+(allow hfcache_host_helper_t hfcache_host_helper_schedule_dir_t (dir (getattr search open read write add_name remove_name)))
+(allow hfcache_host_helper_t hfcache_host_helper_schedule_file_t (file (getattr open read write create setattr rename unlink)))
+(allow hfcache_host_helper_t hfcache_host_helper_host_action_state_t (dir (getattr search open read write add_name remove_name create setattr)))
+(allow hfcache_host_helper_t hfcache_host_helper_host_action_state_t (file (getattr open read write create setattr rename unlink)))
+(allow hfcache_host_helper_t hfcache_host_helper_sync_timer_unit_t (file (getattr open read map)))
+(typetransition hfcache_host_helper_t hfcache_host_helper_schedule_dir_t file hfcache_host_helper_schedule_file_t)
+(typetransition unconfined_t hfcache_host_helper_schedule_dir_t file hfcache_host_helper_schedule_file_t)
+(typetransition hfcache_host_helper_t hfcache_host_helper_schedule_dir_t dir ".hfcache-actions" hfcache_host_helper_host_action_state_t)
+(typetransition hfcache_host_helper_t hfcache_host_helper_configuration_dir_t dir ".host-actions" hfcache_host_helper_host_action_state_t)
+(typetransition hfcache_host_helper_t hfcache_host_helper_configuration_dir_t file ".host-actions.lock" hfcache_host_helper_configuration_guard_t)
+(typetransition hfcache_host_helper_t hfcache_host_helper_configuration_dir_t file ".host-actions.pending" hfcache_host_helper_configuration_guard_t)
+(typetransition unconfined_t hfcache_host_helper_configuration_dir_t file ".host-actions.lock" hfcache_host_helper_configuration_guard_t)
+(typetransition unconfined_t hfcache_host_helper_configuration_dir_t file ".host-actions.pending" hfcache_host_helper_configuration_guard_t)
+(typetransition hfcache_host_helper_t hfcache_host_helper_host_action_state_t dir hfcache_host_helper_host_action_state_t)
+(typetransition hfcache_host_helper_t hfcache_host_helper_host_action_state_t file hfcache_host_helper_host_action_state_t)
+(typetransition hfcache_host_helper_t hfcache_host_helper_host_action_state_t file "staged.conf" hfcache_host_helper_schedule_file_t)
+(neverallow container_t hfcache_host_helper_host_action_state_t (dir (search read write add_name remove_name)))
+(neverallow container_t hfcache_host_helper_host_action_state_t (file (open read write map execute)))
+(neverallow hfcache_host_helper_t hfcache_host_helper_sync_timer_unit_t (file (write append create setattr unlink rename link)))
 (neverallow container_t hfcache_host_helper_application_state_t (dir (search read write add_name remove_name)))
 (neverallow container_t hfcache_host_helper_application_state_t (file (open read write map execute)))
 (neverallow container_t hfcache_host_helper_configuration_guard_t (file (open read write map execute)))
@@ -121,12 +156,15 @@
 ; Global engine initialization stats conmon; it does not execute it for inspect.
 (allow hfcache_host_helper_t conmon_exec_t (file (getattr)))
 (allow hfcache_host_helper_t systemd_systemctl_exec_t (file (getattr open read map execute execute_no_trans)))
+(allow hfcache_host_helper_t journalctl_exec_t (file (getattr open read map execute execute_no_trans)))
 (allow hfcache_host_helper_t container_runtime_exec_t (file (getattr open read map execute execute_no_trans)))
 
 ; Local state paths are already bounded by protected source and systemd masks.
 (allow hfcache_host_helper_t root_t (dir (getattr search open read)))
 (allow hfcache_host_helper_t var_t (dir (getattr search open read)))
 (allow hfcache_host_helper_t var_lib_t (dir (getattr search open read)))
+; Fixed native SDK state-parent traversal; no handle or generic-state reads.
+(allow hfcache_host_helper_t init_var_lib_t (dir (getattr search open read)))
 (allow hfcache_host_helper_t var_run_t (dir (getattr search open read)))
 (allow hfcache_host_helper_t home_root_t (dir (getattr search open read)))
 (allow hfcache_host_helper_t user_home_dir_t (dir (getattr search open read)))
@@ -220,6 +258,25 @@
 ; Fixed system-manager metadata only; no manager control rights.
 (allow hfcache_host_helper_t init_t (system (status)))
 (allow hfcache_host_helper_t systemd_unit_file_t (service (status)))
+; Fixed argv and v2 live-label proof constrain these type-level manager rights.
+; No generic-unit start/stop, enable/disable or API/worker/target operation.
+(allow hfcache_host_helper_t init_t (system (reload)))
+(allow hfcache_host_helper_t hfcache_host_helper_sync_timer_unit_t (service (status start stop)))
+; A same-UID child signals only the retained original native observer pidfd.
+; SIGTERM maps to signal; no other-domain SIGKILL or CAP_KILL is granted.
+(allow hfcache_host_helper_t hfcache_sync_observer_t (process (getattr signal)))
+(allow hfcache_host_helper_t hfcache_sync_observer_t (file (getattr open read)))
+(allow hfcache_host_helper_t hfcache_sync_observer_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t hfcache_sync_observer_t (lnk_file (getattr read)))
+; SDK-state proof observes only the directory's inode/SID, never its handles.
+(allow hfcache_host_helper_t hfcache_sync_observer_state_t (dir (getattr)))
+; Actual volatile journal types and persistent journal's standard log type.
+; These rights are read-only and type-wide; fixed journalctl sources project
+; only closed event/level/run-ID fields, never arbitrary MESSAGE prose.
+(allow hfcache_host_helper_t syslogd_var_run_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t syslogd_var_run_t (file (getattr open read map)))
+(allow hfcache_host_helper_t var_log_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t var_log_t (file (getattr open read map)))
 (allow hfcache_host_helper_t init_t (unix_stream_socket (connectto)))
 (allow hfcache_host_helper_t init_t (dbus (send_msg)))
 (allow hfcache_host_helper_t unconfined_t (unix_stream_socket (connectto)))
@@ -234,6 +291,76 @@
 (allow hfcache_host_helper_t kernel_t (unix_dgram_socket (sendto)))
 (allow hfcache_host_helper_t var_run_t (sock_file (getattr read write)))
 (allow hfcache_host_helper_t container_var_run_t (sock_file (getattr read write)))
+
+; Optional native sync-observer profile. Only the separately provisioned,
+; indexed fixed service fragment requests this context. There is no automatic
+; transition on the shared interpreter and no unconfined-domain attribute.
+(allow init_t hfcache_sync_observer_t (process (transition)))
+(allow init_t hfcache_sync_observer_t (process2 (nnp_transition)))
+(allow hfcache_sync_observer_t bin_t (file (entrypoint getattr open read map execute)))
+(allow hfcache_sync_observer_t self (process (getattr getcap getsched sigchld)))
+(allow hfcache_sync_observer_t init_t (process (sigchld)))
+(allow hfcache_sync_observer_t init_t (fd (use)))
+(allow hfcache_sync_observer_t init_t (unix_stream_socket (getattr read write getopt setopt shutdown)))
+; The measured native Unix API listener has unconfined_service_t peer context.
+(allow hfcache_sync_observer_t unconfined_service_t (unix_stream_socket (connectto)))
+(allow hfcache_sync_observer_t self (unix_stream_socket (create connect getattr read write getopt setopt shutdown)))
+(allow hfcache_sync_observer_t self (fifo_file (getattr read write ioctl)))
+(allow hfcache_sync_observer_t null_device_t (chr_file (getattr open read write)))
+; Read-only Python/native-extension/locale/trust-store dependencies.
+(allow hfcache_sync_observer_t root_t (dir (getattr search open read)))
+(allow hfcache_sync_observer_t usr_t (dir (getattr search open read)))
+(allow hfcache_sync_observer_t usr_t (file (getattr open read map execute)))
+(allow hfcache_sync_observer_t usr_t (lnk_file (getattr read)))
+(allow hfcache_sync_observer_t bin_t (dir (getattr search open read)))
+(allow hfcache_sync_observer_t bin_t (lnk_file (getattr read)))
+(allow hfcache_sync_observer_t lib_t (dir (getattr search open read)))
+(allow hfcache_sync_observer_t lib_t (file (getattr open read map execute)))
+(allow hfcache_sync_observer_t lib_t (lnk_file (getattr read)))
+(allow hfcache_sync_observer_t ld_so_t (file (getattr open read map execute)))
+(allow hfcache_sync_observer_t ld_so_cache_t (file (getattr open read map)))
+(allow hfcache_sync_observer_t etc_t (dir (getattr search open read)))
+(allow hfcache_sync_observer_t etc_t (file (getattr open read map)))
+(allow hfcache_sync_observer_t etc_t (lnk_file (getattr read)))
+(allow hfcache_sync_observer_t passwd_file_t (file (getattr open read)))
+(allow hfcache_sync_observer_t locale_t (dir (getattr search open read)))
+(allow hfcache_sync_observer_t locale_t (file (getattr open read map)))
+(allow hfcache_sync_observer_t cert_t (dir (getattr search open read)))
+(allow hfcache_sync_observer_t cert_t (file (getattr open read map)))
+(allow hfcache_sync_observer_t cert_t (lnk_file (getattr read)))
+; Fixed client configuration is read-only; source credentials remain denied.
+(allow hfcache_sync_observer_t hfcache_host_helper_configuration_dir_t (dir (getattr search open read)))
+(allow hfcache_sync_observer_t hfcache_host_helper_conf_t (file (getattr open read)))
+(allow hfcache_sync_observer_t var_t (dir (getattr search open read)))
+(allow hfcache_sync_observer_t var_lib_t (dir (getattr search open read)))
+; Measured native scheduled-state ancestor, read-only descriptor traversal.
+(allow hfcache_sync_observer_t init_var_lib_t (dir (getattr search open read)))
+; The actual fixed Unix API socket uses this runtime type. The indexed unit
+; forbids IP and makes only its dedicated SDK state writable.
+(allow hfcache_sync_observer_t var_run_t (dir (getattr search open read)))
+(allow hfcache_sync_observer_t var_run_t (sock_file (getattr write)))
+; Actual systemd-delivered hfcache.api credential: init_var_run_t, readonly.
+(allow hfcache_sync_observer_t init_var_run_t (dir (getattr search open read)))
+(allow hfcache_sync_observer_t init_var_run_t (file (getattr open read)))
+(allow hfcache_sync_observer_t hfcache_sync_observer_state_t (dir (getattr search open read write add_name remove_name create setattr)))
+(allow hfcache_sync_observer_t hfcache_sync_observer_state_t (file (getattr open read write create setattr rename unlink lock)))
+(typetransition hfcache_sync_observer_t hfcache_sync_observer_state_t file hfcache_sync_observer_state_t)
+; Manager provisioning/chown metadata only; no manager read of SDK handles.
+(allow init_t hfcache_sync_observer_state_t (dir (getattr search open read setattr mounton)))
+(allow init_t hfcache_sync_observer_state_t (file (getattr setattr)))
+(neverallow hfcache_sync_observer_t self (capability (chown dac_override dac_read_search fowner fsetid kill setgid setuid setpcap net_bind_service net_admin net_raw sys_chroot sys_ptrace sys_admin)))
+(neverallow hfcache_sync_observer_t domain (process (transition dyntransition setexec)))
+(neverallow hfcache_sync_observer_t shell_exec_t (file (execute execute_no_trans entrypoint)))
+(neverallow hfcache_sync_observer_t self (tcp_socket (create)))
+(neverallow hfcache_sync_observer_t self (udp_socket (create)))
+(neverallow hfcache_sync_observer_t self (rawip_socket (create)))
+(neverallow hfcache_sync_observer_t nfs_t (file (getattr open read write map execute)))
+(neverallow hfcache_sync_observer_t hfcache_archive_t (file (getattr open read write map execute)))
+(neverallow hfcache_sync_observer_t hfcache_host_helper_secret_t (file (getattr open read write map execute)))
+(neverallow hfcache_sync_observer_t hfcache_host_helper_hub_state_t (file (getattr open read write map execute)))
+(neverallow hfcache_sync_observer_t hfcache_host_helper_host_action_state_t (file (getattr open read write map execute)))
+(neverallow hfcache_sync_observer_t hfcache_host_helper_application_state_t (file (getattr open read write map execute)))
+(neverallow hfcache_sync_observer_t hfcache_host_helper_configuration_guard_t (file (getattr open read write map execute)))
 
 ; Fixed shared config is read-only; mutable Hub state stays helper-denied.
 (allow container_t hfcache_host_helper_configuration_dir_t (dir (getattr search open read)))

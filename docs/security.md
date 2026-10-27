@@ -1157,8 +1157,9 @@ native positive paths require isolated installed proof.
 [host administration contract](host-administration.md). Its root foreground
 service reads only fixed selected-release/configuration/policy evidence and owns
 one API-only Unix parent/socket/binding. It has no archive payload, Hub secret,
-credential-store or IP socket access. `CAP_SETUID`/`CAP_SETGID` serve only the fixed
-read-only observer running as the indexed API account; no process attachment,
+credential-store or IP socket access. `CAP_SETUID`/`CAP_SETGID` serve the fixed
+read-only observer and the separately authorized original-pidfd SIGTERM child,
+both running as the indexed service account; no process attachment,
 memory access, initial-USER SYS_PTRACE/DAC_READ_SEARCH, SELinux-authorized DAC_OVERRIDE,
 peer signaling, engine socket, broad API mount or generic subprocess is added.
 The observer inspects the fixed manager/container and kernel process facts.
@@ -1229,8 +1230,23 @@ not unit-name or property-name restrictions. Systemctl requests
 and applies its
 [selected-output filter afterward](https://github.com/systemd/systemd/blob/70bae7648f2c18010187c9cf20093155eaa26029/src/systemctl/systemctl-show.c#L2256-L2265).
 The protected fixed argv and strict output parser supply the closed application
-surface. Permit no additional manager control, reload, start/stop, unit-file
-mutation, capability or domain transition. Systemd's
+surface. [Decision156](adr/decision-156.md) adds only manager reload and
+start/stop on the separately labelled immutable sync-timer unit. Generic unit
+types retain status-only service rights; no enable/disable, target/API/worker or
+verification-timer control is added. Optional native receipt2 and fresh fixed
+labels precede those effects. The exact observer stop separately retains the
+original process pidfd and grants SIGTERM only to the separately confined
+`hfcache_sync_observer_t`, through a same-UID child; no CAP_KILL or name-only
+StopUnit is used. Default native units and journal stream metadata do not attest
+a live SDK domain; `init_t` is not a signal target. Optional observer activation
+measures one exact protected/indexed context
+fragment and dedicated SDK-state label; manager context and original process SID
+are freshly joined before admission and again before signal. The optional domain
+has only SDK interpreter/configuration/delivered-credential/Unix-API/journal access
+and writes to its own scheduled state, with no archive, Hub, helper-private state,
+IP or capability authority. Missing proof denies observer control independently
+of schedule control. No generic context selector, unconfined fallback, automatic
+relabel or helper domain transition is permitted. Systemd's
 [status access check](https://github.com/systemd/systemd/blob/70bae7648f2c18010187c9cf20093155eaa26029/src/core/selinux-access.c#L224-L265)
 uses the unit-file context when known and its own context otherwise. A denied
 manager read must be diagnosed from `USER_AVC` as well as kernel `AVC` records;
@@ -1238,8 +1254,9 @@ an unrelated ioctl or certificate lookup denial does not justify a grant.
 
 For helper mask/bind attachment, the trusted system manager separately has only
 directory `mounton` on the
-custom secret, Hub-state, archive, runtime and configuration-directory types so it can install the fixed
-`InaccessiblePaths` masks and fixed `ReadWritePaths` runtime/configuration binds before
+custom secret, Hub-state, archive, runtime, configuration-directory and optional
+fixed schedule-directory types so it can install the fixed
+`InaccessiblePaths` masks and fixed `ReadWritePaths` runtime/configuration/schedule binds before
 helper exec. This type-wide manager permission grants the helper no additional
 mount or object access. Preserve every mask/bind, denied payload type and
 existing helper runtime right; successful policy compilation alone is not proof

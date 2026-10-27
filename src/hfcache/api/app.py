@@ -38,6 +38,8 @@ from hfcache.api.catalog import install_catalog_routes
 from hfcache.api.catalog_refresh import install_catalog_refresh_route
 from hfcache.api.commands import install_command_routes
 from hfcache.api.configuration import install_configuration_route
+from hfcache.api.host_actions import VALIDATIONS, install_host_action_routes
+from hfcache.api.host_routes import OBSERVER_STOPS, SCHEDULE_CHANGES
 from hfcache.api.host_status import HostHelper, install_host_status_route, open_host_helper
 from hfcache.api.lifecycle import MetadataPool, instance_lock
 from hfcache.api.maintenance import install_maintenance_routes
@@ -443,8 +445,14 @@ class Boundary:
         command = scope["method"] == "POST" and path in getattr(
             self.owner.state, "command_routes", ()
         )
-        if command and path == PREFIX + "/config/applications":
-            require_admin_capability(principal, AdminCapability.CONFIG_WRITE)
+        administration = {
+            PREFIX + "/config/applications": AdminCapability.CONFIG_WRITE,
+            SCHEDULE_CHANGES: AdminCapability.SCHEDULE_WRITE,
+            VALIDATIONS: AdminCapability.SCHEDULE_WRITE,
+            OBSERVER_STOPS: AdminCapability.OBSERVER_STOP,
+        }
+        if command and path in administration:
+            require_admin_capability(principal, administration[path])
         if command and path in getattr(
             self.owner.state, "writer_routes", {PREFIX + "/syncs", PREFIX + "/verifications"}
         ):
@@ -820,6 +828,7 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
                 ) as store:
                     pool = None
                     runner = None
+                    host_runner = None
                     try:
                         application.state.operations = store
                         pool = MetadataPool(
@@ -851,6 +860,10 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
                             check_verification_available=application.state.verifier.check_available,
                         )
                         application.state.runner = runner
+                        host_runner = OperationRunner(
+                            store, application.state.policy, max_pending=1, host_actions=True
+                        )
+                        application.state.host_runner = host_runner
                         application.state.instance_id = ExecutionContext.create().run_id
                         application.state.version = query_version()
                         try:
@@ -861,6 +874,10 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
                             # Unsafe history disables admission, while healthy exact
                             # observations and metadata remain available for diagnosis.
                             runner.stop_admission()
+                        try:
+                            await asyncio.to_thread(host_runner.start)
+                        except OperationError:
+                            host_runner.stop_admission()
                         yield
                     finally:
                         if ui_streams is not None:
@@ -869,11 +886,22 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
                             basic.stop_admission()
                         if runner is not None:
                             runner.stop_admission()
+                        if host_runner is not None:
+                            host_runner.stop_admission()
 
                         async def drain() -> None:
                             try:
-                                if runner is not None:
-                                    await asyncio.to_thread(runner.drain)
+                                results = await asyncio.gather(
+                                    *(
+                                        asyncio.to_thread(lane.drain)
+                                        for lane in (runner, host_runner)
+                                        if lane is not None
+                                    ),
+                                    return_exceptions=True,
+                                )
+                                for outcome in results:
+                                    if isinstance(outcome, BaseException):
+                                        raise outcome
                             finally:
                                 if pool is not None:
                                     await pool.close()
@@ -1184,6 +1212,7 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
     install_catalog_routes(app, execute_catalog)
     install_host_status_route(app, render)
     install_configuration_route(app, render, server)
+    install_host_action_routes(app, render, server)
 
     @app.get(PREFIX + "/version", response_model=ReadResponse)
     async def version(request: Request) -> Response:

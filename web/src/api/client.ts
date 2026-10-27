@@ -47,6 +47,9 @@ type Query<K extends keyof typeof wire.routeContracts> = ReturnType<
 >;
 export type PageQuery = Query<"status_default">;
 export type CatalogQuery = Query<"catalog_search_default">;
+export type JournalQuery = Omit<Query<"host_journal_default">, "source"> & {
+    readonly source: "sync-observer" | "verify-observer";
+};
 export interface ApiClientOptions {
     readonly scope: ApiScope;
     readonly fetcher?: typeof globalThis.fetch;
@@ -287,9 +290,11 @@ export class ApiClient {
             const url = this.url(contract, path, query);
             const routeLimits = contract.bindingIds.includes("publication.card")
                 ? CARD_JSON_LIMITS
-                : artifact
-                  ? ARTIFACT_JSON_LIMITS
-                  : NORMAL_JSON_LIMITS;
+                : contract.path === "/api/v1/host/journal"
+                  ? { ...NORMAL_JSON_LIMITS, maxBytes: 512 * 1024 }
+                  : artifact
+                    ? ARTIFACT_JSON_LIMITS
+                    : NORMAL_JSON_LIMITS;
             const requestedLimit = options.responseByteLimit;
             if (
                 requestedLimit !== undefined &&
@@ -346,9 +351,22 @@ export class ApiClient {
                 result = decoded.response;
             const configOutcome =
                 contract.path === "/api/v1/config/applications/{operation_id}";
+            const hostOutcome =
+                contract.path ===
+                    "/api/v1/host/sync-schedule/changes/{operation_id}" ||
+                contract.path ===
+                    "/api/v1/host/sync-observer/stops/{operation_id}";
+            const hostRead =
+                hostOutcome ||
+                [
+                    "/api/v1/host/sync-observer",
+                    "/api/v1/host/sync-schedule/validations",
+                    "/api/v1/host/journal",
+                ].includes(contract.path);
             const historical =
                 contract.path.startsWith("/api/v1/operations/") ||
-                configOutcome;
+                configOutcome ||
+                hostOutcome;
             const nullable = [
                 "/api/v1/version",
                 "/api/v1/capabilities",
@@ -361,6 +379,7 @@ export class ApiClient {
                 nullable,
                 nullable ||
                     configOutcome ||
+                    hostRead ||
                     // ADR153: installed editable bytes bind base_revision;
                     // this read does not capture an operational policy snapshot.
                     contract.path === "/api/v1/config" ||
@@ -482,6 +501,75 @@ export class ApiClient {
             {},
             {},
             options,
+        );
+    }
+    readHostObserver(options: ReadOptions = {}) {
+        return this.read(
+            wire.routeContracts.host_observer_default,
+            {},
+            {},
+            options,
+        );
+    }
+    validateSchedule(
+        request: wire.RequestScheduleValidationRequest,
+        options: ReadOptions = {},
+    ) {
+        const contract = wire.routeContracts.schedule_validate_default;
+        const body = contract.decodeBody(canonicalInput(request));
+        return this.read(
+            contract,
+            {},
+            {},
+            options,
+            {
+                onCalendar: body.on_calendar,
+                randomizedDelaySec: body.randomized_delay_sec,
+            },
+            false,
+            body,
+        );
+    }
+    readScheduleOutcome(
+        operationId: string,
+        idempotencyKey: string,
+        options: ReadOptions = {},
+    ) {
+        return this.read(
+            wire.routeContracts.schedule_outcome_default,
+            { operation_id: operationId },
+            {},
+            options,
+            { operationId },
+            false,
+            undefined,
+            idempotencyKey,
+        );
+    }
+    readObserverStopOutcome(
+        operationId: string,
+        idempotencyKey: string,
+        options: ReadOptions = {},
+    ) {
+        return this.read(
+            wire.routeContracts.observer_outcome_default,
+            { operation_id: operationId },
+            {},
+            options,
+            { operationId },
+            false,
+            undefined,
+            idempotencyKey,
+        );
+    }
+    readHostJournal(query: JournalQuery, options: ReadOptions = {}) {
+        if (!Object.hasOwn(query, "source")) throw new WireError("schema");
+        return this.read(
+            wire.routeContracts.host_journal_default,
+            {},
+            query,
+            options,
+            { journalSource: query.source, limit: query.limit ?? 80 },
         );
     }
     readConfiguration(options: ReadOptions = {}) {
@@ -966,6 +1054,26 @@ export class ApiClient {
     ) {
         return this.submit(
             wire.routeContracts.config_apply_default,
+            request,
+            options,
+        );
+    }
+    submitScheduleChange(
+        request: wire.RequestScheduleChangeRequest,
+        options: SubmissionOptions,
+    ) {
+        return this.submit(
+            wire.routeContracts.schedule_change_default,
+            request,
+            options,
+        );
+    }
+    submitObserverStop(
+        request: wire.RequestObserverStopRequest,
+        options: SubmissionOptions,
+    ) {
+        return this.submit(
+            wire.routeContracts.observer_stop_default,
             request,
             options,
         );

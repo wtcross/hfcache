@@ -108,3 +108,12 @@ relax guard identity or change the strict public inspection response schema.
 
 [Decision 141](decision-141.md) amends this record for the accepted
 replacement design. Accepted future helper transport retains separate manual REST jobs, scheduled observation and protected host permission proof; native positive and rootless denied conformance remains pending.
+
+
+## Fixed host-effect amendment (2026-10-27)
+
+[Decision156](decision-156.md) adds a bounded fixed-route host-action lane,
+original-process observer stop, independent durable outcomes and finite diagnostic
+reads. It preserves archive serialization, original operation identity and this
+record's unrelated requirements. Implementation and actual installed conformance
+are separately required.

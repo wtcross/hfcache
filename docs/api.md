@@ -79,6 +79,13 @@ apply authority. All POSTs reject query parameters. Optional docs require
 | `GET /version` | default | version --server | R | synchronous | none | no | none | none |
 | `GET /capabilities` | default | SDK / HTTP | R | synchronous | none | no | none | none |
 | `GET /host/status` | default | browser / HTTP | internal host-read | synchronous protected helper read | none | no | none | none |
+| `GET /host/sync-observer` | default | browser / HTTP | internal host-read | synchronous protected helper read | none | no | none | none |
+| `POST /host/sync-schedule/validations` | default | browser / HTTP | internal schedule-write | synchronous protected helper validation | none | no | none | none |
+| `POST /host/sync-schedule/changes` | default | browser / HTTP | internal schedule-write | keyed fixed host action | none | no | none | receipt/events/result + private host outcome state |
+| `GET /host/sync-schedule/changes/{operation_id}` | default | browser / HTTP | internal host-read + original key | synchronous protected outcome read | none | no | none | none |
+| `POST /host/sync-observer/stops` | default | browser / HTTP | internal observer-stop | keyed fixed host action | none | no | none | receipt/events/result + private host outcome state |
+| `GET /host/sync-observer/stops/{operation_id}` | default | browser / HTTP | internal host-read + original key | synchronous protected outcome read | none | no | none | none |
+| `GET /host/journal` | default | browser / HTTP | internal host-read | synchronous protected helper read | none | no | none | none |
 | `GET /config` | default | browser / HTTP | internal config-read | synchronous protected helper read | none | no | none | none |
 | `POST /config/validate` | installed | config validate (installed) | R | synchronous | none | no | none | none |
 | `POST /config/validate` | candidate | --config PATH config validate | W | synchronous | none | no | none | none |
@@ -840,9 +847,10 @@ this API does not enable a card view. See the [read procedure](web-ui/readme-car
 
 Calendar expressions are one nonempty printable ASCII line, at most 4096 bytes,
 without backslash; delay is a printable ASCII line at most 256 bytes without
-backslash. Only `replace` carries them. Journal source is `sync`, `verification`,
-`api` or `worker`, with at most 200 events and 64 KiB serialized page, bounded
-opaque cursor and no arbitrary filters/unit/path. Helper protocol is independently
+backslash. Only `replace` carries them. Journal source is `sync-observer` or
+`verify-observer`, with at most80 projected entries,64KiB displayed text and a
+512KiB encoded page. The bounded opaque cursor selects no arbitrary filter,
+unit or path. Helper protocol is independently
 versioned, closed and peer-verified; its absence is unavailable, never fallback.
 
 Basic browser authentication and effective permission/bootstrap context use
@@ -853,3 +861,68 @@ application header; nonbrowser bearer no-Origin behavior remains compatible.
 No UI fallback may consume REST/MCP paths or errors. See [server configuration
 design](server.md#web-ui-design-and-current-availability) and
 [browser security](security.md#browser-administration-design).
+
+
+### Fixed host actions and original outcomes
+
+The following separately typed administration routes preserve existing bearer,
+MCP, HostStatus1 and operation-receipt schemas. Every route authenticates the
+Basic administrator before decoding input. The online API remains unprivileged;
+actual effects require the independently provisioned protected native helper.
+Read [host administration](host-administration.md#fixed-schedule-observer-and-journal-operations)
+and the [exact independent schema](schemas.md#187-fixed-host-action-projections-schema-1).
+
+| Method and path under `/api/v1` | Capability and behavior |
+| --- | --- |
+| GET `/host/sync-observer` | HOST_READ; dedicated host binding, two effective grants/reasons and exact original observer tuple, or explicit inactive/unavailable. |
+| POST `/host/sync-schedule/validations` | SCHEDULE_WRITE and protected schedule grant; bounded fixed systemd-analyze only, no keyed admission or write. |
+| POST `/host/sync-schedule/changes` | SCHEDULE_WRITE and protected schedule grant; required Idempotency-Key, closed pause/resume/replace/reset body with exact expected revision. |
+| GET `/host/sync-schedule/changes/{operation_id}` | HOST_READ and original Basic subject/key/route lookup; read only the independently durable helper outcome. |
+| POST `/host/sync-observer/stops` | OBSERVER_STOP and protected observer grant; required Idempotency-Key and exact boot/invocation/MainPID/start tuple; signal only that original pidfd. |
+| GET `/host/sync-observer/stops/{operation_id}` | HOST_READ and original Basic subject/key/route lookup; read only original stop outcome, never resend SIGTERM. |
+| GET `/host/journal` | HOST_READ; exact source sync-observer or verify-observer, optional opaque cursor and limit1..80 (default80), no extra queries. |
+
+All other routes in this table reject queries. Validation accepts exactly
+`on_calendar` and nullable `randomized_delay_sec`; invalid systemd syntax refuses
+without changing a schedule. Schedule change accepts action/expected_revision,
+with calendar/delay required only for replace. The helper rechecks the full-byte
+revision under its independent original lock, preserves the predecessor, then
+publishes stored-file and manager outcomes separately. Replace/reset reload and
+restart only an already active timer. Pause/resume change activation only, never
+enablement. A Persistent timer may catch up immediately on resume/restart.
+
+Only the two keyed effect routes use the bounded host lane (one executing plus
+one queued); their startup/drain ownership is disjoint from the unchanged domain
+lane. No host action acquires the archive flock, controls the API/worker/target
+or changes verification scheduling. The API durably records transmission intent
+before its sole helper handoff. A lost/invalid post-handoff reply interrupts that
+original receipt without invented completion or replay. Original helper outcomes
+and API receipts remain distinct; only confirmed/unchanged with no pending guard
+can establish current host-effect certainty. Conflicting keys, stale expected
+revision/invocation, unproved profile, unsafe drop-ins and changed protected
+policy refuse. Missing history remains unknown and blocks another effect.
+
+Original-outcome GETs require observation authority and the exact original key,
+not a fresh effect grant. They cannot clear markers or change stored receipts.
+Retain the two effect routes' records for original reconciliation, like existing
+configuration applications. Response wrappers have the configured exact archive
+and nullable policy fingerprint only on these named helper read routes; generic
+fingerprint validation is unchanged. Journal output is finite redacted diagnostic
+text, never an operation result or a command. Guarded rootless schedule/observer
+remains profile-unproved, without redirecting system control to a user manager.
+
+Native observer permission additionally requires the explicitly provisioned
+confined observer domain, fixed indexed context fragment and dedicated SDK-state
+label. Missing proof returns observer denied/profile-unproved before admission;
+it leaves a separately proved schedule grant usable. An actually observed
+original tuple is identity evidence even when stop permission is denied. No
+caller domain/context field or implicit provisioning is accepted.
+
+
+A durably proved pre-effect refusal returns the original typed `unchanged`
+outcome with exit10/HFAPI007, not successful application. In a stale schedule
+case, stored_revision is the actual current revision and may differ from the
+original expected value. File and manager evidence prove no effect; the pending
+guard is absent. This known failed result leaves the host lane usable while
+retaining the original receipt/key. Unknown or possibly transmitted effects
+remain interrupted and blocking, with original-key observation only.

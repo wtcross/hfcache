@@ -39,6 +39,10 @@ export const contextSemanticIds: readonly string[] = [
     "catalog.publication",
     "catalog.response",
     "host.status",
+    "host.observer",
+    "host.outcome",
+    "host.validation",
+    "host.journal",
     "operation.events",
     "operation.identity",
     "operation.result",
@@ -91,6 +95,9 @@ export function validateApiProblem(problem: ClientProblem): void {
 }
 
 export interface RequestBinding {
+    readonly journalSource?: string;
+    readonly onCalendar?: string;
+    readonly randomizedDelaySec?: string | null;
     readonly managedBaseRevision?: string;
     readonly repositoryType?: "model" | "dataset";
     readonly repositoryId?: string;
@@ -122,6 +129,30 @@ export function applyBindings(
     for (const id of ids) {
         const payload = response.envelope.data;
         switch (id) {
+            case "host.observer":
+            case "host.outcome":
+            case "host.validation":
+            case "host.journal": {
+                if (response.envelope.exit_code !== 0) break;
+                check(payload.archive_id === response.archive_id);
+                if (id === "host.outcome")
+                    check(payload.operation_id === context.operationId);
+                if (id === "host.validation")
+                    check(
+                        payload.on_calendar === context.onCalendar &&
+                            payload.randomized_delay_sec ===
+                                context.randomizedDelaySec,
+                    );
+                if (id === "host.journal")
+                    check(
+                        payload.source === context.journalSource &&
+                            array(payload.entries).length <=
+                                (context.limit ?? 80) &&
+                            response.next_cursor === null,
+                    );
+                else check(response.next_cursor === null);
+                break;
+            }
             case "publication.card": {
                 check(
                     response.envelope.command === "card read" &&
@@ -284,6 +315,16 @@ export function applyBindings(
                 );
                 if (response.envelope.command === "catalog refresh")
                     validateCatalogRefresh(response);
+                if (
+                    (operation.route === "/api/v1/host/sync-schedule/changes" ||
+                        operation.route ===
+                            "/api/v1/host/sync-observer/stops") &&
+                    Object.hasOwn(payload, "operation_id")
+                )
+                    check(
+                        payload.operation_id === operation.operation_id &&
+                            payload.archive_id === operation.archive_id,
+                    );
                 break;
             }
             default:

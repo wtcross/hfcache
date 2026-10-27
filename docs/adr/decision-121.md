@@ -91,3 +91,12 @@ This adds no executor, thread framework, lock, runtime dependency, wire format o
 host permission. The [client contract](../api-client.md) states the observable
 behavior; [real signal and ownership regressions](../../tests/unit/test_scheduled_client.py)
 cover the interruption and original-handle boundaries.
+
+
+## Fixed host-effect amendment (2026-10-27)
+
+[Decision156](decision-156.md) adds a bounded fixed-route host-action lane,
+original-process observer stop, independent durable outcomes and finite diagnostic
+reads. It preserves archive serialization, original operation identity and this
+record's unrelated requirements. Implementation and actual installed conformance
+are separately required.

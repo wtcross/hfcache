@@ -58,7 +58,7 @@ from hfcache.retention import plan_prune
 from hfcache.server_config import InstalledPolicy
 from hfcache.services.commands import CommandServices
 from hfcache.services.context import ExecutionContext
-from hfcache.storage import parse_mount_table
+from hfcache.storage import CapacityFacts, parse_mount_table
 from hfcache.sync import synchronize
 from hfcache.transactions import open_transaction, read_journal
 from tests.api_cli import api_cli
@@ -1294,24 +1294,28 @@ def test_the_sync_command_refuses_an_unmounted_archive(tmp_path: Path):
 
 @pytest.mark.usefixtures("_wired")
 def test_a_run_that_clears_the_reserve_only_narrowly_warns_and_still_publishes(
-    client, layout, tmp_path
+    client, layout, tmp_path, monkeypatch
 ):
     # `HFWRN005` is "close to the reserve", not "over it"; a run that can still
     # complete should (`docs/cli.md` §5.6), and the warning is durable.
-    total = os.statvfs(layout.root).f_frsize * os.statvfs(layout.root).f_blocks
-    available = os.statvfs(layout.root).f_frsize * os.statvfs(layout.root).f_bavail
+    # Fixed capacity stays just above the reserve: rounding host free space to
+    # GiB can otherwise move this fixture outside the 10% warning band.
+    monkeypatch.setattr(
+        "hfcache.preflight.describe_capacity",
+        lambda measured: CapacityFacts(
+            path=measured, total_bytes=100 * 1024**3, available_bytes=21 * 1024**3
+        ),
+    )
     path = tmp_path / "narrow.toml"
-    # A reserve just under what is free: the run fits, but only just.
+    # Actual transfer/publication/locking remains the real owned filesystem path.
     path.write_text(
         CONFIG.format(
             root=layout.root,
             archive_id=ARCHIVE_ID,
-            reserve_gib=max(1, int(available / (1024**3)) - 1),
+            reserve_gib=20,
         ),
         encoding="utf-8",
     )
-    assert total > 0
-
     outcome = run(client, layout, load_config(path))
 
     assert set(statuses(outcome).values()) == {"completed_with_warnings"}

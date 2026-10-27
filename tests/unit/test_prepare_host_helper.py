@@ -74,6 +74,104 @@ def test_proposal_matches_actual_leaf_bytes_modes_and_fixed_bindings(fixture, re
     assert before == {name: (host.selected / name).read_bytes() for name in before}
 
 
+def observer_fragment(native, monkeypatch):
+    fixed = (
+        native.selected.parent.parent / "systemd/hfcache-sync.service.d/50-hfcache-observer.conf"
+    )
+    template = native.selected / policy.SYNC_OBSERVER_RELATIVE
+    body = b"[Service]\nSELinuxContext=system_u:system_r:hfcache_sync_observer_t:s0\n"
+    monkeypatch.setattr(policy, "SYNC_OBSERVER_DROP_IN", fixed)
+    fixed.parent.parent.mkdir(parents=True, exist_ok=True)
+    template.parent.mkdir(parents=True, exist_ok=True)
+    template.write_bytes(body)
+    template.chmod(0o644)
+    return fixed, template, body
+
+
+def test_native_observer_provisioning_is_explicit_and_never_created(native, monkeypatch):
+    configure(native, monkeypatch)
+    fixed, _template, _body = observer_fragment(native, monkeypatch)
+    proposed = tool.prepare(policy, "native", "c" * 40, "d" * 64, dirty=True)
+    assert policy.SYNC_OBSERVER_BINDING not in proposed["bindings"]
+    assert not fixed.parent.exists()
+
+
+def test_native_observer_proposal_binds_exact_protected_fragment_and_selected_template(
+    native, monkeypatch
+):
+    configure(native, monkeypatch)
+    fixed, template, body = observer_fragment(native, monkeypatch)
+    fixed.parent.mkdir(parents=True)
+    fixed.write_bytes(body)
+    fixed.chmod(0o644)
+    before = tuple(getattr(fixed.stat(), name) for name in policy.METADATA)
+    proposed = tool.prepare(policy, "native", "c" * 40, "d" * 64, dirty=True)
+    assert proposed["bindings"][policy.SYNC_OBSERVER_BINDING] == hashlib.sha256(body).hexdigest()
+    assert (
+        proposed["authority_files"][policy.SYNC_OBSERVER_RELATIVE]["sha256"]
+        == hashlib.sha256(template.read_bytes()).hexdigest()
+    )
+    assert before == tuple(getattr(fixed.stat(), name) for name in policy.METADATA)
+    assert policy._deployment(json.dumps(proposed).encode()) == proposed
+
+
+@pytest.mark.parametrize("change", ["link", "hardlink", "mode", "extra", "minus", "command"])
+def test_observer_proposal_refuses_unsafe_or_broader_fragment(native, monkeypatch, change):
+    configure(native, monkeypatch)
+    fixed, template, body = observer_fragment(native, monkeypatch)
+    fixed.parent.mkdir(parents=True)
+    if change == "link":
+        fixed.symlink_to(template)
+    elif change == "hardlink":
+        os.link(template, fixed)
+    else:
+        if change == "minus":
+            body = body.replace(b"SELinuxContext=", b"SELinuxContext=-")
+        elif change == "command":
+            body += b"ExecStart=/bin/sh\n"
+        fixed.write_bytes(body)
+        fixed.chmod(0o666 if change == "mode" else 0o644)
+        if change == "extra":
+            (fixed.parent / "99-unknown.conf").write_bytes(b"[Service]\n")
+    with pytest.raises((OSError, ValueError, policy.InspectionError)):
+        tool.prepare(policy, "native", "c" * 40, "d" * 64, dirty=True)
+
+
+def test_observer_fragment_appearance_or_change_cannot_race_the_readonly_proposal(
+    native, monkeypatch
+):
+    configure(native, monkeypatch)
+    fixed, _template, body = observer_fragment(native, monkeypatch)
+    capture = policy._Capture(policy.InspectionBudget())
+    capture.mounts = [(Path("/"), "ext4", {"rw"}, {"rw"})]
+    assert tool.optional_observer_context(policy, capture, "native") is False
+    fixed.parent.mkdir(parents=True)
+    fixed.write_bytes(body)
+    fixed.chmod(0o644)
+    with pytest.raises(policy.InspectionError):
+        capture.revalidate()
+    capture = policy._Capture(policy.InspectionBudget())
+    capture.mounts = [(Path("/"), "ext4", {"rw"}, {"rw"})]
+    assert tool.optional_observer_context(policy, capture, "native") is True
+    fixed.write_bytes(body + b"# changed\n")
+    with pytest.raises(policy.InspectionError):
+        capture.revalidate()
+
+
+def test_rootless_proposal_never_adopts_even_a_present_native_observer_fragment(
+    native, monkeypatch
+):
+    configure(native, monkeypatch)
+    fixed, template, _body = observer_fragment(native, monkeypatch)
+    fixed.parent.mkdir(parents=True)
+    fixed.symlink_to(template)
+    capture = policy._Capture(policy.InspectionBudget())
+    assert tool.optional_observer_context(policy, capture, "rootless") is False
+    assert not capture.files
+    assert not capture.links
+    assert not capture.parents
+
+
 def test_native_inventory_keeps_existing_cache_bytes_and_large_real_runtime(native, monkeypatch):
     configure(native, monkeypatch)
     target = policy.PREFIX / "python" / native.index["profile_evidence"]["python_target_relative"]
@@ -187,6 +285,9 @@ def test_actual_fixed_bootstrap_capture_is_protected_bounded_and_has_no_package_
     path.parent.mkdir()
     path.write_bytes((SCRIPT.parents[1] / "src/hfcache/host_policy.py").read_bytes())
     path.chmod(0o644)
+    labels = path.with_name("host_selinux.py")
+    labels.write_bytes((SCRIPT.parents[1] / "src/hfcache/host_selinux.py").read_bytes())
+    labels.chmod(0o644)
     monkeypatch.setattr(tool, "OWNER", os.geteuid())
     monkeypatch.setattr(tool, "LIBRARY", path)
     if kind == "symlink":
@@ -205,6 +306,9 @@ def test_actual_fixed_bootstrap_capture_is_protected_bounded_and_has_no_package_
     if kind == "regular":
         module = tool.load_policy()
         assert module._bootstrap_sha256 == hashlib.sha256(path.read_bytes()).hexdigest()
+        assert (
+            module._host_labels._bootstrap_sha256 == hashlib.sha256(labels.read_bytes()).hexdigest()
+        )
         assert module.InspectionBudget().remaining() <= 5
     else:
         with pytest.raises((ValueError, OSError)):
@@ -227,3 +331,29 @@ def test_help_has_no_host_reads_and_source_has_no_mutation_primitives(monkeypatc
         and node.func.attr in {"write_bytes", "write_text", "mkdir", "unlink", "execv", "flock"}
         for node in ast.walk(tree)
     )
+
+
+@pytest.mark.parametrize("kind", ["missing", "writable", "symlink", "hardlink"])
+def test_label_bootstrap_must_be_protected_before_the_policy_module_executes(
+    tmp_path, monkeypatch, kind
+):
+    path = tmp_path / "host_policy.py"
+    path.write_bytes(b"raise AssertionError('unvalidated policy executed')\n")
+    path.chmod(0o644)
+    labels = path.with_name("host_selinux.py")
+    labels.write_bytes((SCRIPT.parents[1] / "src/hfcache/host_selinux.py").read_bytes())
+    labels.chmod(0o644)
+    monkeypatch.setattr(tool, "OWNER", os.geteuid())
+    monkeypatch.setattr(tool, "LIBRARY", path)
+    if kind == "missing":
+        labels.unlink()
+    elif kind == "writable":
+        labels.chmod(0o666)
+    elif kind == "symlink":
+        original = labels.with_name("original.py")
+        labels.rename(original)
+        labels.symlink_to(original)
+    else:
+        os.link(labels, labels.with_name("alias.py"))
+    with pytest.raises((ValueError, OSError)):
+        tool.load_policy()

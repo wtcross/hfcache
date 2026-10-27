@@ -3,6 +3,42 @@
 AUDITED_HOOKS: dict[str, str] = dict(  # noqa: C406 - multiline source pins remain reviewable
     (
         (
+            "hfcache.host_actions_models._printable",
+            "e7d35af8987dfd44ac6df126a8cc7064511c8fd4fe7fdbebaaeebba2c5a1c35c",
+        ),
+        (
+            "hfcache.host_actions_models._schedule_text",
+            "869291d9ab2e4422c0ac9f544760fa5ffff31bdb274cddadec8c120edbd1f51c",
+        ),
+        (
+            "hfcache.host_actions_models._journal_message",
+            "bc29e503de080fa2d2504fba70e0860febf1319aaf5e060d507a5fcdd2b0fa4c",
+        ),
+        (
+            "hfcache.host_actions_models.ScheduleValidation.coherent_delay",
+            "0991e15f02be67d74565ceded096ed62e9594072decbe1090784f1dfe790f065",
+        ),
+        (
+            "hfcache.host_actions_models.ScheduleChangeRequest.exact_action",
+            "5cfc75b9494dc68d190d2a759526b0440c3a470a9c484c187e51a3d9c885528e",
+        ),
+        (
+            "hfcache.host_actions_models.HostObserverStatus.coherent_authority",
+            "acfcf705d44d998b125d6add770816069c0733658d575b1f021a6f5144666f50",
+        ),
+        (
+            "hfcache.host_actions_models.ScheduleChangeOutcome.coherent_effect",
+            "122a2e8ad5b5306172daa3594fa3ab9508655bff7989b0eda54759c03464f993",
+        ),
+        (
+            "hfcache.host_actions_models.ObserverStopOutcome.coherent_effect",
+            "9c7bca3075cf5144e0ce4679c43a3f3d4629a23bf2874e6472986b04fb42abcb",
+        ),
+        (
+            "hfcache.host_actions_models.HostJournalPage.bounded_page",
+            "6f7cf998b55f5dc9f4fd5d0c8ffbc3f5b7b820d07bc364263b895a26ed70ec39",
+        ),
+        (
             "hfcache.card_models.RepositoryCardRead.strict_version",
             "b2083bfe255ff6b73c72bb70e0478b6241b4c7c828ef3b77b520b0b063132d84",
         ),
@@ -445,6 +481,19 @@ AUDITED_HOOKS: dict[str, str] = dict(  # noqa: C406 - multiline source pins rema
 AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins remain reviewable
     (
         (
+            "hfcache.api.host_actions",
+            "22afeaacf7361bb3e998b56bca22984bc807985c67c8ce90e4aab981dc427071",
+        ),
+        (
+            "hfcache.api.host_routes",
+            "da086a328e17f647ddb95bebbdcc67c818c301d456eed6178c9cab82bfb0f81c",
+        ),
+        (
+            "hfcache.host_actions_models",
+            "e7589c0af7b5ab836f0f767f0ac492c882729115fd973dfd995f9b62d6f44331",
+        ),
+        ("hfcache.logging", "225ac722bdd469d48049c841ead6c9056774ef14aec88dc9046857112c15a496"),
+        (
             "hfcache.card_models",
             "cadac80326fc38d91b7c9d3ce949d56cd055d73120901e53cf1303fb445d3fe7",
         ),
@@ -480,7 +529,7 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ),
         (
             "hfcache.api.ui_serving",
-            "6e1228784fa57324d9607e5dc437687d2c05ee64c07b07d30d69774c3ff87f04",
+            "f7fd7e82986798eae538fa2fbe38b8dd5d23cc47b1cbd8853f94eb7492f7ee83",
         ),
         (
             "hfcache.api.ui_assets",
@@ -490,7 +539,7 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ("hfcache.ui_models", "3b3b4b2181294ce5c2426d9fdb9227c5a0da8bdfac67d99a0dabe61783701956"),
         (
             "hfcache.api.app",
-            "55f3e9161e8dd170befd6efac34bc46340b5ee59704be863907a01487c12e609",
+            "013dafe1bac42ac6a94794a1ed5e78bae222ecb0e693ec10e44022dd0cbfef23",
         ),
         (
             "hfcache.api.catalog",
@@ -542,7 +591,7 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ),
         (
             "hfcache.client_models",
-            "eee71c37009d9155aa92982be12963f0300cc59bc594d335dfb73102a1ff1e24",
+            "67b3d4ef97d7219e9fab4089a6a5adab78dd09939a19cf2b95e681b2a7ceaf9a",
         ),
         (
             "hfcache.config",

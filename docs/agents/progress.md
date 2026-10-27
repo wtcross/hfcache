@@ -29,6 +29,36 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-018 Implement guarded schedule, observer and journal actions
+  (2026-10-27, this commit — [task](plans/tasks/web-018-schedule-observer-and-journal.md)).
+  Fixed calendar/timespan validation, schedule CAS/apply/reset/pause/resume,
+  exact retained-pidfd stop and bounded diagnostic journals use the narrow helper
+  and independent fixed host lane. Original-key helper outcomes remain separate
+  from API receipt certainty. Decision156/INV022 and relevant ADR/contracts record
+  explicit optional native confinement, independent grants and no-replay recovery.
+  Strict gate6 passes1813.441s on unchanged S5 `415d9b73…`/1500 inputs:8927 backend,
+  3649 web unit/3908 combined frontend,581 Cockpit unit/110 mounted, all required
+  wheel/build/browser/docs checks and no required skips. Line/branch coverage is
+  94.90%/90.11%;217 human documents/27 helpers align. S5 differs from runtime S2
+  only in two unshipped assertions, with exact1500-file/mode equivalence proof.
+  All48 installed scoped cases pass across three engines:33 native through
+  Caddy22443 (original false/unknown collector retained, corrected read-only
+  qualification, no replay) and15 rootless through existing Caddy8443/engine
+  (normal pass203.947s,9 denied POSTs/0 admissions). Native24 host actions/3SDK
+  syncs/1verification prelude join exact original handles/outcomes/predecessors;
+  total485 trusted requests/96 clear CSP checkpoints. Original roles drain,
+  verification timer stays unenabled,10338 prior objects and original stores/
+  keys/configuration/SDK handles remain preserved. Matching .46/.47 shared images
+  use verified pinned UBI10micro without runtime Node. Original failed startup,
+  exact separate cleanup, partial preparation and unindexed test UI retention are
+  recorded honestly, including unsaved historical metadata limits. HOST04–09 and
+  human API/administration/deployment/troubleshooting guidance are complete.
+  Aggregate: /var/tmp/web-018-validation-blcl67j1/source5-functional-all-summary.json.
+  This proves LOCAL_STORAGE_SIMULATION only; WEB019 forms and later platform,
+  compatibility, retirement, final acceptance and production rollout remain.
+  No merge, push, Git tag, NAS or live Cockpit action occurred.
+
+
 - [x] WEB-017 Implement guarded maintenance and integrity remediation
   (2026-10-27, this commit — [task](plans/tasks/web-017-maintenance-ui.md)).
   Dedicated prune, unmanaged purge, recovery, explicit quarantine and exact-finding
@@ -2917,6 +2947,33 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+Latest WEB-018 checkpoint (2026-10-27, this commit): WEB001–018 are complete on
+feat/web-ui. [Task018](plans/tasks/web-018-schedule-observer-and-journal.md)
+records strict source5 gate6,33 actual native and15 actual rootless cases, verified
+shared UBI10micro images with no runtime Node, and HOST04–09. Full rendered
+Administration forms are next in WEB-019. Existing REST bearer/MCP authentication,
+exact publication/configuration/README and original-key no-replay contracts stand.
+
+The owned guest currently selects .47 rootless and is quiet after normal closure:
+40 stop identities gone,4 empty cgroups/4 refused endpoints, created secret IDs
+retired, verification timer inactive/unenabled. Preserve native .46 runtime/archive
+4c80390d… and all its scheduled SDK handles, rootless archive1c27a222… and stores,
+new rootless private authority files, retained original selector/bindings/context/
+helper unit, the preserved unindexed host UI reference and the older /run projection.
+Never rerun whole preparation or an original request to repair collection. Native
+raw false/unknown/rc1 is separately qualified by read-only proof0ef76e6f…; failed
+rootless startup8cd remains false/unknown with exact independent closure/fix
+b48e08bb…. No failed record is rewritten. Historical unsaved full metadata is an
+explicit evidence limit. All10338 older objects, WEB017C ambiguous journal97c38426…,
+damaged retired predecessors and prior uncertain handles remain retained.
+Aggregate: /var/tmp/web-018-validation-blcl67j1/source5-functional-all-summary.json
+(SHA256dbad3dfc…). Existing guest/Caddy/engines are reused; no additional engine or
+frontend server is needed. This is LOCAL_STORAGE_SIMULATION, not NAS/production
+or the later full platform matrix. Production0.2.2, live guards/calendars/
+credentials/Caddy and Cockpit remain untouched. Rollout/merge/push/Git tags/live
+plugin removal remain unauthorized here.
+
 
 Latest WEB-017 checkpoint (2026-10-27, this commit): WEB001–017 are complete on
 feat/web-ui; WEB-018 is pending through the current selector. [Task017](plans/tasks/web-017-maintenance-ui.md)
@@ -12838,3 +12895,28 @@ and INV021 amendments record this composition. The final test collector's
 full-metadata assumption is separately qualified for exactly three provider-cache
 hardlink releases, preserving all original failed flags and required byte/inode
 evidence. No endpoint, dependency, privilege or new architectural decision is added.
+
+
+156. **Bind fixed host effects to original intent and independently observable outcomes**
+     (2026-10-27, WEB-018, this commit; implemented and validated).
+     [Decision156](../adr/decision-156.md) selects one bounded fixed-route host
+     lane beside the unchanged archive lane, disjoint startup/drain ownership,
+     retained-pidfd observer stop, original-key durable helper outcomes and finite
+     journal diagnostics. A dedicated observer authority projection preserves
+     HostStatus1 during real oneshot transient states. Same-bind predecessor
+     retention and active-only timer restart preserve existing native semantics;
+     guarded rootless controls remain denied. New INV022 and amendments to
+     decisions109/115/121/135/136/141/145/150/154 record the boundary. No source or
+     installed acceptance is inferred from this design.
+
+     The WEB018 installed prototype refinement adds explicitly provisioned native
+     observer confinement, an exact optional indexed context fragment and fresh
+     process SID eligibility, independently of schedule grants. Journal stream
+     metadata does not prove a live process context. Direct live sampling and
+     authenticated Unix API observation select only necessary read-only parent/
+     delivered-credential and API-socket peer permissions. Prototype8 proves the
+     confined SDK can authenticate, preserve its original stopped handle and let
+     the accepted backend job complete; it is not helper-stop/browser acceptance.
+     The fixture's mistaken hyphenated policy module is separately retained and
+     corrected to the documented underscore module name. No init_t/unconfined
+     signal grant, capability, IP authority or security fallback is introduced.

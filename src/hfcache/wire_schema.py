@@ -540,6 +540,31 @@ def _audit_sources(exporter: Exporter) -> None:
         "catalog.facet": ("hfcache.client_catalog", "hfcache.catalog_query_models"),
         "catalog.publication": ("hfcache.client", "hfcache.catalog_query_models"),
         "host.status": ("hfcache.host_models", "hfcache.api.host_status"),
+        "host.observer": (
+            "hfcache.host_actions_models",
+            "hfcache.api.host_actions",
+            "hfcache.api.host_routes",
+            "hfcache.api.auth",
+        ),
+        "host.outcome": (
+            "hfcache.host_actions_models",
+            "hfcache.api.host_actions",
+            "hfcache.api.host_routes",
+            "hfcache.api.auth",
+        ),
+        "host.validation": (
+            "hfcache.host_actions_models",
+            "hfcache.api.host_actions",
+            "hfcache.api.host_routes",
+            "hfcache.api.auth",
+        ),
+        "host.journal": (
+            "hfcache.host_actions_models",
+            "hfcache.logging",
+            "hfcache.api.host_actions",
+            "hfcache.api.host_routes",
+            "hfcache.api.auth",
+        ),
         "ui.bootstrap": (
             "hfcache.ui_models",
             "hfcache.api.ui_serving",
@@ -628,6 +653,7 @@ def _queries(group: str) -> list[Node]:
         "page": ("limit", "cursor"),
         "inventory": ("limit", "cursor", "selector", "type"),
         "events": ("after", "limit"),
+        "journal": ("source", "cursor", "limit"),
         "catalog": (
             "type",
             "q",
@@ -655,6 +681,7 @@ def _queries(group: str) -> list[Node]:
         "revision_scope": ("current", "retained"),
         "tag_source": ("current_or_last_observed", "current_only"),
         "facet": ("tag", "format", "quantization_method", "quantization"),
+        "source": ("sync-observer", "verify-observer"),
     }
     for name in groups[group]:
         node: Node = _parameter(name)
@@ -688,6 +715,12 @@ def _queries(group: str) -> list[Node]:
             if name == "after":
                 node["maximum"] = "9999999999"
         repeated = name in {"selector", "tag_all", "tag_any"}
+        if group == "journal" and name == "cursor":
+            node["max_codepoints"] = 2048
+            node["min_codepoints"] = 1
+            node["semantic_ids"] = ["hfcache.host_actions_models._printable"]
+        if group == "journal" and name == "limit":
+            node["maximum"] = "80"
         if repeated:
             node = {
                 "kind": "array",

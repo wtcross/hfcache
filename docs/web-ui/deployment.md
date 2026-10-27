@@ -225,12 +225,13 @@ changes the six permission booleans or the existing key.
 
 1. Install the selected release's `scripts/host-helper.py` as the ordinary
    root-owned0755 `/usr/local/libexec/hfcache-host-helper`. Install its
-   `host_protocol.py`, `host_policy.py`, `host_peer.py`, `host_configuration.py` and selected
+   `host_protocol.py`, `host_policy.py`, `host_peer.py`, `host_configuration.py`,
+   `host_actions.py`, `host_selinux.py` and selected
    `packaging/selinux/hfcache-host-helper.cil` as root-owned0644 ordinary files
    under root-owned0755 `/usr/local/lib/hfcache-host-helper`. The modules are
    protected host Python3.12 standard-library copies, distinct from API code;
    the CIL is independently bound policy authority. Rootless staging captures
-   all seven helper files in its manifest before indexing, including the CIL.
+   all nine helper files in its manifest before indexing, including the CIL.
    Install the exact selected `hfcache-host-helper.service` as an ordinary
    root-owned0644 system unit. Rootless staged copies live under `host-helper/`;
    native copies come from `src/hfcache/`, `scripts/` and `packaging/systemd/`.
@@ -306,6 +307,8 @@ changes the six permission booleans or the existing key.
    winning at the API path or remove an unknown rule. Apply tmpfiles and restore
    the expected labels on this fixed runtime subtree.
    Preserve protected systemd symlinks and their `systemd_unit_file_t` label.
+   Optional native host effects additionally label only the selected immutable
+   sync-timer target as described below; this does not relabel other units.
    The reviewed helper policy must permit only `getattr`/`read` on that type's
    `lnk_file` class so the fixed verifier can validate exact indexed targets.
    A policy change requires a fresh protected installation receipt and both
@@ -347,7 +350,7 @@ changes the six permission booleans or the existing key.
    provisioning after reboot/recreation and genuine stock prewarming. A fixed
    context rule alone does not label a new object. No generic tmpfs relabel,
    creation, engine-backend replacement or ordinary-lock mapping is permitted.
-   Include all twelve closed receipt roles. Shared mutex writes are allowed
+   Include all fifteen base receipt roles. Shared mutex writes are allowed
    coordination; stable identity/label comparison excludes command-wide timestamp
    changes and establishes no content integrity or historical inode identity.
 3. Prepare a deployment-index proposal using the selected read-only
@@ -489,3 +492,80 @@ See [login troubleshooting](troubleshooting.md#administrator-login),
 [server configuration](../server.md), [security](../security.md) and
 [deployment profiles](../deployment-centos-stream-10.md) for the surrounding
 operator controls.
+
+## Optional native schedule and observer provisioning
+
+The fixed host APIs require additional native provisioning before effects.
+Existing read/configuration-only installations may keep the exact version1
+receipt and omit these objects. The current guarded rootless profile continues
+to deny schedule and observer changes; no user-manager substitute is supported.
+
+Before activating native host effects, establish that older privileged schedule/
+observer calls are quiescent. The optional fixed `/etc/hfcache/cockpit-policy.json`
+must be safely absent or a protected strict legacy policy with both `schedule`
+and `observer` false. Its historical source/index identity is not changed or
+matched to the new release. Current disabled bytes do not prove an older admitted
+call drained. Preserve its original policy, handles and evidence; do not migrate
+permissions, clear pending records or bypass the exclusion to make activation pass.
+
+Install the selected six protected modules and CIL together. Stage the CIL with
+the exact module basename `hfcache_host_helper.cil` at priority400; the hyphenated
+installed authority filename is not the module name. Preserve and review any
+unexpected existing module rather than leaving an unmeasured permission union.
+Under an authorized,
+quiescent host preparation, the optional
+`packaging/tmpfiles.d/hfcache-host-actions.conf` creates only three empty
+directories: root0700 `/etc/hfcache/.host-actions`, root0755
+`/etc/systemd/system/hfcache-sync.timer.d`, and its root0700 `.hfcache-actions`
+history directory. It never creates a pending marker or replaces a lock. Provision
+the separate `.host-actions.lock` once as a root:root0600, single-link ordinary
+file by exclusive no-follow creation and durable file/parent sync. If it already
+exists, retain and verify its original inode; never truncate or recreate it.
+Do not clear pending/history evidence to make provisioning pass.
+
+Persist the four exact version2 [label roles](../host-administration.md#mandatory-selinux-isolation).
+The selected immutable sync-timer target gets its dedicated unit label; unrelated
+units keep their original labels. The managed file and private `staged.conf` and
+`predecessor.conf` leaves retain the schedule-file type, including original0644
+predecessors inside private0700 history. Persistent fcontext exceptions must
+preserve those leaves; do not recursively relabel or chmod retained evidence.
+The host lock/pending names use the existing distinct guard type. Only the fixed
+timer drop-in directory is added as an optional writable bind. It may be absent
+for older read/configuration profiles; the broad systemd tree stays read-only.
+
+Observer stop is a separate opt-in. Stock native units do not explicitly select
+the confined observer domain; journal stream context is not live process proof.
+Do not grant signals to `init_t` or move the SDK into an unconfined domain
+to pass a test. Under the same authorized quiescent preparation, install only the
+selected release's
+`packaging/systemd/hfcache-sync.service.d/50-hfcache-observer.conf` as the exact
+root:root0644, single-link ordinary
+`/etc/systemd/system/hfcache-sync.service.d/50-hfcache-observer.conf`. Its protected
+root0755 parent must contain no other entries. Refuse an existing unknown file,
+symlink or extra fragment; preserve known original bytes/inodes before any
+explicitly reviewed replacement. The fragment selects
+`system_u:system_r:hfcache_sync_observer_t:s0` without an ignore-failure prefix.
+The base sync service remains usable without this optional fragment.
+
+Persist the exact `hfcache_sync_observer_state_t` label on the indexed native
+account's0700 `/var/lib/hfcache/scheduled/sync` directory and its SDK state, and
+include the single optional `observer_state` label role in receipt2. Preserve
+pending handles, locks, owner/mode and contents; labeling is not permission to
+clear or replay an old intent. The confined domain reads only its fixed SDK
+dependencies/configuration and delivered credential, talks to the existing Unix
+API and journal, and writes its own state. It receives no IP, archive, Hub,
+helper-private or capability authority. Apply the manager reload explicitly while
+quiescent, then confirm the effective SELinuxContext equals the fixed fragment.
+Read-only `prepare-host-helper.py` captures the optional native
+`sync_observer_context` binding only after safe installation; it creates nothing.
+Keep schedule-only receipt2 valid without this observer role/fragment.
+
+After actual labels and loaded-policy proof, write the exact version2 receipt,
+prepare a fresh deployment index and rebind the independently reviewed permission
+policy. No installation step infers true schedule/observer permissions. Keep the
+existing key, guard, configuration outcomes and rootless engine proof unchanged.
+Actual Enforcing native timer/observer acceptance and guarded-rootless denial
+are required separately; file labels and source tests do not establish them.
+Confirm actual dedicated process SID, original pidfd stop and surviving accepted
+backend work in that acceptance. Missing observer proof must deny stop before
+admission while an independently proved schedule grant remains usable.

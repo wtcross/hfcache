@@ -84,7 +84,7 @@ test.each(incorrect)(
 );
 test("every generated definition has an independently serialized source original", () => {
     // Exporter's separately audited coverage assertion owns the exact authority set.
-    expect(new Set(corpus.map((item) => item.definition)).size).toBe(162);
+    expect(new Set(corpus.map((item) => item.definition)).size).toBe(175);
 });
 test("route path/query schemas reconstruct explicit optional inputs and forbid extras", () => {
     for (const contract of Object.values(routeContracts)) {
@@ -129,6 +129,7 @@ test("every registered route decodes its independently chosen path/query inputs 
         commit_sha: "a".repeat(40),
         publication_id: "b".repeat(32),
         after: 0,
+        source: "sync-observer",
     };
     const input = (value: unknown) => parseWireJson(JSON.stringify(value));
     for (const [key, contract] of Object.entries(routeContracts)) {

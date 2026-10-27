@@ -10,11 +10,15 @@ import { canonicalArchiveId, canonicalHex } from "../api/identity";
 import {
     decodeClientOperation,
     decodeConfigApplicationOutcome,
+    decodeScheduleChangeOutcome,
+    decodeObserverStopOutcome,
     operationResultDefinitions,
 } from "../wire/generated";
 import type {
     ClientOperation,
     ConfigApplicationOutcome,
+    ScheduleChangeOutcome,
+    ObserverStopOutcome,
 } from "../wire/generated";
 import { numberSource, parseWireJson, WireError } from "../wire/json";
 import { isRecord, wireObject } from "../wire/runtime";
@@ -42,6 +46,8 @@ export const ACTION_ROUTES = Object.freeze({
     candidatePlan: "/api/v1/plans",
     managedPlan: "/api/v1/plans",
     configurationApplication: "/api/v1/config/applications",
+    scheduleChange: "/api/v1/host/sync-schedule/changes",
+    observerStop: "/api/v1/host/sync-observer/stops",
     readOnlyDiagnostics: "/api/v1/diagnostics",
     probeDiagnostics: "/api/v1/diagnostics",
     newVerification: "/api/v1/verifications",
@@ -218,6 +224,10 @@ export interface OperationRegistry {
     configurationOutcome(
         auth: AuthorizedObservation,
         outcome: ConfigApplicationOutcome,
+    ): void;
+    hostActionOutcome(
+        auth: AuthorizedObservation,
+        outcome: ScheduleChangeOutcome | ObserverStopOutcome,
     ): void;
     unknown(id: RecordId, reason: UnknownReason): RecoveryRecord;
     invalidateObservations(): void;
@@ -653,6 +663,7 @@ interface ObservationProof {
     readonly keyVerified: boolean;
     readonly resolved: boolean;
     readonly configurationKnown?: boolean;
+    readonly hostActionKnown?: boolean;
 }
 
 export function createOperationRegistry(
@@ -834,6 +845,7 @@ export function createOperationRegistry(
             return (
                 proofFor(record.recordId, session)?.configurationKnown !==
                     true &&
+                proofFor(record.recordId, session)?.hostActionKnown !== true &&
                 (record.state !== "terminal" ||
                     proofFor(record.recordId, session)?.resolved !== true)
             );
@@ -1027,6 +1039,7 @@ export function createOperationRegistry(
             keyVerified: record.handles.kind === "basic-key",
             resolved,
             configurationKnown: previous?.configurationKnown === true,
+            hostActionKnown: previous?.hostActionKnown === true,
         });
         return update(record, {
             handles: Object.freeze({
@@ -1302,6 +1315,38 @@ export function createOperationRegistry(
                 ...proof,
                 configurationKnown: known,
             });
+            publish(snapshot.records, snapshot.storage, snapshot.error);
+        },
+        hostActionOutcome: (auth, input) => {
+            const { record, session } = authorized(auth);
+            const schedule =
+                record.route === "/api/v1/host/sync-schedule/changes";
+            if (
+                !schedule &&
+                record.route !== "/api/v1/host/sync-observer/stops"
+            )
+                throw new OperationRegistryError("observation");
+            const outcome = schedule
+                ? decodeScheduleChangeOutcome(
+                      parseWireJson(JSON.stringify(input)),
+                  )
+                : decodeObserverStopOutcome(
+                      parseWireJson(JSON.stringify(input)),
+                  );
+            const proof = proofFor(record.recordId, session);
+            if (
+                record.handles.kind !== "basic-key" ||
+                proof?.keyVerified !== true ||
+                outcome.operation_id !== proof.receipt.operation_id ||
+                outcome.archive_id !== session.scope.archiveId
+            )
+                throw new OperationRegistryError("observation");
+            const known =
+                ["succeeded", "failed", "interrupted"].includes(proof.state) &&
+                !outcome.pending &&
+                (outcome.state === "confirmed" ||
+                    outcome.state === "unchanged");
+            proofs.set(record.recordId, { ...proof, hostActionKnown: known });
             publish(snapshot.records, snapshot.storage, snapshot.error);
         },
         unknown: (id, reason) => {

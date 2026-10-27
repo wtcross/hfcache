@@ -170,6 +170,8 @@ def inspector():
             "host_protocol",
             "host_peer",
             "host_configuration",
+            "host_actions",
+            "host_selinux",
         )
     }
     bindings = {
@@ -180,6 +182,8 @@ def inspector():
             ("host_protocol", "helper_protocol_module"),
             ("host_peer", "helper_peer_module"),
             ("host_configuration", "helper_configuration_module"),
+            ("host_actions", "helper_actions_module"),
+            ("host_selinux", "helper_selinux_module"),
         )
     }
     budget = SimpleNamespace(
@@ -191,6 +195,7 @@ def inspector():
 
     def inspect_authority(**kwargs):
         calls.append("inspect")
+        assert kwargs["host_labels"] is labels
         authority.budget = kwargs["budget"]
         return authority
 
@@ -226,12 +231,35 @@ def inspector():
         read_config_base=lambda _value: {"base_revision": "b" * 64},
     )
     peers = SimpleNamespace(authenticate=authenticate, revalidate=peer_again)
+
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("a different protected operation was dispatched")
+
+    labels = SimpleNamespace()
+    actions = SimpleNamespace(
+        **dict.fromkeys(
+            (
+                "read_sync_observer",
+                "validate_schedule",
+                "change_schedule",
+                "read_schedule_outcome",
+                "stop_sync_observer",
+                "read_observer_outcome",
+                "read_journal",
+            ),
+            forbidden,
+        )
+    )
     instance = daemon.HostDaemon(
         {
             "host_protocol": protocol,
             "host_policy": policy,
             "host_peer": peers,
-            "host_configuration": SimpleNamespace(),
+            "host_configuration": SimpleNamespace(
+                apply_configuration=forbidden, read_configuration_outcome=forbidden
+            ),
+            "host_actions": actions,
+            "host_selinux": labels,
         },
         hashes,
     )
@@ -307,6 +335,147 @@ def test_daemon_application_dispatch_uses_indexed_writer_after_original_peer_pro
     raw = run_exchange(instance, request.wire())
     assert protocol.reply_body(protocol.decode_object(raw[4:]), request) == {"state": "confirmed"}
     assert calls == ["inspect", "peer-first", "revalidate", "peer-again", "revalidate", operation]
+
+
+@pytest.mark.parametrize(
+    ("operation", "method", "body"),
+    [
+        ("observer-status", "read_sync_observer", {}),
+        (
+            "schedule-validate",
+            "validate_schedule",
+            {"on_calendar": "daily", "randomized_delay_sec": None},
+        ),
+        (
+            "schedule-change",
+            "change_schedule",
+            {
+                "operation_id": "b" * 32,
+                "request_digest": "c" * 64,
+                "request": {"action": "pause", "expected_revision": "d" * 64},
+            },
+        ),
+        (
+            "schedule-outcome",
+            "read_schedule_outcome",
+            {"operation_id": "b" * 32, "request_digest": "c" * 64},
+        ),
+        (
+            "observer-stop",
+            "stop_sync_observer",
+            {
+                "operation_id": "b" * 32,
+                "request_digest": "c" * 64,
+                "request": {
+                    "expected": {
+                        "boot_id": "cf68ba1d-153b-41bc-8f0b-b0414512dc03",
+                        "invocation_id": "1" * 32,
+                        "main_pid": 123,
+                        "start_ticks": 456,
+                    }
+                },
+            },
+        ),
+        (
+            "observer-outcome",
+            "read_observer_outcome",
+            {"operation_id": "b" * 32, "request_digest": "c" * 64},
+        ),
+        ("journal-read", "read_journal", {"source": "sync-observer", "cursor": None, "limit": 80}),
+    ],
+)
+def test_new_host_operations_dispatch_only_after_original_peer_and_bootstrap_revalidation(
+    inspector, operation, method, body
+):
+    instance, calls, authority = inspector
+
+    def dispatch(policy, snapshot, incoming):
+        assert policy is instance.policy
+        assert snapshot is authority
+        assert incoming == body
+        calls.append(operation)
+        return {"observed": operation}
+
+    setattr(instance.actions, method, dispatch)
+    request = protocol.HostRequest("c" * 32, operation, body)
+    raw = run_exchange(instance, request.wire())
+    assert protocol.reply_body(protocol.decode_object(raw[4:]), request) == {"observed": operation}
+    assert calls == ["inspect", "peer-first", "revalidate", "peer-again", "revalidate", operation]
+
+
+def test_journal_subquota_leaves_other_helper_exchanges_available(inspector):
+    instance, calls, _authority = inspector
+    assert instance.journal_capacity.acquire(blocking=False)
+    assert instance.journal_capacity.acquire(blocking=False)
+    try:
+        request = protocol.HostRequest(
+            "c" * 32, "journal-read", {"source": "sync-observer", "cursor": None, "limit": 80}
+        )
+        response = protocol.decode_object(run_exchange(instance, request.wire())[4:])
+        assert response["outcome"] == "unavailable"
+        assert response["reason"] == "busy"
+        calls.clear()
+        status = protocol.HostRequest("d" * 32, "status")
+        raw = run_exchange(instance, status.wire())
+        assert protocol.reply_body(protocol.decode_object(raw[4:]), status) == {"observed": True}
+        assert calls[-1] == "status"
+    finally:
+        instance.journal_capacity.release()
+        instance.journal_capacity.release()
+
+
+@pytest.mark.parametrize(
+    "role",
+    [
+        "helper_daemon",
+        "helper_policy_module",
+        "helper_protocol_module",
+        "helper_peer_module",
+        "helper_configuration_module",
+        "helper_actions_module",
+        "helper_selinux_module",
+    ],
+)
+def test_every_protected_bootstrap_hash_is_checked_before_peer_or_dispatch(inspector, role):
+    instance, calls, authority = inspector
+    authority.deployment["bindings"][role] = "0" * 64
+    assert run_exchange(instance, protocol.HostRequest("e" * 32, "status").wire()) == b""
+    assert calls == ["inspect"]
+
+
+def test_fixed_loader_captures_exact_six_modules_and_daemon_without_discovering_code(
+    tmp_path, protected_metadata, monkeypatch
+):
+    names = (
+        "host_protocol",
+        "host_selinux",
+        "host_policy",
+        "host_peer",
+        "host_configuration",
+        "host_actions",
+    )
+    expected = {}
+    for name in names:
+        path = tmp_path / (name + ".py")
+        body = f"CAPTURED_NAME = {name!r}\n".encode()
+        path.write_bytes(body)
+        path.chmod(0o644)
+        expected[name] = hashlib.sha256(body).hexdigest()
+    (tmp_path / "unindexed.py").write_bytes(b"raise AssertionError('unindexed module executed')\n")
+    monkeypatch.setattr(daemon, "LIBRARY", tmp_path)
+    before = fd_count()
+    modules, hashes, work = daemon.load_modules()
+    assert tuple(modules) == names
+    assert {name: value.CAPTURED_NAME for name, value in modules.items()} == {
+        name: name for name in names
+    }
+    assert hashes == expected | {"helper_daemon": hashlib.sha256(SCRIPT.read_bytes()).hexdigest()}
+    assert work["files"] == 7
+    assert (
+        work["bytes"]
+        == sum((tmp_path / (name + ".py")).stat().st_size for name in names) + SCRIPT.stat().st_size
+    )
+    assert fd_count() == before
 
 
 @pytest.mark.parametrize(

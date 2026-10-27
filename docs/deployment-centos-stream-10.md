@@ -324,10 +324,26 @@ ordinary-lock mapping denied; shared mutex coordination alone receives read/
 write/map on its separate type. Reboot/recreation requires fresh root labeling,
 with no automatic object creation or generic tmpfs grant. Full intra-capture
 joins and stable command-wide identity/label checks do not claim unchanged shared
-contents or timestamps. The receipt has twelve roles and no path selector or
+contents or timestamps. The receipt has fifteen base roles and no path selector or
 historical inode pin; native-only use acquires no engine prerequisite.
 Owned nonsecret alias-denial and full installed API/helper proof remain required;
 earlier source/INFO checks alone do not close this requirement.
+
+Optional native schedule/observer effects require the separate
+[version2 provisioning procedure](web-ui/deployment.md#optional-native-schedule-and-observer-provisioning):
+four fixed labels, the same-bind schedule predecessor directory, an original
+host-action guard and a fresh receipt/index. Existing read/configuration-only
+profiles keep version1 without new host-effect grants. Neither unit installation
+nor label provisioning enables a calendar or authorizes an effect. Guarded
+rootless schedule/observer denial and all existing engine evidence remain intact.
+Observer stop additionally requires the explicitly installed/indexed fixed
+`50-hfcache-observer.conf` context fragment, dedicated confined SDK domain and
+optional receipt2 `observer_state` role. Base native units do not explicitly
+select that domain, and journal stream context is not process proof. Missing
+observer proof denies only that control;
+it cannot disable an independently proved schedule grant. Preserve all SDK
+pending/lock state during quiescent provisioning and prove the actual manager
+and original process contexts before acceptance.
 
 Only the API receives `/run/hfcache-host-helper/api` and only the actual indexed
 API process may exchange fixed reads. Caddy/verifier/client have no mount or

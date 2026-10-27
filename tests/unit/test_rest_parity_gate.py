@@ -7,8 +7,13 @@ from pathlib import Path
 
 import pytest
 
-from tests.rest_parity import PARITY, Evidence, ParityMode
-from tests.rest_reference import CATALOG_API_REFERENCE, PARITY_REFERENCE, REFERENCE
+from tests.rest_parity import HOST_HTTP_EVIDENCE, PARITY, Evidence, ParityMode
+from tests.rest_reference import (
+    CATALOG_API_REFERENCE,
+    HOST_HTTP_REFERENCE,
+    PARITY_REFERENCE,
+    REFERENCE,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -70,11 +75,11 @@ def parameter_values(
 def test_manifest_has_exactly_all_36_unique_semantic_rows_in_contract_order():
     rows = matrix_rows()
     assert len(PARITY) == len(PARITY_REFERENCE) == 36
-    assert len(REFERENCE) == len(rows) == 51
+    assert len(REFERENCE) == len(rows) == 58
     assert len({mode.cli_mode for mode in PARITY}) == len(PARITY)
     assert list(PARITY_REFERENCE) == [mode.cli_mode for mode in PARITY]
     assert rows == REFERENCE
-    assert len({row[:2] for row in rows}) == 51
+    assert len({row[:2] for row in rows}) == 58
     assert all(len(row) == 9 for row in rows)
 
 
@@ -98,6 +103,18 @@ def test_host_status_has_separate_basic_authority_without_expanding_cli_parity()
             "test_host_status_never_promotes_rest_bearers_or_calls_the_helper",
         )
     )
+
+
+@pytest.mark.parametrize("expected", HOST_HTTP_REFERENCE, ids=lambda row: row[0])
+def test_fixed_host_http_routes_have_independent_grants_effects_and_no_cli_alias(expected):
+    actual = next(row for row in matrix_rows() if row[:2] == expected[:2])
+    assert actual == expected
+    assert all(actual[:2] not in routes for routes in PARITY_REFERENCE.values())
+    assert actual[2] == "browser / HTTP"
+    assert actual[5:8] == ("none", "no", "none")
+    assert len(HOST_HTTP_EVIDENCE) == 7
+    for reference in HOST_HTTP_EVIDENCE[actual[0]]:
+        evidence_function(reference)
 
 
 def test_card_read_has_separate_http_evidence_without_claiming_a_cli_mode():

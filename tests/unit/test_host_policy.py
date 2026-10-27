@@ -20,6 +20,7 @@ from types import SimpleNamespace
 import pytest
 
 from hfcache import host_policy as policy
+from hfcache import host_selinux
 from hfcache.host_models import HostStatus
 from tests.unit.test_container_release_installer import (
     deployment as deployment,  # noqa: PLC0414 - original indexed-stage fixture
@@ -60,6 +61,8 @@ def common_sources(selected, profile):
         "helper_protocol_module",
         "helper_peer_module",
         "helper_configuration_module",
+        "helper_actions_module",
+        "helper_selinux_module",
         "helper_selinux_policy",
     ):
         relative = policy.binding_paths(profile)[name][1]
@@ -123,7 +126,9 @@ def authority(profile, selected):
     }
 
 
-def configure(selected, profile, monkeypatch, tmp_path, *, deployment=None):
+def configure(  # noqa: PLR0915 - one explicit protected profile adapter
+    selected, profile, monkeypatch, tmp_path, *, deployment=None
+):
     prefix = selected.parent.parent
     paths = policy.binding_paths(profile)
     if profile == "rootless":
@@ -142,12 +147,14 @@ def configure(selected, profile, monkeypatch, tmp_path, *, deployment=None):
         monkeypatch.setattr(policy, "NATIVE_BINDINGS", patched)
     fixed_paths = policy.binding_paths
 
-    def binding_paths(selected_profile):
+    def binding_paths(selected_profile, *, observer_context=False):
         return {
             name: (tmp_path / "common" / host.relative_to("/"), relative)
             if name.startswith("helper_")
             else (host, relative)
-            for name, (host, relative) in fixed_paths(selected_profile).items()
+            for name, (host, relative) in fixed_paths(
+                selected_profile, observer_context=observer_context
+            ).items()
         }
 
     monkeypatch.setattr(policy, "binding_paths", binding_paths)
@@ -195,6 +202,8 @@ def configure(selected, profile, monkeypatch, tmp_path, *, deployment=None):
         "LOCKS": locks,
         "SCHEDULE_DIRECTORY": tmp_path / "schedule",
         "SCHEDULE": tmp_path / "schedule/50-cockpit.conf",
+        "SYNC_OBSERVER_DROP_IN": tmp_path / "observer-context/50-hfcache-observer.conf",
+        "SYNC_OBSERVER_STATE": tmp_path / "var-lib/scheduled/sync",
     }.items():
         monkeypatch.setattr(policy, name, value)
     # Platform behavior is modeled only in these profile/unit fixtures. Dedicated
@@ -217,10 +226,17 @@ def configure(selected, profile, monkeypatch, tmp_path, *, deployment=None):
     units[policy.GUARD].update(LoadState="not-found", UnitFileState="not-found")
     calls = []
 
-    def show(unit, budget, *, include_invocation=False):
+    def show(unit, budget, *, include_invocation=False, include_observer_context=False):
         budget.remaining()
         calls.append(unit)
-        return units[unit].copy() | ({"InvocationID": "e" * 32} if include_invocation else {})
+        row = {
+            key: value
+            for key, value in units[unit].items()
+            if key not in {"SELinuxContext", "DropInPaths"}
+        }
+        if include_observer_context:
+            row.update({key: units[unit].get(key, "") for key in ("SELinuxContext", "DropInPaths")})
+        return row | ({"InvocationID": "e" * 32} if include_invocation else {})
 
     monkeypatch.setattr(policy, "_show", show)
     state = SimpleNamespace(
@@ -333,6 +349,264 @@ def test_actual_protected_trees_use_original_profile_checks_and_safe_status(fixt
         assert snapshot.status()["facts"]["sync_schedule"]["reason"] == "profile-unproved"
     else:
         assert snapshot.status()["facts"]["sync_schedule"]["on_calendar"] == "*-*-* 00:00:00"
+
+
+def test_dedicated_host_effect_grants_require_additional_captured_proof(native, monkeypatch):
+    snapshot = policy.inspect_authority()
+    legacy = snapshot.status()
+    assert not legacy["permissions"]["schedule"]
+    assert not legacy["permissions"]["observer"]
+    assert legacy["permissions"]["configuration"]
+    derived = snapshot.host_action_status()
+    assert not derived["permissions"]["schedule"]
+    assert not derived["permissions"]["observer"]
+    assert derived["permission_reasons"]["schedule"] == "authority-unknown"
+    assert snapshot.status() == legacy
+    captures = []
+    monkeypatch.setattr(policy, "require_host_actions", captures.append)
+    assert snapshot.host_action_status()["permissions"]["schedule"]
+    assert snapshot.status()["permissions"]["schedule"]
+    assert captures == [snapshot, snapshot]
+
+
+@pytest.mark.parametrize("running", [False, True])
+def test_missing_observer_mac_keeps_effective_schedule_grant_and_original_state(
+    native, monkeypatch, running
+):
+    if running:
+        native.units["hfcache-sync.service"].update(
+            ActiveState="activating", SubState="start", MainPID="1234"
+        )
+    snapshot = policy.inspect_authority()
+    monkeypatch.setattr(policy, "require_host_actions", lambda _snapshot: None)
+    value = snapshot.host_action_status()
+    assert value["permissions"]["schedule"]
+    assert not value["permissions"]["observer"]
+    assert value["permission_reasons"]["observer"] == "profile-unproved"
+    assert value["facts"]["units"]["hfcache-sync.service"]["active"] == (
+        "activating" if running else "inactive"
+    )
+    if not running:
+        public = snapshot.status()
+        HostStatus.model_validate(public)
+        assert public["permissions"]["schedule"]
+        assert not public["permissions"]["observer"]
+
+
+def _optional_observer(host):
+    """Real indexed files/manager metadata; SID provisioning remains an owned adapter."""
+    body = ("[Service]\nSELinuxContext=" + policy.SYNC_OBSERVER_CONTEXT + "\n").encode()
+    write(host.selected / policy.SYNC_OBSERVER_RELATIVE, body)
+    write(policy.SYNC_OBSERVER_DROP_IN, body)
+    policy.SYNC_OBSERVER_DROP_IN.parent.chmod(0o755)
+    host.index["authority_files"][policy.SYNC_OBSERVER_RELATIVE] = file_record(
+        host.selected / policy.SYNC_OBSERVER_RELATIVE
+    )
+    host.index["bindings"][policy.SYNC_OBSERVER_BINDING] = digest(body)
+    host.units["hfcache-sync.service"].update(
+        SELinuxContext=policy.SYNC_OBSERVER_CONTEXT, DropInPaths=str(policy.SYNC_OBSERVER_DROP_IN)
+    )
+    publish(host)
+    captures = []
+    labels = SimpleNamespace(
+        installation_labels=host_selinux.installation_labels,
+        observer_state_labels=lambda inspection, _receipt, _need: captures.append(inspection),
+    )
+    return labels, captures
+
+
+def test_optional_observer_binding_is_native_only_and_keeps_old_indexes_valid(native):
+    old = copy.deepcopy(native.index)
+    assert policy._deployment(encoded(old)) == old
+    _optional_observer(native)
+    assert policy._deployment(encoded(native.index)) == native.index
+    forged = copy.deepcopy(native.index)
+    forged["profile"] = "rootless"
+    with pytest.raises(policy.InspectionError):
+        policy._deployment(encoded(forged))
+    forged = copy.deepcopy(old)
+    forged["bindings"]["another_context"] = "f" * 64
+    with pytest.raises(policy.InspectionError):
+        policy._deployment(encoded(forged))
+
+
+@pytest.mark.parametrize("process_context", ["init_t", "hfcache_sync_observer_t"])
+def test_optional_observer_context_joins_actual_manager_and_process_before_grant(
+    native, monkeypatch, process_context
+):
+    labels, captures = _optional_observer(native)
+    native.units["hfcache-sync.service"]["MainPID"] = "1234"
+    snapshot = policy.inspect_authority(host_labels=labels)
+    monkeypatch.setattr(policy, "require_host_actions", lambda _snapshot: None)
+    monkeypatch.setattr(
+        policy,
+        "observer_process_context",
+        lambda _pid, _budget: "system_u:system_r:" + process_context + ":s0",
+    )
+    value = snapshot.host_action_status()
+    assert value["permissions"]["schedule"]
+    assert value["permissions"]["observer"] == (process_context == "hfcache_sync_observer_t")
+    assert value["permission_reasons"]["observer"] == (
+        "granted" if process_context == "hfcache_sync_observer_t" else "profile-unproved"
+    )
+    assert captures
+
+
+@pytest.mark.parametrize("change", ["extra", "manager", "bytes"])
+def test_optional_observer_capture_refuses_later_dropin_or_manager_drift(native, change):
+    labels, _ = _optional_observer(native)
+    snapshot = policy.inspect_authority(host_labels=labels)
+    policy.require_sync_observer_context(snapshot)
+    if change == "extra":
+        write(policy.SYNC_OBSERVER_DROP_IN.parent / "99-unknown.conf", b"[Service]\n")
+    elif change == "manager":
+        native.units["hfcache-sync.service"]["SELinuxContext"] = "system_u:system_r:init_t:s0"
+    else:
+        policy.SYNC_OBSERVER_DROP_IN.write_bytes(b"[Service]\nSELinuxContext=-bad\n")
+    with pytest.raises(policy.InspectionError):
+        policy.revalidate(snapshot)
+
+
+@pytest.mark.parametrize("name", ["50-hfcache-observer.conf", "99-unknown.conf"])
+def test_schedule_reload_cannot_adopt_an_unindexed_sync_service_dropin(native, name):
+    write(policy.SYNC_OBSERVER_DROP_IN.parent / name, b"[Service]\n")
+    policy.SYNC_OBSERVER_DROP_IN.parent.chmod(0o755)
+    snapshot = policy.inspect_authority()
+    with pytest.raises(policy.InspectionError):
+        snapshot._inspection.observer_dropins()
+    assert (policy.SYNC_OBSERVER_DROP_IN.parent / name).read_bytes() == b"[Service]\n"
+
+
+def test_absent_optional_context_parent_is_revalidated_without_creating_it(native):
+    snapshot = policy.inspect_authority()
+    snapshot._inspection.observer_dropins()
+    assert not policy.SYNC_OBSERVER_DROP_IN.parent.exists()
+    policy.SYNC_OBSERVER_DROP_IN.parent.mkdir(mode=0o755)
+    with pytest.raises(policy.InspectionError):
+        policy.revalidate(snapshot)
+
+
+@pytest.mark.parametrize("optional", [False, True])
+@pytest.mark.parametrize(
+    "loaded",
+    [
+        "/run/systemd/system/hfcache-sync.service.d/override.conf",
+        "/usr/lib/systemd/system/hfcache-sync.service.d/unknown.conf",
+    ],
+)
+def test_common_host_action_proof_refuses_loaded_unknown_sync_dropin(native, optional, loaded):
+    if optional:
+        _optional_observer(native)
+    labels = SimpleNamespace(
+        installation_labels=host_selinux.installation_labels,
+        host_action_labels=lambda *_args: None,
+        observer_state_labels=host_selinux.observer_state_labels,
+    )
+    native.units["hfcache-sync.service"]["DropInPaths"] = (
+        str(policy.SYNC_OBSERVER_DROP_IN) + " " + loaded if optional else loaded
+    )
+    snapshot = policy.inspect_authority(host_labels=labels)
+    with pytest.raises(policy.InspectionError):
+        policy.require_host_actions(snapshot)
+    assert not snapshot.host_action_status()["permissions"]["schedule"]
+    assert not snapshot.status()["permissions"]["schedule"]
+    assert snapshot.status()["permissions"]["configuration"]
+
+
+@pytest.mark.parametrize("optional", [False, True])
+def test_common_schedule_proof_revalidates_loaded_dropins_without_observer_mac(native, optional):
+    if optional:
+        _optional_observer(native)
+    labels = SimpleNamespace(
+        installation_labels=host_selinux.installation_labels,
+        host_action_labels=lambda *_args: None,
+        observer_state_labels=host_selinux.observer_state_labels,
+    )
+    snapshot = policy.inspect_authority(host_labels=labels)
+    policy.require_host_actions(snapshot)
+    status = snapshot.host_action_status()
+    assert status["permissions"]["schedule"]
+    assert not status["permissions"]["observer"]
+    assert status["permission_reasons"]["observer"] == "profile-unproved"
+    policy.revalidate(snapshot)
+    native.units["hfcache-sync.service"]["DropInPaths"] = (
+        "/run/systemd/system/hfcache-sync.service.d/override.conf"
+    )
+    with pytest.raises(policy.InspectionError):
+        policy.revalidate(snapshot)
+
+
+@pytest.mark.parametrize(
+    ("raw", "valid"),
+    [
+        (b"system_u:system_r:init_t:s0", True),
+        (b"system_u:system_r:hfcache_sync_observer_t:s0\n", True),
+        (b"unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023\0", True),
+        (b"system_u:system_r:init_t:s0\n\0", False),
+        (b"system_u:system_r:init_t:s0\0\0", False),
+        (b"system_u:system_r:init_t:s0\nprivate", False),
+        (b"x" * 4097, False),
+    ],
+)
+def test_process_sid_reader_is_bounded_exact_and_does_not_infer_signal_authority(
+    tmp_path, monkeypatch, raw, valid
+):
+    path = tmp_path / "owned-process-context"
+    path.write_bytes(raw)
+    original = os.open
+    target = Path("/proc/1234/attr/current")
+
+    def open_owned(name, flags):
+        assert Path(name) == target
+        return original(path, flags)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(policy.os, "open", open_owned)
+        if valid:
+            assert (
+                policy.observer_process_context(1234, policy.InspectionBudget())
+                == raw.rstrip(b"\0\n").decode()
+            )
+        else:
+            with pytest.raises(policy.InspectionError):
+                policy.observer_process_context(1234, policy.InspectionBudget())
+
+
+def test_starting_oneshot_is_truthful_only_in_dedicated_status(native):
+    native.units["hfcache-sync.service"].update(ActiveState="activating", SubState="start")
+    snapshot = policy.inspect_authority()
+    dedicated = snapshot.host_action_status()
+    assert dedicated["facts"]["units"]["hfcache-sync.service"]["active"] == "activating"
+    public = snapshot.status()
+    HostStatus.model_validate(public)
+    assert public["state"] == "unavailable"
+    assert public["reason"] == "facts-unavailable"
+
+
+@pytest.mark.parametrize("foreign_drift", [False, True])
+def test_confirm_schedule_rebases_only_owned_leaf_and_observer_state(native, foreign_drift):
+    policy.SCHEDULE_DIRECTORY.mkdir(mode=0o755)
+    write(policy.SCHEDULE, b"[Timer]\nOnCalendar=weekly\n")
+    snapshot = policy.inspect_authority()
+    original = policy.SCHEDULE.stat().st_ino
+    retained = policy.SCHEDULE_DIRECTORY / "retained-original"
+    policy.SCHEDULE.rename(retained)
+    candidate = b"[Timer]\nOnCalendar=\nOnCalendar=daily\n"
+    write(policy.SCHEDULE, candidate)
+    # Preservation is real, but the private backup directory is separately
+    # proven by the writer; this focused capture test keeps schedule entries closed.
+    retained.rename(native.config.parent / "owned-schedule-predecessor")
+    assert (native.config.parent / "owned-schedule-predecessor").stat().st_ino == original
+    native.units["hfcache-sync.service"].update(ActiveState="activating", SubState="start")
+    if foreign_drift:
+        native.key.write_bytes(b"z" * 32)
+        with pytest.raises(policy.InspectionError):
+            policy.confirm_schedule(snapshot, candidate, action="replace", timer_was_active=False)
+    else:
+        policy.confirm_schedule(snapshot, candidate, action="replace", timer_was_active=False)
+        # The captured generation itself was not widened or silently refreshed.
+        with pytest.raises(policy.InspectionError):
+            policy.revalidate(snapshot)
 
 
 @pytest.mark.parametrize("fixture", ["native", "rootless"])
@@ -511,6 +785,8 @@ def test_all_nine_original_rootless_bindings_are_still_required(rootless, name):
         "helper_protocol_module",
         "helper_peer_module",
         "helper_configuration_module",
+        "helper_actions_module",
+        "helper_selinux_module",
     ],
 )
 def test_each_trusted_bootstrap_copy_is_bound(fixture, name, request):
@@ -1071,7 +1347,7 @@ def test_actual_manager_parser_fails_closed_for_bad_accounting(kind, monkeypatch
     elif kind == "wrong-unit":
         body = body.replace(unit.encode(), b"other.service")
     elif kind == "unknown":
-        body = body.replace(b"ActiveState=inactive", b"ActiveState=activating")
+        body = body.replace(b"ActiveState=inactive", b"ActiveState=unrecognized")
     elif kind == "missing":
         body = body.replace(b"MainPID=0\n", b"")
     elif kind == "bad-pid":

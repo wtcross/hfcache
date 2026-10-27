@@ -354,8 +354,12 @@ class EndpointBinding:
             os.close(descriptor)
 
 
+MAX_JOURNAL_EXCHANGES = 2
+
+
 class _Job:
     def __init__(self) -> None:
+        self.journal = False
         self.deadline = time.monotonic() + CLIENT_SECONDS
         self.lock = threading.Lock()
         self.cancelled = False
@@ -399,13 +403,16 @@ class HostHelperClient:
         with self._condition:
             self._workers.add(threading.current_thread())
 
-    def _reserve(self) -> _Job:
+    def _reserve(self, *, journal: bool = False) -> _Job:
         with self._condition:
             if self._closed:
                 raise HostProtocolError(_UNAVAILABLE)
             if len(self._jobs) >= MAX_EXCHANGES:
                 raise HostProtocolError(_BUSY)
+            if journal and sum(job.journal for job in self._jobs) >= MAX_JOURNAL_EXCHANGES:
+                raise HostProtocolError(_BUSY)
             job = _Job()
+            job.journal = journal
             self._jobs.add(job)
             return job
 
@@ -461,10 +468,37 @@ class HostHelperClient:
         incoming = _request_body("config-outcome", body)
         return self._execute(self._reserve(), "config-outcome", incoming)
 
+    def observer_status(self) -> dict[str, object]:
+        return self._execute(self._reserve(), "observer-status")
+
+    def schedule_validate(self, body: dict[str, object]) -> dict[str, object]:
+        incoming = _request_body("schedule-validate", body)
+        return self._execute(self._reserve(), "schedule-validate", incoming)
+
+    def schedule_change(self, body: dict[str, object]) -> dict[str, object]:
+        incoming = _request_body("schedule-change", body)
+        return self._execute(self._reserve(), "schedule-change", incoming)
+
+    def schedule_outcome(self, body: dict[str, object]) -> dict[str, object]:
+        incoming = _request_body("schedule-outcome", body)
+        return self._execute(self._reserve(), "schedule-outcome", incoming)
+
+    def observer_stop(self, body: dict[str, object]) -> dict[str, object]:
+        incoming = _request_body("observer-stop", body)
+        return self._execute(self._reserve(), "observer-stop", incoming)
+
+    def observer_outcome(self, body: dict[str, object]) -> dict[str, object]:
+        incoming = _request_body("observer-outcome", body)
+        return self._execute(self._reserve(), "observer-outcome", incoming)
+
+    def journal_read(self, body: dict[str, object]) -> dict[str, object]:
+        incoming = _request_body("journal-read", body)
+        return self._execute(self._reserve(journal=True), "journal-read", incoming)
+
     async def _async(
         self, operation: str, body: dict[str, object] | None = None
     ) -> dict[str, object]:
-        job = self._reserve()
+        job = self._reserve(journal=operation == "journal-read")
         try:
             submitted = self._executor.submit(self._execute, job, operation, body)
         except RuntimeError:
@@ -496,6 +530,15 @@ class HostHelperClient:
 
     async def async_config_outcome(self, body: dict[str, object]) -> dict[str, object]:
         return await self._async("config-outcome", _request_body("config-outcome", body))
+
+    async def async_observer_status(self) -> dict[str, object]:
+        return await self._async("observer-status")
+
+    async def async_schedule_validate(self, body: dict[str, object]) -> dict[str, object]:
+        return await self._async("schedule-validate", _request_body("schedule-validate", body))
+
+    async def async_journal_read(self, body: dict[str, object]) -> dict[str, object]:
+        return await self._async("journal-read", _request_body("journal-read", body))
 
     def close(self, *, timeout: float = 24.0) -> bool:
         """Stop admission, close owned sockets, and report actual joined workers."""

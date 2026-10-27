@@ -20,6 +20,8 @@ HELPER_SOURCES = {
     "host-helper/host_protocol.py": "src/hfcache/host_protocol.py",
     "host-helper/host_peer.py": "src/hfcache/host_peer.py",
     "host-helper/host_configuration.py": "src/hfcache/host_configuration.py",
+    "host-helper/host_actions.py": "src/hfcache/host_actions.py",
+    "host-helper/host_selinux.py": "src/hfcache/host_selinux.py",
     "host-helper/hfcache-host-helper.cil": "packaging/selinux/hfcache-host-helper.cil",
 }
 

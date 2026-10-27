@@ -129,3 +129,12 @@ guards and historical evidence remain. See [server](../server.md),
 legacy guard, durable private outcomes and original-handle read-only observation.
 It supersedes earlier assumptions of a wholly read-only helper for this fixed
 operation; all unrelated authority and original reasoning remain.
+
+
+## Fixed host-effect amendment (2026-10-27)
+
+[Decision156](decision-156.md) adds a bounded fixed-route host-action lane,
+original-process observer stop, independent durable outcomes and finite diagnostic
+reads. It preserves archive serialization, original operation identity and this
+record's unrelated requirements. Implementation and actual installed conformance
+are separately required.

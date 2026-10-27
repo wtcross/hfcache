@@ -13,6 +13,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Self
 
+from hfcache.api.host_routes import HOST_EFFECT_ROUTES
 from hfcache.api.lifecycle import unavailable
 from hfcache.api.operations import Admission, OperationReceipt, OperationStore
 from hfcache.errors import HfcacheError, OperationError, RequestError
@@ -54,7 +55,7 @@ class OperationRunner:
     never holds the store lock while waiting for that condition (AD-17).
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 - fixed lane policy and existing lifecycle seams
         self,
         store: OperationStore,
         policy: InstalledPolicy,
@@ -62,15 +63,20 @@ class OperationRunner:
         max_pending: int = 16,
         monotonic: Callable[[], float] = time.monotonic,
         check_verification_available: Callable[[], None] | None = None,
+        host_actions: bool = False,
     ) -> None:
         if type(max_pending) is not int or not 0 <= max_pending <= _MAX_PENDING:
             message = "pending capacity must be an integer from zero to 64"
+            raise ValueError(message)
+        if type(host_actions) is not bool or (host_actions and max_pending != 1):
+            message = "the fixed host-action lane has exactly one pending slot"
             raise ValueError(message)
         self.store = store
         self.policy = policy
         self.max_pending = max_pending
         self.monotonic = monotonic
         self.check_verification_available = check_verification_available
+        self.host_actions = host_actions
         self._condition = threading.Condition(threading.RLock())
         self._queue: deque[_Work] = deque()
         self._thread: threading.Thread | None = None
@@ -105,6 +111,8 @@ class OperationRunner:
                 raise unavailable()
             self._reconcile = reconcile
             for receipt in reversed(self.store.list()):
+                if not self._owns(receipt.route):
+                    continue
                 if receipt.state not in _ACTIVE_STATES:
                     continue
                 recovered = None
@@ -135,9 +143,14 @@ class OperationRunner:
                     self.store.transition(receipt.operation_id, "interrupted")
             if self._queue:
                 self._active_id = self._queue[0].receipt.operation_id
-            self._thread = threading.Thread(target=self._loop, name="hfcache-command", daemon=False)
+            name = "hfcache-host-action" if self.host_actions else "hfcache-command"
+            self._thread = threading.Thread(target=self._loop, name=name, daemon=False)
             self._accepting = True
             self._thread.start()
+
+    def _owns(self, route: str) -> bool:
+        """Fixed disjoint ownership, including restart; never claim another lane."""
+        return (route in HOST_EFFECT_ROUTES) == self.host_actions
 
     def submit(  # noqa: PLR0913 - trusted lane policy is separate from canonical request data
         self,
@@ -154,6 +167,9 @@ class OperationRunner:
         context: ExecutionContext | None = None,
         authorize: Authorize | None = None,
     ) -> Admission:
+        if not self._owns(route) or (self.host_actions and (requires_lock or delegated)):
+            raise RequestError
+
         def validate_budget(value: float) -> float:
             if (
                 isinstance(value, bool)

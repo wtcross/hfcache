@@ -232,3 +232,12 @@ bookkeeping; the displayed active-page count therefore comes from that ready
 payload rather than a stale stored count. Previous positions and their finite
 retention remain unchanged. This prevents a transient zero loaded extent beside
 visible rows without scanning, inventing totals or altering read authority.
+
+
+## Fixed host-effect amendment (2026-10-27)
+
+[Decision156](decision-156.md) adds a bounded fixed-route host-action lane,
+original-process observer stop, independent durable outcomes and finite diagnostic
+reads. It preserves archive serialization, original operation identity and this
+record's unrelated requirements. Implementation and actual installed conformance
+are separately required.

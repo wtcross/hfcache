@@ -89,3 +89,12 @@ are presentation of already validated bounded data. Loaded history is never a
 complete archive/repository audit. Events/journals stay diagnostic and do not
 replace classified domain results. See [Operations](../web-ui/operations.md).
 No endpoint, report format, archive-path access or execution authority changes.
+
+
+## Fixed host-effect amendment (2026-10-27)
+
+[Decision156](decision-156.md) adds a bounded fixed-route host-action lane,
+original-process observer stop, independent durable outcomes and finite diagnostic
+reads. It preserves archive serialization, original operation identity and this
+record's unrelated requirements. Implementation and actual installed conformance
+are separately required.

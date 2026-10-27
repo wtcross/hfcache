@@ -1637,10 +1637,24 @@ private policy/deployment/address records are specified in
 
 The new protected deployment index additionally requires
 `selinux_installation_sha256` and the fixed `helper_selinux_policy` source
-binding. Its independently installed schema1 SELinux receipt has exactly
+binding. Its independently installed SELinux receipt has exactly
 `schema_version`, `module`, `domain`, `kernel_policy_sha256` and `labels`.
 The module identifies the reviewed source and loaded module at provisioning;
-the twelve label roles contain fixed type names and no caller-selected paths.
+the fifteen base label roles contain fixed type names and no caller-selected paths.
+Explicit integer version1 preserves existing read/configuration provisioning.
+Explicit integer version2 additionally requires all four fixed roles
+`schedule_directory`, `schedule_file`, `host_action_state` and `sync_timer_unit`,
+with the exact types in the [label contract](host-administration.md#mandatory-selinux-isolation).
+Version2 may additionally contain only `observer_state`, exactly
+`hfcache_sync_observer_state_t`, for independently provisioned native observer
+control. Without it, a schedule-only version2 profile remains valid. The
+top-level fields and module version1 remain unchanged. No missing base/host group,
+other extra or caller-selected role is accepted for either version. Version1 cannot
+claim the additional native host effects; version2 itself grants no permission.
+Native deployment bindings additionally permit only the optional
+`sync_observer_context` role for the exact fixed packaged/system context fragment.
+Its digest joins the selected authority table. Existing native indexes without it
+retain independent reads/configuration/schedule; rootless cannot contain it.
 `engine_locks` has the one fixed type `hfcache_host_helper_engine_lock_t` for
 exactly the two existing rootless64B persistent image/layer locks, the fixed
 zero-byte stock runtime alive lock and the fixed64B runtime
@@ -1750,3 +1764,157 @@ removal before unblocking; a local not-submitted summary remains memory-only.
 Failed removal persistence retains the key and block. Missing/expired receipts
 never trigger automatic record cleanup. Passwords, tokens, request/result bodies,
 configuration drafts and raw logs are forbidden. See [browser recovery](web-ui/operations.md).
+
+
+### 18.7 Fixed host-action projections schema 1
+
+
+`SchemaOne`: exact integer1 (not bool). `Id`: lowercase32hex. `Digest/Revision`:
+lowercase64hex. `Calendar`: printableASCII1..4096, nonwhitespace, no backslash.
+`Delay`: printableASCII1..256, nonwhitespace, no backslash; optional is null,
+not empty string. Values are passed after fixed argv `--`, never shell text.
+`OutcomeState`: prepared | unchanged | effect_unconfirmed | confirmed | conflict |
+unknown. Only confirmed/unchanged AND pending=false can settle effect certainty.
+Confirmed+pending=true MUST remain valid for crash after durable outcome and
+before marker removal. Outcome read never removes that marker.
+
+## Exact request/validation models
+
+- `ScheduleValidationRequest {on_calendar:Calendar, randomized_delay_sec:Delay|null}`
+- `ScheduleValidation {schema_version:1, archive_id:ArchiveId,
+  on_calendar:Calendar, randomized_delay_sec:Delay|null,
+  normalized_on_calendar:Calendar, normalized_randomized_delay_sec:Delay|null,
+  next_elapse:string|null}`. `next_elapse` max512 printableASCII is the bounded
+  actual tool description, not an invented UTC instant or execution promise.
+  Normalized delay null exactly when request delay null; echo fields must match
+  original request in typed client. No expected revision or receipt is needed.
+- `ScheduleChangeRequest`: strict discriminated union:
+  `{action:pause|resume|reset, expected_revision:Revision}` OR
+  `{action:replace, expected_revision:Revision, on_calendar:Calendar,
+    randomized_delay_sec:Delay|null}`. No other variant accepts calendar/delay.
+- `ObserverExpected {boot_id:canonical UUID, invocation_id:Id,
+  main_pid:integer 2..2147483647, start_ticks:integer 1..9007199254740991}`.
+- `ObserverStopRequest {expected:ObserverExpected}`. No unit/path/manager/UID
+  field is accepted. Fixed unit is derived server-side.
+
+## Read-only observer status
+
+`HostObserverStatus {schema_version:1, archive_id:ArchiveId,
+ profile:native|rootless|null, host_binding:HostBinding|null,
+ permissions:{schedule:bool,observer:bool},
+ permission_reasons:{schedule:HostPermissionReason,observer:HostPermissionReason},
+ state:observed|inactive|unavailable,
+ reason:HostReason|profile-unproved|null,
+ unit:literal hfcache-sync.service, expected:ObserverExpected|null}`.
+
+This is the dedicated host-action authority projection. It reuses the exact
+existing HostBinding (deployment/policy/release/source/archive) and the closed
+HostPermissionReason values for the TWO effective flags only. Every true flag
+must have reason granted; unknown authority has both false and no expected tuple.
+Known rootless can retain profile+host_binding while unavailable/profile-unproved,
+both permissions false and reasons profile-unproved. Observed requires native+
+known host_binding+expected+reasonnull; inactive requires native+known host_binding
++expectednull+reasonnull. Binding.archive_id must equal outer archive_id.
+Unavailable unknown helper may have profilenull/host_bindingnull and never grants.
+
+Internal fixed inspection may validate finite activating/deactivating service
+facts to authenticate an actual oneshot invocation. Do not widen old public
+HostStatus1 or normalize activating to active: its old projection safely remains
+facts-unavailable. New fixed host-action authorization uses THIS status and fresh
+expected invocation, not a permissive oldstatus fallback. No field claims API
+operation completion. HOST_READ gates reads; schedule/observer grants remain
+independently protected, freshly checked on effect. No unit/path/manager is
+accepted as a caller-selected command.
+
+A native observed tuple or genuinely inactive state can have schedule granted
+and observer denied/profile-unproved when optional confined observer provisioning
+is absent. Identity observation does not grant signaling authority. Do not replace
+a known running observer with an inactive claim or make schedule authority depend
+on this optional observer provisioning. Exact manager/process SIDs remain private
+authority checks; they add no caller-controlled field to ObserverExpected.
+
+## Keyed outcome projections
+
+Common required fields on each distinct model:
+`schema_version:1, archive_id:ArchiveId, operation_id:Id,
+ request_digest:Digest, state:OutcomeState, pending:bool`.
+
+`ScheduleChangeOutcome` adds exactly:
+- `action:pause|resume|replace|reset|null`
+- `expected_revision:Revision|null`
+- `stored_revision:Revision|null`
+- `file_state:unchanged|installed|removed|unknown`
+- `manager_state:not_sent|reload_acknowledged|timer_acknowledged|unknown`
+- `timer_was_active:bool|null`
+- `timer_is_active:bool|null`
+
+This separates stored bytes from ordered manager acknowledgement. No raw drop-in,
+calendar, exception or secret enters the receipt/outcome. Missing history uses
+unknown with nullable action/revisions/timer observations and unknown effects;
+known captured fields may survive unknown if coherent. Every nonunknown state
+requires action+both revisions; confirmed requires known timer before/after and
+known file/manager observations. Prepared is pending, unchanged-file/not_sent, with matching expected/stored
+revision. Unchanged means a durably proved pre-effect refusal with no manager
+action and pending=false. Its stored revision may differ from expected only
+with unchanged file, not_sent manager and known equal before/after timer state;
+never serialize the stale expected revision as the actual stored one. Conflict remains
+unknown-effects to clients even if marker absent. Confirmed pause/resume must
+have unchanged file/revision, timer_acknowledged and false/true final timer
+respectively. Confirmed replace/reset must have reload_acknowledged when the
+prior timer was inactive (still inactive), or timer_acknowledged after reload
+when it was active (still active). Reset allows removed or unchanged when no
+managed file existed; replace installed. No enablement action is modeled.
+
+`ObserverStopOutcome` adds exactly:
+- `expected:ObserverExpected|null`
+- `stop_state:not_sent|acknowledged|exit_confirmed|unknown`
+
+Every nonunknown state requires expected. Confirmed requires exit_confirmed for
+that ORIGINAL binding; acknowledged alone is effect_unconfirmed. Unchanged
+requires not_sent. Current or replacement invocation is not substituted into
+expected; obtain a new status read separately. A confirmed+pendingtrue crash is
+still blocked by controller. No success claim about accepted API/domain work.
+
+Private effect frames include operation_id+request_digest and the exact typed
+request. Private outcome reads take only operation_id+request_digest. Public GET
+routes use original Basic subject/key lookup plus exact route/ID, then stored
+request_digest; no fresh write grant, new key, replay or generic manager action.
+Fixed original-outcome reads:
+GET /host/sync-schedule/changes/{operation_id}
+GET /host/sync-observer/stops/{operation_id}
+The two mutation routes use existing AcceptanceResponse/operation GET/events/
+result unchanged, with new exact payload authorities/command bindings.
+
+## Bounded journal
+
+`JournalSource`: sync-observer | verify-observer, fixed to system sync/verify
+service only. No API/worker/helper or caller-selected sources are accepted.
+`JournalQuery {source:JournalSource, cursor:string|null, limit:integer1..80}`;
+omitted cursor means null, omitted limit means80. Cursor max2048 printableASCII,
+opaque and authenticated to source/boot/authority; never a raw filter or argv.
+
+`HostJournalPage {schema_version:1, archive_id:ArchiveId, source:JournalSource,
+ entries:list[HostJournalEntry] max80, next_cursor:string|null max2048,
+ gap:bool, truncated:bool}`.
+`HostJournalEntry {at:UTC timestamp|null, message:string}` with actual timestamp
+when supplied, UTF8 message<=8192 bytes, aggregate messageUTF8<=65536 bytes.
+Whole encoded page<=512KiB, helper raw/process/time budgets separately fixed.
+At most requested limit entries; request source must equal response source.
+Malformed/forged/source-mismatched cursor refuses; an authenticated cursor whose
+boot/history vanished yields explicit gap (never completion). Truncated reflects
+line/aggregate/display omission; gap also covers lost history. Messages contain only the closed event/level/run-ID projection specified in
+[host administration](host-administration.md#fixed-schedule-observer-and-journal-operations),
+and are rendered as plain text. No operation IDs/results
+are inferred from logs, no unbounded follower or additional framework.
+
+
+Private effect bodies are exactly `{operation_id,request_digest,request}` where
+request is the corresponding strict schedule-change or observer-stop request.
+Private outcome reads accept exactly `{operation_id,request_digest}`.
+`observer-status` has an empty body; `schedule-validate` is the exact validation
+request; `journal-read` has all three resolved query fields. Private history uses
+its own authenticated schema/domain and original-ID binding; it does not change
+archive, API-receipt, configuration or browser persisted schemas. Native host
+labels are optional protected provisioning for the new capabilities; old read/
+configuration-only evidence remains valid without new grants. See
+[decision156](adr/decision-156.md).

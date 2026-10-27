@@ -1657,6 +1657,29 @@ Startup offline initialization
 is only a library switch. See [server](server.md), [API lifecycle](api.md#admission-idempotency-and-lifecycle),
 INV-014/015 and the [supervised recovery boundary](#782-explicit-cancellation-of-an-interrupted-download).
 
+### Fixed host-action lane amendment (2026-10-27)
+
+[Decision156](adr/decision-156.md) adds one separately bounded non-archive lane
+for the two fixed schedule/observer routes, reusing the same admission store and
+runner lifecycle. It has one executing and at most one queued action, with route-
+scoped startup interruption and drain ownership. The existing domain lane,
+verification delegation and original archive flock remain single. Host effects
+run through the independently protected helper without acquiring that archive
+flock; stopping a proven original observer never cancels its accepted backend
+work. Both admissions stop and both lanes drain while the helper remains usable.
+Unknown host effects halt only their lane and preserve original evidence; no
+startup reconstructs a request for execution. INV022 and the
+[host contract](host-administration.md#fixed-schedule-observer-and-journal-operations)
+define exact identity, authority, outcomes and finite diagnostic limits.
+
+Installed native conformance also requires explicit optional observer confinement:
+one protected/indexed fixed context fragment selects the dedicated SDK domain and
+state label. Unproved default context is insufficient; init_t is not a signal
+target. Fresh manager
+and original process SID proof gates only observer control; schedule authority and
+ordinary version1 scheduling/read/configuration remain independent. No unconfined
+fallback, runtime relabel or broad process-signal permission follows.
+
 ## 9. Contract authority
 
 Durable formats carry explicit independent versions and refuse unsupported

@@ -3275,6 +3275,116 @@
       "kind": "union",
       "semantic_ids": []
     },
+    "HostActionPermissionReasons": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "schedule",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "granted"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "policy-denied"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "guard-held"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "profile-unproved"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "authority-unknown"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "helper-unavailable"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "observer",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "granted"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "policy-denied"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "guard-held"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "profile-unproved"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "authority-unknown"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "helper-unavailable"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "HostActionPermissions": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "schedule",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "observer",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
     "HostBinding": {
       "extra": "forbid",
       "fields": [
@@ -3500,6 +3610,405 @@
       "kind": "object",
       "semantic_ids": [
         "hfcache.host_models.HostFacts.exact_units"
+      ]
+    },
+    "HostJournalEntry": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "at",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": null,
+                "min_codepoints": null,
+                "pattern": null,
+                "semantic_ids": [
+                  "timestamp.serialized"
+                ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "message",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 8192,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.host_actions_models._journal_message"
+            ]
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "HostJournalPage": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "schema_version",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [
+              "hfcache.host_models._one"
+            ],
+            "value": 1
+          },
+          "required": true
+        },
+        {
+          "name": "archive_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_archive_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "source",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "sync-observer"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "verify-observer"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "entries",
+          "node": {
+            "items": {
+              "kind": "ref",
+              "name": "HostJournalEntry",
+              "semantic_ids": []
+            },
+            "kind": "array",
+            "max_items": 80,
+            "min_items": null,
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "next_cursor",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": 2048,
+                "min_codepoints": 1,
+                "pattern": null,
+                "semantic_ids": [
+                  "hfcache.host_actions_models._printable"
+                ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "gap",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "truncated",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.host_actions_models.HostJournalPage.bounded_page"
+      ]
+    },
+    "HostObserverStatus": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "schema_version",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [
+              "hfcache.host_models._one"
+            ],
+            "value": 1
+          },
+          "required": true
+        },
+        {
+          "name": "archive_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_archive_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "profile",
+          "node": {
+            "choices": [
+              {
+                "choices": [
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "native"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "rootless"
+                  }
+                ],
+                "kind": "union",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "host_binding",
+          "node": {
+            "choices": [
+              {
+                "kind": "ref",
+                "name": "HostBinding",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "permissions",
+          "node": {
+            "kind": "ref",
+            "name": "HostActionPermissions",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "permission_reasons",
+          "node": {
+            "kind": "ref",
+            "name": "HostActionPermissionReasons",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "state",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "observed"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "inactive"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "unavailable"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "reason",
+          "node": {
+            "choices": [
+              {
+                "choices": [
+                  {
+                    "choices": [
+                      {
+                        "kind": "literal",
+                        "semantic_ids": [],
+                        "value": "helper-disabled"
+                      },
+                      {
+                        "kind": "literal",
+                        "semantic_ids": [],
+                        "value": "helper-unavailable"
+                      },
+                      {
+                        "kind": "literal",
+                        "semantic_ids": [],
+                        "value": "helper-timeout"
+                      },
+                      {
+                        "kind": "literal",
+                        "semantic_ids": [],
+                        "value": "helper-refused"
+                      },
+                      {
+                        "kind": "literal",
+                        "semantic_ids": [],
+                        "value": "helper-busy"
+                      },
+                      {
+                        "kind": "literal",
+                        "semantic_ids": [],
+                        "value": "policy-missing"
+                      },
+                      {
+                        "kind": "literal",
+                        "semantic_ids": [],
+                        "value": "policy-invalid"
+                      },
+                      {
+                        "kind": "literal",
+                        "semantic_ids": [],
+                        "value": "deployment-unverified"
+                      },
+                      {
+                        "kind": "literal",
+                        "semantic_ids": [],
+                        "value": "facts-unavailable"
+                      },
+                      {
+                        "kind": "literal",
+                        "semantic_ids": [],
+                        "value": "guard-unconfirmed"
+                      },
+                      {
+                        "kind": "literal",
+                        "semantic_ids": [],
+                        "value": "key-missing"
+                      },
+                      {
+                        "kind": "literal",
+                        "semantic_ids": [],
+                        "value": "key-invalid"
+                      },
+                      {
+                        "kind": "literal",
+                        "semantic_ids": [],
+                        "value": "config-unavailable"
+                      }
+                    ],
+                    "kind": "union",
+                    "semantic_ids": []
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "profile-unproved"
+                  }
+                ],
+                "kind": "union",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "unit",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": "hfcache-sync.service"
+          },
+          "required": true
+        },
+        {
+          "name": "expected",
+          "node": {
+            "choices": [
+              {
+                "kind": "ref",
+                "name": "ObserverExpected",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.host_actions_models.HostObserverStatus.coherent_authority"
       ]
     },
     "HostPermissionReasons": {
@@ -5353,6 +5862,215 @@
       "kind": "object",
       "semantic_ids": [
         "hfcache.catalog_query_models.ObservationSummary._ordered"
+      ]
+    },
+    "ObserverExpected": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "boot_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_archive_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "invocation_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_run_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "main_pid",
+          "node": {
+            "kind": "integer",
+            "maximum": "2147483647",
+            "minimum": "2",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "start_ticks",
+          "node": {
+            "kind": "integer",
+            "maximum": "9007199254740991",
+            "minimum": "1",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "ObserverStopOutcome": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "schema_version",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [
+              "hfcache.host_models._one"
+            ],
+            "value": 1
+          },
+          "required": true
+        },
+        {
+          "name": "archive_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_archive_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "operation_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_run_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "request_digest",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_sha256"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "state",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "prepared"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "unchanged"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "effect_unconfirmed"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "confirmed"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "conflict"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "unknown"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "pending",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "expected",
+          "node": {
+            "choices": [
+              {
+                "kind": "ref",
+                "name": "ObserverExpected",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "stop_state",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "not_sent"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "acknowledged"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "exit_confirmed"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "unknown"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.host_actions_models.ObserverStopOutcome.coherent_effect"
       ]
     },
     "OperationPayload": {
@@ -9799,6 +10517,75 @@
         "hfcache.api.command_models.VerificationSubmission.scope"
       ]
     },
+    "RequestObserverExpected": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "boot_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_archive_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "invocation_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_run_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "main_pid",
+          "node": {
+            "kind": "integer",
+            "maximum": "2147483647",
+            "minimum": "2",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "start_ticks",
+          "node": {
+            "kind": "integer",
+            "maximum": "9007199254740991",
+            "minimum": "1",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "RequestObserverStopRequest": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "expected",
+          "node": {
+            "kind": "ref",
+            "name": "RequestObserverExpected",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
     "RequestPlanSubmission": {
       "extra": "forbid",
       "fields": [
@@ -10271,6 +11058,147 @@
       "semantic_ids": [
         "hfcache.api.command_models.VerificationSubmission.scope"
       ]
+    },
+    "RequestScheduleChangeRequest": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "action",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "pause"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "resume"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "replace"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "reset"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "expected_revision",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_sha256"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "on_calendar",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": 4096,
+                "min_codepoints": 1,
+                "pattern": null,
+                "semantic_ids": [
+                  "hfcache.host_actions_models._schedule_text"
+                ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
+        },
+        {
+          "name": "randomized_delay_sec",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": 256,
+                "min_codepoints": 1,
+                "pattern": null,
+                "semantic_ids": [
+                  "hfcache.host_actions_models._schedule_text"
+                ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": false
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.host_actions_models.ScheduleChangeRequest.exact_action"
+      ]
+    },
+    "RequestScheduleValidationRequest": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "on_calendar",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 4096,
+            "min_codepoints": 1,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.host_actions_models._schedule_text"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "randomized_delay_sec",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": 256,
+                "min_codepoints": 1,
+                "pattern": null,
+                "semantic_ids": [
+                  "hfcache.host_actions_models._schedule_text"
+                ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
     },
     "RequestSettingsReplace": {
       "extra": "forbid",
@@ -11897,6 +12825,423 @@
       ],
       "kind": "object",
       "semantic_ids": []
+    },
+    "ScheduleChangeOutcome": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "schema_version",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [
+              "hfcache.host_models._one"
+            ],
+            "value": 1
+          },
+          "required": true
+        },
+        {
+          "name": "archive_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_archive_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "operation_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_run_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "request_digest",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_sha256"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "state",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "prepared"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "unchanged"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "effect_unconfirmed"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "confirmed"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "conflict"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "unknown"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "pending",
+          "node": {
+            "kind": "boolean",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "action",
+          "node": {
+            "choices": [
+              {
+                "choices": [
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "pause"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "resume"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "replace"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "reset"
+                  }
+                ],
+                "kind": "union",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "expected_revision",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": null,
+                "min_codepoints": null,
+                "pattern": null,
+                "semantic_ids": [
+                  "hfcache.models._parse_sha256"
+                ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "stored_revision",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": null,
+                "min_codepoints": null,
+                "pattern": null,
+                "semantic_ids": [
+                  "hfcache.models._parse_sha256"
+                ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "file_state",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "unchanged"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "installed"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "removed"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "unknown"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "manager_state",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "not_sent"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "reload_acknowledged"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "timer_acknowledged"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "unknown"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "timer_was_active",
+          "node": {
+            "choices": [
+              {
+                "kind": "boolean",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "timer_is_active",
+          "node": {
+            "choices": [
+              {
+                "kind": "boolean",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.host_actions_models.ScheduleChangeOutcome.coherent_effect"
+      ]
+    },
+    "ScheduleValidation": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "schema_version",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [
+              "hfcache.host_models._one"
+            ],
+            "value": 1
+          },
+          "required": true
+        },
+        {
+          "name": "archive_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_archive_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "on_calendar",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 4096,
+            "min_codepoints": 1,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.host_actions_models._schedule_text"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "randomized_delay_sec",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": 256,
+                "min_codepoints": 1,
+                "pattern": null,
+                "semantic_ids": [
+                  "hfcache.host_actions_models._schedule_text"
+                ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "normalized_on_calendar",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 4096,
+            "min_codepoints": 1,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.host_actions_models._schedule_text"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "normalized_randomized_delay_sec",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": 256,
+                "min_codepoints": 1,
+                "pattern": null,
+                "semantic_ids": [
+                  "hfcache.host_actions_models._schedule_text"
+                ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "next_elapse",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": 512,
+                "min_codepoints": 1,
+                "pattern": null,
+                "semantic_ids": [
+                  "hfcache.host_actions_models._printable"
+                ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": [
+        "hfcache.host_actions_models.ScheduleValidation.coherent_delay"
+      ]
     },
     "SourceObservation": {
       "extra": "forbid",
@@ -13999,6 +15344,34 @@
         "operation.result"
       ],
       "commands": [
+        "host schedule change"
+      ],
+      "failure": [
+        "ScheduleChangeOutcome",
+        "EmptyPayload"
+      ],
+      "origin_path": "/api/v1/host/sync-schedule/changes",
+      "success": "ScheduleChangeOutcome"
+    },
+    {
+      "binding_ids": [
+        "operation.result"
+      ],
+      "commands": [
+        "host observer stop"
+      ],
+      "failure": [
+        "ObserverStopOutcome",
+        "EmptyPayload"
+      ],
+      "origin_path": "/api/v1/host/sync-observer/stops",
+      "success": "ObserverStopOutcome"
+    },
+    {
+      "binding_ids": [
+        "operation.result"
+      ],
+      "commands": [
         "config apply"
       ],
       "failure": [
@@ -14339,6 +15712,160 @@
       "request_body": null,
       "response_kind": "read",
       "success": "HostStatus"
+    },
+    {
+      "binding_ids": [
+        "host.observer"
+      ],
+      "commands": [
+        "host observer status"
+      ],
+      "cursor": "none",
+      "failure": [
+        "EmptyPayload"
+      ],
+      "id": "host_observer",
+      "method": "GET",
+      "mode": "default",
+      "path": "/api/v1/host/sync-observer",
+      "path_parameters": [],
+      "query_parameters": [],
+      "request_body": null,
+      "response_kind": "read",
+      "success": "HostObserverStatus"
+    },
+    {
+      "binding_ids": [
+        "host.outcome"
+      ],
+      "commands": [
+        "host schedule outcome"
+      ],
+      "cursor": "none",
+      "failure": [
+        "EmptyPayload"
+      ],
+      "id": "schedule_outcome",
+      "method": "GET",
+      "mode": "default",
+      "path": "/api/v1/host/sync-schedule/changes/{operation_id}",
+      "path_parameters": [
+        {
+          "name": "operation_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 256,
+            "min_codepoints": 1,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_run_id"
+            ]
+          }
+        }
+      ],
+      "query_parameters": [],
+      "request_body": null,
+      "response_kind": "read",
+      "success": "ScheduleChangeOutcome"
+    },
+    {
+      "binding_ids": [
+        "host.outcome"
+      ],
+      "commands": [
+        "host observer outcome"
+      ],
+      "cursor": "none",
+      "failure": [
+        "EmptyPayload"
+      ],
+      "id": "observer_outcome",
+      "method": "GET",
+      "mode": "default",
+      "path": "/api/v1/host/sync-observer/stops/{operation_id}",
+      "path_parameters": [
+        {
+          "name": "operation_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 256,
+            "min_codepoints": 1,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_run_id"
+            ]
+          }
+        }
+      ],
+      "query_parameters": [],
+      "request_body": null,
+      "response_kind": "read",
+      "success": "ObserverStopOutcome"
+    },
+    {
+      "binding_ids": [
+        "host.journal"
+      ],
+      "commands": [
+        "host journal"
+      ],
+      "cursor": "opaque",
+      "failure": [
+        "EmptyPayload"
+      ],
+      "id": "host_journal",
+      "method": "GET",
+      "mode": "default",
+      "path": "/api/v1/host/journal",
+      "path_parameters": [],
+      "query_parameters": [
+        {
+          "name": "source",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "sync-observer"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "verify-observer"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "repeated": false
+        },
+        {
+          "name": "cursor",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 2048,
+            "min_codepoints": 1,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.host_actions_models._printable"
+            ]
+          },
+          "repeated": false
+        },
+        {
+          "name": "limit",
+          "node": {
+            "kind": "integer",
+            "maximum": "80",
+            "minimum": "1",
+            "semantic_ids": []
+          },
+          "repeated": false
+        }
+      ],
+      "request_body": null,
+      "response_kind": "read",
+      "success": "HostJournalPage"
     },
     {
       "binding_ids": [],
@@ -15864,6 +17391,40 @@
     {
       "binding_ids": [],
       "commands": [
+        "host schedule change"
+      ],
+      "cursor": "none",
+      "failure": [],
+      "id": "schedule_change",
+      "method": "POST",
+      "mode": "default",
+      "path": "/api/v1/host/sync-schedule/changes",
+      "path_parameters": [],
+      "query_parameters": [],
+      "request_body": "RequestScheduleChangeRequest",
+      "response_kind": "acceptance",
+      "success": "Acceptance"
+    },
+    {
+      "binding_ids": [],
+      "commands": [
+        "host observer stop"
+      ],
+      "cursor": "none",
+      "failure": [],
+      "id": "observer_stop",
+      "method": "POST",
+      "mode": "default",
+      "path": "/api/v1/host/sync-observer/stops",
+      "path_parameters": [],
+      "query_parameters": [],
+      "request_body": "RequestObserverStopRequest",
+      "response_kind": "acceptance",
+      "success": "Acceptance"
+    },
+    {
+      "binding_ids": [],
+      "commands": [
         "config apply"
       ],
       "cursor": "none",
@@ -16219,6 +17780,27 @@
       "success": "Acceptance"
     },
     {
+      "binding_ids": [
+        "host.validation"
+      ],
+      "commands": [
+        "host schedule validate"
+      ],
+      "cursor": "none",
+      "failure": [
+        "EmptyPayload"
+      ],
+      "id": "schedule_validate",
+      "method": "POST",
+      "mode": "default",
+      "path": "/api/v1/host/sync-schedule/validations",
+      "path_parameters": [],
+      "query_parameters": [],
+      "request_body": "RequestScheduleValidationRequest",
+      "response_kind": "read",
+      "success": "ScheduleValidation"
+    },
+    {
       "binding_ids": [],
       "commands": [
         "config validate"
@@ -16518,6 +18100,42 @@
       "phase": "field",
       "source_hash": "f429f9cb8a716fb531f4bc117c65647f1128a19f91eaf8ad85004442de9174d6"
     },
+    "hfcache.host_actions_models.HostJournalPage.bounded_page": {
+      "phase": "model",
+      "source_hash": "6f7cf998b55f5dc9f4fd5d0c8ffbc3f5b7b820d07bc364263b895a26ed70ec39"
+    },
+    "hfcache.host_actions_models.HostObserverStatus.coherent_authority": {
+      "phase": "model",
+      "source_hash": "acfcf705d44d998b125d6add770816069c0733658d575b1f021a6f5144666f50"
+    },
+    "hfcache.host_actions_models.ObserverStopOutcome.coherent_effect": {
+      "phase": "model",
+      "source_hash": "9c7bca3075cf5144e0ce4679c43a3f3d4629a23bf2874e6472986b04fb42abcb"
+    },
+    "hfcache.host_actions_models.ScheduleChangeOutcome.coherent_effect": {
+      "phase": "model",
+      "source_hash": "122a2e8ad5b5306172daa3594fa3ab9508655bff7989b0eda54759c03464f993"
+    },
+    "hfcache.host_actions_models.ScheduleChangeRequest.exact_action": {
+      "phase": "model",
+      "source_hash": "5cfc75b9494dc68d190d2a759526b0440c3a470a9c484c187e51a3d9c885528e"
+    },
+    "hfcache.host_actions_models.ScheduleValidation.coherent_delay": {
+      "phase": "model",
+      "source_hash": "0991e15f02be67d74565ceded096ed62e9594072decbe1090784f1dfe790f065"
+    },
+    "hfcache.host_actions_models._journal_message": {
+      "phase": "field",
+      "source_hash": "bc29e503de080fa2d2504fba70e0860febf1319aaf5e060d507a5fcdd2b0fa4c"
+    },
+    "hfcache.host_actions_models._printable": {
+      "phase": "field",
+      "source_hash": "e7d35af8987dfd44ac6df126a8cc7064511c8fd4fe7fdbebaaeebba2c5a1c35c"
+    },
+    "hfcache.host_actions_models._schedule_text": {
+      "phase": "field",
+      "source_hash": "869291d9ab2e4422c0ac9f544760fa5ffff31bdb274cddadec8c120edbd1f51c"
+    },
     "hfcache.host_models.HostFacts.exact_units": {
       "phase": "model",
       "source_hash": "d280a89abfc916207efcf37147e3074df65c96f6e3a6e2f07e76e7653d9cea5d"
@@ -16698,21 +18316,37 @@
       "phase": "field",
       "source_hash": "95f069e06fd22ae562ee1796f9ce50868994ae13c79c56261f76d2835e732d44"
     },
+    "host.journal": {
+      "phase": "context",
+      "source_hash": "46c7289bb90e5a07af9fb94fc418a3adcc4333d1ec973baa3e79df84bf63bc16"
+    },
+    "host.observer": {
+      "phase": "context",
+      "source_hash": "a23bbbb6fc75b3b1fa0646009a003fe2ee34bd442905b81fcadc8b270a58b1be"
+    },
+    "host.outcome": {
+      "phase": "context",
+      "source_hash": "a23bbbb6fc75b3b1fa0646009a003fe2ee34bd442905b81fcadc8b270a58b1be"
+    },
     "host.status": {
       "phase": "context",
       "source_hash": "1948d56757a403c06863478fa0dd356ea753a37d647f3fa81c47576eb75d01e3"
     },
+    "host.validation": {
+      "phase": "context",
+      "source_hash": "a23bbbb6fc75b3b1fa0646009a003fe2ee34bd442905b81fcadc8b270a58b1be"
+    },
     "operation.events": {
       "phase": "context",
-      "source_hash": "4e6e7373fe7a3016eb7d5f40c57bcbb0a35a9b14d25b89bab2110135ad83e02d"
+      "source_hash": "9feafe4e9e08e49cb05933232a7bfbee63e9dbd2fe2bf1cba2b2494dac5f694c"
     },
     "operation.identity": {
       "phase": "context",
-      "source_hash": "4e6e7373fe7a3016eb7d5f40c57bcbb0a35a9b14d25b89bab2110135ad83e02d"
+      "source_hash": "9feafe4e9e08e49cb05933232a7bfbee63e9dbd2fe2bf1cba2b2494dac5f694c"
     },
     "operation.result": {
       "phase": "context",
-      "source_hash": "4e6e7373fe7a3016eb7d5f40c57bcbb0a35a9b14d25b89bab2110135ad83e02d"
+      "source_hash": "9feafe4e9e08e49cb05933232a7bfbee63e9dbd2fe2bf1cba2b2494dac5f694c"
     },
     "publication.card": {
       "phase": "context",
@@ -16740,12 +18374,12 @@
     },
     "ui.bootstrap": {
       "phase": "context",
-      "source_hash": "3b98fea784b4814d37b05f4d2d6945a251d771b2336000d7afaa2b37e7a2f4cd"
+      "source_hash": "448ed463bc818a08453e2f1238da12a1ad32977a8e99941bb1bbfceeb19c9abb"
     },
     "ui.html": {
       "phase": "context",
       "source_hash": "dff0773c84838ccad3236d517d37a71717ba41c0d3b78c53276fb29fd9ee1c61"
     }
   },
-  "source_digest": "476acbbbb8fa88b010d8ae14244fe3b90fa4cc1f5972ef4b25f54328ea49b43b"
+  "source_digest": "02b01232bb236efbb10ed213b1a148d17f30b9522a74b22443fd8b72d6b30a4e"
 }

@@ -40,8 +40,47 @@ APIs. Its configuration-read/write grants and independent policy checks stand
 on their own; host-read is not an additional gate. A visible **Allowed** status
 does not bypass fresh request/execution checks. Follow the
 [configuration workflow](configuration-and-tags.md) for one in-memory draft,
-exact-base review and original-outcome recovery. Unimplemented schedule/observer
-controls remain disabled.
+exact-base review and original-outcome recovery. Full schedule, observer and
+journal forms remain a separate Administration UI package. Their fixed host APIs
+have independent native provisioning and permission requirements below.
+
+## Schedule, observer and diagnostic APIs
+
+The [fixed host API](../api.md#fixed-host-actions-and-original-outcomes) validates
+calendar and delay values with the installed systemd tools. A change uses the
+fresh exact schedule revision and one original idempotency key. Replace/reset
+reload the manager and restart only a previously active sync timer. Pause stops
+that timer; resume starts it without enabling it. Persistent catch-up can start
+the scheduled observer. Verification scheduling remains read-only, and these
+actions never operate on the application target, API or worker.
+
+Stopping the scheduled sync observer requires fresh evidence identifying that
+original boot, service invocation and process. It sends SIGTERM only to the
+retained original process. An accepted backend job and the observer's pending
+handle survive independently. A stopped observer does not prove cancellation,
+failure or completion of that job.
+
+Native observer stop needs the separately provisioned confined observer profile.
+An ordinary native installation can expose the real observer identity and allow
+schedule changes while correctly denying stop with `profile-unproved`. The host
+administrator must install and verify the fixed context fragment and dedicated
+scheduled-state label; granting a policy bit alone is insufficient. An inactive
+timer may be reported as `linked` when installed by an immutable unit symlink.
+That state is not calendar enablement; retain the actual unit state and check its
+enablement links independently.
+
+After a lost reply, observe the original schedule/stop outcome with its original
+key. Keep API receipt state separate from host certainty: a stored schedule does
+not prove manager reload succeeded, and an acknowledged signal without observed
+exit is unconfirmed. Never submit a replacement key to discover what happened.
+Private pending records and uncertain outcomes require operator review, not
+browser cleanup or automatic rollback.
+
+Journal pages cover only the sync and verification observers. They are finite,
+newest-first diagnostics with explicit gaps/truncation and a short-lived cursor.
+Only closed event, level and run-ID fields are exposed. Empty or missing journal
+data establishes no operation outcome. See [native provisioning](deployment.md#optional-native-schedule-and-observer-provisioning)
+and [troubleshooting](troubleshooting.md#schedule-observer-and-journal-diagnostics).
 
 ## Provision policy independently
 

@@ -13,6 +13,10 @@ import {
 } from "./manifest-semantics";
 import { contextSemanticIds } from "../api/bindings";
 import { applyHostSemantic, hostSemanticIds } from "./host-semantics";
+import {
+    applyHostActionSemantic,
+    hostActionSemanticIds,
+} from "./host-actions-semantics";
 import { applyConfigSemantic, configSemanticIds } from "./config-semantics";
 import { applyCardSemantic, cardSemanticIds } from "./card-semantics";
 import { pythonIsPrintable } from "./unicode";
@@ -190,6 +194,8 @@ const jobs = new Set(
         "archive/initializations",
         "catalog/refreshes",
         "config/applications",
+        "host/sync-schedule/changes",
+        "host/sync-observer/stops",
     ].map((item) => "/api/v1/" + item),
 );
 const exitCodes = new Set([0, 10, 20, 30, 40, 50]);
@@ -264,11 +270,16 @@ export const implementedSemanticIds: readonly string[] = [
     ...uiSemanticIds,
     ...uiContextSemanticIds,
     ...hostSemanticIds,
+    ...hostActionSemanticIds,
     ...configSemanticIds,
     ...cardSemanticIds,
 ];
 
 export function applySemantic(id: string, value: unknown): void {
+    if (hostActionSemanticIds.includes(id)) {
+        applyHostActionSemantic(id, value);
+        return;
+    }
     if (cardSemanticIds.includes(id)) {
         applyCardSemantic(id, value);
         return;

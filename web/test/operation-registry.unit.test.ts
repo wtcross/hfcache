@@ -166,6 +166,8 @@ const actionRoutes: readonly (readonly [Action, string])[] = [
     ["candidatePlan", "/api/v1/plans"],
     ["managedPlan", "/api/v1/plans"],
     ["configurationApplication", "/api/v1/config/applications"],
+    ["scheduleChange", "/api/v1/host/sync-schedule/changes"],
+    ["observerStop", "/api/v1/host/sync-observer/stops"],
     ["readOnlyDiagnostics", "/api/v1/diagnostics"],
     ["probeDiagnostics", "/api/v1/diagnostics"],
     ["newVerification", "/api/v1/verifications"],

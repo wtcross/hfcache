@@ -213,6 +213,8 @@ def bootstrap_bytes(  # noqa: PLR0913 - independently sourced configured/build/p
                     AdminCapability.HOST_READ,
                     AdminCapability.CONFIG_READ,
                     AdminCapability.CONFIG_WRITE,
+                    AdminCapability.SCHEDULE_WRITE,
+                    AdminCapability.OBSERVER_STOP,
                 }
                 and capability in principal.admin_capabilities,
                 "reason": "allowed"
@@ -221,6 +223,8 @@ def bootstrap_bytes(  # noqa: PLR0913 - independently sourced configured/build/p
                     AdminCapability.HOST_READ,
                     AdminCapability.CONFIG_READ,
                     AdminCapability.CONFIG_WRITE,
+                    AdminCapability.SCHEDULE_WRITE,
+                    AdminCapability.OBSERVER_STOP,
                 }
                 and capability in principal.admin_capabilities
                 else "feature_unavailable"

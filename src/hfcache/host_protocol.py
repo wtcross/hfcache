@@ -50,6 +50,13 @@ _TIMEOUT = "timeout"
 _UNAVAILABLE = "facts-unavailable"
 _INT_MIN = -(2**63)
 _INT_MAX = 2**63 - 1
+_MIN_PROCESS_ID = 2
+_MAX_PROCESS_ID = 2**31 - 1
+_MAX_START_TICKS = 2**53 - 1
+_MAX_CALENDAR_CHARS = 4096
+_MAX_DELAY_CHARS = 256
+_MAX_JOURNAL_CURSOR_CHARS = 2048
+_MAX_JOURNAL_LINES = 80
 _REASONS = frozenset(
     {
         "peer-refused",
@@ -63,11 +70,25 @@ _REASONS = frozenset(
         "operation-denied",
         "config-unavailable",
         "config-conflict",
+        "host-conflict",
         "internal-unavailable",
     }
 )
 _OPERATIONS = frozenset(
-    {"status", "config-read", "config-prepare", "config-apply", "config-outcome"}
+    {
+        "status",
+        "config-read",
+        "config-prepare",
+        "config-apply",
+        "config-outcome",
+        "schedule-validate",
+        "schedule-change",
+        "schedule-outcome",
+        "observer-status",
+        "observer-stop",
+        "observer-outcome",
+        "journal-read",
+    }
 )
 # Linux limits one SCM_RIGHTS message to253 FDs. Leave room for credentials,
 # all such FDs and an unexpected pidfd; MSG_CTRUNC still always refuses.
@@ -223,6 +244,93 @@ def _managed_request(value: object) -> None:
     _need(type(body["edits"]) is list and len(body["edits"]) <= MAX_MANAGED_EDITS)
 
 
+def _calendar_value(value: object, maximum: int) -> None:
+    _need(
+        type(value) is str
+        and 1 <= len(value) <= maximum
+        and bool(value.strip())
+        and "\\" not in value
+        and all(" " <= char <= "~" for char in value)
+    )
+
+
+def _schedule_values(body: dict[str, object]) -> None:
+    _calendar_value(body["on_calendar"], _MAX_CALENDAR_CHARS)
+    if body["randomized_delay_sec"] is not None:
+        _calendar_value(body["randomized_delay_sec"], _MAX_DELAY_CHARS)
+
+
+def _observer_request(value: object) -> None:
+    _need(type(value) is dict and set(value) == {"expected"})
+    value = cast("dict[str, object]", value)
+    expected = value["expected"]
+    _need(type(expected) is dict)
+    expected = cast("dict[str, object]", expected)
+    _need(set(expected) == {"boot_id", "invocation_id", "main_pid", "start_ticks"})
+    boot = expected["boot_id"]
+    _need(type(boot) is str and re.fullmatch(r"[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}", boot))
+    _hex_field(expected["invocation_id"], 32)
+    _need(
+        type(expected["main_pid"]) is int
+        and _MIN_PROCESS_ID <= expected["main_pid"] <= _MAX_PROCESS_ID
+    )
+    _need(type(expected["start_ticks"]) is int and 1 <= expected["start_ticks"] <= _MAX_START_TICKS)
+
+
+def _host_action_request(operation: str, body: dict[str, object]) -> None:
+    if operation == "schedule-validate":
+        _need(set(body) == {"on_calendar", "randomized_delay_sec"})
+        _schedule_values(body)
+    elif operation == "journal-read":
+        _need(set(body) == {"source", "cursor", "limit"})
+        _need(
+            type(body["source"]) is str and body["source"] in {"sync-observer", "verify-observer"}
+        )
+        _need(type(body["limit"]) is int and 1 <= body["limit"] <= _MAX_JOURNAL_LINES)
+        cursor = body["cursor"]
+        _need(
+            cursor is None
+            or (
+                type(cursor) is str
+                and 1 <= len(cursor) <= _MAX_JOURNAL_CURSOR_CHARS
+                and all(" " <= char <= "~" for char in cursor)
+            )
+        )
+    elif operation == "observer-status":
+        _need(not body)
+    else:
+        effect = operation in {"schedule-change", "observer-stop"}
+        _need(
+            set(body)
+            == (
+                {"operation_id", "request_digest", "request"}
+                if effect
+                else {"operation_id", "request_digest"}
+            )
+        )
+        _hex_field(body["operation_id"], 32)
+        _hex_field(body["request_digest"], 64)
+        if not effect:
+            return
+        request = body["request"]
+        if operation == "observer-stop":
+            _observer_request(request)
+            return
+        _need(type(request) is dict)
+        request = cast("dict[str, object]", request)
+        _need(
+            type(request.get("action")) is str
+            and request["action"] in {"pause", "resume", "replace", "reset"}
+        )
+        fields = {"action", "expected_revision"}
+        if request["action"] == "replace":
+            fields |= {"on_calendar", "randomized_delay_sec"}
+        _need(set(request) == fields)
+        _hex_field(request["expected_revision"], 64)
+        if request["action"] == "replace":
+            _schedule_values(request)
+
+
 @dataclass(frozen=True)
 class HostRequest:
     request_id: str
@@ -239,7 +347,17 @@ class HostRequest:
         body = value["body"]
         _need(type(body) is dict)
         body = cast("dict[str, object]", body)
-        if operation == "config-prepare":
+        if operation in {
+            "schedule-validate",
+            "schedule-change",
+            "schedule-outcome",
+            "observer-status",
+            "observer-stop",
+            "observer-outcome",
+            "journal-read",
+        }:
+            _host_action_request(operation, body)
+        elif operation == "config-prepare":
             _managed_request(body)
         elif operation in {"config-apply", "config-outcome"}:
             expected = {"operation_id", "request_digest"}

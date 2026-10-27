@@ -63,6 +63,15 @@ def test_export_is_deterministic_closed_and_every_reference_resolves(contracts):
             assert contracts["semantics"][binding]["phase"] == "context"
 
 
+@pytest.mark.parametrize("module", ["hfcache.api.host_actions", "hfcache.api.host_routes"])
+def test_host_api_authorization_and_route_source_drift_refuses_export(monkeypatch, module):
+    # DTO-only pins would miss a changed original-key gate, limit or renderer.
+    assert module in wire_schema.AUDITED_SOURCES
+    monkeypatch.setitem(wire_schema.AUDITED_SOURCES, module, "0" * 64)
+    with pytest.raises(ValueError, match="Changed audited source module " + module):
+        build_contracts()
+
+
 def test_serialized_defaults_are_required_without_erasing_request_omission(contracts):
     envelope = contracts["definitions"]["Envelope"]
     assert all(field["required"] for field in envelope["fields"])
@@ -158,6 +167,7 @@ def test_every_actual_json_route_and_original_job_result_is_registered():
         "maintenance",
         "catalog_refresh",
         "host_status",
+        "host_actions",
         "configuration",
     ):
         tree = ast.parse(Path(f"src/hfcache/api/{module}.py").read_text())
@@ -173,6 +183,11 @@ def test_every_actual_json_route_and_original_job_result_is_registered():
                 "PREFIX": prefix,
                 "ROUTE": prefix + "/catalog/refreshes",
                 "_APPLICATIONS": "/api/v1/config/applications",
+                "_OBSERVER": "/api/v1/host/sync-observer",
+                "_JOURNAL": "/api/v1/host/journal",
+                "VALIDATIONS": "/api/v1/host/sync-schedule/validations",
+                "SCHEDULE_CHANGES": "/api/v1/host/sync-schedule/changes",
+                "OBSERVER_STOPS": "/api/v1/host/sync-observer/stops",
             }[node.id]
 
         for node in ast.walk(tree):

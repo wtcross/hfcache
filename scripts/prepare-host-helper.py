@@ -2,7 +2,7 @@
 """Propose a fixed host-helper deployment index from actual protected files.
 
 Read-only administrator preparation, not activation or conformance. Install the
-reviewed protected entry and all four standard-library module copies first.
+reviewed protected entry and all six standard-library module copies first.
 Explicit source provenance must come from the genuine build receipt; this tool
 never invents a clean source commit.
 No policy, key, configuration, archive or service is read or changed.
@@ -43,12 +43,12 @@ def require(value):
         raise ValueError(message)
 
 
-def load_policy():
-    """Capture only the fixed root-protected bootstrap, without package imports."""
+def read_bootstrap(path):
+    """Capture one of the two fixed protected bootstrap leaves."""
     parent = os.open("/", os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
     descriptor = -1
     try:
-        for part in LIBRARY.parent.parts[1:]:
+        for part in path.parent.parts[1:]:
             info = os.fstat(parent)
             require(
                 info.st_uid in {0, OWNER}
@@ -62,7 +62,7 @@ def load_policy():
         info = os.fstat(parent)
         require(info.st_uid == OWNER and not info.st_mode & 0o022)
         descriptor = os.open(
-            LIBRARY.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC, dir_fd=parent
+            path.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC, dir_fd=parent
         )
         before = os.fstat(descriptor)
         require(
@@ -84,7 +84,7 @@ def load_policy():
             and expected
             == tuple(getattr(os.fstat(descriptor), name) for name in METADATA)
             == tuple(
-                getattr(os.stat(LIBRARY.name, dir_fd=parent, follow_symlinks=False), name)
+                getattr(os.stat(path.name, dir_fd=parent, follow_symlinks=False), name)
                 for name in METADATA
             )
         )
@@ -92,12 +92,56 @@ def load_policy():
         if descriptor >= 0:
             os.close(descriptor)
         os.close(parent)
-    module = types.ModuleType("_hfcache_protected_index_policy")
-    module.__file__ = str(LIBRARY)
-    sys.modules[module.__name__] = module
-    exec(compile(body, str(LIBRARY), "exec"), module.__dict__)  # noqa: S102 - captured fixed administrator bootstrap
-    module.__dict__["_bootstrap_sha256"] = hashlib.sha256(body).hexdigest()
-    return module
+    return bytes(body)
+
+
+def load_policy():
+    """Capture fixed policy/label code without importing the application package."""
+    captured = {}
+    for name, path in (
+        ("labels", LIBRARY.with_name("host_selinux.py")),
+        ("policy", LIBRARY),
+    ):
+        body = read_bootstrap(path)
+        module = types.ModuleType("_hfcache_protected_index_" + name)
+        module.__file__ = str(path)
+        sys.modules[module.__name__] = module
+        exec(compile(body, str(path), "exec"), module.__dict__)  # noqa: S102 - captured fixed administrator bootstrap
+        module.__dict__["_bootstrap_sha256"] = hashlib.sha256(body).hexdigest()
+        captured[name] = module
+    captured["policy"].__dict__["_host_labels"] = captured["labels"]
+    return captured["policy"]
+
+
+def optional_observer_context(policy, capture, profile):
+    """Capture explicit native provisioning; never create or infer an opt-in."""
+    if profile != "native":
+        return False
+    path = policy.SYNC_OBSERVER_DROP_IN
+    # A missing fixed parent is ordinary legacy provisioning. Capture its
+    # absence so appearance cannot race a successful read-only proposal.
+    parent = capture.parent(path.parent)
+    try:
+        try:
+            os.stat(path.parent.name, dir_fd=parent, follow_symlinks=False)
+        except FileNotFoundError:
+            capture.absent.add(path.parent)
+            return False
+    finally:
+        os.close(parent)
+    parent = capture.parent(path)
+    try:
+        try:
+            os.stat(path.name, dir_fd=parent, follow_symlinks=False)
+        except FileNotFoundError:
+            capture.absent.add(path)
+            return False
+    finally:
+        os.close(parent)
+    body = capture.read(path, maximum=4096, mode=0o644, gid=policy.OWNER_GID)
+    require(body == b"[Service]\nSELinuxContext=system_u:system_r:hfcache_sync_observer_t:s0\n")
+    require([name for name, _info in capture.entries(path.parent)] == [path.name])
+    return True
 
 
 def prepare(policy, profile, commit, snapshot, dirty):  # noqa: PLR0915 - two closed actual deployment branches
@@ -108,7 +152,8 @@ def prepare(policy, profile, commit, snapshot, dirty):  # noqa: PLR0915 - two cl
     require(type(dirty) is bool)
     account = pwd.getpwnam("hfcache")
     require(account.pw_dir == "/var/lib/hfcache" and account.pw_uid > 0 and account.pw_gid > 0)
-    inspection = policy._Inspection(policy.InspectionBudget())  # noqa: SLF001 - shared protected implementation
+    labels = getattr(policy, "_host_labels", None)
+    inspection = policy._Inspection(policy.InspectionBudget(), host_labels=labels)  # noqa: SLF001 - shared protected implementation
     capture = inspection.capture
     selector = policy.PREFIX / "current"
     parent = capture.parent(selector)
@@ -142,7 +187,8 @@ def prepare(policy, profile, commit, snapshot, dirty):  # noqa: PLR0915 - two cl
         return bodies[path]
 
     capture.read = read
-    paths = policy.binding_paths(profile)
+    observer_context = optional_observer_context(policy, capture, profile)
+    paths = policy.binding_paths(profile, observer_context=observer_context)
     if profile == "native":
         pin = read(root / ".python-version", maximum=4096).decode("ascii").strip()
         require(re.fullmatch(r"3\.[0-9]+(?:\.[0-9]+)?", pin))
@@ -208,7 +254,7 @@ def prepare(policy, profile, commit, snapshot, dirty):  # noqa: PLR0915 - two cl
         gid=policy.OWNER_GID,
     )
     policy._selinux_installation(  # noqa: SLF001 - shared closed authority schema
-        selinux_body, files[paths["helper_selinux_policy"][1]]["sha256"]
+        selinux_body, files[paths["helper_selinux_policy"][1]]["sha256"], host_labels=labels
     )
     proposed = {
         "schema_version": 1,
@@ -227,6 +273,11 @@ def prepare(policy, profile, commit, snapshot, dirty):  # noqa: PLR0915 - two cl
     require(
         getattr(policy, "_bootstrap_sha256", None) == proposed["bindings"]["helper_policy_module"]
     )
+    if labels is not None:
+        require(
+            getattr(labels, "_bootstrap_sha256", None)
+            == proposed["bindings"]["helper_selinux_module"]
+        )
     inspection.bindings()
     inspection.legacy = inspection.legacy_namespace()
     if profile == "native":

@@ -700,3 +700,17 @@ unknown evidence is not permission to relabel it. Application
 containers retain read-only config access; private outcome/guard types remain
 denied. See [label roles](host-administration.md#mandatory-selinux-isolation) and
 [helper deployment](web-ui/deployment.md#install-the-protected-host-reader).
+
+Helper-enabled releases also capture `host-helper/host_actions.py` and
+`host-helper/host_selinux.py`, independently bound as `helper_actions_module` and
+`helper_selinux_module`. Their presence grants no host permission. Optional native
+effect labels use the closed version2 receipt; the rootless read/configuration
+profile may retain version1 without those objects. It continues to deny system
+schedule and observer effects, with no same-name user-manager fallback. New
+schedule history stays inside the sole optional fixed timer-directory writable
+bind; no application container receives that bind, private outcomes or a manager
+socket. See [native provisioning](web-ui/deployment.md#optional-native-schedule-and-observer-provisioning).
+The optional native observer context fragment/domain/state label is not a
+rootless binding or a container escape hatch. Rootless rejects that optional
+deployment role and continues to deny system schedule/observer effects even
+when Basic administrator feature availability is true.
