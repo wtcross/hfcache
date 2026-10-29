@@ -129,11 +129,11 @@ export const semanticSourceHashes: Readonly<Record<string, string>> =
         // WEB009 adds a separate card namespace; existing manifest/reference
         // path construction and public validation behavior are unchanged.
         "publication.manifest":
-            "18bb75cc7e5fceca74ebab614f6ea53b000ce1db8b15a2cf2f2efbd4cb3d853c",
+            "6bdf0f476fb7047211bd0f147c5df79e3b9c50a99d51ee20c61713ff7501ad39",
         "publication.card":
-            "452f67070232e422eccd6943a74df2ae4b25616fc7c8715a83f7d16c6cd0009b",
+            "2eb2cd6eff8f910b3109fff1b2dc50ac7499b30f7b803bff367e9bf356f5a539",
         "publication.reference":
-            "5bd218564e4be5f61303f9703fd9cad9778c07cd41b9be9a0e25abcbbbfdfbfc",
+            "217f940bf4a5e067372a49632c127608ac117a542543335dda12278ad939e09a",
         "run.report":
             "2bf3d9b55a9f8183d894036ea6a5b2a6da358c2672cc8ca717bff2d5138d2b05",
         "hfcache.api.command_models.CatalogRefreshSubmission.canonical":

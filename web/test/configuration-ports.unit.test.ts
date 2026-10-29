@@ -192,6 +192,72 @@ function outcomeFetcher(
     });
 }
 
+test("hidden original configuration outcome reads require explicit Observe after return", async () => {
+    const fetcher = outcomeFetcher(),
+        { value } = controller(fetcher),
+        record = importApplication(value);
+    value.setPageHidden(true);
+    await expect(
+        value.observeConfigurationOutcome(record.recordId),
+    ).rejects.toThrow();
+    expect(fetcher).not.toHaveBeenCalled();
+    value.setPageHidden(false);
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(
+        (await value.observeConfigurationOutcome(record.recordId)).kind,
+    ).toBe("outcome");
+    expect(fetcher).toHaveBeenCalledTimes(2);
+});
+
+test.each(["lookup", "outcome"])(
+    "hide and return fences a late configuration %s without donating proof",
+    async (stage) => {
+        const late = deferred<Response>();
+        let signal: AbortSignal | null | undefined;
+        const fetcher = vi.fn<typeof fetch>((input, options) => {
+            const lookup =
+                urlOf(input).pathname === "/api/v1/operations/lookup";
+            if ((stage === "lookup") === lookup) {
+                signal = options?.signal;
+                return late.promise;
+            }
+            return Promise.resolve(
+                jsonResponse(
+                    operationResponse("operations lookup", {
+                        operation: applicationReceipt(),
+                    }),
+                ),
+            );
+        });
+        const { value } = controller(fetcher),
+            record = importApplication(value);
+        const observing = value.observeConfigurationOutcome(record.recordId),
+            rejection = expect(observing).rejects.toThrow();
+        await vi.waitFor(() => {
+            expect(fetcher).toHaveBeenCalledTimes(stage === "lookup" ? 1 : 2);
+        });
+        value.setPageHidden(true);
+        expect(signal?.aborted).toBe(true);
+        value.setPageHidden(false);
+        late.resolve(
+            jsonResponse(
+                stage === "lookup"
+                    ? operationResponse("operations lookup", {
+                          operation: applicationReceipt(),
+                      })
+                    : operationResponse("config outcome", outcome()),
+            ),
+        );
+        await rejection;
+        expect(fetcher).toHaveBeenCalledTimes(stage === "lookup" ? 1 : 2);
+        expect(value.snapshot().canSubmit).toBe(false);
+        expect(value.snapshot().registry.records[0]?.handles).toMatchObject({
+            key,
+            operationId: OPERATION_ID,
+        });
+    },
+);
+
 test.each(["succeeded", "failed", "interrupted"])(
     "fresh confirmed host evidence settles effects after API %s without rewriting its stored receipt",
     (state) => {

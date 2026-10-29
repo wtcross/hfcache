@@ -171,3 +171,44 @@ test("actual API authentication refuses a context without the generated bearer",
         await context.close();
     }
 });
+
+test("actual authenticated query pools bound 100 route cycles and fence slow cancelled stale oversized and unsafe responses", async ({
+    page,
+}, testInfo) => {
+    let nonGetApiRequests = 0;
+    page.on("request", (request) => {
+        if (
+            new URL(request.url()).pathname.startsWith(api) &&
+            request.method() !== "GET"
+        )
+            nonGetApiRequests++;
+    });
+    await page.goto(entry + "?source=load");
+    await page.getByRole("button", { name: "Run finite read stress" }).click();
+    await expect(page.getByTestId("load-phase")).not.toHaveText("running", {
+        timeout: 12000,
+    });
+    await expect(page.getByTestId("load-phase")).toHaveText("passed");
+    expect(nonGetApiRequests).toBe(0);
+    const raw = await page.getByTestId("load-summary").textContent();
+    if (raw === null)
+        throw new Error("The finite integration summary is missing.");
+    const summary: unknown = JSON.parse(raw);
+    expect(summary).toMatchObject({
+        cycles: 100,
+        activeMaximum: 2,
+        waitingMaximum: 1,
+        maximumRetainedBytes: 32 * 1024 * 1024,
+        cancelledAndSupersededDrained: true,
+        retiredHandlesBlocked: true,
+        finalOwnershipDrained: true,
+        startedReads: 108,
+        slowCompletedServiceHeaders: 6,
+        interruptedAfterCompletedServiceHeaders: 2,
+        negativeFaults: ["response-limit", "unsafe-integer"],
+    });
+    await testInfo.attach("actual-query-pool-metrics", {
+        body: raw,
+        contentType: "application/json",
+    });
+});

@@ -8,6 +8,7 @@ import type { OperationObserverOptions } from "../src/state/operation-observatio
 import {
     createReadCoordinator,
     createRetentionBudget,
+    READ_RESERVATION_BYTES,
 } from "../src/state/retention-budget";
 import { receiptIdentity } from "../src/state/authority";
 import { createOperationRegistry } from "../src/state/operation-registry";
@@ -74,6 +75,95 @@ function terminalClient() {
 }
 afterEach(() => {
     vi.useRealTimers();
+});
+
+test("hidden observation attempts stay read-free until an explicit visible Observe", async () => {
+    const state = setup(),
+        auth = authorized(),
+        { fetcher, client } = terminalClient();
+    state.observer.setHidden(true);
+    await state.observer.observe(auth, client);
+    expect(state.observer.snapshot(auth.recordId)).toMatchObject({
+        phase: "paused",
+        pauseReason: "hidden",
+    });
+    expect(fetcher).not.toHaveBeenCalled();
+    state.observer.setHidden(false);
+    await Promise.resolve();
+    expect(fetcher).not.toHaveBeenCalled();
+    await state.observer.observe(auth, client);
+    expect(state.observer.snapshot(auth.recordId).phase).toBe("settled");
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    state.observer.dispose();
+});
+
+test("hiding fences a transport that ignores abort and releases owned timers", async () => {
+    vi.useFakeTimers();
+    const state = setup(),
+        auth = authorized(),
+        late = deferred<Response>();
+    let signal: AbortSignal | null | undefined;
+    const fetcher = vi.fn<typeof fetch>((_input, options) => {
+        signal = options?.signal;
+        return late.promise;
+    });
+    const pending = state.observer.observe(
+        auth,
+        new ApiClient({ scope, fetcher }),
+    );
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fetcher).toHaveBeenCalledOnce();
+    const activeTimers = vi.getTimerCount();
+    const pendingBytes = state.retention.usedBytes;
+    state.observer.setHidden(true);
+    expect(signal?.aborted).toBe(true);
+    // The uncooperative transport retains its own finite read timeout until
+    // settlement; the observer's session deadline is retired immediately.
+    expect(vi.getTimerCount()).toBeLessThan(activeTimers);
+    state.observer.setHidden(false);
+    late.resolve(
+        jsonResponse(
+            operationResponse("operations lookup", { operation: terminal() }),
+        ),
+    );
+    await pending;
+    expect(vi.getTimerCount()).toBe(0);
+    expect(state.onReceipt).not.toHaveBeenCalled();
+    expect(state.onResult).not.toHaveBeenCalled();
+    expect(state.observer.snapshot(auth.recordId)).toMatchObject({
+        phase: "paused",
+        pauseReason: "hidden",
+        receipt: null,
+        result: null,
+    });
+    expect(pendingBytes - state.retention.usedBytes).toBe(
+        READ_RESERVATION_BYTES,
+    );
+    expect(fetcher).toHaveBeenCalledOnce();
+    state.observer.dispose();
+});
+
+test("hiding cancels the retry delay without restarting it on return", async () => {
+    vi.useFakeTimers();
+    const state = setup(),
+        auth = authorized();
+    const fetcher = vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(jsonResponse(problemWire("HFAPI019", 20), 503));
+    const pending = state.observer.observe(
+        auth,
+        new ApiClient({ scope, fetcher }),
+    );
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fetcher).toHaveBeenCalledOnce();
+    state.observer.setHidden(true);
+    await pending;
+    expect(vi.getTimerCount()).toBe(0);
+    state.observer.setHidden(false);
+    await vi.advanceTimersByTimeAsync(7000);
+    expect(fetcher).toHaveBeenCalledOnce();
+    expect(state.observer.snapshot(auth.recordId).pauseReason).toBe("hidden");
+    state.observer.dispose();
 });
 
 test("original-key-first then actual typed result, no POST and controller owns resolution", async () => {

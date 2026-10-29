@@ -201,6 +201,8 @@ export function createSessionController(options: SessionControllerOptions) {
     let disposed = false;
     let batching = false;
     let otherTabChanged = false;
+    let pageHidden = false;
+    let visibilityEpoch = 0;
     const listeners = new Set<() => void>();
     const registry = createOperationRegistry({ storage: options.storage });
     const retention = createRetentionBudget();
@@ -208,6 +210,7 @@ export function createSessionController(options: SessionControllerOptions) {
     let privateSerial = 0;
     const privateOwners = new Set<string>();
     const controlledReads = new Set<AbortController>();
+    const observationReads = new Set<AbortController>();
     let snapshot: SessionSnapshot;
     function publish() {
         if (batching || disposed) return;
@@ -299,6 +302,18 @@ export function createSessionController(options: SessionControllerOptions) {
                     authGeneration: auth.authGeneration,
                 }),
             )
+        );
+    }
+    function currentObservation(
+        auth: AuthorizedObservation,
+        epoch: number,
+        signal: AbortSignal,
+    ) {
+        return (
+            current(auth) &&
+            !pageHidden &&
+            epoch === visibilityEpoch &&
+            !signal.aborted
         );
     }
     function stillReconnecting(generation: number) {
@@ -526,6 +541,7 @@ export function createSessionController(options: SessionControllerOptions) {
         ): Promise<ConfigurationOutcomeObservation> {
             if (
                 disposed ||
+                pageHidden ||
                 connection !== "connected" ||
                 !bootstrap.user.admin_permissions.some(
                     (permission) =>
@@ -546,6 +562,8 @@ export function createSessionController(options: SessionControllerOptions) {
             });
             const controller = new AbortController();
             controlledReads.add(controller);
+            observationReads.add(controller);
+            const observationEpoch = visibilityEpoch;
             const owner = "configuration-outcome:" + id;
             try {
                 return await reads.run(owner, controller.signal, async () => {
@@ -560,7 +578,13 @@ export function createSessionController(options: SessionControllerOptions) {
                                 responseByteLimit: SESSION_RESPONSE_BYTES,
                             },
                         );
-                        if (!current(auth))
+                        if (
+                            !currentObservation(
+                                auth,
+                                observationEpoch,
+                                controller.signal,
+                            )
+                        )
                             throw new OperationRegistryError("scope");
                         if (lookup.kind !== "success") {
                             if (
@@ -578,6 +602,14 @@ export function createSessionController(options: SessionControllerOptions) {
                             id,
                             session,
                         );
+                        if (
+                            !currentObservation(
+                                proven,
+                                observationEpoch,
+                                controller.signal,
+                            )
+                        )
+                            throw new OperationRegistryError("scope");
                         const result =
                             await originalClient.readConfigurationOutcome(
                                 receipt.operation_id,
@@ -587,7 +619,13 @@ export function createSessionController(options: SessionControllerOptions) {
                                     responseByteLimit: SESSION_RESPONSE_BYTES,
                                 },
                             );
-                        if (!current(proven))
+                        if (
+                            !currentObservation(
+                                proven,
+                                observationEpoch,
+                                controller.signal,
+                            )
+                        )
                             throw new OperationRegistryError("scope");
                         if (
                             result.kind === "api_problem" &&
@@ -621,6 +659,7 @@ export function createSessionController(options: SessionControllerOptions) {
                 });
             } finally {
                 controlledReads.delete(controller);
+                observationReads.delete(controller);
             }
         },
         async observeHostActionOutcome(
@@ -628,6 +667,7 @@ export function createSessionController(options: SessionControllerOptions) {
         ): Promise<HostActionOutcomeObservation> {
             if (
                 disposed ||
+                pageHidden ||
                 connection !== "connected" ||
                 !bootstrap.user.admin_permissions.some(
                     (permission) =>
@@ -648,6 +688,8 @@ export function createSessionController(options: SessionControllerOptions) {
             });
             const controller = new AbortController();
             controlledReads.add(controller);
+            observationReads.add(controller);
+            const observationEpoch = visibilityEpoch;
             const owner = "host-action-outcome:" + id;
             try {
                 return await reads.run(owner, controller.signal, async () => {
@@ -662,7 +704,13 @@ export function createSessionController(options: SessionControllerOptions) {
                                 responseByteLimit: SESSION_RESPONSE_BYTES,
                             },
                         );
-                        if (!current(auth))
+                        if (
+                            !currentObservation(
+                                auth,
+                                observationEpoch,
+                                controller.signal,
+                            )
+                        )
                             throw new OperationRegistryError("scope");
                         if (lookup.kind !== "success") {
                             if (
@@ -684,6 +732,14 @@ export function createSessionController(options: SessionControllerOptions) {
                             id,
                             session,
                         );
+                        if (
+                            !currentObservation(
+                                proven,
+                                observationEpoch,
+                                controller.signal,
+                            )
+                        )
+                            throw new OperationRegistryError("scope");
                         const result = await (
                             receipt.route ===
                                 "/api/v1/host/sync-schedule/changes"
@@ -697,7 +753,13 @@ export function createSessionController(options: SessionControllerOptions) {
                             signal: controller.signal,
                             responseByteLimit: SESSION_RESPONSE_BYTES,
                         });
-                        if (!current(proven))
+                        if (
+                            !currentObservation(
+                                proven,
+                                observationEpoch,
+                                controller.signal,
+                            )
+                        )
                             throw new OperationRegistryError("scope");
                         if (
                             result.kind === "api_problem" &&
@@ -726,6 +788,7 @@ export function createSessionController(options: SessionControllerOptions) {
                 });
             } finally {
                 controlledReads.delete(controller);
+                observationReads.delete(controller);
             }
         },
         observer,
@@ -735,6 +798,14 @@ export function createSessionController(options: SessionControllerOptions) {
             return registry.importHandle(input, session);
         },
         originalScope: () => session.scope,
+        setPageHidden(value: boolean) {
+            if (disposed || pageHidden === value) return;
+            pageHidden = value;
+            if (value) visibilityEpoch++;
+            observer.setHidden(value);
+            if (value)
+                for (const controller of observationReads) controller.abort();
+        },
         observe(id: RecordId) {
             if (disposed || connection !== "connected")
                 throw new OperationRegistryError("scope");
@@ -774,6 +845,8 @@ export function createSessionController(options: SessionControllerOptions) {
                 throw new OperationRegistryError("scope");
             const originalSession = session;
             const originalClient = client;
+            const observationEpoch = visibilityEpoch;
+            const observationWasAllowed = !pageHidden;
             const record = registry.prepare(intent.action, originalSession);
             if (record.handles.kind !== "basic-key")
                 throw new OperationRegistryError("invalid");
@@ -808,9 +881,20 @@ export function createSessionController(options: SessionControllerOptions) {
                         expectedSafeReceiptIdentity: null,
                     })
                 ) {
-                    startObservation(
-                        registry.authorizeObservation(record.recordId, session),
-                    );
+                    if (
+                        !observationWasAllowed ||
+                        observationEpoch !== visibilityEpoch
+                    ) {
+                        // A deliberate Observe after return owns its own lifecycle.
+                        if (observer.snapshot(record.recordId).phase === "idle")
+                            observer.pause(record.recordId, "hidden");
+                    } else
+                        startObservation(
+                            registry.authorizeObservation(
+                                record.recordId,
+                                session,
+                            ),
+                        );
                 }
                 return { recordId: record.recordId, result };
             } finally {

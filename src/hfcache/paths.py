@@ -29,7 +29,7 @@ import re
 import unicodedata
 from dataclasses import dataclass
 from datetime import UTC
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Final, NoReturn, final
 
 from hfcache.errors import CodedError
@@ -637,8 +637,12 @@ class ArchiveLayout:
         return self._relative(path, self.published, "published root")
 
     @staticmethod
-    def _relative(path: Path, root: Path, what: str) -> PurePosixPath:
+    def _relative(path: PurePath, root: PurePath, what: str) -> PurePosixPath:
         try:
+            parts, base = path.parts, root.parts
+            if path.anchor == root.anchor and parts[: len(base)] == base:
+                return PurePosixPath(*parts[len(base) :])
+            # Preserve pathlib's remaining flavour rules and refusal diagnostics.
             return PurePosixPath(path.relative_to(root))
         except ValueError as exc:
             message = f"{path} is not inside the {what} {root}"

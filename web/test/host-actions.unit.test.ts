@@ -10,7 +10,12 @@ import {
     resultCertainty,
 } from "../src/state/session-controller";
 import type { SessionController } from "../src/state/session-controller";
-import { ARCHIVE_ID, jsonResponse, readWire } from "./read-fixtures";
+import {
+    ARCHIVE_ID,
+    jsonResponse,
+    problemWire,
+    readWire,
+} from "./read-fixtures";
 import {
     deferred,
     OPERATION_ID,
@@ -582,6 +587,83 @@ test("late outcome after disconnect cannot release the preserved original handle
         operationId: OPERATION_ID,
     });
 });
+
+test("hidden original host outcome reads require an explicit observation after return", async () => {
+    const fetcher = vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(jsonResponse(problemWire("HFAPI013", 20), 404));
+    const value = controller(fetcher),
+        record = value.importHandle({
+            kind: "basic-key",
+            key,
+            operationId: OPERATION_ID,
+            originalScope: value.originalScope(),
+        });
+    value.setPageHidden(true);
+    await expect(
+        value.observeHostActionOutcome(record.recordId),
+    ).rejects.toThrow();
+    expect(fetcher).not.toHaveBeenCalled();
+    value.setPageHidden(false);
+    expect(fetcher).not.toHaveBeenCalled();
+    expect((await value.observeHostActionOutcome(record.recordId)).kind).toBe(
+        "lookup",
+    );
+    expect(fetcher).toHaveBeenCalledOnce();
+});
+
+test.each(["lookup", "outcome"])(
+    "hide and return fences a late host %s without clearing original handles",
+    async (stage) => {
+        const late = deferred<Response>();
+        let signal: AbortSignal | null | undefined;
+        const fetcher = vi.fn<typeof fetch>((input, options) => {
+            const lookup = url(input).pathname === "/api/v1/operations/lookup";
+            if ((stage === "lookup") === lookup) {
+                signal = options?.signal;
+                return late.promise;
+            }
+            return Promise.resolve(
+                jsonResponse(
+                    operationResponse("operations lookup", {
+                        operation: original(),
+                    }),
+                ),
+            );
+        });
+        const value = controller(fetcher),
+            record = value.importHandle({
+                kind: "basic-key",
+                key,
+                operationId: OPERATION_ID,
+                originalScope: value.originalScope(),
+            });
+        const observing = value.observeHostActionOutcome(record.recordId),
+            rejection = expect(observing).rejects.toThrow();
+        await vi.waitFor(() => {
+            expect(fetcher).toHaveBeenCalledTimes(stage === "lookup" ? 1 : 2);
+        });
+        value.setPageHidden(true);
+        expect(signal?.aborted).toBe(true);
+        value.setPageHidden(false);
+        late.resolve(
+            jsonResponse(
+                stage === "lookup"
+                    ? operationResponse("operations lookup", {
+                          operation: original(),
+                      })
+                    : hostWire("host schedule outcome", schedule()),
+            ),
+        );
+        await rejection;
+        expect(fetcher).toHaveBeenCalledTimes(stage === "lookup" ? 1 : 2);
+        expect(value.snapshot().canSubmit).toBe(false);
+        expect(value.snapshot().registry.records[0]?.handles).toMatchObject({
+            key,
+            operationId: OPERATION_ID,
+        });
+    },
+);
 
 test("independent schedule/observer grants refuse locally before preserving a fresh key or making POST", async () => {
     const fetcher = vi.fn<typeof fetch>();

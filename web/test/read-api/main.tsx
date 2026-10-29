@@ -8,6 +8,7 @@ import "../../src/styles.css";
 import { readBoundedJson, WireError } from "../../src/wire/json";
 import { decodeNamed } from "../../src/wire/generated";
 import { wireArray, wireObject, wireString } from "../../src/wire/runtime";
+import { LoadBoundary } from "./load-boundary";
 
 function metadata(name: string): string {
     const value = document.querySelector<HTMLMetaElement>(
@@ -132,7 +133,9 @@ createRoot(container).render(
             Owned source fixture. Caddy, Basic authentication and installed
             platform behavior are not established here.
         </p>
-        {selected === "roundtrip" ? (
+        {selected === "load" ? (
+            <LoadBoundary scope={scope} />
+        ) : selected === "roundtrip" ? (
             <ModelRoundtrip />
         ) : (
             <StatusReadView client={client} scope={scope} source={source} />

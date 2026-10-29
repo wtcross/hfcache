@@ -65,7 +65,7 @@ export function HostControls({
                 ? "Reset to shipped schedule"
                 : "Apply reviewed schedule";
     return (
-        <div className="host-controls" aria-label="Host controls">
+        <div className="host-controls" role="group" aria-label="Host controls">
             <Panel title="Sync schedule">
                 <p>
                     Basic authentication and protected host permissions are

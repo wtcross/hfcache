@@ -491,6 +491,14 @@ Queries share finite metadata budgets and a 32 MiB visible projection ceiling,
 including rows beyond the requested page. Oversized detail refuses rather than
 silently dropping observations.
 
+Every authoritative read still opens its metadata through the contained
+no-follow reader and charges the current query's entry/byte bounds. Strict
+parsing may reuse a frozen reference or manifest only for identical fresh bytes,
+under the fixed process-local bounds in [the parsing decision](adr/decision-157.md).
+Current/retained membership, generation, archive identity and observation binding
+are rechecked independently. Parser reuse cannot supply a missing file, accept
+changed bytes or bypass an exhausted read budget.
+
 The Library preserves those server predicates and distinguishes scoped coverage,
 known matching repositories, loaded table rows and loaded facet values. Facet
 totals are not table totals. It joins separately read status/inventory by type/ID

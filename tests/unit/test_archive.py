@@ -30,9 +30,28 @@ from hfcache.archive import (
     published_adoption_problems,
 )
 from hfcache.errors import SafetyError
-from hfcache.models import SCHEMA_VERSION, ArchiveSentinel, Provenance, dump
+from hfcache.hashing import FileDigest
+from hfcache.hub import TreeEntry
+from hfcache.identity import CommitSha, RepositoryIdentity, new_publication_id, new_transaction_id
+from hfcache.metadata import MetadataReader
+from hfcache.models import SCHEMA_VERSION, ArchiveSentinel, Provenance, Reference, dump
 from hfcache.paths import ArchiveLayout
-from hfcache.storage import MountEntry, atomic_write_bytes, parse_mount_table, temporary_sibling
+from hfcache.publication import (
+    create_staging,
+    discard_staging,
+    promote_staging,
+    publish_current_reference,
+    publish_revision_reference,
+    stage_file,
+)
+from hfcache.storage import (
+    MountEntry,
+    atomic_write_bytes,
+    parse_mount_table,
+    temporary_sibling,
+    write_model,
+)
+from hfcache.sync import Timeline, build_manifest, hash_snapshot
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -314,6 +333,110 @@ def test_a_full_layout_with_a_matching_sentinel_is_initialized(layout, table):
     assert inspection.problems == ()
     assert inspection.sentinel is not None
     assert inspection.sentinel.archive_id == ARCHIVE_ID
+
+
+@pytest.mark.parametrize("bounded_reader", [False, True])
+def test_model_and_dataset_publications_do_not_make_archive_layout_unusable(
+    layout, table, tmp_path: Path, *, bounded_reader: bool
+):
+    """FS-21/AD-10: normal publication adds namespaces, not an invalid init layout."""
+    initialize(layout, table)
+    snapshot = tmp_path / "download"
+    snapshot.mkdir()
+    payload = b"a published model or dataset file"
+    (snapshot / "config.json").write_bytes(payload)
+    tree = (TreeEntry(path="config.json", size=len(payload)),)
+    now = datetime(2026, 10, 28, tzinfo=UTC)
+    timeline = Timeline(now, now, now, now, now)
+    sha = CommitSha("a" * 40)
+    for kind in ("model", "dataset"):
+        identity = RepositoryIdentity.of(kind, "organization/repository")
+        repository = layout.repository(identity)
+        publication = new_publication_id()
+        transaction = new_transaction_id()
+        staging = create_staging(layout, transaction)
+        hashed = hash_snapshot(snapshot, tree, identity=identity)
+        entry = hashed.files[0]
+        stage_file(
+            snapshot / "config.json",
+            staging.tree / "config.json",
+            publication_mode="copy",
+            cache_root=snapshot,
+            expected=FileDigest(digest=entry.sha256, size=entry.size),
+            expected_identity=entry.object_identity,
+        )
+        manifest = build_manifest(
+            identity=identity,
+            requested_revision="main",
+            commit_sha=sha,
+            publication_id=publication,
+            publication_generation=1,
+            publication_mode="copy",
+            tree=tree,
+            hashed=hashed,
+            layout=repository,
+            hub_endpoint="https://huggingface.co",
+            timeline=timeline,
+        )
+        promote_staging(layout, staging, repository.instance(sha, publication))
+        manifest_path = repository.manifest(sha, publication)
+        manifest_path.parent.mkdir(parents=True)
+        write_model(manifest_path, manifest, mode=0o640, code="HFMNT008")
+        reference = Reference(
+            commit_sha=sha,
+            manifest=str(repository.manifest_reference(sha, publication)),
+            publication_generation=1,
+            publication_id=publication,
+            repository_id=identity.id,
+            repository_type=identity.type,
+            tree=str(repository.tree_reference(sha, publication)),
+            updated_at=now,
+        )
+        publish_revision_reference(layout, reference)
+        publish_current_reference(layout, reference)
+        discard_staging(layout, transaction)
+
+    inspection = inspect_archive(
+        layout,
+        archive_id=ARCHIVE_ID,
+        table=table,
+        reader=MetadataReader(layout.root) if bounded_reader else None,
+    )
+
+    assert inspection.state == "initialized"
+    assert inspection.problems == ()
+    assert inspection.unknown_entries == ()
+    assert inspection.missing_directories == ()
+
+
+@pytest.mark.parametrize("parent", ["repos", "manifests"])
+@pytest.mark.parametrize("entry", ["unknown", "file", "symlink"])
+def test_initialized_publication_namespaces_still_refuse_unexplained_entries(
+    layout, table, tmp_path: Path, parent: str, entry: str
+):
+    initialize(layout, table)
+    directory = getattr(layout, parent)
+    child = directory / ("stranger" if entry == "unknown" else "models")
+    if entry == "unknown":
+        child.mkdir()
+    elif entry == "file":
+        child.write_text("not a publication directory", encoding="utf-8")
+    else:
+        child.symlink_to(tmp_path, target_is_directory=True)
+
+    inspection = inspect(layout, table)
+
+    assert inspection.state == "unusable"
+    assert codes(inspection.problems) == ["HFMNT015" if entry == "symlink" else "HFMNT014"]
+
+
+def test_publication_namespaces_are_not_adopted_before_initialization(layout, table):
+    (layout.repos / "models").mkdir(parents=True)
+
+    inspection = inspect(layout, table)
+
+    assert inspection.state == "unusable"
+    assert inspection.unknown_entries == ("published/repos/models",)
 
 
 def test_a_sentinel_that_disagrees_with_configuration_is_hfmnt007(layout, table):

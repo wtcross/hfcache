@@ -29,6 +29,12 @@ The required source gate also runs `pnpm --dir web run test:auth-sandbox`, bound
 Node metadata/drain unit tests whose retained TAP must show a positive all-pass
 count and zero failures, cancellation, skips or TODOs. Those tests supplement the
 actual browser sandbox proof; fabricated process metadata cannot establish it.
+The pinned Chromium can rewrite child command lines as lossy process titles,
+including truncation immediately after one literal space. Preserve the exact
+raw title and its observed-only qualifier. Tokenization may recognize that one
+terminal separator; internal or repeated empty tokens, other whitespace,
+quotes, backslashes and disabling flags still refuse. A title never reconstructs
+original argv or replaces the independent live sandbox/namespace proof.
 It proves direct API TLS/authentication; shared-Caddy and complete installed
 UI/platform acceptance follow with authenticated static serving. Synthetic fixture
 storage supplies no live NAS evidence. Preserve failed workspaces and original
@@ -292,8 +298,14 @@ test-only entry importing the actual React component/client, starts the real
 application on an owned loopback socket and runs sandboxed Chromium. It uses only
 generated private credentials and synthetic local state. Version, capabilities,
 status and genuine failed inspection/API-problem responses cross the real service
-boundary. A labelled post-service corruption fault checks unknown-schema handling;
-that negative fault does not replace the real-route positives. The fixture
+boundary. A finite query-pool scenario runs 100 refresh/handle cycles through the
+actual typed client, query store, shared two-read coordinator and encoded-retention
+budget. Delayed genuine service replies expose their real headers before body
+delivery; cancellation and authority retirement then prove late-body fencing.
+Explicit post-service faults check unknown schema, oversize and unsafe-integer
+refusal; those negative faults do not replace the real-route positives. Encoded
+retention observations measure neither browser heap nor installed route churn.
+The fixture
 retains unique logs, source/artifact identities and browser reports under
 `.scratch/`; it observes exact browser/API shutdown. A caller-supplied workspace
 must be a new owned descendant of `.scratch/`. Missing prerequisites or uncertain

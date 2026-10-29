@@ -215,6 +215,7 @@ export function ReadmeCard({
                         {mode === "source" ? (
                             <pre
                                 className="readme-source"
+                                role="group"
                                 tabIndex={0}
                                 aria-label="Sanitized README source"
                             >

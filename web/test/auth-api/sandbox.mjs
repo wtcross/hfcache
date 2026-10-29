@@ -286,7 +286,13 @@ export function commandProof(raw) {
             ),
         );
         assert.ok(!/["'\\]/.test(args[0]));
-        tokens = args[0].split(" ");
+        // A real Chromium title can be truncated immediately after a separator.
+        // Drop exactly that one final separator for token checks, retaining the
+        // original bytes and the existing lossy/observed-only qualifications.
+        const tokenTitle = args[0].endsWith(" ")
+            ? args[0].slice(0, -1)
+            : args[0];
+        tokens = tokenTitle.split(" ");
         assert.ok(
             tokens.length < 256 && tokens.every((token) => token.length > 0),
         );

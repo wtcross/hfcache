@@ -9,6 +9,7 @@ import {
 import type { ReactNode } from "react";
 import { Notice, Panel } from "../primitives";
 import { ReadmeCard } from "../readme/ReadmeCard";
+import { VirtualManifestFiles } from "./VirtualManifestFiles";
 import {
     parseRepositoryFragment,
     repositoryFragment,
@@ -1174,48 +1175,62 @@ export function RepositoryDetail({
                     <Panel title="Files & manifest">
                         <p>
                             The whole manifest was read under the existing
-                            artifact limit. These local table pages do not
-                            reduce that read limit. Files are metadata; this
+                            artifact limit. Local paging and virtualization do
+                            not reduce that read limit. Files are metadata; this
                             interface serves no file payload.
                         </p>
-                        <LocalCollection
-                            items={manifest.files}
-                            identity={identity}
-                            name="files"
-                            render={(visible) => (
-                                <div
-                                    className="repository-table-scroll"
-                                    tabIndex={0}
-                                    role="region"
-                                    aria-label="Manifest file table, scroll horizontally on narrow screens"
-                                >
-                                    <table aria-label="Manifest files">
-                                        <thead>
-                                            <tr>
-                                                <th>Path</th>
-                                                <th>Logical bytes</th>
-                                                <th>Evidence</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {visible.map((file) => (
-                                                <tr key={file.path}>
-                                                    <th scope="row">
-                                                        <code>{file.path}</code>
-                                                    </th>
-                                                    <td>{number(file.size)}</td>
-                                                    <td>
-                                                        <FileDetails
-                                                            file={file}
-                                                        />
-                                                    </td>
+                        {manifest.files.length > 100 ? (
+                            <VirtualManifestFiles
+                                identity={identity}
+                                files={manifest.files}
+                                renderDetails={(file) => (
+                                    <FileDetails file={file} />
+                                )}
+                            />
+                        ) : (
+                            <LocalCollection
+                                items={manifest.files}
+                                identity={identity}
+                                name="files"
+                                render={(visible) => (
+                                    <div
+                                        className="repository-table-scroll"
+                                        tabIndex={0}
+                                        role="region"
+                                        aria-label="Manifest file table, scroll horizontally on narrow screens"
+                                    >
+                                        <table aria-label="Manifest files">
+                                            <thead>
+                                                <tr>
+                                                    <th>Path</th>
+                                                    <th>Logical bytes</th>
+                                                    <th>Evidence</th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        />
+                                            </thead>
+                                            <tbody>
+                                                {visible.map((file) => (
+                                                    <tr key={file.path}>
+                                                        <th scope="row">
+                                                            <code>
+                                                                {file.path}
+                                                            </code>
+                                                        </th>
+                                                        <td>
+                                                            {number(file.size)}
+                                                        </td>
+                                                        <td>
+                                                            <FileDetails
+                                                                file={file}
+                                                            />
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            />
+                        )}
                         <dl className="repository-facts">
                             <Fact name="Manifest path (archive-root-relative)">
                                 <code>{manifestPath ?? "Not observed"}</code>

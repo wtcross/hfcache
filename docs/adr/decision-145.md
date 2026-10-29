@@ -4,6 +4,7 @@
 - Status: Accepted; source implementation is present. Executable acceptance is
   recorded in the introducing task and commit.
 - Date: 2026-10-20.
+- Fresh-byte parsing amendment: [decision157](decision-157.md).
 - Introducing evidence: this commit; source acceptance is recorded separately.
 
 ## Context and decision
@@ -123,6 +124,124 @@ The [session contract](../schemas.md#186-browser-recovery-metadata-schema-1) and
 [user guide](../web-ui/operations.md) refine the recovery design of
 [decision134](decision-134.md) and query semantics of [decision137](decision-137.md).
 No server DTO, receipt format, REST/MCP permission or execution authority changes.
+
+Original-handle announcement clarification (2026-10-29): original-handle import keeps a
+typed local success/error outcome. Rejected input is presented as an error alert;
+a successful local save remains a polite status announcement. This changes only
+feedback semantics, without moving focus, looking up a handle or submitting an
+operation. Recovery identity, authority, wire formats and dependencies are
+unchanged. Matching installed reader acceptance remains separately required.
+
+### Large manifest presentation refinement (2026-10-27)
+
+The authority metadata scanner advances between structural bytes and quoted
+string boundaries using native byte searches. Quote termination still depends on
+the complete adjacent backslash run's parity. The existing depth 32 and 100,000
+structural-token ceilings, byte caps and subsequent strict JSON/model validation
+remain unchanged. This reduces repeated work for long UTF-8 manifest paths while
+retaining every existing refusal and fresh authority read.
+
+Catalog projections bind each present observation through its fresh authoritative
+reference and manifest once. A missing observation still requires that binding
+before it may be classified as missing. This removes an immediately repeated
+authority read without caching a previous query, trusting an adjunct or changing
+the configured byte/traversal ceilings. Lexical containment uses an exact anchor
+and component prefix for the common case, retaining the standard path operation
+as its fallback. The descriptor reader still rejects relative paths and `..`
+before opening anything, and walks every absolute component with `O_NOFOLLOW`.
+
+The reviewed storage, metadata and path source pins and affected publication
+context pins are renewed for these implementation changes. Public definitions,
+routes, operation results and
+browser semantic ports are unchanged; the conservative source digest changes
+and an old open page still requires the normal interface-version check. Boundary,
+escape-parity, independent tree-oracle and real-query equivalence tests accompany
+the change. Installed performance acceptance remains a separate measured gate.
+
+[Decision157](decision-157.md) subsequently permits bounded reuse of frozen
+parsed models by exact freshly read bytes. The earlier duplicate-binding
+optimization remains independent; no previous query result, membership or
+authority is reused. Filesystem reads and their query charges still occur before
+the parser memo lookup.
+
+Keep whole-manifest validation, exact publication identity and existing response,
+Unicode-work and shared retention limits. Small file collections retain local
+25-row pages. Above100 files, use a virtualized metadata table with at most24
+mounted file rows and inert height spacers, without a new dependency. Fixed
+summary-row heights and one separately selected full-metadata panel avoid
+unbounded expanded provenance rows. Preserve column headers and actual row
+indices/counts, retain a focused row across scrolling, and support arrows,
+Page Up/Down, Home/End and explicit file-number navigation. Publication changes
+reset the window and selected metadata before display. Viewport movement and
+selection perform no network request and grant no operation authority.
+
+Metadata action names include the visible phrase **Inspect metadata** and the
+loaded file number. The full path remains in the row header and selected evidence.
+This keeps the accessible action name consistent with its visible label and
+avoids repeating a potentially long path inside every button name. Real connected
+scans exposed the earlier label mismatch; file identity and validation are unchanged.
+
+This fulfills the large-manifest virtualization requirement rather than calling
+existing pagination virtualization. The server still sends one complete bounded
+manifest; an oversized/unsafe artifact remains an explicit refusal. No arbitrary
+file route, download, source-digest invention or publication fallback is added.
+Existing finite pagination remains appropriate for other bounded detail/report
+collections. Actual keyboard, zoom, reader, DOM/retention and real-Caddy evidence
+belongs to task020, not this decision text.
+
+### Repository text contrast refinement (2026-10-27)
+
+Repository selection labels, summary captions, small evidence text, fact labels
+and local page controls use the shared muted foreground. The former lighter
+detail-specific colors failed the actual connected model overview contrast
+scan. The shared foreground provides at least 4.5:1 contrast on the interface's
+white, page, table-header and warning backgrounds at ordinary text sizes.
+Descriptions use the same foreground so text remains readable outside white
+cards. Disabled controls retain their distinct unavailable presentation.
+Final built-browser scans remain required; calculated palette ratios alone do
+not establish accessibility acceptance. This changes presentation only, with
+no new invariant, public wire shape, dependency or architectural authority.
+
+### Primary repository action hover refinement (2026-10-28)
+
+Primary repository actions retain white text on a dark accent background when
+hovered. Their hover rule must take precedence over the generic pale repository
+button hover background. The source8 installed cancellation/fresh-return case
+exposes the former cascade conflict as a serious contrast violation on **Select
+current publication**. This correction fulfills the existing text-contrast
+requirement; matching built-browser checks remain required for the new source.
+It changes no invariant, wire shape, dependency or architectural authority.
+
+### Named content groups refinement (2026-10-27)
+
+Author-labelled content groups must expose a supported nameable role. The
+Sanitized README source, Selected job effects and Host controls use explicit
+group semantics with their existing labels. A label on a generic `div` or `pre`
+alone does not supply that semantic grouping. Source text remains exact,
+escaped and keyboard-focusable; related explanations and controls retain their
+existing order, layout and authority. Component regressions resolve these groups
+by role and name and check their content or controls. This fulfills the existing
+presentation boundary without a new API, dependency or operation. Built-browser
+and reader acceptance remain required for the revised source; earlier artifact
+evidence is not relabelled as acceptance of this refinement.
+
+### Document visibility refinement (2026-10-27)
+
+Visibility is a local observation gate. A hidden document pauses active original
+receipt/event/result observation, aborts its GET and finite retry/poll/deadline
+ownership, and fences late responses. Explicit original configuration and host
+outcome reads are gated and aborted too: a hidden or superseded response cannot
+provide fresh private outcome proof. Ordinary explicit query ownership retains
+its existing route/lifecycle rules. No visibility transition cancels a submitted
+POST, erases an original handle or implies that backend execution stopped.
+
+Returning visible does not restart observation. The user deliberately chooses
+Observe for the preserved original. An admission acknowledgement crossing a hide
+transition still saves its original key/ID, but cannot automatically begin reads
+after return. This makes the existing `hidden` pause reason effective at the
+mount-owned document boundary and avoids hidden polling without adding a retry
+loop, credential store, API, dependency or authority. Actual lifecycle and
+installed-browser evidence belong to task020; this amendment alone claims none.
 
 ## Typed Library composition amendment (2026-10-26)
 

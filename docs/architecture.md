@@ -705,6 +705,13 @@ This named supplemental extension is writer-created after normal preflight; old
 archives without it remain valid. Unknown siblings are still refused. The
 sentinel and initial required layout are never recreated or rewritten.
 
+Layout inspection recognizes the optional `models/` and `datasets/` directories
+under `published/repos/` and `published/manifests/` after initialization. It
+checks those directory entries without descending into publication content;
+publication integrity is checked by verification. Unknown siblings and symlinks
+at the inspected layout boundaries remain refusals. These optional namespaces
+do not enlarge the directory skeleton created by initialization.
+
 Writer-local paths, none of which hold archive content:
 
 ```text

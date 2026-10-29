@@ -400,6 +400,16 @@ abandons ownership prematurely. Metadata uses safe no-follow reads and frozen
 policy snapshots; it neither hashes repository content nor reconstructs a catalog.
 Health readiness does not certify archive integrity or open execution admission.
 
+Reference and manifest parsing can reuse a frozen model only after the current
+anchored read returns identical bytes and charges the current query budget.
+The process retains at most512 reference inputs of at most4KiB each and one
+manifest input between64KiB and8MiB; other inputs parse normally. This bounds raw
+keys at10MiB, separately from decoded model and active-worker memory. Parser
+entries contain no filesystem capability or authenticated response. Fresh policy,
+archive identity and publication/retention joins remain required; missing,
+replaced, unsafe or exhausted reads still refuse. See
+[the parsing decision](adr/decision-157.md).
+
 Request IDs are server-generated, separate from operation IDs and domain report/
 journal run IDs. Execution correlation is context-scoped and copied into workers;
 invocation mode describes the execution host, not a timer/submitter origin.

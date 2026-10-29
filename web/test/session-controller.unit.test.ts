@@ -649,3 +649,88 @@ test("manual legacy reference remains nonblocking while stop-observing sends no 
         value.submit({ action: "managedPlan", request: managedRequest }),
     ).rejects.toThrow();
 });
+
+test.each([false, true])(
+    "late admission begun hidden=%s preserves its key through return without automatic GETs",
+    async (initialHidden) => {
+        const late = deferred<Response>();
+        const fetcher = vi
+            .fn<typeof fetch>()
+            .mockImplementation((_input, options) => {
+                if (options?.method === "POST") return late.promise;
+                return Promise.resolve(
+                    jsonResponse(problemWire("HFAPI013", 20), 404),
+                );
+            });
+        const { value, storage } = controller(fetcher);
+        if (initialHidden) value.setPageHidden(true);
+        const submitted = value.submit({
+            action: "managedPlan",
+            request: managedRequest,
+        });
+        expect(fetcher).toHaveBeenCalledOnce();
+        const saved = value.snapshot().registry.records[0];
+        if (saved?.handles.kind !== "basic-key")
+            throw new Error("Original key missing");
+        value.setPageHidden(true);
+        value.setPageHidden(false);
+        late.resolve(acceptance());
+        const accepted = await submitted;
+        expect(accepted.result.kind).toBe("accepted");
+        expect(value.observer.snapshot(accepted.recordId)).toMatchObject({
+            phase: "paused",
+            pauseReason: "hidden",
+        });
+        expect(fetcher).toHaveBeenCalledOnce();
+        expect(value.snapshot().registry.records[0]?.handles).toMatchObject({
+            kind: "basic-key",
+            key: saved.handles.key,
+            operationId,
+        });
+        expect(storage.saved).toContain(operationId);
+        value.observe(accepted.recordId);
+        await vi.waitFor(() => {
+            expect(fetcher).toHaveBeenCalledTimes(2);
+        });
+        expect(fetcher.mock.calls[1]?.[1]?.method).toBe("GET");
+        expect(
+            fetcher.mock.calls.filter(
+                ([, options]) => options?.method === "POST",
+            ),
+        ).toHaveLength(1);
+    },
+);
+
+test("a late acknowledgement does not pause a deliberate Observe made after return", async () => {
+    const late = deferred<Response>();
+    const fetcher = vi.fn<typeof fetch>((_input, options) =>
+        options?.method === "POST"
+            ? late.promise
+            : Promise.resolve(jsonResponse(problemWire("HFAPI013", 20), 404)),
+    );
+    const { value } = controller(fetcher);
+    const submitting = value.submit({
+        action: "managedPlan",
+        request: managedRequest,
+    });
+    const record = value.snapshot().registry.records[0];
+    if (record === undefined) throw new Error("Original key missing");
+    value.setPageHidden(true);
+    value.setPageHidden(false);
+    value.observe(record.recordId);
+    await vi.waitFor(() => {
+        expect(value.observer.snapshot(record.recordId).pauseReason).toBe(
+            "history_missing",
+        );
+    });
+    late.resolve(acceptance());
+    await submitting;
+    expect(value.observer.snapshot(record.recordId).pauseReason).toBe(
+        "history_missing",
+    );
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher.mock.calls.map(([, options]) => options?.method)).toEqual([
+        "POST",
+        "GET",
+    ]);
+});

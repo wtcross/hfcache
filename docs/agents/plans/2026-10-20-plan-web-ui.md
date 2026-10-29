@@ -8,7 +8,7 @@
 | Tracker | `docs/agents/plans/current.md` — sole active selector; intentionally not overwritten by extraction |
 | Baseline | `6b8fae2e0997403ae5c716a2e92148af0a972af9` — main reviewed October 20, 2026 |
 | Branch | `feat/web-ui` |
-| Latest completed package | WEB-019, this commit; WEB-020 is pending |
+| Latest completed package | WEB-020, this commit; WEB-021 is pending/handoff only |
 | Work-package family | WEB, deliberately introduced for this feature after collision check; one task = one work package = one implementation commit |
 | References | [Bundle entrypoint](support/web-ui/README.md), [kickoff](support/web-ui/KICKOFF.md), [source review](support/web-ui/source-review.md) |
 
@@ -3846,3 +3846,481 @@ Task019 owns exact sources, original evidence and limits; aggregate3ebb9e27…
 records506 trusted requests/84 clear CSP checkpoints and normal rootless drain.
 WEB-020 is pending next. NAS/production/full-platform, compatibility, retirement,
 final gate and rollout remain separate; no merge, push, tag or live Cockpit action.
+
+2026-10-27: WEB-020 activated after WEB-019 committed at `abaef80` with a clean
+tree. Harden actual end-user accessibility, hidden/disconnected polling and
+bounded large-data workflows, measuring the existing budgets through real
+Caddy/API in all three engines. Establish actual owned reader/keyboard/zoom
+evidence; preserve earlier acceptance and all uncertain originals. Reuse owned
+test infrastructure and keep production/NAS/retirement/rollout outside this task.
+
+2026-10-27 WEB-020 checkpoint: matching source4 strict gate passes with8978
+backend and4029 combined web tests, no required skips,95% line/90.01% branch
+coverage and completed real-API100-cycle integration. Native53/rootless54 stock
+artifacts are built; native53 prefix installation and confined module imports
+pass. Actual initial native JavaScript requests total204,904 gzip bytes.
+Installed cohort7 stops after10 usable Library samples at a read-settlement
+deadline, with normal role closure and unchanged fixture data. Twenty-sample
+p95, final installed browser/zoom/reader/positive-helper/transition acceptance
+remain open. Task020 owns exact evidence; no WEB020 commit or WEB021 advance.
+
+The subsequent source4 cohort8 completes20 Chromium loads, measuring2.754s p95,
+then fails the connected repository-detail contrast scan. Normal role closure,
+unchanged fixture data and both false originals are retained. A shared-foreground
+contrast fix is now implemented; the next matching source/gate and artifact
+acceptance are pending. The harness's actual authenticated browser cache behavior
+is being checked independently before attributing its repeated full asset
+transfers to application performance. Task020 remains active and uncommitted.
+
+Source5 cohort9 verifies default-cache restoration on the actual Chromium SDK
+protocol owner and completes20 samples at2.234s p95, still above2s. All29 covered
+accessibility scans have no serious/critical finding. Its large-manifest failure
+is reproduced as an oversized ASCII-escaped response; a new mixed-Unicode fixture
+preserves file/path/work stress while fitting the existing browser byte limit.
+Source6 now adopts decision157's bounded frozen-model parsing reuse only after
+fresh authoritative reads and charges. An isolated installed55 full-query
+comparison improves0.981s to0.630s with identical output; final browser evidence
+is still required. Actual SPA100-cycle retention, all-engine native/rootless,
+reader/zoom/positive-helper/transitions and a matching strict gate remain open.
+
+2026-10-27 later WEB-020 checkpoint: source6 matching gate4 passes9030 backend/
+4029 combined web tests with unchanged inputs. Installed native57 cohort10
+closes normally but remains false:20 Chromium samples yield2.844s p95 against
+the unchanged2s target. The large manifest now renders and supports its keyboard
+jump;12 metadata-button accessible names fail the next scan. The corrected
+names pass8 component tests and require updated artifacts/browser validation.
+Initial JavaScript is204,899 gzip bytes, below358,400. All-engine positive
+workflows, SPA retention, transitions, genuine zoom, application reader and
+installed slow/cancelled/stale reads remain acceptance work; WEB-020 is not
+complete and WEB-021 has not started.
+Task020 owns detailed evidence; no commit or WEB021 advance has occurred.
+
+2026-10-27 source7 checkpoint: matching strict gate5 passes0 in1522.413s with
+unchanged1528 inputs. Native59/rootless60 stock builds and fresh59 prefix/import
+checks pass. Live installed59 cohort11 completes Chromium's13 cases/100SPA
+cycles at1.793s load p95; Firefox's load passes at1.874s, with connected/large
+accessibility and its first50SPA cycles passing. WebKit/final original closure,
+positive workflows, actual zoom/reader, races and installed transport cases remain
+open. Source-only coordinators and separate candidate-staging qualification do
+not close those acceptance rows. WEB-020 remains active and uncommitted.
+
+Later original-cohort audit5 confirms Chromium and Firefox each complete13
+cases/100SPA cycles, with20-sample load p95 at1.793s/1.874s. WebKit's initial load
+passes at1.953s, alongside connected/large-manifest accessibility and30SPA cycles.
+Its remaining cycles and original normal closure are pending; all other open
+WEB-020 acceptance remains required before the single work-package commit.
+
+Cohort11's original result is now false with normal verified closure. Separate
+read-only retrieval preserves its9.4MB report beyond the old8MiB artifact cap:
+Chromium/Firefox complete13 cases/100SPA cycles each, all3 load p95 pass and90
+accessibility scans pass. WebKit stops at95 cycles on1ms time-origin drift despite
+unchanged actual Document/navigation fences; a corrected whole100-cycle WebKit
+run remains required. Matching gate5 read-fixture and all3 initial JavaScript
+request-closure joins pass. Other installed WEB-020 acceptance remains open.
+
+Independent accessibility review identifies three intentional labels on generic
+containers that require explicit nameable group roles. WEB-020 includes this
+semantic correction, focused regressions and ADR145/human guidance amendments
+in a new source8 snapshot. Existing source7 artifacts/results stay preserved;
+its targeted WebKit100-cycle run continues against those immutable inputs.
+Fresh source8 artifacts, matching gate and installed acceptance remain required.
+
+Source8 now freezes1528 inputs at32e7f0b7, with59 focused component cases and
+matching native61/rootless62 builds passing. Both actual images have no runtime
+Node/package managers; gate6 is running. The original source7 targeted WebKit
+run closes normally but fails at83 cycles on a15s Library-settlement predicate;
+its unchanged archive/configuration, zero POSTs and exact closure are retained.
+Source8 final browser/reader/installed workflow acceptance remains open.
+
+Matching source8 gate6 passes1508.707s with unchanged1528 inputs,9030 backend/
+4029 combined frontend tests and all required checks; the source8 HTTP fixture
+join also passes. Native61's first prefix stage remains false on its empty UV
+lock permission check after package/asset installation. A separate guarded
+completion is being prepared; source8 installed/browser acceptance stays open.
+
+The separate completion-v1 also refuses before mutation on a root-inclusive
+versus descendant count mismatch. Fresh read-only proof confirms5319 total/
+5318 descendant entries, the unchanged0666 empty UV lock, absent runtime/
+installation receipts and the quiet baseline. All failed records remain intact;
+a new scoped completion version must join those actual facts.
+
+2026-10-28: scoped completion-v2 (`fd9f4bef…`) and protected public-helper
+stage-v4 (`45e53ff4…`, manifest `e920ff4f…`) now pass with original transports
+reaped and no unknown cleanup. The sole empty noncode UV lock retains its inode
+with mode0600; code, current49 and the quiet baseline are preserved. Original
+false stage/completion-v1 records remain unchanged. New bound three-engine core
+acceptance is next; remaining WEB-020 acceptance and its commit stay open.
+
+The first source8 core cohort now runs against frozen graph `8a36274c…` and
+manifest `ac4400d1…`. Actual stage/import completion is separately joined by
+read-only qualification `a59970c1…`; its original final read-back NameError
+result remains false/unknown. The entire three-engine load/accessibility/100-SPA
+cohort owns the quiet measurement lane. No browser result is inferred early.
+
+That source8 cohort now closes false/known in1373.163s after Chromium completes
+13 cases/100 cycles at1.876s p95. Three supported100-selector requests exceed
+the collector's32-pair metadata bound; their detailed queries remain unknown,
+while complete native origin counts and200 response records are retained.
+Separate qualification `b67e9697…` preserves completed Chromium facts and the
+raw false result. Corrected Firefox/WebKit whole-case coverage is next; fresh
+root closure releases the quiet lane with current49/base5/5314 archive and
+configuration files unchanged. Remaining WEB-020 acceptance stays open.
+
+The corrected Firefox/WebKit whole-case target now runs from frozen closure
+`acff756b…` after successful protected stage/import `7af15e42…`. It explicitly
+requires the separately qualified Chromium scopes, keeps every per-engine case
+and budget, and owns a new quiet lane through both engines' measurements.
+
+2026-10-28 Source9 checkpoint: the primary-action hover contrast correction
+freezes1528 inputs at776470cc; matching gate7, native63/rootless64 stock builds,
+scoped no-runtime-Node proofs and root/prefix real API integration pass. Separate
+runtime completion and protected public-helper staging pass while the original
+false installation is retained. Fresh all-three-engine core-v2 acceptance is
+running under a whole-target quiet reservation after protected stage/import.
+Its complete JSON evidence retains every field within the unchanged16MiB cap
+by removing formatting whitespace. Native visibility still fails Firefox in the
+separate inert prerequisite; positive workflows, rootless acceptance, real races,
+genuine zoom/reader and final case mappings remain open. WEB-020 is active and
+uncommitted; WEB-021 has not started. Task020 owns detailed evidence.
+
+2026-10-28 WEB-020 fixture sequencing amendment: retain the three completed
+current49 GET scopes (core, read-budget negatives and read transport), their
+normal closures and every failed race record. Canonical staging and genuine
+protected native fixture preparation may precede the still-required prefixed
+race scope. Requiring all four scopes before that preparation was an agent
+fixture dependency assumption, not an acceptance requirement; it creates a
+cycle because Basic read-only Doctor correctly requires fresh protected Hub
+authority. This amendment changes test order only. It grants no application
+authority, reduces no scenario or budget and supplies no fourth-scope pass.
+
+The next race fixture must use actual supported old51 and new63 profiles,
+version-matched API/helper proof, the fixed hfcache principal, private /etc and
+/srv bindings and a separately provisioned Hub-only protected policy. A runtime
+prefix survey alone does not qualify an official native51 installation. Fresh
+qualification, or guarded official staging if absent, precedes browser effects.
+Each engine still opens the real old51 page before replacement by63, retaining
+the owned browser while API/worker/helper phases drain normally. The full
+controller teardown still requires known browser closure; unknown dependencies
+are preserved. New executable copies and effects require concrete source review.
+Native/rootless positive workflows, genuine zoom/reader, affected Firefox
+performance and every final gate remain required. Historical artifacts,
+contracts, receipts and failed outcomes are preserved unchanged.
+
+
+2026-10-28 later Core4 checkpoint: the unchanged Source9 build remains under
+acceptance. Core3's bootstrap-body observer fails after complete Chromium cases;
+its original failed/known result and normal closure are preserved. The reviewed
+first-response lifetime fix is staged/imported and Firefox-only attempt2 now
+owns QUIETv4. Historical accepted Chromium/WebKit checks remain separate; no
+stock-Firefox donation or fresh acceptance is inferred. Native/races/rootless,
+genuine zoom/reader and final mapping/documentation work remain open; task020
+owns exact evidence and WEB-021 has not started.
+
+Subsequent actual Core4 completion: affected modified Firefox passes13cases,
+20 loads at1.802s p95,100SPA and30AX in1375.871s with normal original closure.
+Fresh current49/base5/confinement/quiet audit passes and QUIETv4 is released.
+The remaining actual read-negative/transport, native/races/rootless and genuine
+zoom/reader acceptance stays open; task020 owns exact records.
+
+Later Negative5 original closes failed/known on WebKit CJK diagnostic errors,
+with normal closure and fresh quiet audit. Lost before-facts are not reconstructed;
+a new affected-Firefox collector will persist them. Transport6 stage/import pass
+and actual attempt1 runs under quiet; task020 retains exact records and all
+remaining native/race/rootless/zoom/reader acceptance. No WEB-020 commit yet.
+
+Subsequent Transport6 actual completion passes all12cases across3engines in
+585.171s, with normal closure and fresh current49/base5/confinement/quiet audit.
+Negative collection/diagnosis and actual native/races/rootless/zoom/reader remain
+open. Task020 records exact evidence; WEB-020 stays active and uncommitted.
+
+Subsequent actual scoped Firefox negative qualification535fcda6 accepts both
+original cases/byte and ownership predicates, retaining two runtime ctime
+differences and the failed aggregate. Official native51/63 target-only stages
+now pass119wheel/7UI/layout/current49-preservation with actual equal3closure
+maps. Initial63 preparation is locally bound/preflighted but unexecuted; the
+WebKit diagnostic precedes selection. Task020 owns exact records and open work.
+
+Subsequent actual single-WebKit diagnostic7 now closes failed/known with strict
+errors preserved (`292edbe8…`, wrapper `95a4f59c…`). Full same-origin Library
+facet access-control messages are captured; cancellation timing is evidence,
+not a causal waiver. Both post-inspections and normal closure complete; fresh
+current49 audit `d8492d2e…` passes and quiet is released. Root initial native63
+preparation now runs from actual targets/bindings, with roles stopped and no
+acceptance inferred early. Diagnosis continues alongside the remaining actual
+races/positive/rootless/zoom/reader work; task020 owns exact evidence.
+
+Subsequent actual WebKit8 original CJK scope separately qualifies (`14442103…`):
+case/strict zero SDK errors/byte limits/stock refusal/preservation/normal closure
+pass. Raw and added auxiliary Window diagnostic flags stay false; its fourth
+Document exceeds the unchanged3 cap, with no auxiliary event-absence claim or
+original predicate waiver. Fresh `5ee44b98…` passes and quiet is released.
+Corrected initial native preparation7 now runs, reusing exact14 sealed inputs
+read-only and using verified63 Python for setup. Task020 retains all exact facts;
+genuine native races/positive/rootless/zoom/reader/final work remain required.
+
+Actual initial preparation7 now passes (`fc09e327…`), selects supported63 with
+roles stopped and retains old objects. Actual initial/target bindings `ddd65682…`,
+Root review and local race11 activation `77ff51e1…` pass; protected stage/import
+`df0ac983…`/`458d6657…` close normally. Genuine native51A→63A→63B attempt1 is
+running; no race/restoration/completion or positive workflow claim is inferred.
+Task020 owns exact records and the remaining acceptance/commit work.
+
+2026-10-28 subsequent user steering: stop further validation of test machinery
+and exercise the real application directly. Preserve the existing fixture drafts,
+failed outcomes and original acceptance requirements. WEB-020 stays active and
+uncommitted; task020 remains the evidence authority and WEB-021 has not started.
+
+Direct guest inspection resolves the first old51 helper startup failure as a
+documented missing runtime directory. Applying its specified ownership/modes and
+existing SELinux labels starts the helper without policy or hardening changes.
+Normal drain and the official installer return to the already prepared 0.2.63 target;
+the retained helper unit and prior51 variant are preserved. This is not race or
+Restored63 acceptance. Real helper/verifier/API/shared Caddy now run, with 200
+health/catalog/native HostStatus/UI/bootstrap and six native grants. All three
+stock browsers pass trusted-HTTPS desktop/mobile navigation and later loaded
+Library240/search/3997-file keyboard checks with 10 mounted rows. Original script
+envelope/auth-challenge errors remain false and are not product regressions.
+
+The direct checks reveal a genuine archive-health classification bug for the
+four documented optional publication directories. The narrow product fix passes
+153 regressions and Ruff; the full product gate is running, not yet passed.
+Distinct 0.2.65 source/wheel/UI artifacts are built in
+`/home/tyler/web020-app-native-0.2.65-build-6125d5269844`; installation and actual
+fixed-health retest are pending. All six owned acceptance rows remain open.
+Native writes/race-equivalent application workflows, rootless, real zoom/reader,
+applicable performance and final mappings/docs/checks remain required before the
+single WEB-020 commit and WEB-021 handoff. No production/NAS or remote effect
+authority is added.
+
+
+2026-10-29 current direct application checkpoint: the archive fix and reviewed
+wire-audit update pass the full `scripts/check.sh` gate2 (exit 0, 9039 passed,
+52 deselected in 1196.62s; frontend/Cockpit/installation/build and all other checks
+passed). Logs remain at
+`/var/tmp/web-020-validation-nvj5zeg7/direct-application-fix-gate2.*`.
+Native 0.2.66 source `5d1fbe6e…`/wire `320c5fb1…` is actually staged and normally switched/started
+(helper 25579/verifier 25605/API 25613/Caddy 25619). Original switch `f74ca077…`
+and HTTP `d83eb9c0…` show archive initialized, zero unknown entries, ready/valid
+policy, supported native six grants and matching 0.2.66 UI/bootstrap. Native 0.2.65 stays
+unqualified/inactive; rootless 0.2.67 is built only without guest acceptance.
+
+The original succeeded preview `e4fb1f4f…` and interrupted Apply `1b808e75…` remain.
+Transmission exists, the original application key is lost and no replay occurs.
+Upgrade attempt `e41f6f0…` remains false because switching preceded all three old
+pages being ready (Firefox connection refused, WebKit not reached); exact upgrade
+acceptance remains required. All six owned rows stay open; WEB-020 remains
+in_progress/uncommitted with native writes/race-equivalent flows, rootless,
+genuine zoom/reader and final mapping/documentation/commit work outstanding.
+Task020 retains the exact actual paths and scopes; earlier failed records remain.
+
+
+2026-10-29 direct application continuation: original interrupted-operation
+recovery passes all three browsers in `27fad989…` (raw exit0), retaining the same
+imported ID after reload and blocking new diagnostic jobs, with zero POSTs/errors.
+Native 200% zoom passes seven surfaces for Chromium/WebKit in `aaf812d0…`; its raw
+aggregate remains exit1 for Firefox pointer-coordinate activation failure.
+Firefox-only keyboard continuation `f3c0a3cc…` exits0 on all seven surfaces with
+fixed 1440×1000 native PNGs, CSS viewport1440x1000→720x500, six true DOM CSS hits,
+focus/overflow/dialog checks and zero POSTs/errors. No Firefox pointer or reader pass
+is claimed. Earlier failed zoom `79707d48…` remains preserved.
+
+Task020 and the evidence ledger record exact raw artifacts and functional scope
+against canonical native 0.2.66 source `5d1fbe6e…`/wire `320c5fb1…`/UI `1faa4d4e…`. UX-01–03 advance
+only to in_progress; all six owned rows remain open because required layer/clause
+coverage is incomplete. No existing unit node is invented or failed flag changed.
+WEB-020 remains uncommitted; Root alone continues actual application checks.
+
+
+2026-10-29 subsequent direct upgrade: all three ready old63 browser Documents
+survive the official66 switch, explicitly reconnect to **Interface update
+required**, clear private API/HostStatus observations and retain their old marker.
+Explicit reload connects to66, with zero POSTs/page errors in every row. Original
+`16210ea8…` exits0; both preview/interrupted Apply receipts remain and no Apply is
+replayed. Official roundtrips `32d2cef5…`→63 and `2428a034…`→66 retain their records;
+final services are helper30749/verifier30767/API30775/Caddy30781. Earlier premature
+upgrade failures stay false. Task020/ledger retain stdout464eae74…/6710B and scoped
+AUTH-10/UX-01 functional evidence. All six owned rows remain open/in_progress or
+pending; no missing layer or remaining profile/workflow clause is invented.
+
+
+2026-10-29 direct catalog/row completion checkpoint:
+
+Actual native66 offline catalog writes now exist once per engine: Chromium
+`0ffe8fcf0df51146d674f13406706a3f`, Firefox
+`34d046383a320b6ec34c9c15777bbdb5` and WebKit
+`6a4198c1fb65fb36cc2a3000ed09d86c`. Each original receives202 after one POST and
+succeeds with domain exit0/**success_with_warnings**, HFWRN011, one captured tag
+snapshot, one written observation and zero failed records. Technical evidence
+remains partial/unsupported for this fixture; no integrity claim follows.
+
+Raw mutator scripts remain exit1: Chromium's DevTools body resource is unavailable,
+Firefox's separate Node observer lacks CA trust, and WebKit's result-region lookup
+is wrong. Their jobs are not replayed. Separate original-key/result GETs confirm
+Chrome/Firefox saved keys and exact succeeded operations. The read-only all3 UI
+continuation `d093bb9f…` exits0, opens **Validated original result**, renders the
+actual warning/counts, reloads and explicitly observes the same IDs, with zero
+POSTs/page errors. All three mutators are known terminal/closed. Exact originals
+and raw hashes are in task020 and the evidence ledger.
+
+CATALOG-09 completes its own matrix/layer requirements using mapped unit/integration,
+original Source9 real functional read scopes and current native66 update-clearing,
+error/result and recovery observations. Historical Source9 hashes remain unchanged;
+no current-source/performance or rootless result is donated. At that checkpoint AUTH-10 stayed
+in_progress for one specific installed predicate: the upgrade's old contexts held
+no unresolved browser records, so separate recovery/reload and authority-transition
+checks do not directly observe a retained unresolved handle across that transition.
+Its unit coverage remains valid; this gap is not an Orca/rootless requirement.
+The subsequent AUTH-10/UX-01 completions and retained UX-04 scope are recorded below. WEB-020 stays in_progress/uncommitted.
+
+
+2026-10-29 rootless Gen2 negative-state checkpoint:
+
+UX-04 is completed using retained original Source9 load/JS/100-SPA/DOM and
+encoded-retention evidence, existing real HTTP integration and 95%/90.01% coverage;
+no Source9 hash is relabelled as 5d1. The 189-runtime-path comparison changes only
+archive health, its wire-audit pin and two generated wire artifacts. RSS/unsupported
+heap limitations remain. UX-03 has existing component/API mappings but stays open
+for the actual 1440/390/reduced-motion/font check; no new test was added.
+
+Current rootless67 Gen2 negative UI case `56ca7d31…` passes all three browsers,
+raw exit0 with normal closure and zero POSTs/page errors. The real Library reports
+HFVER007 without an invented table; Administration is unavailable and configuration
+GET503/HFAPI022 supplies no private edit controls. Six axe4.14.0 whole-document
+scans have zero serious/critical **violations**, while moderate region violations
+and serious color-contrast **incompletes** remain. This is not full accessibility,
+contrast or positive rootless acceptance: Gen2's global archive is invalid/empty.
+Gen3 preparation is separate and has no result inferred here.
+
+
+2026-10-29 rootless67 generation3 positive application continuation:
+
+All three Chromium/Firefox/WebKit rows in `484da9b4…` pass with normal closure:
+220-match populated catalog/Library, actual model-001 archived README source,
+supported rootless HostStatus (configuration true/other five false),25 private
+edit controls, tags-only draft validation/discard and disabled Maintenance.
+Exactly one `/api/v1/config/validate` POST per engine and zero page errors occur;
+no Apply or job is run. Raw65904B/SHA `b3c17bf76db44892b31b7e387f3ebd6f666299af332b79ddeb39fdb47d4a03d1`
+is preserved in task020/the ledger. Original `24ed55fb…` stays collector-false
+for its wrong table label, with0POSTs; it is not an app failure.
+
+Twelve axe4.14.0 whole-document scans have zero serious/critical violations,
+but retain moderate preview-banner region violations and serious contrast
+incompletes: all checks report nonBmp decorative glyphs (55nodes/engine).
+No full accessibility/contrast or reader claim follows. Readonly writer-health
+still reports archive unusable; successful catalog reads do not make it initialized.
+
+The independent de787 fixture uses readonly native archive binds and derivative
+imagedc8800d7 with stock67 modules/UI/API+worker argv, changing only the console
+local-mount metadata hook. This is LOCAL_NFS_METADATA_SIMULATION, not NAS proof,
+old-global reconciliation or a policy weakening. Original global pending/config/
+stores remain under the binds; setup failures and their corrected new0600
+instance locks/existing SHM label provisioning remain recorded. Precleanup
+`7bc8046a…` normally closes roles/cgroups, removes aliases and restores the native
+domain-lock label (ctime transition retained); normal return `e1e353d7…` selects66
+and restores original guards. No acceptance-row status changes from this addition.
+
+AUTH-10 now completes on actual case `94221fa0d73d4adfb5f5ed61bebda6cf`,
+raw exit0/normal closure in all three browsers. Each genuine original Basic key
+starts unobserved with IDnull and25 private configuration controls. The actual
+same66 API/Caddy restart changes instance/authority epoch; explicit Reconnect
+clears private controls, preserves the exact original authority/key/IDnull and
+makes no automatic lookup or POST. Explicit Observe makes one original lookup
+and recovers its correct verified terminal catalog warning result. Zero POSTs/page
+errors occur and no key is printed or replayed. Source is
+`.scratch/web-020-direct-app-unresolved-reconnect-v2.mjs`; original stdout is
+1884B/SHA256 `74be2ec9ea814607b78e6dc12b0dae473c4ad09b512458dfbc4c1bf1311efc72`.
+The separate restart43df0/socket MainPID error and f518/immediate readiness
+refusal remain failed; readiness/marker080a5ccd succeeds without another restart.
+Original configuration Apply uncertainty is unchanged.
+
+UX-01 also completes from the mapped real native66 Basic/read/catalog-write/
+upgrade/recovery cases and rootless67 generation3 reads/validation/denials,
+plus historical all3 native `/management` bootstrap/deep-refresh/history/prefix
+checks. Original prefix generation412ce26a has RESULT SHA `f3b97ea9…`/244192B,
+browser report `1d46fd17…`/224940B and local common21 metrics/postverify
+`73321b0c…`/`283e5818…`; Source13 identities are retained, not called5d1.
+Existing Basic unit/socket integration nodes are mapped, not invented. The
+rootless local-mount simulation and readonly health limitations remain explicit.
+At that checkpoint AUTH-10, CATALOG-09, UX-01 and UX-04 were complete; subsequent UX-03 completion is recorded below.
+No reader/responsive outcome, configuration Apply success or old failed race is
+inferred. WEB-020 remains in_progress/uncommitted.
+
+UX-03 now completes with actual responsive case `df3610c0f3de4552874fd422f7da2791`,
+raw exit0/normal closure in all three browsers, source
+`.scratch/web-020-direct-app-responsive-motion-fonts-v2.mjs`. At both1440 and390,
+loaded Library/model001, README source, four workspaces/mobile menu and25 private
+Administration controls remain reachable. Real Tab/ShiftTab focus is visible
+(3px outline), in bounds, without document overflow. Reduced-motion matches true,
+measured transitions/animations are0 and actual font resources/requests/document
+font faces/external fonts are0; every row records0POSTs/page errors. Stdout is
+20118B/SHA256 `438d830aa1c41cb307322572b2ef379aa3bb490977f56868c4cd7e9d51432701`.
+Existing seven-surface native200% Chromium/WebKit and separate Firefox keyboard
+observations plus mapped component/API evidence complete the row. No Firefox
+pointer or universal accessibility conformance is inferred.
+
+Original responsive `4f9973af…` remains collector-false: Chromium1440 passes, then
+390 calls isVisible before asynchronous mounting; v2 awaits the same control within
+the unchanged30s action limit. Its2887B/SHA `5320817031b897ea383e9f884cc421a733cd43c505b630ad9220a6fb87499de5`
+is preserved; no application defect or erased failure is claimed. AUTH-10,
+CATALOG-09 and UX-01/03/04 are complete; UX-02 genuine reader smoke is the only
+remaining owned acceptance row. WEB-020 remains in_progress/uncommitted.
+
+The actual seven-surface Orca run `meyymo95` records genuine DOM/speech/PCM
+for its named controls (`f03688a1…`,28544B), without claiming every warning
+paragraph must speak automatically. A separate natural status check `s248grsi`
+finds a real app bug: invalid handle import displays the error but does not
+announce it while Save retains focus (`8a55fd66…`,4773B;0POSTs/page errors).
+Outer owned closure is normal; original worker wait flags remain separate.
+The minimal error-alert/success-polite fix and human clarification are ready with
+nine focused components/type/format passing. Prior5d1 gate2 remains historical;
+the changed source needs its full gate/new68 installed-reader recheck. UX-02
+stays open; the other five owned rows remain complete.
+
+UX-02 now completes from prior actual seven-surface `meyymo95` plus the
+Native68 specific error-announcement pass `dum9rf2m`: the browser verifies68/
+manifestac39/wire320c, and genuine Orca speaks the full rejected-handle failure
+including **No operation was submitted**, with Save focus retained,0POSTs/page
+errors and790854 PCM bytes (284623nonzero samples/peak30308). Original report
+is6060B/SHA `adf35cb38477961326af168e0925f1983852d2431dd65de9cf4321ca68a6be68`.
+Outer Root93690 closes normally in37.526s (parent0/timeoutfalse/allownedclosed,
+SHA `d80b9a8c…`); original worker reviewedfalse/readerreapedfalse stay unchanged.
+The ledger maps existing component/API checks and actual reader/keyboard/axe
+scopes without claiming human listening or full contrast/conformance.
+
+All six owned rows are complete, but WEB-020 remains in_progress/uncommitted:
+required changed-source full gate2 (Root86932) is still running. Prior5d1 green
+results are historical. Native68 build/stage/switch/HTTP pass at canonical
+`610de3ca…`, UI-build274933cb/manifestac39b9d1/wire320c; the post-build ADR
+label/link correction changes no app/runtime bytes. Its complete JS inventory is
+253846 gzip bytes (entry204530/lazy49316) below358400, with no new p95 claim.
+Review of INV-021/ADR145 finds a local message-severity correction only: focus,
+original handles/authority, no-replay HTTP, wire/storage formats and dependencies
+are unchanged. No new architecture/invariant is introduced. Human docs stay
+frozen. Do not complete the task, commit or select WEB-021 before gate2 passes.
+
+Changed-source gate2 exits1 only for the strict ledger metadata check:9038 tests
+pass/52 are deselected in1114.68s. Two unknown-exit reader observations are now
+retained verbatim in task020 history instead of known-exit executions; no exit is
+invented. The existing entire `tests/unit/test_web_plan.py` then passes9tests in
+0.41s. App/source/human docs and all six completed row statuses are unchanged.
+The mandatory full gate3 rerun remains pending; WEB-020 is not complete/committed.
+
+## WEB-020 completion and pending WEB-021 handoff (2026-10-29)
+
+WEB-020 completed 2026-10-29, **this commit**:
+`WEB-020: harden browser recovery, accessibility and bounded reads`.
+All six owned acceptance rows are complete. Final required gate3 exits0 on
+canonical3f97731e/1528:9039 backend/52 opt-in deselections/1067.78s backend,
+3702 web unit/4029 combined frontend,95% line/90.02% branch coverage, Cockpit,
+wheel/build/browser smoke and real HTTP/API React integration all pass.
+Original stdout359596b0…/124539B and stderr4dcb9afe…/9402B are retained under
+`/var/tmp/web-020-validation-nvj5zeg7/direct-application-status-fix-gate3.*`.
+Native68 actual reader/error/PCM and prior all3 native/rootless/keyboard/zoom/
+responsive/write/recovery scopes are mapped without relabelling Source9 p95,
+unknown worker exits, failed originals or local storage simulation. Native68
+build610 and final3f977 differ only in ADR145's removed forbidden label/link;
+app/runtime/UI bytes are identical. INV-018/021 and ADR145/157 with AD12/ADR113
+are aligned; the error-alert fix adds no authority, wire, dependency or execution
+boundary. Original interrupted Apply/lost-key uncertainty remains unreplayed.
+Next is **WEB-021 pending/handoff only**, not started. Production/NAS deployment,
+merge/push/tag and Cockpit retirement remain outside this completed package.

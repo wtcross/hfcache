@@ -68,7 +68,9 @@ class MetadataReader:
         """Return a pinned fd, refusing symlinks in every absolute component."""
         descriptor = None
         try:
-            path.relative_to(self.root)
+            parts, base = path.parts, self.root.parts
+            if path.anchor != self.root.anchor or parts[: len(base)] != base:
+                path.relative_to(self.root)
             if not path.is_absolute() or ".." in path.parts:
                 message = "metadata path is not contained by its archive"
                 raise ValueError(message)

@@ -5,8 +5,9 @@ import json
 import os
 import re
 import stat
+from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from pydantic import ValidationError
 
@@ -56,6 +57,11 @@ RECORD_BOUNDS = QueryBounds(
 )
 MAXIMUM_JSON_DEPTH = 32
 MAXIMUM_JSON_NODES = 100_000
+_JSON_STRUCTURE = re.compile(rb'[\[\]{},:"]')
+_JSON_BACKSLASH = ord("\\")
+_MINIMUM_CACHED_MANIFEST_BYTES = 64 * 1024
+_MAXIMUM_CACHED_MANIFEST_BYTES = 8 * 1024 * 1024
+_MAXIMUM_CACHED_REFERENCE_BYTES = 4 * 1024
 
 
 def _invalid() -> IntegrityError:
@@ -81,25 +87,28 @@ def _constant(_: str) -> None:
 
 def _json_structure(raw: bytes) -> None:
     """Bound structure before JSON allocates nested containers, counting skipped content too."""
-    depth = tokens = 0
-    quoted = escaped = False
-    for character in raw:
-        if quoted:
-            if escaped:
-                escaped = False
-            elif character == ord("\\"):
-                escaped = True
-            elif character == ord('"'):
-                quoted = False
-        elif character == ord('"'):
-            quoted = True
-        elif character in b"[{":
+    depth = tokens = position = 0
+    while match := _JSON_STRUCTURE.search(raw, position):
+        character = match[0]
+        position = match.end()
+        if character == b'"':
+            while True:
+                quote = raw.find(b'"', position)
+                if quote < 0:
+                    return  # The normal JSON parser rejects an unterminated string.
+                backslashes = quote
+                while backslashes > position and raw[backslashes - 1] == _JSON_BACKSLASH:
+                    backslashes -= 1
+                position = quote + 1
+                if (quote - backslashes) % 2 == 0:
+                    break
+        elif character in (b"[", b"{"):
             depth += 1
             tokens += 1
-        elif character in b"]}":
+        elif character in (b"]", b"}"):
             depth -= 1
-        elif character in b",:":
-            tokens += 1
+        else:
+            tokens += 1  # A comma or colon outside a quoted string.
         if depth > MAXIMUM_JSON_DEPTH or tokens > MAXIMUM_JSON_NODES:
             raise _invalid()
 
@@ -184,6 +193,41 @@ def read_tag_snapshot(
     return record
 
 
+def _uncached_authority[ModelT: VersionedModel](model: type[ModelT], raw: bytes) -> ModelT:
+    _json_structure(raw)
+    return load(model, raw, error=IntegrityError, code="HFVER007")
+
+
+@lru_cache(maxsize=1)
+def _cached_manifest(raw: bytes, _structural_limits: tuple[int, int]) -> RevisionManifest:
+    """Memoize frozen parsing only; the caller has already charged a fresh read."""
+    if not _MINIMUM_CACHED_MANIFEST_BYTES <= len(raw) <= _MAXIMUM_CACHED_MANIFEST_BYTES:
+        raise _invalid()
+    return _uncached_authority(RevisionManifest, raw)
+
+
+@lru_cache(maxsize=512)
+def _cached_reference(raw: bytes, _structural_limits: tuple[int, int]) -> Reference:
+    if len(raw) > _MAXIMUM_CACHED_REFERENCE_BYTES:
+        raise _invalid()
+    return _uncached_authority(Reference, raw)
+
+
+def _parse_authority[ModelT: VersionedModel](model: type[ModelT], raw: bytes) -> ModelT:
+    # Decision157 / INV-018: limits are part of each key so a changed ceiling cannot reuse
+    # an earlier result. Model families have separate bounded caches; mutable
+    # journal/operation records and small scan manifests remain uncached.
+    limits = MAXIMUM_JSON_DEPTH, MAXIMUM_JSON_NODES
+    if (
+        model is RevisionManifest
+        and _MINIMUM_CACHED_MANIFEST_BYTES <= len(raw) <= _MAXIMUM_CACHED_MANIFEST_BYTES
+    ):
+        return cast("ModelT", _cached_manifest(raw, limits))
+    if model is Reference and len(raw) <= _MAXIMUM_CACHED_REFERENCE_BYTES:
+        return cast("ModelT", _cached_reference(raw, limits))
+    return _uncached_authority(model, raw)
+
+
 def read_authority[ModelT: VersionedModel](
     path: Path,
     model: type[ModelT],
@@ -193,8 +237,7 @@ def read_authority[ModelT: VersionedModel](
 ) -> tuple[ModelT, str]:
     try:
         raw = reader.read(path, maximum_bytes=MAXIMUM_RECORD_BYTES)
-        _json_structure(raw)
-        value = load(model, raw, error=IntegrityError, code="HFVER007")
+        value = _parse_authority(model, raw)
     except FileNotFoundError as exc:
         if missing_ok:
             raise

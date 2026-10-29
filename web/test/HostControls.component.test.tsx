@@ -59,7 +59,8 @@ afterEach(() => {
 test("mount sends zero requests and verification timer has only read-only presentation", async () => {
     const f = mount();
     expect(f.calls).toEqual([]);
-    const panel = screen.getByRole("region", {
+    const controls = screen.getByRole("group", { name: "Host controls" });
+    const panel = within(controls).getByRole("region", {
         name: "Verification timer (read-only)",
     });
     expect(within(panel).queryByRole("button")).not.toBeInTheDocument();

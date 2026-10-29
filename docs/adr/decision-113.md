@@ -7,6 +7,7 @@
 - Curated tool amendment: [decision 125](decision-125.md).
 - Independent bounded Basic verification: [decision146](decision-146.md).
 - Foreground default-SIGTERM cleanup ordering: [decision149](decision-149.md).
+- Fresh-byte parser memoization: [decision157](decision-157.md).
 - Status: Amended; current scope includes the amendments referenced below.
 - Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-17.
@@ -81,3 +82,13 @@ and finite stream budget do not add another application or worker. Actual
 installed/browser conformance and exact resource drain remain independently
 required; no release or production availability is claimed. See the
 [asset-serving contract](../server.md#authenticated-application-assets).
+
+## Fresh-byte parsing refinement (2026-10-27)
+
+[Decision157](decision-157.md) adds bounded process-local parsing reuse for two
+frozen metadata model families. It follows every fresh no-follow read and query
+charge, and leaves publication/policy joins and response leases unchanged. Raw
+key retention is bounded separately from decoded objects and active read memory;
+this memo never caches an authenticated response or filesystem authority.
+The refinement is implemented in unreleased source. Its product gate and
+artifact builds remain distinct from final installed performance/profile results.

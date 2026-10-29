@@ -266,14 +266,30 @@ test("authentication loss clears observations and reconnect does not issue an op
         screen.getByText(/Original operation handles are preserved separately/),
     ).toBeInTheDocument();
 });
-test("copy failure leaves selectable original handles and invalid imports produce no request", async () => {
-    const { fetcher } = mount();
+test("invalid imports alert without requests, successful import clears the alert, and copy failure keeps handles", async () => {
+    const { controller, fetcher } = mount();
     await importId("invalid-id");
-    expect(screen.getByText(/handle could not be saved/)).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+        "The handle could not be saved.",
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+        "No operation was submitted.",
+    );
+    expect(
+        screen.getByRole("button", { name: "Save original handle" }),
+    ).toHaveFocus();
+    expect(controller.snapshot().registry.records).toHaveLength(0);
+    expect(fetcher).not.toHaveBeenCalled();
     await userEvent.clear(
         screen.getByRole("textbox", { name: "Original handle" }),
     );
     await importId();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByText(/Original handle saved\./)).toHaveAttribute(
+        "role",
+        "status",
+    );
+    expect(controller.snapshot().registry.records).toHaveLength(1);
     Object.defineProperty(navigator, "clipboard", {
         configurable: true,
         value: {

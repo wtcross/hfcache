@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
+import { readFile } from "node:fs/promises";
 import { createInterface } from "node:readline";
 import test from "node:test";
 import {
@@ -93,17 +94,109 @@ test("the exact pinned Chromium title is observed lossy metadata, never reconstr
         `${CHROME}-other --type=renderer\0`,
         `${CHROME} --type=renderer\0--lang=en\0`,
         `${CHROME}  --type=renderer\0`,
-        `${CHROME} --type=renderer \0`,
+        `${CHROME} --type=renderer  \0`,
+        `${CHROME} --type=renderer   \0`,
+        `${CHROME} --type=renderer  --lang=en-US \0`,
         `${CHROME}\t--type=renderer\0`,
         `${CHROME} --type=renderer --name='ambiguous value'\0`,
         `${CHROME} --type=renderer --name=ambiguous\\ value\0`,
         `${CHROME} --type=unknown\0`,
         `${CHROME} --type=renderer --type=utility\0`,
+        `${CHROME} --type=renderer --type=renderer \0`,
+        `${CHROME} --type=unknown \0`,
+        `${CHROME} --type=renderer\t \0`,
+        `${CHROME} --type=renderer\n \0`,
+        `${CHROME} --type=renderer --name='ambiguous' \0`,
+        `${CHROME} --type=renderer --name=ambiguous\\value \0`,
         `${CHROME} --value=--type=renderer\0`,
     ])
         assert.throws(() => {
             commandProof(raw);
         });
+});
+
+test("one final Chromium title separator is retained verbatim as observed truncated presentation", () => {
+    const title = `${CHROME} --type=renderer --blink-settings=primaryPointerType=4 `;
+    const value = commandProof(title + "\0");
+    assert.equal(value.raw_command_line, title + "\0");
+    assert.deepEqual(value.arguments, [title]);
+    assert.deepEqual(value.title_tokens, [
+        CHROME,
+        "--type=renderer",
+        "--blink-settings=primaryPointerType=4",
+    ]);
+    assert.equal(value.renderer, true);
+    assert.equal(value.representation, "chromium-process-title");
+    assert.equal(value.original_argument_boundaries_recoverable, false);
+    assert.equal(value.title_may_be_truncated, true);
+    assert.equal(value.flag_check_scope, "observed-title-only");
+    assert.equal(value.observed_disabling_flags_absent, true);
+    assert.equal(value.disabling_flags_absent, undefined);
+    const ordinary = commandProof(
+        `${CHROME}\0--type=renderer\0--name=value \0`,
+    );
+    assert.equal(ordinary.representation, "nul-separated-argv");
+    assert.deepEqual(ordinary.arguments, [
+        CHROME,
+        "--type=renderer",
+        "--name=value ",
+    ]);
+    assert.equal(
+        ordinary.raw_command_line,
+        `${CHROME}\0--type=renderer\0--name=value \0`,
+    );
+    assert.equal(ordinary.flag_check_scope, "observed-nul-argv");
+});
+
+test("actual owned process.title ending at a Chromium separator preserves raw bytes and proves its normal drain", async () => {
+    const title = `${CHROME} --type=renderer --blink-settings=primaryPointerType=4 `;
+    const child = spawn(
+        process.execPath,
+        [
+            "-e",
+            "process.title=process.argv[1];process.stdout.write('ready\\n');process.stdin.resume()",
+            title,
+            "x".repeat(2048),
+        ],
+        { stdio: ["pipe", "pipe", "ignore"] },
+    );
+    const closed = once(child, "close");
+    const lines = createInterface({ input: child.stdout });
+    try {
+        assert.deepEqual(
+            await once(lines, "line", {
+                signal: globalThis.AbortSignal.timeout(5000),
+            }),
+            ["ready"],
+        );
+        const value = await processProof(child.pid);
+        assert.equal(value.pid, child.pid);
+        assert.equal(value.status.parent_pid, process.pid);
+        assert.deepEqual(value.command.arguments, [title]);
+        const actualRaw = await readFile(`/proc/${child.pid}/cmdline`, "utf8");
+        assert.ok(actualRaw.startsWith(title + "\0"));
+        assert.ok(
+            [...actualRaw.slice(title.length)].every((byte) => byte === "\0"),
+        );
+        assert.equal(value.command.raw_command_line, actualRaw);
+        assert.equal(value.command.renderer, true);
+        assert.equal(
+            value.command.original_argument_boundaries_recoverable,
+            false,
+        );
+        assert.equal(value.command.title_may_be_truncated, true);
+        assert.equal(value.command.flag_check_scope, "observed-title-only");
+        child.stdin.end();
+        await closed;
+        assert.equal(child.exitCode, 0);
+        assert.equal(child.signalCode, null);
+        assert.equal(await descendantsClosed([value]), true);
+    } finally {
+        if (child.exitCode === null && child.signalCode === null)
+            child.kill("SIGTERM");
+        await closed;
+        lines.close();
+    }
 });
 
 test("actual owned Node process.title rewriting exercises presentation only, not Chromium acceptance", async () => {
@@ -454,6 +547,9 @@ for (const flag of [
                 commandProof(
                     `${CHROME} --type=renderer --top-chrome-webui ${flag}${suffix} --lang=en\0`,
                 );
+            });
+            assert.throws(() => {
+                commandProof(`${CHROME} --type=renderer ${flag}${suffix} \0`);
             });
         }
     });

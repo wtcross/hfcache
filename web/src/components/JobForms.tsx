@@ -424,6 +424,7 @@ export function JobForms({
                     )}
                     <div
                         className="job-effects"
+                        role="group"
                         aria-label="Selected job effects"
                     >
                         <p>{state.description.scope}</p>

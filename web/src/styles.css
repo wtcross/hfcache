@@ -8,6 +8,70 @@
     --line: #dfe5ee;
     --accent: #315fe9;
 }
+.virtual-manifest-scroll {
+    height: 24rem;
+    max-height: 65vh;
+    overflow: auto;
+    border: 1px solid var(--line);
+}
+.virtual-manifest-scroll table {
+    width: 100%;
+    min-width: 36rem;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+.virtual-manifest-scroll thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 40px;
+    background: #f4f6f9;
+}
+.virtual-manifest-scroll thead th:first-child {
+    width: 48%;
+}
+.virtual-manifest-scroll thead th:nth-child(2) {
+    width: 24%;
+}
+.virtual-manifest-scroll .virtual-manifest-row,
+.virtual-manifest-scroll .virtual-manifest-row > :is(th, td) {
+    box-sizing: border-box;
+    height: 72px;
+    padding: 8px;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.virtual-manifest-row code {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.virtual-manifest-scroll .virtual-manifest-spacer > td {
+    padding: 0;
+    border: 0;
+    line-height: 0;
+}
+.virtual-manifest-selected-path {
+    overflow-wrap: anywhere;
+}
+.virtual-manifest-scroll + .repository-local-pages {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: start;
+}
+.virtual-manifest-scroll + .repository-local-pages form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.virtual-manifest-scroll + .repository-local-pages input {
+    display: block;
+    width: 8rem;
+    padding: 6px;
+    font: inherit;
+}
 .administration-workspace,
 .administration-read-view,
 .host-controls {
@@ -1152,7 +1216,7 @@ main:focus {
 .repository-detail small {
     display: block;
     margin-top: 0.3rem;
-    color: #71819c;
+    color: var(--muted);
     font-size: 0.72rem;
 }
 .repository-detail code {
@@ -1160,7 +1224,7 @@ main:focus {
     font-size: 0.75rem;
 }
 .repository-detail p {
-    color: #657692;
+    color: var(--muted);
     font-size: 0.8rem;
     line-height: 1.65;
 }
@@ -1200,6 +1264,10 @@ main:focus {
     border-color: #315df5;
     color: #fff;
 }
+.repository-actions button:first-child:hover:not(:disabled) {
+    background: #244bd0;
+    border-color: #244bd0;
+}
 .repository-warning {
     border-left: 3px solid #c28a19;
     padding: 0.7rem 1rem;
@@ -1225,7 +1293,7 @@ main:focus {
 }
 .repository-selection strong {
     font-size: 0.7rem;
-    color: #8190a8;
+    color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.035em;
 }
@@ -1248,7 +1316,7 @@ main:focus {
 }
 .repository-summaries span {
     font-size: 0.65rem;
-    color: #7889a5;
+    color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.065em;
 }
@@ -1300,7 +1368,7 @@ main:focus {
 }
 .repository-fact dt {
     margin-bottom: 0.35rem;
-    color: #7a8ba7;
+    color: var(--muted);
     font-size: 0.7rem;
 }
 .repository-fact dd {
@@ -1335,7 +1403,7 @@ main:focus {
     gap: 0.7rem;
     margin-top: 0.75rem;
     font-size: 0.7rem;
-    color: #7c8ca5;
+    color: var(--muted);
 }
 .repository-local-pages > div {
     display: flex;

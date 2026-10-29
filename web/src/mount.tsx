@@ -73,6 +73,11 @@ export function mountApplication(
                     fetcher,
                 )),
     });
+    const visibilityChanged = () => {
+        controller.setPageHidden(document.hidden);
+    };
+    document.addEventListener("visibilitychange", visibilityChanged);
+    visibilityChanged();
     const root = createRoot(container);
     const library = createLibraryStore(controller);
     const repository = createRepositoryStore(controller);
@@ -98,6 +103,7 @@ export function mountApplication(
         />,
     );
     return () => {
+        document.removeEventListener("visibilitychange", visibilityChanged);
         root.unmount();
         library.dispose();
         repository.dispose();

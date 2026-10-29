@@ -32,6 +32,7 @@ if TYPE_CHECKING:
 ROOT = Path(__file__).absolute().parents[1]
 ARCHIVE_ID = "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90"
 MAX_MEMBERS = 4096
+EXPECTED_DELAYED_COMPLETIONS = 6
 LOCAL_FILESYSTEMS = frozenset({"btrfs", "ext2", "ext3", "ext4", "xfs", "zfs", "tmpfs", "overlay"})
 
 
@@ -245,6 +246,21 @@ def model_corpus() -> dict[str, Any]:
     return {"originals": originals, "incorrect": incorrect}
 
 
+def fault_body(fault: str, raw: bytes) -> bytes:
+    """Change transport only after real auth/service completion; never positive facts."""
+    if fault == "delay":
+        return raw
+    if fault == "response-limit":
+        # Valid JSON plus whitespace crosses the session's 8 MiB read bound.
+        return raw + b" " * (8 * 1024 * 1024)
+    payload = json.loads(raw)
+    if fault == "schema-version":
+        payload["schema_version"] = 2
+    else:
+        payload["envelope"]["data"]["max_page_size"] = 9007199254740993
+    return json.dumps(payload, ensure_ascii=False).encode()
+
+
 class FixtureRoutes:
     """Test-only indexed assets/control and an explicitly labelled wire fault.
 
@@ -366,10 +382,7 @@ class FixtureRoutes:
             )
             await JSONResponse({"fixture_control": "changed"})(scope, receive, send)
             return
-        fault = any(
-            key.lower() == b"x-hfcache-fixture-fault" and value == b"schema-version"
-            for key, value in scope["headers"]
-        )
+        fault = dict(scope["headers"]).get(b"x-hfcache-fixture-fault", b"").decode("ascii")
         forwarded = scope | {
             "headers": [
                 (key, value)
@@ -377,7 +390,21 @@ class FixtureRoutes:
                 if key.lower() != b"x-hfcache-fixture-fault"
             ]
         }
-        corrupt = fault and method == "GET" and path == self.prefix + "/api/v1/version"
+        corrupt = method == "GET" and (
+            (
+                fault in {"schema-version", "response-limit"}
+                and path == self.prefix + "/api/v1/version"
+            )
+            or (fault == "unsafe-integer" and path == self.prefix + "/api/v1/capabilities")
+            or (
+                fault == "delay"
+                and path
+                in {
+                    self.prefix + "/api/v1/" + leaf
+                    for leaf in ("version", "capabilities", "status")
+                }
+            )
+        )
         messages: list[Message] = []
 
         async def capture(message: Message) -> None:
@@ -408,9 +435,7 @@ class FixtureRoutes:
             if start["status"] != HTTPStatus.OK or len(raw) > 1024 * 1024:
                 msg = "post-service fault did not receive the bounded real response"
                 raise ValueError(msg)
-            payload = json.loads(raw)
-            payload["schema_version"] = 2
-            body = json.dumps(payload, ensure_ascii=False).encode()
+            body = fault_body(fault, raw)
             headers = [
                 (key, value) for key, value in start["headers"] if key.lower() != b"content-length"
             ]
@@ -420,10 +445,16 @@ class FixtureRoutes:
                     "method": method,
                     "path": path,
                     "status": start["status"],
-                    "post_service_schema_fault": True,
+                    "post_service_schema_fault": fault == "schema-version",
+                    "post_service_transport_fault": fault,
+                    "completed_service_bytes": len(raw),
+                    "transport_body_bytes": len(body),
                 }
             )
             await send(start | {"headers": headers})
+            if fault == "delay":
+                # Headers prove actual auth/service completion while the body remains pending.
+                await asyncio.sleep(0.25)
             await send({"type": "http.response.body", "body": body})
 
 
@@ -543,6 +574,10 @@ async def exercise(  # noqa: PLR0915 - one actual fixture lifecycle retains drai
             not required <= seen
             or (prefix + "/api/v1/status", 503) not in seen
             or not any(item["post_service_schema_fault"] for item in observations)
+            or not {"delay", "response-limit", "unsafe-integer"}
+            <= {item.get("post_service_transport_fault") for item in observations}
+            or sum(item.get("post_service_transport_fault") == "delay" for item in observations)
+            != EXPECTED_DELAYED_COMPLETIONS
         ):
             msg = "required actual service success/failure/fault reads did not execute"
             raise ValueError(msg)

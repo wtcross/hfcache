@@ -187,6 +187,9 @@ test("mount and local action/scope choices are read-free, CSP-safe and expose ex
     const fixture = mounted();
     expect(fixture.fetcher).not.toHaveBeenCalled();
     expect(screen.getByRole("region", { name: "Jobs" })).toBeInTheDocument();
+    const effects = screen.getByRole("group", {
+        name: "Selected job effects",
+    });
     expect(document.querySelector("select")).toBeNull();
     expect(
         screen.queryByRole("button", { name: /cancel/iu }),
@@ -198,7 +201,7 @@ test("mount and local action/scope choices are read-free, CSP-safe and expose ex
         }),
     ).toBeChecked();
     expect(
-        screen.getByText(
+        within(effects).getByText(
             /Syntax validity does not prove authority compatibility/u,
         ),
     ).toBeInTheDocument();

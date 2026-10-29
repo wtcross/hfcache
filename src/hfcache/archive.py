@@ -39,6 +39,7 @@ from typing import TYPE_CHECKING, Any, Final, Literal, final
 
 from hfcache import __version__
 from hfcache.errors import Problem, SafetyError
+from hfcache.identity import TYPE_DIRECTORIES
 from hfcache.metadata import QueryLimitError
 from hfcache.models import ArchiveSentinel, Provenance, dump, load
 from hfcache.storage import (
@@ -112,7 +113,7 @@ def _bounded(values: list[str]) -> tuple[str, ...]:
     return tuple(sorted(values)[:REPORTED_ENTRY_LIMIT])
 
 
-def _walk(
+def _walk(  # noqa: PLR0912 - explicit initial, publication and supplemental layout entries
     layout: ArchiveLayout, known: Iterable[Path], *, reader: MetadataReader | None = None
 ) -> _Contents:
     """Enumerate the archive root, descending only into directories of the layout.
@@ -122,6 +123,11 @@ def _walk(
     refusal rather than a traversal of it.
     """
     expected = set(known)
+    publication_roots = {
+        parent / name
+        for parent in (layout.repos, layout.manifests)
+        for name in TYPE_DIRECTORIES.values()
+    }
     existing: list[Path] = []
     unknown: list[str] = []
     symlinks: list[str] = []
@@ -152,6 +158,14 @@ def _walk(
                 symlinks.append(where)
             elif child == layout.sentinel:
                 sentinel_present = True
+            elif (
+                sentinel_present
+                and child in publication_roots
+                and (stat.S_ISDIR(mode) if mode is not None else child.is_dir())
+            ):
+                # FS-21: publication adds these optional namespaces after init.
+                # Layout inspection does not traverse or verify publication payloads.
+                continue
             elif child.is_relative_to(layout.metadata):
                 # INV-018: only an initialized archive can gain this optional extension.
                 kind = layout.supplemental_entry_kind(child) if sentinel_present else None

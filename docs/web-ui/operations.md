@@ -159,6 +159,11 @@ original handle's namespace and do not grant authority.
    admission, not completion. A terminal domain failure retains its original
    exit, errors and validated partial evidence.
 
+A rejected handle is reported as an error alert; a successful local save uses a
+polite status announcement. Focus stays on the current control. This feedback
+neither submits an operation nor starts a lookup: observation is the separate
+explicit action above.
+
 Imported handles have an unknown original creator. An operation visible to the
 current reader was not necessarily created by that reader. ID-only observation
 does not prove ownership of an idempotency key or grant protected configuration
@@ -244,6 +249,18 @@ handles and reload to read the saved history before submitting new work. Reconne
 alone does not merge another tab's records or clear that precaution.
 
 ## Finite observation
+
+When the page becomes hidden, the browser pauses active operation polling and
+its pending retry delays. It also stops in-flight original configuration and
+host-outcome reads. Original keys and accepted jobs remain unchanged; backend
+work continues. A late response cannot establish a new outcome after that pause.
+
+Returning to the page does not restart observation. Choose **Observe original
+operation**, **Observe original configuration outcome** or **Observe original
+host outcome** deliberately for the corresponding original handle. This also
+applies when admission completes while the page is hidden: the acknowledged
+handle is retained without automatic polling. Never submit a new job to resume
+observation.
 
 | Bound | Browser behavior |
 | --- | --- |

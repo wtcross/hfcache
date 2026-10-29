@@ -1158,6 +1158,14 @@ image/worker/TLS fixture records and clean immutable artifact identities.
   cannot erase independent authoritative manifest/inventory. Loaded history is
   not a complete repository audit, and copied consumer locators retain their
   declared base without becoming HTTP payload-serving paths.
+  A process-local parser memo may reuse only frozen references/manifests keyed
+  by exact freshly read bytes and structural ceilings. Every lookup follows
+  the original no-follow open/read and entry/byte charge; all authority joins
+  remain fresh. At most512 reference inputs of at most4KiB and one64KiB–8MiB
+  manifest input are retained, bounding raw keys at10MiB separately from decoded
+  and concurrent-worker memory. Other models/sizes parse normally; failures,
+  membership, negative lookups and query results are never memoized. See
+  [decision157](adr/decision-157.md).
   **Independent card capture:** [decision 142](adr/decision-142.md)
   adds independent schema-1 `RepositoryCard` records in `published/metadata/cards/`
   under the same lock/atomic/preservation guards. Only writer capture may read
@@ -1197,7 +1205,11 @@ validation. Offline evidence is not production acceptance.
 
 Query enforcement: [shared catalog reader](../src/hfcache/services/catalog_queries.py),
 [strict query/payload models](../src/hfcache/catalog_query_models.py) and
-[scope/variant/privacy fixtures](../tests/unit/test_catalog_queries.py).
+[scope/variant/privacy fixtures](../tests/unit/test_catalog_queries.py), with
+[authority and containment regressions](../tests/unit/test_catalog_read_boundaries.py)
+and [fresh-byte parser regressions](../tests/unit/test_catalog_authority_cache.py).
+Present and missing observations both require fresh authoritative publication
+binding; eliminating duplicate work never makes an adjunct authoritative.
 Sanitize before predicates, counts and cursor identity; opaque source curation
 fingerprints are withheld from read projections. Whole selected coverage and
 finite aggregate bounds apply before paging.
@@ -1413,7 +1425,13 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   remain separate; ID import proves no creator/key association. Compatible
   explicit reconnect retains original admitted scope while fresh authority/auth
   generation invalidates private evidence. Stop observing aborts local reads,
-  never execution. Shared32MiB encoded retention, route-clamped8MiB responses,
+  never execution. A hidden document pauses original-operation polling and
+  owned retries, aborts its observation GETs and fences late callbacks. It also
+  gates explicit original configuration/host-outcome reads; hiding cannot donate
+  fresh protected-outcome proof after return. Original keys and accepted POSTs
+  survive independently. Returning visible requires deliberate observation;
+  neither visibility nor a late admission acknowledgement restarts polling.
+  Shared32MiB encoded retention, route-clamped8MiB responses,
   finite concurrency/retry/time/cycle/event bounds and advisory cross-tab notices
   never manufacture outcomes or execution authority. API interruption cannot
   clear separate unknown protected configuration effects.
@@ -1447,8 +1465,14 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   publication pairs rather than row positions or a presumed global snapshot.
   Recognized type-aware detail routes accept only bounded paired publication/tab
   fragments. Selection changes invalidate late old responses. Whole manifest
-  reads retain existing byte/integer bounds despite locally paged file tables;
-  manifest-file digests are never invented from reserialized HTTP JSON.
+  reads retain existing byte/integer bounds despite locally paged file tables.
+  Large file tables virtualize their accepted metadata with at most24 file rows
+  mounted, plus inert spacers. Keyboard navigation and explicit file-number
+  jumps reach every loaded row; focused rows remain mounted across scrolling.
+  One selected file's full metadata remains available outside the viewport.
+  Exact publication changes reset the window and selection before presentation;
+  virtualization neither truncates the manifest nor fetches payload files.
+  Manifest-file digests are never invented from reserialized HTTP JSON.
   Leaving repository details releases its query subscriptions and aggregate
   payload references, including ready evidence. Retained navigation identity
   grants no read ownership: returning creates fresh scoped handles and rechecks

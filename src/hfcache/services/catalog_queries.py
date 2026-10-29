@@ -262,7 +262,6 @@ class CatalogQueries:
         summaries, variants, states = [], [], []
         for ref in refs:
             sha, publication = CommitSha(ref.commit_sha), PublicationId(ref.publication_id)
-            publication_binding(layout, identity, sha, publication, reader=reader)
             record = read_publication_observation(
                 layout,
                 identity,
@@ -272,6 +271,8 @@ class CatalogQueries:
                 reader=reader,
             )
             if record is None:
+                # Present records bind in their reader; absence still needs authority (AD-12).
+                publication_binding(layout, identity, sha, publication, reader=reader)
                 states.append("missing")
             elif not all(
                 _safe(v)

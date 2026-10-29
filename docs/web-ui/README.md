@@ -38,6 +38,8 @@ forms with original-handle recovery:
 | Administration | Inspect [archive/readiness/verification observations, warnings and independent host permissions](administration.md); use reviewed configuration, diagnostics, fixed sync schedule/observer controls, bounded journals and original-operation recovery as permitted by the installed profile. |
 
 Use the sidebar or **Open navigation** on a narrow screen to change workspace.
+See [browser and keyboard use](browser-and-keyboard.md) for focus, table navigation,
+zoom, hidden-tab observation and practical large-library limits.
 Direct links to Library, Operations, Maintenance and Administration survive a
 reload. Recognized type-aware repository paths also survive reload, with a
 paired full SHA/publication selection and fixed tab in a bounded fragment.

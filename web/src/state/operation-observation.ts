@@ -209,6 +209,7 @@ export function createOperationObserver(options: OperationObserverOptions) {
     const entries = new Map<RecordId, Entry>();
     const clock = options.clock ?? (() => performance.now());
     let disposed = false;
+    let hidden = false;
     let clearing = false;
     const notifications = new Set<Entry>();
     let notificationQueued = false;
@@ -351,6 +352,13 @@ export function createOperationObserver(options: OperationObserverOptions) {
         pause(id: RecordId, reason: PauseReason = "user") {
             pauseEntry(get(id), reason);
         },
+        setHidden(value: boolean) {
+            if (disposed || hidden === value) return;
+            hidden = value;
+            if (hidden)
+                for (const entry of entries.values())
+                    if (entry.abort !== null) pauseEntry(entry, "hidden");
+        },
         clearPrivate,
         observe(
             authorization: AuthorizedObservation,
@@ -365,6 +373,10 @@ export function createOperationObserver(options: OperationObserverOptions) {
                 entry.authorization !== null &&
                 entry.authorization.authGeneration === auth.authGeneration &&
                 sameApiScope(entry.authorization.target, auth.target);
+            if (hidden) {
+                pauseEntry(entry, "hidden", !same);
+                return Promise.resolve();
+            }
             pauseEntry(entry, "user", !same);
             const generation = ++entry.generation;
             const abort = new AbortController();
@@ -374,6 +386,7 @@ export function createOperationObserver(options: OperationObserverOptions) {
             let reads = 0;
             const live = () =>
                 !disposed &&
+                !hidden &&
                 generation === entry.generation &&
                 !abort.signal.aborted;
             const deadline = setTimeout(
@@ -382,6 +395,12 @@ export function createOperationObserver(options: OperationObserverOptions) {
                 },
                 5 * 60 * 1000,
             );
+            const clearDeadline = () => {
+                clearTimeout(deadline);
+            };
+            abort.signal.addEventListener("abort", clearDeadline, {
+                once: true,
+            });
             function stop(
                 reason: PauseReason,
                 failure: ObservationFailure | null = null,
@@ -618,6 +637,7 @@ export function createOperationObserver(options: OperationObserverOptions) {
                         );
                 } finally {
                     clearTimeout(deadline);
+                    abort.signal.removeEventListener("abort", clearDeadline);
                     if (generation === entry.generation) {
                         entry.abort = null;
                         entry.promise = null;

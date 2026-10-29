@@ -313,7 +313,10 @@ export function OperationRecovery({
     const [legacyClass, setLegacyClass] = useState<
         "rest-reader" | "rest-writer"
     >("rest-writer");
-    const [message, setMessage] = useState<string | null>(null);
+    const [message, setMessage] = useState<{
+        kind: "success" | "error";
+        text: string;
+    } | null>(null);
     function importHandle(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         try {
@@ -332,13 +335,15 @@ export function OperationRecovery({
                     credentialClass: legacyClass,
                 });
             setValue("");
-            setMessage(
-                "Original handle saved. Choose Observe original operation to read its current evidence.",
-            );
+            setMessage({
+                kind: "success",
+                text: "Original handle saved. Choose Observe original operation to read its current evidence.",
+            });
         } catch {
-            setMessage(
-                "The handle could not be saved. Check its exact value, current authority and recovery storage. No operation was submitted.",
-            );
+            setMessage({
+                kind: "error",
+                text: "The handle could not be saved. Check its exact value, current authority and recovery storage. No operation was submitted.",
+            });
         }
     }
     return (
@@ -481,7 +486,11 @@ export function OperationRecovery({
                         Save original handle
                     </button>
                 </form>
-                {message !== null && <p role="status">{message}</p>}
+                {message !== null && (
+                    <p role={message.kind === "error" ? "alert" : "status"}>
+                        {message.text}
+                    </p>
+                )}
             </Panel>
         </div>
     );

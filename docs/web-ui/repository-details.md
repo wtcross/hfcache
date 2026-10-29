@@ -113,17 +113,32 @@ is unavailable rather than replaced with zero counts.
 
 ## Inspect files within the read budget
 
-The manifest is a complete bounded artifact. The browser pages its accepted file
-metadata locally; choosing a smaller table page does not reduce the server's
+The manifest is a complete bounded artifact. The browser presents its accepted
+file metadata locally; a smaller rendered window does not reduce the server's
 underlying manifest scan or the browser's artifact read. Existing REST manifest
 URLs do not accept file-table `limit` or `cursor` parameters.
 
-Use **Next files** and **Previous files**, with keyboard focus, to inspect one
-bounded page. Preserve the displayed total and loaded extent. An oversized artifact,
+Up to100 files use local25-row pages with **Next files** and **Previous files**.
+Larger manifests use a scrollable virtualized table: only a finite window is
+mounted, with the actual file count and row positions preserved. Focus the table
+and use Arrow Up/Down, Page Up/Down, Home or End, or enter **File number** and choose
+**Go to file**. The next/previous buttons move the window without another read.
+Scrolling retains a focused row rather than silently removing its control.
+
+Choose **Inspect metadata** to focus one file's complete path and metadata below
+the table. Open **Hashes and provenance** for its exact evidence; **Return to
+selected file** restores the table control. Long paths are shortened visually
+only in the table and remain complete in selected metadata. Choosing another
+publication resets this window and selection. No scrolling, jump or inspection
+fetches a file payload or changes archive data.
+
+Preserve the displayed total and loaded extent. An oversized artifact,
 unsafe integer or exhausted read/parse budget refuses explicitly instead of
 rounding a size, silently truncating a manifest or showing an empty success.
 The shared session retains bounded encoded evidence; a panel can refuse even
 when the backend can produce a larger artifact.
+The response envelope and JSON escaping count toward the browser's byte limit;
+a durable manifest file's size alone does not establish that its response fits.
 
 File and variant counts and sizes are logical metadata, not physical disk usage,
 deduplication savings, transfer requirements or hardware memory. Read file paths

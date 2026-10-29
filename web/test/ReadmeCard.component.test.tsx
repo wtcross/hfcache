@@ -261,9 +261,12 @@ test("sanitized source is exact escaped presentation text, including leading sep
     await userEvent.click(
         within(region).getByRole("button", { name: "Sanitized source" }),
     );
-    expect(
-        within(region).getByLabelText("Sanitized README source").textContent,
-    ).toBe(source);
+    const sourceGroup = within(region).getByRole("group", {
+        name: "Sanitized README source",
+    });
+    expect(sourceGroup.textContent).toBe(source);
+    sourceGroup.focus();
+    expect(sourceGroup).toHaveFocus();
     expect(region.querySelector("svg,img,script")).toBeNull();
     expect(
         within(region).getByRole("button", { name: "Sanitized source" }),
