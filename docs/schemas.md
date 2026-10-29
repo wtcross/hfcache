@@ -1100,7 +1100,7 @@ These independent schema-1 deployment records are separate from runtime.json,
 archive JSON and service receipts. [Installer](../scripts/install-container-release.py)
 uses duplicate-free/nonfinite-refusing bounded JSON and descriptor-pinned local
 no-follow reads with stable metadata excluding access time. Root-protected input
-must be a single-link regular file, at most 1 MiB; copied artifacts are bounded
+must be a single-link regular file, at most 8 MiB; copied artifacts are bounded
 to 16 MiB each. Invalid/future/unknown data refuses without cleanup or activation.
 
 container-release.json has exactly these fields:
@@ -1114,12 +1114,23 @@ container-release.json has exactly these fields:
 | app_image, caddy_image | Exact sha256: plus 64 lowercase hex image IDs |
 | source_commit | 40 lowercase hex source commit |
 | wheel_sha256 | 64 lowercase hex exact wheel hash |
-| files | Required source path→SHA-256 map, at most 1,000 entries |
+| files | Required source path→SHA-256 map, at most 1,000 non-UI entries plus 4,097 `ui/` entries |
 
 Source paths are canonical relative POSIX paths, without escape/control/backslash/
 symlink or reserved rendered/index/release destinations. The required helper/unit/
 template set and fixed renderer remain installer policy; no executable/engine
 options or secret values come from arbitrary manifest fields.
+
+The additional UI entries permit the complete separately bounded 4,096-member
+artifact and its manifest. They do not enlarge non-UI source admission. The
+optional indexed `packaging/containers/web.toml` has exactly `schema_version`
+(integer `1`), `enabled` (boolean `true`) and `manifest_sha256` (lowercase SHA256);
+it is at most 4 KiB. Explicit disabled input has exactly `schema_version = 1`
+and `enabled = false`, without a digest. Enabled input additionally requires the
+indexed `scripts/web-release.py` matching the trusted installer and the exact
+clean source/version/member closure under `ui/`. Unknown fields, incomplete or
+changed bytes refuse before staging/rendering. See
+[optional web release input](containers.md#optional-web-release-input).
 
 artifact-index.json has exactly schema_version (integer 1) and files (relative
 path→64-lowercase-hex SHA-256). Its exhaustive map covers copied sources,
@@ -1506,6 +1517,40 @@ bundling from actual consumed inputs; no generated self-hash is checked into
 source. The installed backend's authoritative wire digest must agree before
 assets are accepted. Enabled missing/mismatched assets fail startup. The separate
 asset artifact does not add React, Node or frontend requirements to reader wheels.
+
+The clean release builder also emits independent canonical `web-release.json`,
+distinct from the UI manifest and rootless deployment records. It has exactly:
+
+| Field | Contract |
+| --- | --- |
+| `schema_version` / `kind` | Integer `1` / `hfcache_web_release` |
+| `version` | Three decimal application-version components |
+| `source_commit` | Exact 40-lowercase-hex committed source identity |
+| `source_files` | Canonical relative path→lowercase SHA256 map of captured committed regular source files |
+| `files` | Canonical relative path→lowercase SHA256 map of UI, backend wheel/source distribution and fixed helper artifacts |
+| `ui_manifest_sha256` | Exact lowercase SHA256 of `ui/manifest.json` |
+
+The release index is at most 2 MiB. Each map has 1–8,192 entries; verification
+bounds each read to 64 MiB and each map's aggregate to 256 MiB. Source/index paths
+allow at most16 canonical ASCII components and1,024 characters, with an initial
+period/underscore and the systemd template `@` allowed for committed source names;
+`.` and `..` components
+remain forbidden. UI member paths retain their stricter eight-component grammar.
+The source capture
+retains only the fixed repository-provided documentation alias outside the
+regular-file hash map; other source symlinks refuse. The index's own SHA256 is an
+explicit installer input, outside the record. It binds every indexed source and
+artifact byte, matching application version, source commit, wire authority,
+pnpm lock and clean UI provenance. The complete fixed helper closure must match
+its indexed source originals; native shipped source trees refuse unindexed files,
+directories and links. Repeated UI, wheel and sdist construction must yield
+identical bytes with the existing uv backend pinned to0.11.32. The independent
+[deployment golden](../tests/fixtures/schemas/deployment/web-release.json) exercises
+the standard-library verifier without adding another runtime model. This is
+installation/build provenance, not archive state,
+a credential or installed functional acceptance. The original strict UI schema
+still validates construction and API startup. Native installation selects the
+captured source explicitly; the base Python-only installation remains separate.
 
 `GET <effective-prefix>/ui/bootstrap.json` returns a plain object, outside the
 REST `Envelope` and strict `/capabilities` contract:

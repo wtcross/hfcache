@@ -192,6 +192,43 @@ def test_module_installers_are_refused_even_without_path_entrypoints(proof, inst
 
 
 @pytest.mark.parametrize(
+    "installed",
+    [
+        None,
+        "node",
+        "nodejs",
+        "npm",
+        "pnpm",
+        "corepack",
+        "gcc",
+        "clang++",
+        "rustc",
+        "chromium",
+        "firefox",
+        "MiniBrowser",
+    ],
+)
+def test_runtime_build_tools_and_browsers_refuse_foundation(proof, installed):
+    checks: list[ast.stmt] = [
+        node
+        for node in ast.parse(proof._PAYLOAD).body
+        if isinstance(node, ast.Assert) and "shutil.which" in ast.unparse(node)
+    ]
+    assert len(checks) == 4
+    program = compile(ast.Module(body=checks, type_ignores=[]), "runtime-tool-absence", "exec")
+    context = {
+        "shutil": SimpleNamespace(
+            which=lambda name: "/usr/bin/" + name if name == installed else None
+        )
+    }
+    if installed is None:
+        exec(program, context)
+    else:
+        with pytest.raises(AssertionError):
+            exec(program, context)
+
+
+@pytest.mark.parametrize(
     "change",
     [
         {"schema_version": True},
@@ -199,6 +236,9 @@ def test_module_installers_are_refused_even_without_path_entrypoints(proof, inst
         {"ca_sha256": "0" * 64},
         {"read_only_root": False},
         {"credential_masks": False},
+        {"node_absent": False},
+        {"compilers_absent": False},
+        {"browsers_absent": False},
         {"uid": True},
         {"trusted_ca_count": 0},
         {"trusted_ca_count": True},
@@ -212,7 +252,9 @@ def test_partial_or_contradictory_output_cannot_be_accepted(proof, pins, change)
         proof.validate_result(valid_result(proof, pins) | change, pins)
 
 
-def fake_runtime(proof, monkeypatch, pins, workspace, *, bad_container=False):
+def fake_runtime(  # noqa: PLR0913 - independent image and executor refusal dimensions
+    proof, monkeypatch, pins, workspace, *, bad_container=False, size=400000000
+):
     calls = []
     result = valid_result(proof, pins)
     marker = "fixture"
@@ -235,6 +277,7 @@ def fake_runtime(proof, monkeypatch, pins, workspace, *, bad_container=False):
             body = [
                 {
                     "Id": BASE if arguments[-1] == pins["python"] else IMAGE,
+                    "Size": size,
                     "RootFS": {
                         "Layers": [LAYER] if arguments[-1] == pins["python"] else [LAYER, IMAGE]
                     },
@@ -281,11 +324,26 @@ def test_exact_one_shot_proof_retains_identity_ancestry_and_source_without_unkno
     assert result["base_manifest"] == pins["python"]
     assert result["base_config_id"] == BASE
     assert result["base_diff_ids"] == [LAYER]
+    assert result["image_size_bytes"] == 400000000
     assert result["container_retained_stopped"] is True
     assert result["build_provenance"]["source_dirty"] is True
     assert "DO_NOT_ECHO" not in (workspace / "proof.json").read_text()
     assert len(calls) == 5
     assert all("stop" not in call and "rm" not in call for call in calls)
+
+
+@pytest.mark.parametrize("size", [None, True, 0, -1, "400000000"])
+def test_missing_or_malformed_image_size_refuses_before_start(
+    proof, monkeypatch, pins, tmp_path, size
+):
+    source = tmp_path / "images.json"
+    source.write_text(json.dumps(pins))
+    workspace = tmp_path / "proof"
+    calls = fake_runtime(proof, monkeypatch, pins, workspace, size=size)
+    with pytest.raises(ValueError, match="image size"):
+        proof.prove(IMAGE, workspace, source)
+    assert not workspace.exists()
+    assert all(call[2] != "run" for call in calls)
 
 
 def test_running_or_unexplained_container_refuses_and_preserves_logs(

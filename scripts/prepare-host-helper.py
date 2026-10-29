@@ -206,6 +206,7 @@ def prepare(policy, profile, commit, snapshot, dirty):  # noqa: PLR0915 - two cl
             *(relative for _host, relative in paths.values()),
             *(package + "/" + name for name in capture.tree(root / package)),
         }
+        names.update(policy.native_web_files(capture, root))
         target, _names = policy.fixed_interpreter(capture, root, pin)
         relative = target.relative_to(policy.PREFIX / "python").as_posix()
         policy._relative(relative)  # noqa: SLF001 - shared closed authority schema

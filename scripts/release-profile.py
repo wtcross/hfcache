@@ -6,6 +6,8 @@ layouts refuse. This identifies layout, not artifact authenticity or quiescence.
 """
 
 import argparse
+import hashlib
+import json
 import os
 import re
 import stat
@@ -15,6 +17,8 @@ from pathlib import Path
 
 VERSION = re.compile(r"[0-9][A-Za-z0-9.+-]*\Z")
 MAX_METADATA = 4194304
+MAX_INDEX_FILES = 8192
+MAX_INDEX_PATH = 1024
 CONTAINER_MARKERS = ("container-release.json", "artifact-index.json", "rendered")
 PROFILE_ERRORS = (OSError, ValueError, TypeError, KeyError)
 
@@ -40,7 +44,7 @@ def directory(path, *, allow_missing=False):
             refuse("native profile directory is missing or linked")
 
 
-def read_metadata(path):
+def read_metadata(path, *, binary=False, maximum=MAX_METADATA):
     directory(path.parent)
     descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC)
     try:
@@ -48,29 +52,131 @@ def read_metadata(path):
         if (
             not stat.S_ISREG(before.st_mode)
             or before.st_nlink != 1
-            or not 0 < before.st_size <= MAX_METADATA
+            or not 0 <= before.st_size <= maximum
+            or (not binary and before.st_size == 0)
         ):
             refuse("native profile metadata is not a bounded ordinary file")
         with os.fdopen(descriptor, "rb", closefd=False) as stream:
-            raw = stream.read(MAX_METADATA + 1)
+            raw = stream.read(maximum + 1)
         after = os.fstat(descriptor)
         if len(raw) != before.st_size or any(
             getattr(before, field) != getattr(after, field)
             for field in ("st_dev", "st_ino", "st_size", "st_mtime_ns", "st_ctime_ns")
         ):
             refuse("native profile metadata changed")
-        return raw.decode("utf-8")
+        return raw if binary else raw.decode("utf-8")
     finally:
         os.close(descriptor)
+
+
+def _unique(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            refuse("duplicate native index field")
+        result[key] = value
+    return result
+
+
+def native_web_layout(path, version):  # noqa: PLR0912 - bounded native index structure and copied bytes
+    if not os.path.lexists(path / "web-release.json"):
+        return
+    raw = read_metadata(path / "web-release.json")
+    index = json.loads(raw, object_pairs_hook=_unique)
+    if (
+        not isinstance(index, dict)
+        or set(index)
+        != {
+            "schema_version",
+            "kind",
+            "version",
+            "source_commit",
+            "source_files",
+            "files",
+            "ui_manifest_sha256",
+        }
+        or type(index["schema_version"]) is not int
+        or index["schema_version"] != 1
+        or index["kind"] != "hfcache_web_release"
+        or index["version"] != version
+        or not isinstance(index["source_commit"], str)
+        or not re.fullmatch(r"[0-9a-f]{40}", index["source_commit"])
+        or not isinstance(index["ui_manifest_sha256"], str)
+        or not re.fullmatch(r"[0-9a-f]{64}", index["ui_manifest_sha256"])
+        or json.dumps(index, sort_keys=True, indent=2, ensure_ascii=False) + "\n" != raw
+    ):
+        refuse("native web asset layout not proven")
+    for field in ("source_files", "files"):
+        records = index[field]
+        if not isinstance(records, dict) or not records or len(records) > MAX_INDEX_FILES:
+            refuse("native web index map not proven")
+        for name, expected in records.items():
+            if (
+                not isinstance(name, str)
+                or len(name) > MAX_INDEX_PATH
+                or not re.fullmatch(r"[A-Za-z0-9._/@-]+", name)
+                or name.startswith("/")
+                or name.endswith("/")
+                or any(part in {"", ".", ".."} for part in name.split("/"))
+                or not isinstance(expected, str)
+                or not re.fullmatch(r"[0-9a-f]{64}", expected)
+            ):
+                refuse("native web index member not proven")
+    copied = {
+        name: expected
+        for name, expected in index["files"].items()
+        if name.startswith(("ui/", "host-helper/"))
+    }
+    helpers = {
+        "host-helper/" + name
+        for name in (
+            "host-helper.py",
+            "hfcache-host-helper.service",
+            "hfcache-host-helper.cil",
+            "host_policy.py",
+            "host_protocol.py",
+            "host_peer.py",
+            "host_configuration.py",
+            "host_actions.py",
+            "host_selinux.py",
+        )
+    }
+    if (
+        not helpers <= copied.keys()
+        or copied.get("ui/manifest.json") != index["ui_manifest_sha256"]
+    ):
+        refuse("native web closure not proven")
+    for name, expected in copied.items():
+        if (
+            hashlib.sha256(read_metadata(path / name, binary=True, maximum=8388608)).hexdigest()
+            != expected
+        ):
+            refuse("native web member hash mismatch")
+    actual = set()
+    entries = 0
+    for folder in ("ui", "host-helper"):
+        directory(path / folder)
+        for current, names, leaves in os.walk(path / folder, followlinks=False):
+            entries += len(names) + len(leaves)
+            if entries > MAX_INDEX_FILES:
+                refuse("native web closure exceeds bound")
+            for name in names:
+                directory(Path(current) / name)
+            for name in leaves:
+                actual.add((Path(current) / name).relative_to(path).as_posix())
+                if len(actual) > MAX_INDEX_FILES:
+                    refuse("native web closure exceeds bound")
+    if actual != copied.keys():
+        refuse("native web closure differs")
 
 
 def native_layout(path, *, installed=False, version=None):
     directory(path)
     if any(os.path.lexists(path / name) for name in CONTAINER_MARKERS):
         refuse("container or mixed release: use install-container-release.py")
-    # Native releases have no top-level JSON release metadata. Unknown metadata
-    # must not silently become native merely because its marker is unfamiliar.
-    if any(item.suffix == ".json" for item in path.iterdir()):
+    # WEB-021 adds one explicit native asset index. Unknown metadata still
+    # refuses; this layout check grants neither authenticity nor activation.
+    if any(item.suffix == ".json" and item.name != "web-release.json" for item in path.iterdir()):
         refuse("unknown release metadata: native profile not proven")
     project = tomllib.loads(read_metadata(path / "pyproject.toml")).get("project", {})
     if not isinstance(project, dict):
@@ -93,6 +199,7 @@ def native_layout(path, *, installed=False, version=None):
         refuse("native locked project not proven")
     for relative in ("src/hfcache/__init__.py", "src/hfcache/cli.py"):
         read_metadata(path / relative)
+    native_web_layout(path, found)
     if installed:
         directory(path / ".venv/bin")
         read_metadata(path / ".venv/pyvenv.cfg")

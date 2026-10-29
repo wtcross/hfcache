@@ -1287,10 +1287,23 @@ private helper policy/index/key/receipt labels do not become container-readable.
 Mutable Hub home and the entire cache root use a separate helper-denied state
 type, with legitimate application state operations. Credential/container-secret
 inputs remain read-only. Validated helper opt-in preserves these Hub labels by
-omitting `:z` from only those two existing API binds; default and other-role
-arguments remain unchanged. Fixed persistent contexts and actual original/new
+omitting `:z` from those two existing API binds; default and other-role arguments
+remain unchanged except the separately typed rootless archive-lock bind below.
+Fixed persistent contexts and actual original/new
 leaf-label proof across operations and restart are required. No generic relabel
 or mount selector is introduced.
+
+For enabled rootless helper support, the fixed original archive lock has the
+independently provisioned `hfcache_host_helper_archive_lock_t` type. API and
+worker validate fixed no-follow ownership/mode/link/context metadata and preserve
+that bind without shared relabeling; the worker receives no authority projection.
+The rootless mixed-ID guard observer brackets the original inode/FLOCK predicate
+with the same metadata proof. Only helper file `getattr` is allowed; open/read/
+write/map/lock stay compile-denied. Exact `container_t` receives only existing
+lock-use rights, with no creation or mutation-of-identity grant. Generic container
+payload access, automatic lock repair and native label requirements remain
+excluded. Selected CIL/module/kernel bindings and direct fixed-object validation
+preserve the existing receipt/protocol. See [the rationale](adr/decision-159.md).
 
 The stock backend may stat/read image files and enumerate image directories
 carrying `container_ro_file_t`; the file grant is exactly `getattr`, `open` and

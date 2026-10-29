@@ -58,6 +58,7 @@ TECHNICAL_IDS = {
 HELP_MODES = {
     "build-caddy-container.py": "python",
     "build-container.py": "python",
+    "build-web-release.py": "python",
     "check-container-foundation.py": "python",
     "check-container-worker.py": "python",
     "check-docs.py": "python",
@@ -82,6 +83,7 @@ HELP_MODES = {
     "provision-ui-administrator.py": "python",
     "release-functions.sh": "library",
     "release-profile.py": "python",
+    "web-release.py": "python",
     "setup-hfcache-consumer-model-store.sh": "bash",
 }
 

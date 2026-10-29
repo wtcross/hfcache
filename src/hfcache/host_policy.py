@@ -69,6 +69,7 @@ SELINUX_LABELS = {
 MOUNTINFO = Path("/proc/1/mountinfo")
 LOCKS = Path("/proc/locks")
 LOCK = Path("/run/hfcache/hfcache.lock")
+ARCHIVE_LOCK_TYPE = "hfcache_host_helper_archive_lock_t"
 SCHEDULE_DIRECTORY = Path("/etc/systemd/system/hfcache-sync.timer.d")
 SCHEDULE = SCHEDULE_DIRECTORY / "50-cockpit.conf"
 OWNER = 0
@@ -675,6 +676,22 @@ def fixed_interpreter(capture: _Capture, selected: Path, pin: str) -> tuple[Path
         capture.link(alias, "python")
         names.add(name)
     return target, names
+
+
+def native_web_files(capture: _Capture, selected: Path) -> set[str]:
+    """Capture an optional installed web closure without widening helper budgets."""
+    index = selected / "web-release.json"
+    entries = dict(capture.entries(selected))
+    if index.name not in entries:
+        capture.absent.add(index)
+        return set()
+    _need(index not in capture.absent)
+    _need(stat.S_ISREG(entries[index.name].st_mode))
+    return {
+        index.name,
+        *("ui/" + name for name in capture.tree(selected / "ui")),
+        *("host-helper/" + name for name in capture.tree(selected / "host-helper")),
+    }
 
 
 def _policy(body: bytes) -> dict[str, Any]:
@@ -1308,6 +1325,14 @@ class _Inspection:
             "src/hfcache/cli.py",
         }
         _need(required <= set(self.deployment["authority_files"]))
+        web_files = native_web_files(self.capture, self.selected)
+        _need(web_files <= set(self.deployment["authority_files"]))
+        web_index = (
+            _json(self.authority_read(self.selected / "web-release.json", 2097152))
+            if web_files
+            else None
+        )
+        _need(web_index is None or type(web_index.get("files")) is dict)
         pin = self.authority_read(self.selected / ".python-version").decode("ascii").strip()
         _need(re.fullmatch(r"3\.[0-9]+(?:\.[0-9]+)?", pin) is not None)
         minor = ".".join(pin.split(".")[:2])
@@ -1340,9 +1365,28 @@ class _Inspection:
             "__name__": "protected_native_layout",
         }
         exec(compile(self.authority_read(classifier), str(classifier), "exec"), namespace)  # noqa: S102 - captured indexed classifier, never selected executable
-        namespace["read_metadata"] = lambda path: self.authority_read(path, 4194304).decode("utf-8")
+
+        def read_metadata(
+            path: Path, *, binary: bool = False, maximum: int = 4194304
+        ) -> bytes | str:
+            _need(type(binary) is bool)
+            body = self.authority_read(path, maximum)
+            relative = path.relative_to(self.selected).as_posix()
+            _need(
+                body
+                or (
+                    binary
+                    and relative.startswith("ui/")
+                    and web_index is not None
+                    and relative in web_index["files"]
+                )
+            )
+            return body if binary else body.decode("utf-8")
+
+        namespace["read_metadata"] = read_metadata
         bounded_path = self.capture.path_type()
         namespace["Path"] = bounded_path
+        namespace["os"] = SimpleNamespace(**(vars(os) | {"walk": self.capture.walk}))
         _need(
             namespace["native_layout"](
                 bounded_path(self.selected),
@@ -1350,6 +1394,10 @@ class _Inspection:
                 version=self.deployment["release"]["version"],
             )
             == self.deployment["release"]["version"]
+        )
+        _need(
+            web_index is None
+            or web_index["source_commit"] == self.deployment["source"]["parent_commit"]
         )
 
     def rootless(self) -> None:
@@ -1368,12 +1416,72 @@ class _Inspection:
         verifier = self.legacy["_inspection_verifier"](self.selected, self.capture.mounts, index)
 
         def verified_read(
-            path: Path, *, protected: bool = False, maximum: int = MAX_AUTHORITY_BYTES
+            path: Path,
+            *,
+            protected: bool = False,
+            maximum: int = MAX_AUTHORITY_BYTES,
+            allow_empty: bool = False,
         ) -> bytes:
             _need(protected or path.is_relative_to(self.selected))
-            return self.authority_read(path, maximum)
+            relative = path.relative_to(self.selected).as_posix()
+            _need(type(allow_empty) is bool)
+            _need(
+                not allow_empty
+                or (
+                    relative.startswith("ui/")
+                    and relative in index["files"]
+                    and relative in self.deployment["authority_files"]
+                )
+            )
+            body = self.authority_read(path, maximum)
+            _need(allow_empty or bool(body))
+            return body
+
+        def web_module(module: SimpleNamespace) -> None:
+            source = self.selected / "scripts/web-release.py"
+            module.__dict__.update(__file__=str(source), __name__="protected_web_release")
+            exec(  # noqa: S102 - captured indexed installation authority, never pathname import
+                compile(self.authority_read(source), str(source), "exec"), module.__dict__
+            )
+            parse_assets = module.parse_assets
+
+            def captured_assets(
+                root: Path,
+                expected: str,
+                **constraints: Any,  # noqa: ANN401 - captured parser ABI
+            ) -> tuple[dict[str, Any], dict[str, bytes]]:
+                _need(root == self.selected / "ui")
+                raw_manifest = verified_read(root / "manifest.json", maximum=2097152)
+                manifest, members = parse_assets(raw_manifest, expected, **constraints)
+                names = {"ui/manifest.json", *("ui/" + name for name in members)}
+                _need({name for name in index["files"] if name.startswith("ui/")} == names)
+                files = {"manifest.json": raw_manifest}
+                for name, member in members.items():
+                    body = verified_read(root / name, maximum=member["bytes"], allow_empty=True)
+                    _need(
+                        len(body) == member["bytes"]
+                        and hashlib.sha256(body).hexdigest() == member["sha256"]
+                    )
+                    files[name] = body
+                return manifest, files
+
+            module.load_assets = captured_assets
+
+        def web_spec(name: str, source: Path) -> SimpleNamespace:
+            _need(
+                name == "hfcache_web_release" and source == self.selected / "scripts/web-release.py"
+            )
+            return SimpleNamespace(loader=SimpleNamespace(exec_module=web_module))
 
         verifier["read_file"] = verified_read
+        # The installer keeps its own strict web opt-in grammar. Only its fixed
+        # sibling loader is adapted: captured code reuses the pure manifest
+        # authority while all asset reads retain this inspection's shared budget.
+        verifier["importlib"] = SimpleNamespace(
+            util=SimpleNamespace(
+                spec_from_file_location=web_spec, module_from_spec=lambda _spec: SimpleNamespace()
+            )
+        )
         # Only this captured namespace sees the adapters. Shared os/pathlib
         # modules remain unchanged when helper exchanges run concurrently.
         verifier["os"] = SimpleNamespace(**(vars(os) | {"walk": self.capture.walk}))
@@ -1766,6 +1874,38 @@ def inspect_authority(
         raise InspectionError(msg) from None
 
 
+def _archive_lock_context(capture: _Capture, uid: int, gid: int) -> tuple[tuple[int, ...], bytes]:
+    """Observe the fixed service-owned lock without opening or locking its body."""
+    capture.budget.consume(files=1)
+    parent = capture.parent(LOCK, owners={OWNER, uid})
+    try:
+        before = os.stat(LOCK.name, dir_fd=parent, follow_symlinks=False)
+        _need(
+            stat.S_ISREG(before.st_mode)
+            and (before.st_uid, before.st_gid) == (uid, gid)
+            and stat.S_IMODE(before.st_mode) == LOCK_MODE
+            and before.st_nlink == 1,
+            "facts-unavailable",
+        )
+        context = os.getxattr(LOCK, "security.selinux", follow_symlinks=False)
+        capture.budget.consume(size=len(context))
+        _need(
+            0 < len(context) <= MAX_SELINUX_CONTEXT
+            and re.fullmatch(
+                rb"[A-Za-z0-9_]+:object_r:" + ARCHIVE_LOCK_TYPE.encode() + rb":s0\0?", context
+            ),
+            "facts-unavailable",
+        )
+        identity = _identity(before)
+        _need(
+            _identity(os.stat(LOCK.name, dir_fd=parent, follow_symlinks=False)) == identity,
+            "facts-unavailable",
+        )
+        return identity, context
+    finally:
+        os.close(parent)
+
+
 def observe_guard(
     *, bootstrap_work: dict[str, int] | None = None, started_at: float | None = None
 ) -> dict[str, Any]:
@@ -1832,12 +1972,22 @@ def observe_guard(
         os.setresuid(0, uid, 0)
         _need(os.getresuid() == (0, uid, 0) and os.getresgid() == (0, gid, 0), "facts-unavailable")
         before = LOCK.lstat()
+        lock_context = (
+            _archive_lock_context(inspection.capture, uid, gid)
+            if inspection.deployment["profile"] == "rootless"
+            else None
+        )
         release = {"service_uid": uid, "service_gid": gid}
         _need(
             inspection.legacy["_inspection_guard"](inspection.capture.mounts, release) == "held",
             "facts-unavailable",
         )
         _need(_identity(LOCK.lstat()) == _identity(before), "facts-unavailable")
+        if lock_context is not None:
+            _need(
+                _archive_lock_context(inspection.capture, uid, gid) == lock_context,
+                "facts-unavailable",
+            )
         inspection.capture.revalidate()
     finally:
         os.setresuid(0, 0, 0)

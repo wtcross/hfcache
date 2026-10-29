@@ -205,6 +205,17 @@ Main-workspace task/evidence edits cannot contaminate source provenance; source
 and evidence commits remain distinct. A stopped or incompletely scoped gate is
 not passing evidence even if its wrapper returns 0.
 
+Optional full web releases use `scripts/build-web-release.py --output <new-local-path>`
+from a clean committed detached source worktree. It records the exact source,
+pinned build tools, repeated wheel/sdist/UI byte comparisons and canonical
+`web-release.json` index. Keep its captured `source/`, UI, backend and helper
+closure together. The explicit native index-digest arguments and rootless
+asset-digest/web-input arguments in the [web deployment guide](../web-ui/deployment.md)
+stage this immutable material; Python-only profiles remain independent. Build
+results never authorize provisioning, selection or production execution. Retain
+the build-source worktree/commit with the final work-package evidence even when
+later evidence-only record changes create the finalized package commit.
+
 Stage non-secret immutable runtime artifacts with umask 022 and verify directory/
 file readability as the actual service UID/GID before selection. A root-only
 successful validation does not prove runtime readability. Keep private manifest/

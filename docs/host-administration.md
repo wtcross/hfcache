@@ -701,6 +701,14 @@ fixed fcontext rules and actual creation proof must cover new runtime/secret
 objects. A directory label alone does not attest its children's labels. Where
 fixed inspection needs nonsecret secret-store metadata, it must have a separate
 supported label from secret bodies; otherwise that configuration refuses.
+Root independently provisions the fixed `/run/hfcache-host-helper` parent as an
+ordinary root:root0755 directory with the runtime type before first start and
+after each boot. Its fixed `api` child is root-owned0750 with the actual indexed
+service group and the same runtime type. Existing unsafe objects refuse rather
+than being repaired. The helper proves these parents before publishing its
+socket/binding; the system manager's runtime-type mount permission does not
+grant parent creation. `RuntimeDirectory=` therefore does not replace this
+explicit provisioning step.
 The shared application-config type permits guarded helper writes and read-only
 application file access; it does
 not make private policy/index/key/receipt types container-readable. Mutable Hub
@@ -820,6 +828,26 @@ charged to the original aggregate budget, with at most5 seconds of remaining
 work. Deadline expiry refuses the proof and retains the owned child/inspection
 slot until actual normal exit. This internal observer adds no private effect
 opcode and reads no configuration, key, credential or archive contents.
+
+Enabled rootless profiles additionally require independent provisioning of
+`hfcache_host_helper_archive_lock_t` on exactly the existing
+`/run/hfcache/hfcache.lock`: ordinary, single-link,0600 and owned by the indexed
+service UID/GID. Preserve its original device/inode and permissions. Before
+launch, both API and worker validate no-follow metadata and the `object_r` role,
+fixed type and `s0` range, then preserve this bind without `:z`. The worker reads
+only captured protected rendered server helper opt-in; it never receives helper
+authority files or projection. Disabled launch arguments remain unchanged.
+The rootless mixed-ID observer brackets its original guard predicate with the
+same fixed-lock metadata/context proof. Native observation is unchanged.
+
+The dedicated type grants the helper file `getattr` only; payload access,
+mapping, writes and locking remain forbidden. Exact `container_t` retains only
+the fixed lock's `getattr`/`open`/`read`/`write`/`lock` rights. No path is selected
+by a caller and no launcher/observer creates, repairs or relabels the lock.
+This fixed direct proof introduces no receipt role or protocol field: selected
+CIL, installed module and kernel-policy bindings remain mandatory. Fresh policy
+provisioning and receipt/deployment bindings precede restart; recreated locks
+require independent provisioning. See [the rationale](adr/decision-159.md).
 
 A root-owned0600 fixed32-byte `/etc/hfcache/host-helper.key` authenticates opaque
 configuration/schedule revisions. It is independently provisioned, never created

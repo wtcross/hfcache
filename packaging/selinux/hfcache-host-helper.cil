@@ -26,10 +26,11 @@
 (type hfcache_host_helper_hub_state_t)
 (type hfcache_host_helper_runtime_t)
 (type hfcache_host_helper_secret_t)
+(type hfcache_host_helper_archive_lock_t)
 (type hfcache_host_helper_engine_lock_t)
 (type hfcache_host_helper_engine_shm_t)
 (type hfcache_archive_t)
-(typeattributeset file_type (hfcache_host_helper_exec_t hfcache_host_helper_code_t hfcache_host_helper_conf_t hfcache_host_helper_application_conf_t hfcache_host_helper_configuration_dir_t hfcache_host_helper_application_state_t hfcache_host_helper_configuration_guard_t hfcache_host_helper_hub_state_t hfcache_host_helper_runtime_t hfcache_host_helper_secret_t hfcache_host_helper_engine_lock_t hfcache_host_helper_engine_shm_t hfcache_archive_t))
+(typeattributeset file_type (hfcache_host_helper_exec_t hfcache_host_helper_code_t hfcache_host_helper_conf_t hfcache_host_helper_application_conf_t hfcache_host_helper_configuration_dir_t hfcache_host_helper_application_state_t hfcache_host_helper_configuration_guard_t hfcache_host_helper_hub_state_t hfcache_host_helper_runtime_t hfcache_host_helper_secret_t hfcache_host_helper_archive_lock_t hfcache_host_helper_engine_lock_t hfcache_host_helper_engine_shm_t hfcache_archive_t))
 (typeattributeset exec_type (hfcache_host_helper_exec_t))
 (typeattributeset file_type (hfcache_host_helper_schedule_dir_t hfcache_host_helper_schedule_file_t hfcache_host_helper_host_action_state_t hfcache_host_helper_sync_timer_unit_t))
 
@@ -177,6 +178,10 @@
 ; Only independently labeled existing fixed storage-lock inodes are writable.
 (allow hfcache_host_helper_t hfcache_host_helper_engine_lock_t (file (getattr open read write lock)))
 (allow container_runtime_t hfcache_host_helper_engine_lock_t (file (getattr open read write lock)))
+; ADR159: independently labeled original archive lock, metadata-only to helper.
+; API and worker retain only existing lock use; launchers preserve this SID.
+(allow hfcache_host_helper_t hfcache_host_helper_archive_lock_t (file (getattr)))
+(allow container_t hfcache_host_helper_archive_lock_t (file (getattr open read write lock)))
 ; Independently labeled existing fixed stock SHM coordination segment only.
 ; These are whole-type rights, including shared mutex writes; not path/byte-range MAC.
 ; Keep map separate from ordinary lock files and never grant blanket tmpfs access.
@@ -395,3 +400,5 @@
 (neverallow hfcache_host_helper_t container_ro_file_t (dir (write add_name remove_name create setattr rmdir rename)))
 ; Lock labels grant coordination only, never replacement, creation or execution.
 (neverallow hfcache_host_helper_t hfcache_host_helper_engine_lock_t (file (append create setattr unlink rename link map execute)))
+; Archive-lock observation must never acquire content, lock or relabel authority.
+(neverallow hfcache_host_helper_t hfcache_host_helper_archive_lock_t (file (ioctl open read write append create setattr lock relabelfrom relabelto unlink link rename map execute execute_no_trans entrypoint mounton)))

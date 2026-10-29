@@ -2,6 +2,8 @@
 
 import ast
 import fcntl
+import hashlib
+import importlib.util
 import json
 import os
 import select
@@ -477,6 +479,427 @@ def test_optional_mcp_profile_cannot_change_an_existing_release(tmp_path, mode):
     assert result.returncode == 1
     assert "only when building or staging" in result.stderr
     assert not prefix.exists()
+
+
+@pytest.mark.parametrize("stage", [False, True])
+def test_explicit_web_release_dry_run_does_not_open_assets_or_run_build_tools(tmp_path, stage):
+    prefix = tmp_path / "unused"
+    release = tmp_path / "unavailable release"
+    arguments = [
+        "bash",
+        str(ROOT / "scripts/install-release.sh"),
+        "--dry-run",
+        "--web-release",
+        str(release),
+        "--web-release-sha256",
+        "a" * 64,
+    ]
+    if stage:
+        arguments.append("--no-switch")
+    result = subprocess.run(
+        arguments,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=dict(os.environ)
+        | {
+            "HFCACHE_PREFIX": str(prefix),
+            "HFCACHE_SOURCE": str(tmp_path / "unavailable-source"),
+            "HFCACHE_UV": str(tmp_path / "forbidden"),
+            "HFCACHE_SYSTEMCTL": str(tmp_path / "forbidden"),
+        },
+    )
+    assert result.returncode == 0, result.stderr
+    assert f"web release: {release}; index SHA256: {'a' * 64}" in result.stdout
+    assert not release.exists()
+    assert not prefix.exists()
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ["--web-release", "/unavailable"],
+        ["--web-release-sha256", "a" * 64],
+        ["--web-release"],
+        ["--web-release-sha256"],
+        ["--web-release", ""],
+        ["--web-release-sha256", ""],
+        ["--web-release", "/unavailable", "--web-release-sha256", "A" * 64],
+        ["--web-release", "relative", "--web-release-sha256", "a" * 64],
+        ["--web-release", "/unavailable", "--web-release", "/other"],
+        ["--web-release-sha256", "a" * 64, "--web-release-sha256", "b" * 64],
+    ],
+)
+def test_incomplete_or_invalid_web_release_selection_refuses_without_effects(tmp_path, arguments):
+    prefix = tmp_path / "unused"
+    result = subprocess.run(
+        ["bash", str(ROOT / "scripts/install-release.sh"), "--dry-run", *arguments],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=dict(os.environ)
+        | {"HFCACHE_PREFIX": str(prefix), "HFCACHE_SOURCE": str(tmp_path / "absent-source")},
+    )
+    assert result.returncode == 1
+    assert "--web-release" in result.stderr
+    assert not prefix.exists()
+
+
+@pytest.mark.parametrize("mode", [["--list"], ["--switch", "0.1.10"]])
+def test_web_release_selection_cannot_reconfigure_an_existing_release(tmp_path, mode):
+    prefix = tmp_path / "unused"
+    result = subprocess.run(
+        [
+            "bash",
+            str(ROOT / "scripts/install-release.sh"),
+            "--dry-run",
+            "--web-release",
+            str(tmp_path / "absent-assets"),
+            "--web-release-sha256",
+            "a" * 64,
+            *mode,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=dict(os.environ) | {"HFCACHE_PREFIX": str(prefix)},
+    )
+    assert result.returncode == 1
+    assert "only when building or staging" in result.stderr
+    assert not prefix.exists()
+
+
+def web_installer_fixture(tmp_path):
+    """Retain real shell/profile code; substitute only the independent verifier CLI."""
+    scripts = tmp_path / "installer scripts"
+    scripts.mkdir()
+    for name in ("install-release.sh", "release-functions.sh", "release-profile.py"):
+        (scripts / name).write_bytes((ROOT / "scripts" / name).read_bytes())
+    (scripts / "web-release.py").write_text(
+        "import json,os,sys\nfrom pathlib import Path\n"
+        "Path(os.environ['WEB_COMMAND']).write_text(json.dumps({"
+        "'argv':sys.argv[1:],'no_bytecode':os.environ['PYTHONDONTWRITEBYTECODE']}))\n"
+        "raise SystemExit(int(os.environ.get('WEB_EXIT','0')))\n"
+    )
+    command = tmp_path / "web-command.json"
+    environment = dict(os.environ) | {
+        "WEB_COMMAND": str(command),
+        "HFCACHE_PREFIX": str(tmp_path / "new-prefix"),
+        "HFCACHE_SOURCE": str(native_source(tmp_path / "native source")),
+        "HFCACHE_UV": str(tmp_path / "forbidden-uv"),
+        "HFCACHE_SYSTEMCTL": str(tmp_path / "forbidden-manager"),
+    }
+    return scripts, command, environment
+
+
+def test_web_index_preflight_runs_after_native_classification_before_root_or_build(tmp_path):
+    scripts, command, environment = web_installer_fixture(tmp_path)
+    environment["WEB_EXIT"] = "23"
+    release = tmp_path / "release assets"
+    arguments = [
+        "bash",
+        str(scripts / "install-release.sh"),
+        "--no-switch",
+        "--web-release",
+        str(release),
+        "--web-release-sha256",
+        "a" * 64,
+    ]
+    result = subprocess.run(arguments, check=False, capture_output=True, text=True, env=environment)
+    assert result.returncode == 23, result.stderr
+    assert json.loads(command.read_text()) == {
+        "argv": [
+            "verify-native",
+            "--release",
+            str(release),
+            "--index-sha256",
+            "a" * 64,
+            "--source",
+            environment["HFCACHE_SOURCE"],
+        ],
+        "no_bytecode": "1",
+    }
+    assert not Path(environment["HFCACHE_PREFIX"]).exists()
+    command.unlink()
+    (Path(environment["HFCACHE_SOURCE"]) / "container-release.json").write_text("{}")
+    refused = subprocess.run(
+        arguments, check=False, capture_output=True, text=True, env=environment
+    )
+    assert refused.returncode == 20
+    assert "native profile refused" in refused.stderr
+    assert not command.exists()
+
+
+@pytest.mark.parametrize("enabled", [False, True])
+def test_native_sync_selects_copied_python_only_for_explicit_full_web_release(tmp_path, enabled):
+    scripts, command, environment = web_installer_fixture(tmp_path)
+    prepared = tmp_path / "python" / "web-0.2.2-commit" / "bin/python3.14"
+    donor = tmp_path / "python" / "cpython-3.14.6-linux-x86_64-gnu/bin/python3.14"
+    (scripts / "web-release.py").write_text(
+        "import json,os,sys\nfrom pathlib import Path\n"
+        "Path(os.environ['WEB_COMMAND']).write_text(json.dumps(sys.argv[1:]))\n"
+        "assert sys.argv[1]=='prepare-python'\n"
+        "print(os.environ['PREPARED_PYTHON'])\n"
+    )
+    uv = tmp_path / "uv"
+    uv.write_text(
+        "#!/usr/bin/env python3\nimport json,os,sys\nfrom pathlib import Path\n"
+        "Path(os.environ['SYNC_COMMAND']).write_text(json.dumps(sys.argv[1:]))\n"
+    )
+    uv.chmod(0o755)
+    release = tmp_path / "release"
+    release.mkdir()
+    sync_record = tmp_path / "sync-command.json"
+    environment |= {"PREPARED_PYTHON": str(prepared), "SYNC_COMMAND": str(sync_record)}
+    original = (scripts / "install-release.sh").read_text()
+    function = original[original.index("web_release() {") : original.index("\nMODE=install")]
+    selection = original[
+        original.index("SYNC_PYTHON=${PYTHON_VERSION}") : original.index('step "release tree')
+    ]
+    sync = original[original.index('step "uv sync') : original.index("step 'ownership and modes'")]
+    shell = (
+        "set -euo pipefail; SCRIPT_DIRECTORY=$1; WEB_RELEASE=$2; "
+        "WEB_RELEASE_SHA256=$3; SOURCE=$4; INTERPRETER=$5; UV_PYTHON_INSTALL_DIR=$6; "
+        "UV=$7; RELEASE=$8; PYTHON_VERSION=3.14.6; RELEASE_EXTRAS=(--extra server); "
+        "step() { :; }; " + function + selection + sync
+    )
+    result = subprocess.run(
+        [
+            "bash",
+            "-c",
+            shell,
+            "fixture",
+            str(scripts),
+            str(tmp_path / "web assets") if enabled else "",
+            "a" * 64,
+            environment["HFCACHE_SOURCE"],
+            str(donor),
+            str(tmp_path / "python"),
+            str(uv),
+            str(release),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+    assert result.returncode == 0, result.stderr
+    arguments = json.loads(sync_record.read_text())
+    assert arguments[-2:] == ["--python", str(prepared) if enabled else "3.14.6"]
+    if enabled:
+        assert json.loads(command.read_text())[-4:] == [
+            "--interpreter",
+            str(donor),
+            "--python-root",
+            str(tmp_path / "python"),
+        ]
+    else:
+        assert not command.exists()
+
+
+def test_web_stage_hook_passes_exact_paths_to_host_verifier_before_release_rename(tmp_path):
+    scripts, command, environment = web_installer_fixture(tmp_path)
+    source = (scripts / "install-release.sh").read_text()
+    start = source.index("web_release() {\n")
+    end = source.index("\n}\n", start) + 3
+    function = source[start:end]
+    release, staging = tmp_path / "release assets", tmp_path / "staging tree"
+    staging.mkdir()
+    script = (
+        "set -euo pipefail; SCRIPT_DIRECTORY=$1; WEB_RELEASE=$2; "
+        "WEB_RELEASE_SHA256=$3; SOURCE=$4;\n"
+        + function
+        + '\nweb_release stage-native --destination "$5"'
+    )
+    result = subprocess.run(
+        [
+            "bash",
+            "-c",
+            script,
+            "fixture",
+            str(scripts),
+            str(release),
+            "a" * 64,
+            environment["HFCACHE_SOURCE"],
+            str(staging),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+    assert result.returncode == 0, result.stderr
+    assert json.loads(command.read_text())["argv"] == [
+        "stage-native",
+        "--release",
+        str(release),
+        "--index-sha256",
+        "a" * 64,
+        "--source",
+        environment["HFCACHE_SOURCE"],
+        "--destination",
+        str(staging),
+    ]
+    copy = source.index('cp -R "${SOURCE}/${item}" "${STAGING}/"')
+    stage = source.index('web_release stage-native --destination "${STAGING}"')
+    rename = source.index('mv -T "${STAGING}" "${RELEASE}"')
+    assert copy < stage < rename
+
+
+@pytest.fixture
+def native_web_profile():
+    spec = importlib.util.spec_from_file_location(
+        "native_web_profile", ROOT / "scripts/release-profile.py"
+    )
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def write_native_web_index(root, index):
+    (root / "web-release.json").write_text(
+        json.dumps(index, sort_keys=True, indent=2, ensure_ascii=False) + "\n"
+    )
+
+
+@pytest.fixture
+def indexed_native_web(tmp_path):
+    root = tmp_path / "native-web"
+    root.mkdir()
+    files = {
+        "ui/manifest.json": b'{"structural_test_fixture":true}\n',
+        "ui/assets/app-12345678.js": b"binary fixture bytes\x00\xff",
+        **{
+            "host-helper/" + name: ("captured " + name + "\n").encode()
+            for name in (
+                "host-helper.py",
+                "hfcache-host-helper.service",
+                "hfcache-host-helper.cil",
+                "host_policy.py",
+                "host_protocol.py",
+                "host_peer.py",
+                "host_configuration.py",
+                "host_actions.py",
+                "host_selinux.py",
+            )
+        },
+    }
+    for name, body in files.items():
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(body)
+    index = {
+        "schema_version": 1,
+        "kind": "hfcache_web_release",
+        "version": "0.2.2",
+        "source_commit": "a" * 40,
+        "source_files": {"pyproject.toml": "b" * 64},
+        "files": {name: hashlib.sha256(body).hexdigest() for name, body in files.items()},
+        "ui_manifest_sha256": hashlib.sha256(files["ui/manifest.json"]).hexdigest(),
+    }
+    write_native_web_index(root, index)
+    return root, index
+
+
+def test_native_web_classification_verifies_copied_closure_without_candidate_execution(
+    native_web_profile, indexed_native_web
+):
+    root, _ = indexed_native_web
+    assert not (root / ".venv").exists()
+    assert native_web_profile.native_web_layout(root, "0.2.2") is None
+
+
+def test_native_web_classification_refuses_dangling_index_without_discarding_it(
+    native_web_profile, tmp_path
+):
+    index = tmp_path / "web-release.json"
+    index.symlink_to("unknown-index.json")
+    with pytest.raises(OSError, match="Too many levels of symbolic links"):
+        native_web_profile.native_web_layout(tmp_path, "0.2.2")
+    assert index.is_symlink()
+    assert index.readlink() == Path("unknown-index.json")
+
+
+def test_native_web_classification_refuses_duplicate_index_fields(
+    native_web_profile, indexed_native_web
+):
+    root, _ = indexed_native_web
+    index = root / "web-release.json"
+    raw = index.read_text()
+    index.write_text('{"kind":"hfcache_web_release",' + raw[1:])
+    with pytest.raises(ValueError, match="duplicate native index field"):
+        native_web_profile.native_web_layout(root, "0.2.2")
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"source_commit": "A" * 40},
+        {"source_commit": "a" * 39},
+        {"source_commit": None},
+        {"files": []},
+        {"files": {}},
+        {"source_files": []},
+        {"source_files": {}},
+        {"source_files": {"../escaped": "a" * 64}},
+        {"source_files": {"pyproject.toml": "invalid digest"}},
+        {"version": "0.9.9"},
+        {"ui_manifest_sha256": "f" * 64},
+        {"schema_version": True},
+    ],
+)
+def test_native_web_classification_refuses_unknown_identity_or_map(
+    native_web_profile, indexed_native_web, change
+):
+    root, index = indexed_native_web
+    write_native_web_index(root, index | change)
+    with pytest.raises(ValueError, match="native web"):
+        native_web_profile.native_web_layout(root, "0.2.2")
+
+
+@pytest.mark.parametrize(
+    "name", ["ui/manifest.json", "ui/assets/app-12345678.js", "host-helper/host_policy.py"]
+)
+@pytest.mark.parametrize("change", ["missing", "changed", "unindexed"])
+def test_native_web_classification_refuses_missing_changed_or_extra_copied_bytes(
+    native_web_profile, indexed_native_web, name, change
+):
+    root, _ = indexed_native_web
+    path = root / name
+    if change == "missing":
+        path.unlink()
+    elif change == "changed":
+        path.write_bytes(b"changed indexed bytes\n")
+    else:
+        path.with_name("unindexed-extra").write_bytes(b"unindexed copied bytes\n")
+    with pytest.raises((ValueError, OSError)):
+        native_web_profile.native_web_layout(root, "0.2.2")
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "host-helper.py",
+        "hfcache-host-helper.service",
+        "hfcache-host-helper.cil",
+        "host_policy.py",
+        "host_protocol.py",
+        "host_peer.py",
+        "host_configuration.py",
+        "host_actions.py",
+        "host_selinux.py",
+    ],
+)
+def test_native_web_classification_requires_all_nine_helper_index_members(
+    native_web_profile, indexed_native_web, name
+):
+    root, index = indexed_native_web
+    del index["files"]["host-helper/" + name]
+    write_native_web_index(root, index)
+    with pytest.raises(ValueError, match="native web closure not proven"):
+        native_web_profile.native_web_layout(root, "0.2.2")
 
 
 @pytest.mark.parametrize(

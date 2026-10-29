@@ -39,6 +39,9 @@ HOST_HELPER_MAX_BINDING = 4096
 HOST_HELPER_PARENT_MODE = 0o750
 HOST_HELPER_BINDING_MODE = 0o440
 HOST_HELPER_OVERFLOW = 65534
+HOST_HELPER_ARCHIVE_LOCK = Path("/run/hfcache/hfcache.lock")
+HOST_HELPER_ARCHIVE_LOCK_TYPE = "hfcache_host_helper_archive_lock_t"
+HOST_HELPER_MAX_CONTEXT = 4096
 
 # ADR135: this inspection is separate from every container/service role. These
 # paths are fixed host policy/accounting, never caller-selected routing.
@@ -664,15 +667,22 @@ class _HelperProjectionRead:
         self.parents = {}
         self.leaves = {}
 
-    def parent(self, path):
+    def parent(self, path, *, archive_owner=None):
         _helper_need(path.is_absolute() and ".." not in path.parts)
+        _helper_need(
+            archive_owner is None
+            or (path == HOST_HELPER_ARCHIVE_LOCK and type(archive_owner) is int)
+        )
+        owners = {0, HOST_HELPER_OWNER}
+        if archive_owner is not None:
+            owners.add(archive_owner)
         descriptor = os.open("/", os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
         current = Path("/")
         try:
             for part in (*path.parent.parts[1:], None):
                 info = os.fstat(descriptor)
                 _helper_need(
-                    info.st_uid in {0, HOST_HELPER_OWNER}
+                    info.st_uid in owners
                     and (
                         not info.st_mode & 0o022
                         or (info.st_uid == 0 and info.st_mode & stat.S_ISVTX)
@@ -747,9 +757,7 @@ class _HelperProjectionRead:
             )
 
 
-def host_helper_projection(profile):  # noqa: PLR0915 - one fixed protected startup authority join
-    """Only main's API branch calls this explicit fixed helper opt-in loader."""
-    capture = _HelperProjectionRead()
+def _host_helper_configuration(profile, capture):
     configuration = tomllib.loads(
         capture.read(PROFILE_DIRECTORY / "server.toml", MAX_PROFILE_BYTES).decode("utf-8")
     )
@@ -772,6 +780,56 @@ def host_helper_projection(profile):  # noqa: PLR0915 - one fixed protected star
         and type(helper["api_host_gid"]) is int
         and helper["api_host_gid"] == profile["service_gid"]
     )
+    if "deployment_sha256" in helper:
+        _helper_digest(helper["deployment_sha256"])
+    return helper
+
+
+def host_helper_enabled(profile):
+    """Worker reads only the existing protected opt-in, never helper authority."""
+    capture = _HelperProjectionRead()
+    enabled = _host_helper_configuration(profile, capture) is not None
+    capture.revalidate()
+    return enabled
+
+
+def host_helper_archive_lock(profile):
+    """Observe only the fixed existing coordination inode and its full context."""
+    capture = _HelperProjectionRead()
+    parent = capture.parent(HOST_HELPER_ARCHIVE_LOCK, archive_owner=profile["service_uid"])
+    try:
+        before = os.stat(HOST_HELPER_ARCHIVE_LOCK.name, dir_fd=parent, follow_symlinks=False)
+        _helper_need(
+            stat.S_ISREG(before.st_mode)
+            and (before.st_uid, before.st_gid) == (profile["service_uid"], profile["service_gid"])
+            and stat.S_IMODE(before.st_mode) == _INSPECTION_LOCK_MODE
+            and before.st_nlink == 1
+        )
+        context = os.getxattr(HOST_HELPER_ARCHIVE_LOCK, "security.selinux", follow_symlinks=False)
+        _helper_need(
+            0 < len(context) <= HOST_HELPER_MAX_CONTEXT
+            and re.fullmatch(
+                rb"[A-Za-z0-9_]+:object_r:" + HOST_HELPER_ARCHIVE_LOCK_TYPE.encode() + rb":s0\0?",
+                context,
+            )
+        )
+        after = os.stat(HOST_HELPER_ARCHIVE_LOCK.name, dir_fd=parent, follow_symlinks=False)
+        _helper_need(
+            tuple(getattr(before, name) for name in _INSPECTION_METADATA)
+            == tuple(getattr(after, name) for name in _INSPECTION_METADATA)
+        )
+        capture.revalidate()
+    finally:
+        os.close(parent)
+
+
+def host_helper_projection(profile):  # noqa: PLR0915 - one fixed protected startup authority join
+    """Only main's API branch calls this explicit fixed helper opt-in loader."""
+    capture = _HelperProjectionRead()
+    helper = _host_helper_configuration(profile, capture)
+    if helper is None:
+        capture.revalidate()
+        return None
     raw = capture.read(
         HOST_HELPER_DEPLOYMENT, HOST_HELPER_MAX_INDEX, mode=0o644, gid=HOST_HELPER_OWNER
     )
@@ -916,7 +974,15 @@ def host_helper_projection(profile):  # noqa: PLR0915 - one fixed protected star
     return helper_parent_projection(deployment_sha256, boot_id, parent.st_dev, parent.st_ino)
 
 
-def command(profile, role, arguments=(), *, invocation_id=None, helper_projection=None):  # noqa: PLR0912, PLR0915 - one closed role/mount allowlist
+def command(  # noqa: PLR0912, PLR0913, PLR0915 - one closed role/mount allowlist
+    profile,
+    role,
+    arguments=(),
+    *,
+    invocation_id=None,
+    helper_projection=None,
+    preserve_archive_lock=False,
+):
     if role not in {*NAMES, "client"} or (role != "client" and arguments):
         msg = "unknown fixed container role"
         raise ValueError(msg)
@@ -924,6 +990,11 @@ def command(profile, role, arguments=(), *, invocation_id=None, helper_projectio
     if helper_projection is not None:
         _helper_need(role == "api")
         projected_environment = _helper_projection(helper_projection)
+    _helper_need(
+        type(preserve_archive_lock) is bool
+        and (not preserve_archive_lock or role in {"api", "worker"})
+    )
+    preserve_archive_lock = preserve_archive_lock or helper_projection is not None
     argv = [
         *ENGINE,
         "run",
@@ -971,7 +1042,7 @@ def command(profile, role, arguments=(), *, invocation_id=None, helper_projectio
             argv += [f"--tmpfs={hidden}:ro,nosuid,nodev,noexec,mode=000"]
     if role in {"api", "worker"}:
         argv += volume("/srv/hfcache")  # No relabel/chown/copyup option, ever.
-        argv += volume("/run/hfcache/hfcache.lock", writable=True, shared=True)
+        argv += volume("/run/hfcache/hfcache.lock", writable=True, shared=not preserve_archive_lock)
     if role in {"api", "client", "caddy"}:
         argv += volume("/run/hfcache/api", writable=role == "api", shared=True)
     if role in {"api", "worker"}:
@@ -1182,12 +1253,18 @@ def main():
             return 0
         role = sys.argv[1] if len(sys.argv) > 1 else ""
         projection = host_helper_projection(profile) if role == "api" else None
+        preserve_lock = projection is not None or (
+            role == "worker" and host_helper_enabled(profile)
+        )
+        if preserve_lock:
+            host_helper_archive_lock(profile)
         argv = command(
             profile,
             role,
             sys.argv[2:],
             invocation_id=os.environ.get("INVOCATION_ID", ""),
             helper_projection=projection,
+            preserve_archive_lock=preserve_lock,
         )
         if role in {"api", "worker"}:
             archive_readonly()

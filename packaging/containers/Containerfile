@@ -34,6 +34,9 @@ COPY --from=build /opt/hfcache/python /opt/hfcache/python
 COPY --from=build /opt/hfcache/.venv /opt/hfcache/.venv
 COPY --from=build /etc/ssl/cert.pem /etc/ssl/cert.pem
 COPY --from=build /prepared/ /
+# Decision 143: verified static bytes share the API image; no Node runtime.
+# Backend-only construction supplies an empty directory and leaves web disabled.
+COPY ui/ /opt/hfcache/ui/
 ENV PATH=/opt/hfcache/.venv/bin:/opt/hfcache/python/bin:/usr/local/bin:/usr/bin:/bin \
     HOME=/nonexistent PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     HF_HUB_DISABLE_TELEMETRY=1 SSL_CERT_FILE=/etc/ssl/cert.pem

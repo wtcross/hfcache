@@ -23,7 +23,13 @@ from tests.unit.test_host_policy import (
 )
 from tests.unit.test_host_policy import native_uv_aliases
 from tests.unit.test_host_policy import (
+    native_web as native_web,  # noqa: PLC0414 - full indexed closure
+)
+from tests.unit.test_host_policy import (
     rootless as rootless,  # noqa: PLC0414 - original staged tree and bindings
+)
+from tests.unit.test_host_policy import (
+    rootless_web as rootless_web,  # noqa: PLC0414 - indexed web stage and bounded reads
 )
 
 SCRIPT = Path(__file__).parents[2] / "scripts/prepare-host-helper.py"
@@ -72,6 +78,31 @@ def test_proposal_matches_actual_leaf_bytes_modes_and_fixed_bindings(fixture, re
     assert proposed["authority_files"] == host.index["authority_files"]
     assert proposed["profile_evidence"] == host.index["profile_evidence"]
     assert before == {name: (host.selected / name).read_bytes() for name in before}
+
+
+def test_rootless_web_proposal_keeps_complete_empty_and_nonempty_asset_authority(
+    rootless_web, monkeypatch
+):
+    configure(rootless_web, monkeypatch)
+    proposed = tool.prepare(policy, "rootless", "c" * 40, "d" * 64, dirty=True)
+    assert proposed["authority_files"] == rootless_web.index["authority_files"]
+    assert proposed["bindings"] == rootless_web.index["bindings"]
+    assert proposed["profile_evidence"] == rootless_web.index["profile_evidence"]
+    assert "ui/assets/app-12345678.js" in proposed["authority_files"]
+
+
+def test_native_web_proposal_keeps_index_complete_ui_and_nine_helper_artifacts(
+    native_web, monkeypatch
+):
+    configure(native_web, monkeypatch)
+    proposed = tool.prepare(policy, "native", "c" * 40, "d" * 64, dirty=True)
+    assert proposed["authority_files"] == native_web.index["authority_files"]
+    assert proposed["bindings"] == native_web.index["bindings"]
+    assert "web-release.json" in proposed["authority_files"]
+    assert proposed["authority_files"]["ui/assets/app-12345678.js"]["bytes"] == 0
+    assert (
+        len([name for name in proposed["authority_files"] if name.startswith("host-helper/")]) == 9
+    )
 
 
 def observer_fragment(native, monkeypatch):

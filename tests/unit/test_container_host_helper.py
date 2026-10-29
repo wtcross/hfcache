@@ -154,12 +154,16 @@ def test_enabled_projection_uses_actual_host_group_and_projects_only_fixed_ident
     )
 
 
-def test_enabled_api_preserves_hub_inode_labels_and_only_changes_the_two_hub_bind_options(host):
-    """ADR150: Podman must retain separately installed Hub payload labels."""
+def test_enabled_api_preserves_hub_and_original_archive_lock_labels(host):
+    """ADR150/159: Podman retains the independently provisioned object labels."""
     projection = runtime.host_helper_projection(host.profile)
     original = runtime.command(host.profile, "api", invocation_id="")
     enabled = runtime.command(host.profile, "api", invocation_id="", helper_projection=projection)
-    for path in ("/var/lib/hfcache/hf-home", "/var/cache/hfcache"):
+    for path in (
+        "/var/lib/hfcache/hf-home",
+        "/var/cache/hfcache",
+        "/run/hfcache/hfcache.lock",
+    ):
         assert f"{path}:{path}:rw,z" in original
         assert f"{path}:{path}:rw" in enabled
         assert f"{path}:{path}:rw,z" not in enabled
@@ -172,6 +176,7 @@ def test_enabled_api_preserves_hub_inode_labels_and_only_changes_the_two_hub_bin
         in {
             "/var/lib/hfcache/hf-home:/var/lib/hfcache/hf-home:rw,z",
             "/var/cache/hfcache:/var/cache/hfcache:rw,z",
+            "/run/hfcache/hfcache.lock:/run/hfcache/hfcache.lock:rw,z",
         }
         else item
         for item in original
@@ -473,6 +478,15 @@ def test_main_only_api_loads_protected_projection_before_original_exec(host, mon
         calls.append("projection")
         return projection
 
+    def enabled(profile):
+        assert profile == host.profile
+        calls.append("worker-optin")
+        return True
+
+    def archive_lock(profile):
+        assert profile == host.profile
+        calls.append("archive-lock")
+
     class Executed(BaseException):
         pass
 
@@ -481,13 +495,19 @@ def test_main_only_api_loads_protected_projection_before_original_exec(host, mon
         raise Executed
 
     monkeypatch.setattr(runtime, "host_helper_projection", project)
+    monkeypatch.setattr(runtime, "host_helper_enabled", enabled)
+    monkeypatch.setattr(runtime, "host_helper_archive_lock", archive_lock)
     monkeypatch.setattr(runtime.os, "execv", execute)
     monkeypatch.setattr(runtime.sys, "argv", ["container-service", role])
     with pytest.raises(Executed):
         runtime.main()
     if role == "api":
-        assert calls[0] == "projection"
-        assert any("HFCACHE_HOST_HELPER_PARENT" in value for value in calls[1])
+        assert calls[:2] == ["projection", "archive-lock"]
+        assert any("HFCACHE_HOST_HELPER_PARENT" in value for value in calls[2])
+    elif role == "worker":
+        assert calls[:2] == ["worker-optin", "archive-lock"]
+        assert "/run/hfcache/hfcache.lock:/run/hfcache/hfcache.lock:rw" in calls[2]
+        assert not any("HFCACHE_HOST_HELPER_PARENT" in value for value in calls[2])
     else:
         assert len(calls) == 1
         assert not any("HFCACHE_HOST_HELPER_PARENT" in value for value in calls[0])
@@ -520,3 +540,233 @@ def test_failed_projection_read_drains_fds_and_preserves_unsafe_metadata(host):
             runtime.host_helper_projection(host.profile)
     assert set(os.listdir("/proc/self/fd")) == before  # noqa: PTH208
     assert host.deployment.stat().st_mode & 0o777 == 0o666
+
+
+@pytest.mark.parametrize("enabled", [False, True])
+def test_worker_optin_reads_only_captured_server_configuration(host, monkeypatch, enabled):
+    if not enabled:
+        write(host.configuration, b"[host_helper]\nenabled=false\n")
+    original = runtime._HelperProjectionRead.read
+    opened = []
+
+    def read(self, path, *args, **kwargs):
+        opened.append(path)
+        assert path == host.configuration
+        return original(self, path, *args, **kwargs)
+
+    host.deployment.unlink()
+    host.binding_file.unlink()
+    monkeypatch.setattr(runtime._HelperProjectionRead, "read", read)
+    assert runtime.host_helper_enabled(host.profile) is enabled
+    assert opened == [host.configuration]
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        b"[host_helper]\nenabled=1\n",
+        b"[host_helper]\nenabled=false\nprofile='rootless'\n",
+        b"[host_helper]\nenabled=true\nprofile='native'\napi_host_gid=983\n",
+        b"[host_helper]\nenabled=true\nprofile='rootless'\napi_host_gid=true\n",
+        b"[host_helper]\nenabled=true\nprofile='rootless'\napi_host_gid=999999\n",
+    ],
+)
+def test_worker_refuses_malformed_helper_optin(host, body):
+    write(host.configuration, body)
+    with pytest.raises(ValueError, match="protected host helper projection refused"):
+        runtime.host_helper_enabled(host.profile)
+
+
+def test_worker_refuses_invalid_optional_digest_without_reading_index(host):
+    write(host.configuration, host.configuration.read_bytes() + b"deployment_sha256='bad'\n")
+    host.deployment.unlink()
+    with pytest.raises(ValueError, match="protected host helper projection refused"):
+        runtime.host_helper_enabled(host.profile)
+
+
+def test_worker_refuses_configuration_inode_replacement_during_capture(host, monkeypatch):
+    original = os.read
+    changed = False
+
+    def replace(descriptor, maximum):
+        nonlocal changed
+        body = original(descriptor, maximum)
+        if not changed and b"[host_helper]" in body:
+            changed = True
+            host.configuration.rename(host.configuration.with_suffix(".original"))
+            write(host.configuration, body)
+        return body
+
+    monkeypatch.setattr(os, "read", replace)
+    with pytest.raises(ValueError, match="protected host helper projection refused"):
+        runtime.host_helper_enabled(host.profile)
+    assert changed
+
+
+def test_worker_preserves_only_archive_lock_bind_without_helper_authority(host, monkeypatch):
+    original = runtime.command(host.profile, "worker", invocation_id="")
+
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("pure worker argv builder performed I/O")
+
+    monkeypatch.setattr(os, "open", forbidden)
+    enabled = runtime.command(host.profile, "worker", invocation_id="", preserve_archive_lock=True)
+    lock = "/run/hfcache/hfcache.lock:/run/hfcache/hfcache.lock:rw"
+    assert enabled == [lock if item == lock + ",z" else item for item in original]
+    assert not any("host-helper" in item or "HFCACHE_HOST_HELPER" in item for item in enabled)
+
+
+@pytest.mark.parametrize("value", [None, 0, 1, "true", [], {}])
+def test_archive_lock_preservation_requires_boolean_flag(host, value):
+    with pytest.raises(ValueError, match="protected host helper projection refused"):
+        runtime.command(host.profile, "worker", preserve_archive_lock=value)
+
+
+@pytest.mark.parametrize("role", ["caddy", "client"])
+def test_other_roles_refuse_archive_lock_preservation(host, role):
+    with pytest.raises(ValueError, match="protected host helper projection refused"):
+        runtime.command(host.profile, role, preserve_archive_lock=True)
+
+
+@pytest.fixture
+def archive_lock(host, monkeypatch):
+    path = host.parent.parent / "hfcache/hfcache.lock"
+    write(path, b"original-lock-body-is-not-read", 0o600)
+    if os.geteuid() == 0:
+        os.chown(path, host.profile["service_uid"], host.profile["service_gid"])
+        os.chown(path.parent, host.profile["service_uid"], host.profile["service_gid"])
+    path.parent.chmod(0o700)
+    context = b"system_u:object_r:hfcache_host_helper_archive_lock_t:s0"
+    reads = []
+
+    def getxattr(target, name, *, follow_symlinks):
+        assert target == path
+        assert name == "security.selinux"
+        assert follow_symlinks is False
+        reads.append(target)
+        return context
+
+    monkeypatch.setattr(runtime, "HOST_HELPER_ARCHIVE_LOCK", path)
+    monkeypatch.setattr(os, "getxattr", getxattr)
+    return SimpleNamespace(path=path, context=context, reads=reads)
+
+
+def test_enabled_launch_lock_check_reads_metadata_only_and_preserves_inode(
+    host, archive_lock, monkeypatch
+):
+    original = os.open
+    before = archive_lock.path.stat()
+
+    def open_parent(path, *args, **kwargs):
+        assert path not in {archive_lock.path, archive_lock.path.name}
+        return original(path, *args, **kwargs)
+
+    monkeypatch.setattr(os, "open", open_parent)
+    runtime.host_helper_archive_lock(host.profile)
+    after = archive_lock.path.stat()
+    assert archive_lock.reads == [archive_lock.path]
+    assert (before.st_dev, before.st_ino, before.st_mode) == (
+        after.st_dev,
+        after.st_ino,
+        after.st_mode,
+    )
+
+
+@pytest.mark.parametrize(
+    "context",
+    [
+        b"",
+        b"system_u:object_r:container_file_t:s0",
+        b"system_u:system_r:hfcache_host_helper_archive_lock_t:s0",
+        b"system_u:object_r:hfcache_host_helper_archive_lock_t:s0:c1",
+        b"system_u:object_r:hfcache_host_helper_archive_lock_t:s1",
+        b"system_u:object_r:hfcache_host_helper_archive_lock_t:s0\n",
+        b"system_u:object_r:hfcache_host_helper_archive_lock_t:s0\0\0",
+        b"\xff:object_r:hfcache_host_helper_archive_lock_t:s0",
+        b"x" * 4097,
+    ],
+)
+def test_enabled_launch_refuses_unprovisioned_or_unknown_lock_context(
+    host, archive_lock, monkeypatch, context
+):
+    monkeypatch.setattr(os, "getxattr", lambda *_args, **_kwargs: context)
+    with pytest.raises(ValueError, match="protected host helper projection refused"):
+        runtime.host_helper_archive_lock(host.profile)
+
+
+@pytest.mark.parametrize("change", ["missing", "symlink", "hardlink", "mode", "uid", "gid"])
+def test_enabled_launch_refuses_unsafe_original_lock(host, archive_lock, change):
+    profile = host.profile.copy()
+    path = archive_lock.path
+    if change == "missing":
+        path.unlink()
+    elif change == "symlink":
+        original = path.with_suffix(".original")
+        path.rename(original)
+        path.symlink_to(original)
+    elif change == "hardlink":
+        os.link(path, path.with_suffix(".alias"))
+    elif change == "mode":
+        path.chmod(0o640)
+    else:
+        profile["service_" + change] += 1
+    with pytest.raises((ValueError, OSError)):
+        runtime.host_helper_archive_lock(profile)
+    assert archive_lock.reads == []
+
+
+def test_enabled_launch_refuses_lock_inode_swap_during_context_read(
+    host, archive_lock, monkeypatch
+):
+    def swapped(*_args, **_kwargs):
+        archive_lock.path.rename(archive_lock.path.with_suffix(".original"))
+        write(archive_lock.path, b"replacement", 0o600)
+        return archive_lock.context
+
+    monkeypatch.setattr(os, "getxattr", swapped)
+    with pytest.raises(ValueError, match="protected host helper projection refused"):
+        runtime.host_helper_archive_lock(host.profile)
+
+
+@pytest.mark.parametrize("role", ["api", "worker"])
+def test_invalid_enabled_lock_refuses_before_engine_mutation(host, monkeypatch, role):
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("invalid lock reached engine or archive operation")
+
+    def refused(_profile):
+        message = "unprovisioned original lock"
+        raise ValueError(message)
+
+    monkeypatch.setattr(runtime, "load_profile", lambda: host.profile)
+    monkeypatch.setattr(runtime, "host_helper_archive_lock", refused)
+    monkeypatch.setattr(runtime, "archive_readonly", forbidden)
+    monkeypatch.setattr(runtime, "prepare_start", forbidden)
+    monkeypatch.setattr(runtime.os, "execv", forbidden)
+    monkeypatch.setattr(runtime.sys, "argv", ["container-service", role])
+    assert runtime.main() == 20
+
+
+@pytest.mark.parametrize("role", ["api", "worker"])
+def test_disabled_launch_never_observes_lock_or_helper_authority(host, monkeypatch, role):
+    write(host.configuration, b"[host_helper]\nenabled=false\n")
+    host.deployment.unlink()
+    host.binding_file.unlink()
+
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("disabled helper reached archive-lock label check")
+
+    class Executed(BaseException):
+        pass
+
+    def execute(_program, argv):
+        assert "/run/hfcache/hfcache.lock:/run/hfcache/hfcache.lock:rw,z" in argv
+        raise Executed
+
+    monkeypatch.setattr(runtime, "load_profile", lambda: host.profile)
+    monkeypatch.setattr(runtime, "host_helper_archive_lock", forbidden)
+    monkeypatch.setattr(runtime, "archive_readonly", lambda: None)
+    monkeypatch.setattr(runtime, "prepare_start", lambda *_args: None)
+    monkeypatch.setattr(runtime.os, "execv", execute)
+    monkeypatch.setattr(runtime.sys, "argv", ["container-service", role])
+    with pytest.raises(Executed):
+        runtime.main()

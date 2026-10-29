@@ -9,6 +9,7 @@ the atomic current link; normal runtime startup remains a separate operation.
 import argparse
 import fcntl
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -60,10 +61,14 @@ REQUIRED = {
 }
 _LOCAL_FS = {"xfs", "ext4", "ext3", "ext2", "btrfs", "tmpfs", "overlay"}
 _MAX_ARTIFACT = 16777216
-_MAX_MANIFEST = 1048576
+_MAX_MANIFEST = 8388608
 _MAX_SOURCE_FILES = 1000
+_MAX_WEB_FILES = 4097
 _HOST_HELPER_INPUT = "packaging/containers/host-helper.toml"
 _MAX_HOST_HELPER_INPUT = 4096
+_WEB_INPUT = "packaging/containers/web.toml"
+_WEB_VERIFIER = "scripts/web-release.py"
+_MAX_WEB_INPUT = 4096
 _HOST_HELPER_COPIES = frozenset(
     {
         "host-helper/host-helper.py",
@@ -171,7 +176,7 @@ def _parent(path, *, protected=False, owners=None):
         return descriptor
 
 
-def read_file(path, *, protected=False, maximum=_MAX_ARTIFACT):
+def read_file(path, *, protected=False, maximum=_MAX_ARTIFACT, allow_empty=False):
     """Bound descriptor-pinned reads; atime is deliberately absent from stability."""
     parent = _parent(path, protected=protected)
     descriptor = -1
@@ -183,7 +188,7 @@ def read_file(path, *, protected=False, maximum=_MAX_ARTIFACT):
         if (
             not stat.S_ISREG(before.st_mode)
             or before.st_nlink != 1
-            or not 0 < before.st_size <= maximum
+            or not (0 if allow_empty else 1) <= before.st_size <= maximum
         ):
             refuse("invalid bounded release artifact")
         if protected and (before.st_uid != OWNER_UID or before.st_mode & 0o022):
@@ -276,7 +281,10 @@ def manifest(value):
     if (
         not isinstance(files, dict)
         or not files.keys() >= REQUIRED
-        or len(files) > _MAX_SOURCE_FILES
+        or len(files) > _MAX_SOURCE_FILES + _MAX_WEB_FILES
+        or sum(not isinstance(name, str) or not name.startswith("ui/") for name in files)
+        > _MAX_SOURCE_FILES
+        or sum(isinstance(name, str) and name.startswith("ui/") for name in files) > _MAX_WEB_FILES
     ):
         refuse("missing release source identities")
     for name, digest in files.items():
@@ -371,7 +379,61 @@ def _host_helper_enabled(source, release):
     return options["enabled"]
 
 
+def _web_assets(source, release):
+    """Authenticate explicitly enabled assets before creating a staged/rendered tree."""
+    if _WEB_INPUT not in release["files"]:
+        return None
+    body = read_file(source / _WEB_INPUT, maximum=_MAX_WEB_INPUT)
+    if hashlib.sha256(body).hexdigest() != release["files"][_WEB_INPUT]:
+        refuse("web build input changed")
+    options = tomllib.loads(body.decode("utf-8"))
+    if (
+        type(options.get("schema_version")) is not int
+        or options["schema_version"] != 1
+        or type(options.get("enabled")) is not bool
+        or set(options)
+        != (
+            {"schema_version", "enabled", "manifest_sha256"}
+            if options["enabled"]
+            else {"schema_version", "enabled"}
+        )
+    ):
+        refuse("unknown web build input")
+    if not options["enabled"]:
+        return None
+    expected = options["manifest_sha256"]
+    if not isinstance(expected, str) or not HEX.fullmatch(expected):
+        refuse("invalid web manifest identity")
+    if _WEB_VERIFIER not in release["files"]:
+        refuse("missing captured web release verifier")
+    # Execute only the verifier alongside this already-trusted installer. An
+    # authenticated input file cannot select arbitrary Python code for root.
+    trusted_verifier = Path(__file__).with_name("web-release.py")
+    captured = read_file(source / _WEB_VERIFIER)
+    if hashlib.sha256(captured).hexdigest() != release["files"][
+        _WEB_VERIFIER
+    ] or captured != read_file(trusted_verifier):
+        refuse("web release verifier does not match this installer")
+    spec = importlib.util.spec_from_file_location("hfcache_web_release", trusted_verifier)
+    if spec is None or spec.loader is None:
+        refuse("web release verifier is unavailable")
+    verifier = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(verifier)
+    _, files = verifier.load_assets(
+        source / "ui",
+        expected,
+        application_version=release["version"],
+        source_commit=release["source_commit"],
+        require_clean=True,
+    )
+    indexed = {name: digest for name, digest in release["files"].items() if name.startswith("ui/")}
+    if indexed != {"ui/" + name: hashlib.sha256(data).hexdigest() for name, data in files.items()}:
+        refuse("incomplete or mismatched indexed web assets")
+    return expected
+
+
 def _rendered(source, release, base):
+    web_manifest = _web_assets(source, release)
     output = {}
     for name in _template_names(release):
         body = (
@@ -396,6 +458,21 @@ def _rendered(source, release, base):
         output["server.toml"] += (
             '\n[host_helper]\nenabled = true\nprofile = "rootless"\n'
             f"api_host_gid = {release['service_gid']}\n"
+        ).encode("ascii")
+    if web_manifest is not None:
+        server = tomllib.loads(output["server.toml"].decode("utf-8"))
+        if {"basic", "web"} & server.keys():
+            refuse("ambiguous web server configuration")
+        origin = f"https://{release['hostname']}:8443"
+        if origin != origin.lower():
+            refuse("web origin must use a canonical lowercase hostname")
+        if origin not in server.get("listener", {}).get("allowed_origins", []):
+            refuse("web origin is absent from the listener policy")
+        output["server.toml"] += (
+            f"\n[basic]\norigin = {json.dumps(origin)}\n"
+            '[basic.administrator]\nfile = "/etc/hfcache/credentials/ui-administrator.json"\n'
+            '\n[web]\nenabled = true\nasset_root = "/opt/hfcache/ui"\n'
+            f"manifest_sha256 = {json.dumps(web_manifest)}\n"
         ).encode("ascii")
     output["runtime.json"] = encoded(
         {
@@ -496,7 +573,9 @@ def _verify_stage(destination):
         _relative(name)
         if not isinstance(digest, str) or not HEX.fullmatch(digest):
             refuse("invalid staged artifact digest")
-        actual = hashlib.sha256(read_file(destination / name, protected=True)).hexdigest()
+        actual = hashlib.sha256(
+            read_file(destination / name, protected=True, allow_empty=name.startswith("ui/"))
+        ).hexdigest()
         if actual != digest or (name in release["files"] and actual != release["files"][name]):
             refuse("staged release artifact changed")
     base = read_file(destination / "rendered/default-seccomp.json", protected=True)
@@ -510,6 +589,7 @@ def stage(source, release, default_seccomp):
     source = local(source)
     manifest(release)
     _host_helper_enabled(source, release)
+    _web_assets(source, release)
     destination = local(PREFIX / "releases" / release["version"])
     staging = local(PREFIX / "releases" / (".container-stage-" + release["version"]))
     parent = _parent(staging, protected=True)
@@ -523,7 +603,7 @@ def stage(source, release, default_seccomp):
         os.mkdir(staging.name, mode=0o755, dir_fd=parent)
         sync_directory(staging.parent)
         for name, expected in release["files"].items():
-            body = read_file(source / name)
+            body = read_file(source / name, allow_empty=name.startswith("ui/"))
             if hashlib.sha256(body).hexdigest() != expected:
                 refuse("source artifact changed")
             output = staging / name
@@ -538,7 +618,11 @@ def stage(source, release, default_seccomp):
                 {
                     "schema_version": 1,
                     "files": {
-                        name: hashlib.sha256(read_file(staging / name, protected=True)).hexdigest()
+                        name: hashlib.sha256(
+                            read_file(
+                                staging / name, protected=True, allow_empty=name.startswith("ui/")
+                            )
+                        ).hexdigest()
                         for name in sorted(files)
                     },
                 }

@@ -42,6 +42,9 @@ _FLAGS = (
     "credential_masks",
     "ambient_sources_absent",
     "package_managers_absent",
+    "node_absent",
+    "compilers_absent",
+    "browsers_absent",
     "nss_localhost",
 )
 _MODULES = (
@@ -86,7 +89,15 @@ for path in ('/run/credentials','/run/secrets','/etc/credstore',
  try: os.listdir(path)
  except PermissionError: pass
  else: raise AssertionError
-assert not any(shutil.which(name) for name in ('uv','pip','pip3','dnf','microdnf','yum','rpm'))
+assert not any(shutil.which(name) for name in (
+ 'uv','pip','pip3','dnf','microdnf','yum','rpm','apt','apt-get','dpkg',
+ 'npm','npx','pnpm','pnpx','yarn','yarnpkg','corepack'))
+assert not any(shutil.which(name) for name in ('node','nodejs','bun','deno'))
+assert not any(shutil.which(name) for name in (
+ 'cc','gcc','g++','c++','clang','clang++','rustc','cargo','go','javac','make','cmake'))
+assert not any(shutil.which(name) for name in (
+ 'chromium','chromium-browser','chrome','google-chrome','firefox','MiniBrowser',
+ 'webkit2png','playwright'))
 assert all(importlib.util.find_spec(name) is None for name in ('pip','ensurepip','uv'))
 ca='/etc/ssl/cert.pem'
 with open(ca,'rb') as stream: body=stream.read(1024*1024)
@@ -110,6 +121,7 @@ result={'schema_version':1,'python_version':platform.python_version(),
  'uid':981,'gid':981,'account':'hfcache','nss_localhost':True,'pid1':True,'read_only_root':True,
  'capabilities_empty':True,'no_new_privileges':True,'seccomp':True,'offline':True,
  'credential_masks':True,'ambient_sources_absent':True,'package_managers_absent':True,
+ 'node_absent':True,'compilers_absent':True,'browsers_absent':True,
  'ca_sha256':hashlib.sha256(body).hexdigest(),'trusted_ca_count':context.cert_store_stats()['x509_ca'],
  'openssl':ssl.OPENSSL_VERSION,'glibc':glibc,'imported':list(modules),
  'caio':{'linux_aio_available':True,'thread_aio_available':True,
@@ -255,9 +267,12 @@ def prove(image, workspace, images, *, build_record=None):
     if info["host"]["security"]["rootless"] is not True:
         _BUILD.refuse("actual rootless local engine required")
     graph = _BUILD.local_path(Path(info["store"]["graphRoot"]))
-    identity = foundation_identity(inspect_image(pins["python"]), inspect_image(image))
+    actual = inspect_image(image)
+    identity = foundation_identity(inspect_image(pins["python"]), actual)
     if identity["image_config_id"] != image:
         _BUILD.refuse("requested exact image changed")
+    if type(actual.get("Size")) is not int or actual["Size"] <= 0:
+        _BUILD.refuse("actual image size is unavailable")
     source = None
     if build_record is not None:
         record = _BUILD.local_path(build_record)
@@ -307,6 +322,7 @@ def prove(image, workspace, images, *, build_record=None):
     evidence = {
         "schema_version": 1,
         "image_id": image,
+        "image_size_bytes": actual["Size"],
         "base_manifest": pins["python"],
         **identity,
         "graph_root": str(graph),

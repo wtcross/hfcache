@@ -135,6 +135,13 @@ def test_payload_object_types_never_allow_helper_reads_or_mapping(target):
 
 def test_container_compatibility_is_closed_to_inputs_endpoint_and_hub_state():
     expected = {
+        ("hfcache_host_helper_archive_lock_t", "file"): {
+            "getattr",
+            "open",
+            "read",
+            "write",
+            "lock",
+        },
         ("hfcache_host_helper_application_conf_t", "file"): {"getattr", "open", "read"},
         ("hfcache_host_helper_configuration_dir_t", "dir"): {"getattr", "search", "open", "read"},
         ("hfcache_host_helper_hub_state_t", "dir"): {
@@ -549,6 +556,54 @@ def test_engine_lock_type_only_adds_fixed_coordination_permissions():
         "file",
         frozenset({"append", "create", "setattr", "unlink", "rename", "link", "map", "execute"}),
     ) in access_rules("neverallow")
+
+
+def test_original_archive_lock_type_only_allows_helper_metadata_and_container_lock_use():
+    target = "hfcache_host_helper_archive_lock_t"
+    policy = forms()
+    assert [form for form in policy if form == ["type", target]] == [["type", target]]
+    assert [form[1] for form in policy if form[0] == "typeattributeset" and target in form[2]] == [
+        "file_type"
+    ]
+    assert [
+        (source, cls, rights)
+        for source, selected, cls, rights in access_rules("allow")
+        if selected == target
+    ] == [
+        (SUBJECT, "file", frozenset({"getattr"})),
+        ("container_t", "file", frozenset({"getattr", "open", "read", "write", "lock"})),
+    ]
+    forbidden = frozenset(
+        {
+            "ioctl",
+            "open",
+            "read",
+            "write",
+            "append",
+            "create",
+            "setattr",
+            "lock",
+            "relabelfrom",
+            "relabelto",
+            "unlink",
+            "link",
+            "rename",
+            "map",
+            "execute",
+            "execute_no_trans",
+            "entrypoint",
+            "mounton",
+        }
+    )
+    assert (SUBJECT, target, "file", forbidden) in access_rules("neverallow")
+    assert not any(form[0] == "typetransition" and target in form for form in policy)
+
+
+def test_archive_lock_metadata_grant_never_expands_to_generic_container_payloads():
+    assert not any(
+        source == SUBJECT and target == "container_file_t"
+        for source, target, _cls, _rights in access_rules("allow")
+    )
 
 
 def test_image_file_and_directory_mutation_are_compile_checked_denials():

@@ -29,6 +29,29 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-021 Package immutable native and rootless web releases
+  (2026-10-29, this commit — [task](plans/tasks/web-021-immutable-ui-release-packaging.md)).
+  Clean source245f2eaa reproduces indexed wheel/sdist/UI; actual API072146b2 uses
+  pinned UBI10micro with verified ancestry, asset bytes and runtime tool absence.
+  Fresh19 offline Python-profile commands pass. Native source8 stage/selection,
+  copied3.14.6 runtime audit and live-role audit pass; both API/worker119 modules,
+  16 UI/helper artifacts and961 shipped source files join. All3 native engines at
+  root+/management and all3 prior-boot rootless engines pass trusted TLS/helper/
+  configuration/navigation smoke with zero mutations/pageerrors/5xx. Recovered
+  rootless actual Apply confirms parent-bind replacement visibility and role/
+  secret/no-IP boundaries; normal executor drain precedes cold native fixture
+  reconstitution. Historical all3 dirty-document upgrade is explicitly joined
+  by unchanged UI/API validator bytes. Final gate6 passes9318 backend/52 opt-in
+  deselections/1114.68s,3702 web unit/4029 combined frontend,95% lines/90.02%
+  branches, required Cockpit/browser/HTTP/build and16 wheel smoke checks, with
+  all1005 frozen product files unchanged and no required skips. Four owned rows
+  complete. INV018–022/ADR007/129/143/145/150/156 review, new ADR158/159 and human
+  release/deployment/security contracts align. Failed gates/stages/collectors,
+  QEMU termination, old/new boot locks and image-size accounting remain qualified.
+  WEB-022 is next for full workflows/native controls and14 positive MCP tools;
+  current smoke has12 successes/2 absent-report errors. No production/NAS,
+  merge/push/tag, uncertain-handle replay or live Cockpit action.
+
 - [x] WEB-020 Harden browser recovery, accessibility and bounded reads
   (2026-10-29, this commit — [task](plans/tasks/web-020-cross-browser-accessibility-and-load.md)).
   All six owned rows have actual unit/integration/functional mappings. The final
@@ -2998,6 +3021,28 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+WEB-021 completed2026-10-29, this commit:
+`WEB-021: package immutable native and rootless web releases`.
+The [task](plans/tasks/web-021-immutable-ui-release-packaging.md) and four completed
+ledger rows bind clean source245f2eaa, index01f4df84/UIcb22c40d/API072146b2,
+actual native/rootless packaging checks and final gate6 exit0. Original gate log
+SHA256b6960885… is retained under `.scratch/web-021-validation/gate6.log`.
+The native source8 API/worker/Caddy/helper and independent original-inode guard
+remain running on the owned recovered guest bootb2f9c836, Enforcing/NFS-ro with
+calendars inactive. Rootless8 prefix, stores, previous runtimes, failed attempts,
+pre-recovery overlay and original unknown states remain retained. Current-boot
+global1641 is separate from prior-boot1332; persistent configuration lock61244163
+and key61259513 stay unchanged. Root owns any next guest/service mutation.
+
+Continue WEB-022 through WEB-026 under the user's existing goal. WEB-022 must
+complete real workflows, positive verification/reports/native host controls,
+all14 positive MCP calls, deliberate restricted-profile denials and its full
+functional gate. It must not promote the12-positive/2-absent-report smoke or
+configuration-only grants into those results. Later rollback, human walkthrough,
+conditional source retirement and final gate remain required. Production/NAS,
+live Cockpit uninstall, merge/push/tags and replay of uncertain old work remain
+excluded. The earlier WEB-020 handoff below retains its original package scope.
 
 WEB-020 completed 2026-10-29, **this commit**:
 `WEB-020: harden browser recovery, accessibility and bounded reads`.
@@ -13326,3 +13371,48 @@ are test evidence, never a production relaxation or permission to replay work.
      to AD-12/113/145, INV018 and discovery/server contracts record the refinement.
      The final matching source, gate and installed browser/memory checks remain
      required; no dependency, durable format or privilege is added.
+
+158. **Copy a separate native interpreter for each immutable web release**
+     (2026-10-29, WEB-021, this commit; accepted, conformance pending).
+     [Decision158](../adr/decision-158.md) follows the actual native4 audit that
+     proved UI/helper/package bytes but found pip/ensurepip in the selected
+     managed interpreter. Full web installs use a protected local version/source
+     copy with only inspected optional installers omitted, and uv builds against
+     that exact executable. The shared donor, retained releases and failed
+     copies remain unchanged. Pin3.14.6 and preserve ordinary direct-target
+     helper proof; backend-only installation remains independent of web inputs.
+     Stripping shared runtimes or qualifying away the audit failure was rejected.
+     This adds storage, not runtime dependencies, authority, domain formats or
+     activation. Final clean artifacts and installed service acceptance remain
+     required; native4's false aggregate and every earlier failure stay intact.
+
+159. **Preserve a dedicated rootless archive-lock label for metadata-only guard proof**
+     (2026-10-29, WEB-021, this commit; accepted, installed conformance pending).
+     [Decision159](../adr/decision-159.md) addresses the measured confined
+     rootless guard observer's `LOCK.lstat()` EACCES after shared API/worker binds
+     relabelled the original lock to `container_file_t`. Independently provision
+     only that original inode with its dedicated coordination type; enabled API
+     and worker preserve it, and helper rights remain `getattr` only with payload/
+     map/write/lock neverallows. Both launchers and the rootless mixed-ID observer
+     validate fixed metadata/context without repairing it. Worker reads only the
+     existing protected server opt-in and receives no authority projection.
+     Native/disabled behavior and the fifteen-role receipt/protocol stay unchanged;
+     exact CIL/module/kernel bindings plus direct fixed-object checks provide the
+     proof. Broad generic-container grants, a replacement lock and confinement
+     weakening were rejected. New source, policy provisioning, installed enforcing
+     acceptance and the final gate remain required; prior failures stay retained.
+
+2026-10-29 WEB-021 installed conformance for decisions158/159: clean source8
+construction and actual native/rootless installation pass. Native selected copied
+3.14.6 runtime excludes inspected optional installers while complete donors and
+older runtimes remain unchanged. Installed enforcing rootless API/worker preserve
+the current boot's original archive lock1641/dedicated SID; confined helper status,
+read-only parent-bind configuration replacement and real role isolation pass.
+Exact CIL69693458/module/kernel-policy bindings and the unchanged fifteen-role
+receipt are retained. Independent root provisioning of both cold-boot runtime
+parents is documented after actual missing-parent refusals; no manager create
+permission was added. Final gate6 passes all9318 backend tests and required
+frontend/build checks, with1005 product files frozen unchanged. The earlier
+conformance-pending notes describe their decision-time state; task021 now owns
+completed source/isolated packaging evidence. This does not authorize a production
+rollout or establish WEB-022's full functional matrix.

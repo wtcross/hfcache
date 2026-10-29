@@ -70,10 +70,15 @@ service state/cache are local and owned by the intended service identity.
 
 Install/review `git`, `nfs-utils` and time synchronization for the writer host.
 Container tooling is a separate rootless-profile prerequisite; the native installer
-uses pinned uv 0.11.32 and the source `.python-version` value (`3.14`),
+uses pinned uv 0.11.32 and the source `.python-version` value (`3.14.6`),
 which uv resolves into its managed installation. The container input separately
 pins an authenticated CPython 3.14.6 artifact. Host helper scripts support the
 system Python 3.12; the application uses its pinned interpreter.
+Explicit full web native installs build against a separate protected
+version/source copy of that interpreter with pip/ensurepip omitted; the shared
+managed donor and retained runtimes remain untouched. See
+[the runtime decision](adr/decision-158.md) and
+[web staging](web-ui/deployment.md#select-a-matching-immutable-asset-artifact).
 
 Use either explicit `srv-hfcache.mount`/`.automount` units or an fstab-generated
 pair, never both. Network ordering belongs on the mount, not the automount:
@@ -351,6 +356,16 @@ administrative capability. Rootless launch uses measured keep-id projection,
 never an assumed host UID981. The helper cannot read archive payloads, Hub
 secrets or credential stores or create IP sockets. A missing/unsafe helper makes
 status unavailable and new Basic jobs denied; original observation stays usable.
+Enabled rootless API and worker additionally require independent provisioning of
+the original `/run/hfcache/hfcache.lock` as
+`hfcache_host_helper_archive_lock_t`, preserving its original inode and
+service-owned single-link0600 metadata. Both launchers preserve that bind without
+`:z`; helper inspection remains metadata-only. Missing/unsafe labels refuse
+rather than creating or repairing the lock. Refresh the selected CIL installation
+receipt and deployment/policy bindings before restart. Native labels and existing
+receipt roles remain unchanged. Follow the
+[fixed-lock provisioning procedure](web-ui/deployment.md#install-the-protected-host-reader)
+and [host contract](host-administration.md).
 The exact selected helper unit and entry must implement the
 [startup capability and engine-observer contract](host-administration.md#managed-startup-and-fixed-engine-observation).
 Only bounded ambient SETUID is carried into the managed entry; it must clear

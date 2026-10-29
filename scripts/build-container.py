@@ -8,6 +8,7 @@ The new context and all failed-build evidence are retained for review.
 
 import argparse
 import hashlib
+import importlib.util
 import io
 import json
 import os
@@ -224,25 +225,81 @@ def validate_containerfile(body: bytes) -> None:
         "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /etc/ssl/cert.pem"
         not in text
         or CA_SHA256 not in text
+        or text.count("COPY ui/ /opt/hfcache/ui/") != 1
     ):
         refuse("Containerfile differs from its pinned binary or CA inputs")
 
 
-def build(
-    wheel: Path, expected: str, context: Path, image: str, *, python_archive: Path
+def web_input(root: Path, expected: str, version: str, commit: str):
+    """Capture only independently indexed static bytes, never Node/build inputs."""
+    root = local_path(root)
+    spec = importlib.util.spec_from_file_location(
+        "hfcache_web_release", REPOSITORY / "scripts/web-release.py"
+    )
+    if spec is None or spec.loader is None:
+        refuse("web release verifier is unavailable")
+    verifier = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(verifier)
+    wire = json.loads((REPOSITORY / "web/src/wire/contracts.json").read_bytes())
+    return verifier.load_assets(
+        root,
+        expected,
+        application_version=version,
+        source_commit=commit,
+        wire_source_digest=wire["source_digest"],
+        pnpm_lock_sha256=digest((REPOSITORY / "web/pnpm-lock.yaml").read_bytes()),
+    )
+
+
+def source_commit() -> str:
+    return subprocess.run(  # noqa: S603 - fixed local repository query, no shell
+        [executable("git"), "rev-parse", "HEAD"],
+        cwd=REPOSITORY,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
+def build(  # noqa: PLR0913 - independent authenticated release inputs are explicit
+    wheel: Path,
+    expected: str,
+    context: Path,
+    image: str,
+    *,
+    python_archive: Path,
+    web_assets: Path | None = None,
+    web_manifest_sha256: str | None = None,
 ) -> dict[str, object]:
     if os.geteuid() == 0:
         refuse("build as the rootless login/service account, never root")
     if not _IMAGE.fullmatch(image):
         refuse("image tag must be local localhost/hfcache:<tag>")
+    if (web_assets is None) != (web_manifest_sha256 is None):
+        refuse("web assets and manifest SHA256 must be supplied together")
     wheel_body, version = wheel_input(wheel, expected)
     interpreter = python_archive_input(python_archive)
     context = local_path(context)
     containerfile = local_path(REPOSITORY / "packaging/containers/Containerfile")
     recipe = containerfile.read_bytes()
     validate_containerfile(recipe)
+    web_manifest, web_files, commit = None, {}, None
+    if web_assets is not None and web_manifest_sha256 is not None:
+        commit = source_commit()
+        web_manifest, web_files = web_input(web_assets, web_manifest_sha256, version, commit)
     # Never merge into or delete an unexplained prior build directory.
     context.mkdir(mode=0o700)
+    (context / "ui").mkdir(mode=0o755)
+    (context / "ui").chmod(0o755)
+    for name, body in web_files.items():
+        member = context / "ui" / name
+        directory = context / "ui"
+        for part in PurePosixPath(name).parts[:-1]:
+            directory /= part
+            directory.mkdir(mode=0o755, exist_ok=True)
+            directory.chmod(0o755)
+        member.write_bytes(body)
+        member.chmod(0o644)
     extract_python(interpreter, context)
     closure = hashed_requirements(
         subprocess.run(  # noqa: S603 - fixed argv, validated local paths and no shell
@@ -269,13 +326,7 @@ def build(
     requirements = closure + f"/build/wheels/{wheel.name} --hash=sha256:{expected}\n".encode()
     (context / "requirements.txt").write_bytes(requirements)
     (context / "Containerfile").write_bytes(recipe)
-    commit = subprocess.run(  # noqa: S603 - fixed argv, validated local paths and no shell
-        [executable("git"), "rev-parse", "HEAD"],
-        cwd=REPOSITORY,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
+    commit = source_commit() if commit is None else commit
     dirty = bool(
         subprocess.run(  # noqa: S603 - fixed argv, validated local paths and no shell
             [executable("git"), "status", "--porcelain"],
@@ -305,6 +356,12 @@ def build(
         "platform": PINS["platform"],
         "image_tag": image,
     }
+    if web_manifest is not None:
+        evidence["web_manifest_sha256"] = web_manifest_sha256
+        evidence["web_build"] = web_manifest["build"]
+        evidence["web_files_sha256"] = {
+            name: digest(body) for name, body in sorted(web_files.items())
+        }
     (context / "inputs.json").write_text(json.dumps(evidence, sort_keys=True, indent=2) + "\n")
     subprocess.run(  # noqa: S603 - fixed argv, validated local paths and no shell
         [
@@ -335,6 +392,8 @@ def main() -> int:
     parser.add_argument("--wheel", type=Path, required=True)
     parser.add_argument("--wheel-sha256", required=True)
     parser.add_argument("--python-archive", type=Path, required=True)
+    parser.add_argument("--web-assets", type=Path, help="verified immutable UI artifact directory")
+    parser.add_argument("--web-manifest-sha256", help="explicit canonical UI manifest SHA256")
     parser.add_argument("--context", type=Path, required=True, help="new local directory; retained")
     parser.add_argument("--tag", required=True, help="localhost/hfcache:<tag>")
     options = parser.parse_args()
@@ -345,6 +404,8 @@ def main() -> int:
             options.context,
             options.tag,
             python_archive=options.python_archive,
+            web_assets=options.web_assets,
+            web_manifest_sha256=options.web_manifest_sha256,
         )
     except OSError, ValueError, tarfile.TarError, zipfile.BadZipFile, subprocess.CalledProcessError:
         print("container build refused or failed; retained context contains available evidence")

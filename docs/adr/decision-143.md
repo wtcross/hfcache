@@ -174,3 +174,41 @@ assets, with an explicitly provisioned frozen license-audited closure. No Python
 runtime dependency, runtime Node, remote plugin or asset fetching follows. The
 existing immutable build/source/license identity and installed acceptance
 requirements remain unchanged; the decision is not execution evidence.
+
+## Immutable release construction refinement (2026-10-29)
+
+[Decision158](decision-158.md) refines native full web runtime delivery: a fresh
+release/source-specific interpreter copy excludes optional Python installers
+without changing shared managed donors or previous runtimes.
+
+The clean release constructor builds wheel, sdist and the separately indexed UI
+twice from one clean committed source and compares bytes. Pin the existing
+`uv_build` backend to `0.11.32`, matching the already pinned uv tool, rather than
+resolving a floating backend during release construction. This tightens a build
+dependency; it adds no runtime dependency. A separate canonical deployment index
+binds all captured source files, backend artifacts, the UI manifest and the exact
+nine-file helper closure. The native installer verifies this explicit digest
+before effects and checks the copied source again before staging assets.
+Native dependency installation uses ordinary copying so release bytes are
+independent of mutable cache links and filesystem reflink support.
+
+The rootless builder accepts a paired asset directory/digest and copies captured
+verified bytes into `/opt/hfcache/ui` in the existing API image. An explicit
+authenticated rootless `web.toml` input selects that digest and the fixed API-only
+Basic hash location. Absent/disabled input retains backend-only behavior. Existing
+schema-1 rootless release maps carry these additional indexed files; UI assets
+remain separate from secrets, writable policy, sockets and archive storage.
+
+These delivery checks reuse the original UI schema during construction and
+startup, with a standard-library-only installer verifier for bounded canonical
+manifest/hash/path checks. They neither provision host policy or secrets nor
+activate services. Runtime confinement and original handles remain unchanged.
+The protected host reader executes the captured indexed verifier and retains
+all source/UI reads inside its existing per-inspection metadata/hash accounting;
+it never imports a verifier by a freshly reopened candidate pathname. Empty
+bytes are accepted only for explicitly indexed public UI members, preserving
+the ordinary nonempty authority-file rule and existing aggregate limits.
+Expanded foundation checks use actual image ancestry/size and reject Node,
+package managers, compilers and browsers. Source implementation and focused
+tests alone do not prove clean or installed release conformance; exact artifact
+and disposable installed acceptance remain required.

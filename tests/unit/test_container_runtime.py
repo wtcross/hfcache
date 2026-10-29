@@ -13,6 +13,9 @@ from types import SimpleNamespace
 
 import pytest
 
+from hfcache.models import dump
+from tests.fixtures.ui_examples import UI_BODIES, ui_asset_manifest
+
 ROOT = Path(__file__).resolve().parents[2]
 IMAGE = "sha256:" + "a" * 64
 CLOSURE = b"example==1.0 \\\n    --hash=sha256:" + b"b" * 64 + b"\n"
@@ -181,9 +184,169 @@ def test_exact_wheel_closure_and_final_identity_are_recorded_without_source_copy
         "inputs.json",
         "python",
         "requirements.txt",
+        "ui",
         "wheels",
     ]
+    assert list((context / "ui").iterdir()) == []
+    assert "web_manifest_sha256" not in result
     assert len(calls) == 4
+
+
+def web_artifact(builder, tmp_path, **metadata):
+    """Write synthetic indexed bytes; this is not clean-release evidence."""
+    root = tmp_path / "web"
+    (root / "assets").mkdir(parents=True)
+    for name, body in UI_BODIES.items():
+        (root / name).write_bytes(body)
+    manifest = ui_asset_manifest()
+    manifest = manifest.model_copy(
+        update={
+            "build": manifest.build.model_copy(
+                update={
+                    "application_version": "0.1.10",
+                    "source_commit": "c" * 40,
+                    "wire_source_digest": json.loads(
+                        (ROOT / "web/src/wire/contracts.json").read_bytes()
+                    )["source_digest"],
+                    "pnpm_lock_sha256": builder.digest((ROOT / "web/pnpm-lock.yaml").read_bytes()),
+                    **metadata,
+                }
+            )
+        }
+    )
+    body = dump(manifest)
+    (root / "manifest.json").write_bytes(body)
+    return root, builder.digest(body)
+
+
+@pytest.mark.parametrize(("assets", "expected"), [(Path("/missing"), None), (None, "a" * 64)])
+def test_web_input_options_must_be_paired_before_build_effects(
+    builder, monkeypatch, tmp_path, assets, expected
+):
+    context = tmp_path / "context"
+    calls = fake_build_tools(builder, monkeypatch, context)
+    with pytest.raises(ValueError, match="supplied together"):
+        builder.build(
+            tmp_path / "missing.whl",
+            "a" * 64,
+            context,
+            "localhost/hfcache:proof",
+            python_archive=tmp_path / "missing-python",
+            web_assets=assets,
+            web_manifest_sha256=expected,
+        )
+    assert not context.exists()
+    assert calls == []
+
+
+def test_indexed_web_bytes_share_runtime_image_and_have_exact_build_provenance(
+    builder, monkeypatch, tmp_path
+):
+    root, expected = web_artifact(builder, tmp_path)
+    wheel = wheel_file(tmp_path)
+    interpreter = python_file(builder, tmp_path, monkeypatch)
+    context = tmp_path / "context"
+    fake_build_tools(builder, monkeypatch, context)
+    run = builder.subprocess.run
+
+    def mutate_after_capture(arguments, **kwargs):
+        if arguments[0].endswith("/uv"):
+            (root / "assets/app-12345678.js").write_bytes(b"changed after verified capture")
+        return run(arguments, **kwargs)
+
+    monkeypatch.setattr(builder.subprocess, "run", mutate_after_capture)
+    previous_umask = os.umask(0o077)
+    try:
+        result = builder.build(
+            wheel,
+            builder.digest(wheel.read_bytes()),
+            context,
+            "localhost/hfcache:proof",
+            python_archive=interpreter,
+            web_assets=root,
+            web_manifest_sha256=expected,
+        )
+    finally:
+        os.umask(previous_umask)
+    assert result["web_manifest_sha256"] == expected
+    assert result["web_build"] == json.loads((root / "manifest.json").read_bytes())["build"]
+    actual = {
+        str(path.relative_to(context / "ui")): path.read_bytes()
+        for path in (context / "ui").rglob("*")
+        if path.is_file()
+    }
+    assert actual == {**UI_BODIES, "manifest.json": (root / "manifest.json").read_bytes()}
+    for path in (context / "ui", *(context / "ui").rglob("*")):
+        assert path.stat().st_mode & 0o777 == (0o755 if path.is_dir() else 0o644)
+    assert result["web_files_sha256"] == {
+        name: builder.digest(body) for name, body in sorted(actual.items())
+    }
+    assert "COPY ui/ /opt/hfcache/ui/" in (context / "Containerfile").read_text()
+    assert json.loads((context / "build.json").read_bytes()) == result
+
+
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        {"application_version": "0.1.9"},
+        {"source_commit": "e" * 40},
+        {"wire_source_digest": "f" * 64},
+        {"pnpm_lock_sha256": "f" * 64},
+    ],
+)
+def test_mismatched_web_authority_refuses_before_build_context(
+    builder, monkeypatch, tmp_path, metadata
+):
+    root, expected = web_artifact(builder, tmp_path, **metadata)
+    wheel = wheel_file(tmp_path)
+    interpreter = python_file(builder, tmp_path, monkeypatch)
+    context = tmp_path / "context"
+    calls = fake_build_tools(builder, monkeypatch, context)
+    with pytest.raises(ValueError, match=r"[Ww]eb|UI|asset|manifest"):
+        builder.build(
+            wheel,
+            builder.digest(wheel.read_bytes()),
+            context,
+            "localhost/hfcache:proof",
+            python_archive=interpreter,
+            web_assets=root,
+            web_manifest_sha256=expected,
+        )
+    assert not context.exists()
+    assert all("/git" in command[0] for command in calls)
+
+
+@pytest.mark.parametrize("damage", ["digest", "missing", "extra", "changed", "symlink"])
+def test_unverified_web_members_cannot_enter_image_context(builder, monkeypatch, tmp_path, damage):
+    root, expected = web_artifact(builder, tmp_path)
+    member = root / "assets/app-12345678.js"
+    if damage == "digest":
+        expected = "f" * 64
+    elif damage == "missing":
+        member.unlink()
+    elif damage == "extra":
+        (root / "assets/unindexed.js").write_bytes(b"unindexed")
+    elif damage == "changed":
+        member.write_bytes(b"changed")
+    else:
+        member.unlink()
+        member.symlink_to(root / "index.html")
+    wheel = wheel_file(tmp_path)
+    interpreter = python_file(builder, tmp_path, monkeypatch)
+    context = tmp_path / "context"
+    calls = fake_build_tools(builder, monkeypatch, context)
+    with pytest.raises(ValueError, match=r"[Ww]eb|UI|asset|manifest"):
+        builder.build(
+            wheel,
+            builder.digest(wheel.read_bytes()),
+            context,
+            "localhost/hfcache:proof",
+            python_archive=interpreter,
+            web_assets=root,
+            web_manifest_sha256=expected,
+        )
+    assert not context.exists()
+    assert all("/git" in command[0] for command in calls)
 
 
 def test_failed_build_preserves_authenticated_inputs_and_no_success_manifest(

@@ -6,6 +6,10 @@ Status: accepted when recorded; retained as historical evidence. Dated
 implementation and deployment details are not independent current requirements.
 Current contracts and later qualifications below govern.
 
+[Decision158](decision-158.md) tightens the source pin to3.14.6 and requires an
+independent installer-free interpreter copy for explicit full web native releases;
+it leaves the base reader Python-version requirement unchanged.
+
 - Original decision date: 2026-07-24.
 
 ## Decision, context, and consequences

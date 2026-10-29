@@ -102,6 +102,18 @@ remain. UBI inputs are --python-archive (required verified portable artifact),
 version, wheel/lock/closure/requirements/Containerfile hashes, base refs and final
 image ID. A dirty-fixture build proves that snapshot, not a clean release artifact.
 
+For an explicitly selected web release, pass both `--web-assets DIR` and
+`--web-manifest-sha256 HEX` to the app builder. It verifies the canonical bounded
+asset tree, hashes and backend version/wire/lock identity, then copies its bytes
+to `/opt/hfcache/ui` in the existing app image. Its input/build records bind the
+UI manifest and member hashes to the image construction. Omitting both options
+keeps the Python-only image path; partial options refuse. Construct clean
+backend/UI/helper artifacts with the
+[clean release builder](web-ui/deployment.md#build-and-select-a-clean-release).
+The actual foundation probe verifies ordered pinned base ancestry, final image
+size and absence of Node/npm/pnpm/corepack, Python/system package managers,
+compilers and browsers. Labels or source recipes alone are insufficient.
+
 The [actual worker probe](../scripts/check-container-worker.py) takes --image
 (exact local image ID), --workspace (new short local path) and --seccomp-profile
 (derived baseline-preserving file). It retains known containers, logs and
@@ -419,6 +431,45 @@ libpod cgroup or activation state may be ignored. Previous native/container
 releases and all retained state remain; no force cleanup or implicit migration.
 Staging and selection require explicit operator authorization and quiescence.
 
+### Optional web release input
+
+The optional authenticated `packaging/containers/web.toml` enables the built UI
+without changing the deployment schema's top-level fields. Include its exact
+digest, `scripts/web-release.py` and every `ui/` artifact, including
+`ui/manifest.json`, in `container-release.json`'s existing `files` map. The input
+is at most 4 KiB, with exactly integer `schema_version = 1`, boolean
+`enabled = true` and lowercase SHA256 `manifest_sha256`. An explicit disabled
+input has exactly `schema_version = 1` and `enabled = false`; an absent or disabled
+input leaves Basic/web configuration disabled.
+
+Before render/stage directory effects, enabled input requires the complete
+canonical asset tree, its clean source commit and application version, member
+hashes and exact indexed verifier bytes matching the trusted installer's sibling
+verifier. Unknown/extra/missing/mismatched assets refuse. Rendering appends only
+`[web]` with `/opt/hfcache/ui` and the exact manifest digest, plus `[basic]` for
+`https://<hostname>:8443` and the fixed
+`/etc/hfcache/credentials/ui-administrator.json`. The hostname must be canonical
+lowercase and the exact origin must already be in the listener policy. Existing
+Basic/web template sections refuse this opt-in. Caddy routing, port and TLS stay
+unchanged; assets are served only by the authenticated API.
+
+The manifest permits at most 1,000 non-UI source entries plus 4,097 UI entries
+(4,096 members and their manifest), with an 8 MiB release/index bound. UI byte,
+path and tree limits remain the separate
+[asset contract](schemas.md#183-web-release-manifest-and-ui-bootstrap).
+Valid zero-byte members are preserved; non-UI artifact reads retain their
+nonempty requirement. All copied bytes remain in the immutable artifact index.
+The independently protected host reader retains its own smaller inspection
+budgets; the release-index ceiling grants no larger helper-read authority.
+
+This input provisions no hash record, helper policy, credential, SELinux label,
+timer or manager. The API refuses enabled startup if the hash record or assets
+are missing or incompatible. Preserve the existing API-only policy bind,
+worker/client credential masks, no Caddy policy bind and helper opt-in below.
+Staging never installs the separate protected helper bootstrap copies or starts
+services. Source packaging and disposable acceptance do not authorize production
+deployment or live Cockpit removal.
+
 ### Optional host reader input
 
 The fixed optional source file `packaging/containers/host-helper.toml` enables
@@ -441,10 +492,19 @@ only the independent six-category policy can grant actions. Helper paths are
 mounted read-only into the API alone, with no unprivileged relabel option;
 worker, Caddy and client roles receive no helper mount or projection.
 
-When the validated API helper projection is present, only its existing
+When the validated API helper projection is present, its existing
 `/var/lib/hfcache/hf-home` and `/var/cache/hfcache` binds omit shared `:z`
 relabeling. Preserve their fixed writable mount scope, the separately provisioned
-Hub-state type, and original/default and other-role argv. The application
+Hub-state type, and original/default and other-role argv, except the archive-lock
+bind described next. Both enabled API and worker preserve the independently
+provisioned `hfcache_host_helper_archive_lock_t` label on the original fixed
+`/run/hfcache/hfcache.lock` without `:z`. Both validate its service ownership,
+ordinary single-link0600 metadata and `object_r`/type/`s0` context. Worker reads
+only the protected rendered server opt-in and receives no helper authority
+projection. Missing/unsafe labels refuse; no launch repairs or creates the lock.
+The helper can inspect only its metadata; generic container payload permissions
+remain unchanged. Native/disabled profiles and the fifteen-role receipt remain
+unchanged. See [the fixed-lock decision](adr/decision-159.md). The application
 `config.toml` leaf has its own application-readable type; the privileged helper
 may write that type only through its fixed guarded configuration workflow. The
 API bind remains read-only. `/etc/hfcache` has a separate directory type for
@@ -559,6 +619,12 @@ must still bind a clean source build to the independently verified backend wheel
 and prove ancestry, installed asset identity and runtime contents before claiming
 release acceptance. Dirty owned fixtures remain labeled as such. Browser test
 tooling is unshipped and does not determine the application base.
+
+The configured canonical hostname is also Caddy's default TLS server name for
+clients that omit SNI, including IP-address clients behind the rootless port
+forwarder. The existing certificate still has to cover that hostname or address;
+client certificate verification and the API's explicit Host/Origin policy remain
+required.
 
 The same Caddy process forwards UI, REST and MCP to the existing Unix API
 upstream. Application-owned authentication protects every enabled UI path,

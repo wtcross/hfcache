@@ -8,11 +8,17 @@
 | Tracker | `docs/agents/plans/current.md` — sole active selector; intentionally not overwritten by extraction |
 | Baseline | `6b8fae2e0997403ae5c716a2e92148af0a972af9` — main reviewed October 20, 2026 |
 | Branch | `feat/web-ui` |
-| Latest completed package | WEB-020, this commit; WEB-021 is pending/handoff only |
+| Latest completed package | WEB-021, this commit; WEB-022 is next under the 2026-10-29 continuation goal |
 | Work-package family | WEB, deliberately introduced for this feature after collision check; one task = one work package = one implementation commit |
 | References | [Bundle entrypoint](support/web-ui/README.md), [kickoff](support/web-ui/KICKOFF.md), [source review](support/web-ui/source-review.md) |
 
 ## Outcome and scope
+
+2026-10-29 continuation authority: the user's explicit WEB-021 through WEB-026
+goal authorizes the remaining sequential source work, owned disposable installed
+acceptance, local work-package commits and plan closure. It supersedes the prior
+WEB-020-only stopping point and grants no production/NAS, merge/push/tag or live
+Cockpit-uninstall authority.
 
 Deliver a strict-TypeScript React SPA that completely replaces the Cockpit plugin as hfcache's management UI. Use the approved archive-first Library, rich model/dataset detail pages, configuration-backed tags, Operations, Maintenance and Administration. Render a securely captured, publication-pinned README when available, alongside every supported existing source-attributed catalog/inventory/integrity field. Preserve hfcache's unique safety, complete-snapshot, publication, retention, recovery and uncertainty contracts. Borrow the reference downloader's organization, not additional product features.
 
@@ -4324,3 +4330,18 @@ are aligned; the error-alert fix adds no authority, wire, dependency or executio
 boundary. Original interrupted Apply/lost-key uncertainty remains unreplayed.
 Next is **WEB-021 pending/handoff only**, not started. Production/NAS deployment,
 merge/push/tag and Cockpit retirement remain outside this completed package.
+
+## WEB-021 completion and continued installed acceptance (2026-10-29)
+
+WEB-021 completes in this commit with reproducible clean source245f2eaa artifacts,
+explicit native/rootless UI enablement, copied installer-free native runtime and
+fixed metadata-only rootless archive-lock policy. The task and four completed
+ledger rows retain exact artifact hashes, three-browser native/rootless packaging
+smoke, actual role/secret isolation, atomic configuration visibility, historical
+dirty-document upgrade and all failed/unknown observations. Final gate6 exits0:
+9318 backend,3702 web unit/4029 combined frontend,95% lines/90.02% branches,
+required Cockpit/browser/HTTP checks and16 wheel smoke tests. All1005 frozen
+product files stay unchanged. This is isolated packaging acceptance; no full
+positive fourteen-tool MCP, complete workflow, rollback, NAS or production claim.
+WEB-022 is next under the existing continuation authorization. The plan stays
+active; no merge/push/tag or live Cockpit removal is authorized.

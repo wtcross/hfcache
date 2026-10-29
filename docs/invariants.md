@@ -1126,6 +1126,20 @@ Evidence: [app build tests](../tests/unit/test_container_runtime.py),
 [foundation tests](../tests/unit/test_container_foundation.py), with actual
 image/worker/TLS fixture records and clean immutable artifact identities.
 
+The optional UI uses the same API image and foundation. The foundation probe
+records actual image size and rejects Node, frontend package managers, compilers
+and browsers in addition to the existing installer/tool exclusions. The clean
+[release constructor](../scripts/build-web-release.py) compares repeated UI,
+wheel and sdist bytes; the [installer verifier](../scripts/web-release.py) binds
+explicit source/UI/backend/helper indexes before staging. The original
+asset/startup bounds and separate Python-only installation profiles stand.
+Construction, installed role proof and production acceptance remain distinct.
+For explicit full web native releases, [decision158](adr/decision-158.md) requires
+a separate protected version/source interpreter copy without pip/ensurepip.
+Never alter a shared managed donor or previous runtime to satisfy a new release.
+The direct executable and original fixed aliases retain the existing native
+helper proof; Python-only installation remains independent of frontend inputs.
+
 ## Tags and supplemental discovery metadata
 
 - **`INV-018` — Separate curation, observations and archive authority.** Current
@@ -1299,6 +1313,10 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   inaccessible masks and writable runtime bind before helper exec. The helper
   gains no mount or additional object right; retain labels, masks and existing
   runtime permissions and prove actual enforcing startup.
+  Root independently provisions the fixed root:root0755 runtime parent and its
+  root:service-group0750 API child before helper start after each boot; manager
+  mount permission does not imply creation.
+  Existing unsafe runtime objects remain preserved and refuse startup.
   Fixed existing rootless network-state directory recognition permits only
   `ifconfig_var_run_t` directory `getattr`; no new search/enumeration, mutation,
   file access, network authority or namespace entry follows.
@@ -1306,8 +1324,19 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   private helper authority stays private. Mutable Hub home and the entire cache
   root use a separate helper-denied state type. Validated rootless helper opt-in
   removes relabeling from only those two API binds, preserving default/other-role
-  argv. Prove persistent contexts and original/new leaf labels across application
+  argv, with the separate fixed archive-lock exception below. Prove persistent
+  contexts and original/new leaf labels across application
   operations and restart; neither directory labels nor source tests suffice.
+  [Decision159](adr/decision-159.md) requires the enabled rootless API and worker
+  to preserve the independently provisioned original archive lock's dedicated
+  `hfcache_host_helper_archive_lock_t` label. Both launchers and the rootless
+  mixed-ID observer bracket no-follow metadata/context checks; require original
+  service ownership,0600/single-link ordinary file, `object_r` and `s0`.
+  Helper file rights are `getattr` only, with payload/map/write/lock neverallows;
+  exact `container_t` retains only existing lock-use rights. No generic payload
+  grant, automatic creation/repair/relabel, new receipt role, worker authority
+  projection or native label prerequisite follows. Recreated locks require
+  independent root provisioning and fresh bound policy receipts.
   Image payload/JSON files and image directories remain helper-mutation-denied.
   Only the two independently provisioned existing rootless64B image/layer locks
   and the fixed stock runtime alive/mountpoints locks of0B/64B use the separate

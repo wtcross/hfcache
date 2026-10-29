@@ -2,7 +2,8 @@
 
 - Decision identity: 150.
 - Status: Amended; [decision151](decision-151.md) supersedes only the
-  SYS_ADMIN-only engine capability-retention rule.
+  SYS_ADMIN-only engine capability-retention rule. [Decision159](decision-159.md)
+  adds a dedicated rootless archive-lock type and preserved API/worker binds.
 - Date: 2026-10-21.
 
 ## Context and decision
@@ -37,6 +38,16 @@ worker reconciliation; after possible handoff original uncertainty rules apply.
 Original-key/status/result observation remains available when the helper is down.
 
 ## Rationale and alternatives
+
+### Dedicated rootless archive-lock metadata (2026-10-29)
+
+[Decision159](decision-159.md) addresses the installed confined guard observer's
+metadata refusal after the API/worker shared bind assigned `container_file_t` to
+the original lock. Independently label that fixed original inode with its own
+coordination type, preserve it in both enabled launchers and permit the helper
+only `getattr`. Keep original mixed-ID, inode/FLOCK, manager and process checks,
+native behavior and the existing receipt/protocol unchanged. Generic container
+payload permissions and automatic repair remain forbidden.
 
 ### Separate cardinality and cumulative work bounds (2026-10-25)
 

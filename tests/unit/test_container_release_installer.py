@@ -16,7 +16,9 @@ from types import SimpleNamespace
 import pytest
 
 from hfcache.client_config import ClientConfig
+from hfcache.models import dump
 from hfcache.server_config import validate_server_config_mapping
+from tests.fixtures.ui_examples import UI_BODIES, ui_asset_manifest
 
 REPOSITORY = Path(__file__).parents[2]
 SPEC = importlib.util.spec_from_file_location(
@@ -148,10 +150,232 @@ def staged(deployment):
     return installer.stage(deployment.source, deployment.release, deployment.default)
 
 
+def enabled_web(deployment):
+    """Stage inert schema bytes, never claim installed/browser release acceptance."""
+    source, release = deployment.source, deployment.release
+    verifier = source / installer._WEB_VERIFIER
+    verifier.write_bytes((REPOSITORY / installer._WEB_VERIFIER).read_bytes())
+    build = ui_asset_manifest().build.model_copy(
+        update={
+            "application_version": release["version"],
+            "source_commit": release["source_commit"],
+            "source_dirty": False,
+        }
+    )
+    model = ui_asset_manifest().model_copy(update={"build": build})
+    bodies = UI_BODIES | {"manifest.json": dump(model)}
+    for name, body in bodies.items():
+        path = source / "ui" / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(body)
+        release["files"]["ui/" + name] = digest(body)
+    expected = digest(bodies["manifest.json"])
+    options = source / installer._WEB_INPUT
+    options.write_text(f'schema_version = 1\nenabled = true\nmanifest_sha256 = "{expected}"\n')
+    release["files"][installer._WEB_INPUT] = digest(options.read_bytes())
+    release["files"][installer._WEB_VERIFIER] = digest(verifier.read_bytes())
+    return model
+
+
 def assert_preserved(deployment):
     assert (deployment.prefix / "current").readlink() == Path("releases/0.1.9")
     assert (deployment.prefix / "releases/0.1.9/preserved").read_bytes() == b"old release"
     assert deployment.lock.read_bytes() == b"original lock inode\n"
+
+
+def test_explicit_web_release_indexes_assets_and_renders_only_api_authentication(deployment):
+    enabled_web(deployment)
+    target = staged(deployment)
+    assert installer._verify_stage(target) == deployment.release
+    server = validate_server_config_mapping(
+        tomllib.loads((target / "rendered/server.toml").read_text())
+    )
+    assert server.web.enabled
+    assert server.web.asset_root == Path("/opt/hfcache/ui")
+    assert server.web.manifest_sha256 == digest((target / "ui/manifest.json").read_bytes())
+    assert server.basic is not None
+    assert server.basic.origin == "https://writer.example.test:8443"
+    assert server.basic.administrator.file == Path("/etc/hfcache/credentials/ui-administrator.json")
+    assert not server.host_helper.enabled
+    index = installer.decode((target / "artifact-index.json").read_bytes())
+    for name in deployment.release["files"]:
+        if name.startswith("ui/"):
+            assert index["files"][name] == digest((target / name).read_bytes())
+    for name in (
+        "Caddyfile",
+        "hfcache-caddy.service",
+        "hfcache-verification.service",
+        "client.toml",
+    ):
+        body = (target / "rendered" / name).read_bytes()
+        assert b"ui-administrator" not in body
+        assert b"/opt/hfcache/ui" not in body
+    assert not deployment.calls
+    assert_preserved(deployment)
+
+
+def test_web_release_preserves_valid_empty_indexed_members(deployment):
+    model = enabled_web(deployment)
+    source, release = deployment.source, deployment.release
+    name = "assets/app-12345678.js"
+    member = next(item for item in model.members if item.path == name)
+    changed = model.model_copy(
+        update={
+            "members": tuple(
+                item.model_copy(update={"bytes": 0, "sha256": digest(b"")})
+                if item == member
+                else item
+                for item in model.members
+            )
+        }
+    )
+    body = dump(changed)
+    (source / "ui" / name).write_bytes(b"")
+    (source / "ui/manifest.json").write_bytes(body)
+    release["files"]["ui/" + name] = digest(b"")
+    release["files"]["ui/manifest.json"] = digest(body)
+    options = source / installer._WEB_INPUT
+    options.write_text(f'schema_version = 1\nenabled = true\nmanifest_sha256 = "{digest(body)}"\n')
+    release["files"][installer._WEB_INPUT] = digest(options.read_bytes())
+    target = staged(deployment)
+    assert (target / "ui" / name).read_bytes() == b""
+    assert installer._verify_stage(target) == release
+    assert_preserved(deployment)
+
+
+@pytest.mark.parametrize("mode", ["stage", "render"])
+@pytest.mark.parametrize(
+    "kind",
+    [
+        "input-hash",
+        "missing-index",
+        "missing-verifier",
+        "changed-verifier",
+        "index-hash",
+        "member-hash",
+        "extra-member",
+        "symlink",
+        "dirty-source",
+        "wrong-source",
+        "wrong-version",
+    ],
+)
+def test_enabled_web_refuses_incomplete_or_mismatched_assets_before_effects(deployment, mode, kind):
+    model = enabled_web(deployment)
+    source, release = deployment.source, deployment.release
+    if kind == "input-hash":
+        (source / installer._WEB_INPUT).write_text("schema_version = 1\nenabled = false\n")
+    elif kind == "missing-index":
+        del release["files"]["ui/licenses.json"]
+    elif kind == "missing-verifier":
+        del release["files"][installer._WEB_VERIFIER]
+    elif kind == "changed-verifier":
+        path = source / installer._WEB_VERIFIER
+        path.write_bytes(path.read_bytes() + b"\nraise RuntimeError('must never execute')\n")
+        release["files"][installer._WEB_VERIFIER] = digest(path.read_bytes())
+    elif kind == "index-hash":
+        release["files"]["ui/licenses.json"] = "f" * 64
+    elif kind == "member-hash":
+        (source / "ui/licenses.json").write_bytes(b"altered license bytes\n")
+    elif kind == "extra-member":
+        (source / "ui/assets/unindexed.js").write_bytes(b"unindexed\n")
+    elif kind == "symlink":
+        path = source / "ui/licenses.json"
+        path.unlink()
+        path.symlink_to(source / "scripts/extra.py")
+    else:
+        field, value = {
+            "dirty-source": ("source_dirty", True),
+            "wrong-source": ("source_commit", "f" * 40),
+            "wrong-version": ("application_version", "9.9.9"),
+        }[kind]
+        changed = model.model_copy(update={"build": model.build.model_copy(update={field: value})})
+        body = dump(changed)
+        (source / "ui/manifest.json").write_bytes(body)
+        release["files"]["ui/manifest.json"] = digest(body)
+        options = source / installer._WEB_INPUT
+        options.write_text(
+            f'schema_version = 1\nenabled = true\nmanifest_sha256 = "{digest(body)}"\n'
+        )
+        release["files"][installer._WEB_INPUT] = digest(options.read_bytes())
+    rendered = source.parent / "rendered-new"
+    operation = (
+        (lambda: staged(deployment))
+        if mode == "stage"
+        else (lambda: installer.render(source, rendered, release, deployment.default))
+    )
+    with pytest.raises((OSError, ValueError)):
+        operation()
+    assert not rendered.exists()
+    assert not (deployment.prefix / "releases/.container-stage-0.2.0").exists()
+    assert not (deployment.prefix / "releases/0.2.0").exists()
+    assert not deployment.calls
+    assert_preserved(deployment)
+
+
+@pytest.mark.parametrize("enabled", [None, False])
+def test_backend_only_release_needs_no_web_verifier_or_authentication(deployment, enabled):
+    if enabled is not None:
+        path = deployment.source / installer._WEB_INPUT
+        path.write_text("schema_version = 1\nenabled = false\n")
+        deployment.release["files"][installer._WEB_INPUT] = digest(path.read_bytes())
+    target = staged(deployment)
+    server = validate_server_config_mapping(
+        tomllib.loads((target / "rendered/server.toml").read_text())
+    )
+    assert not server.web.enabled
+    assert server.basic is None
+    assert not (target / "ui").exists()
+    assert not (target / installer._WEB_VERIFIER).exists()
+    assert_preserved(deployment)
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        "schema_version = true\nenabled = false\n",
+        "schema_version = 2\nenabled = false\n",
+        'schema_version = 1\nenabled = "false"\n',
+        "schema_version = 1\nenabled = true\n",
+        'schema_version = 1\nenabled = true\nmanifest_sha256 = "unreviewed"\n',
+        'schema_version = 1\nenabled = false\nmanifest_sha256 = "' + "f" * 64 + '"\n',
+        "schema_version = 1\nenabled = false\nallow_host_control = true\n",
+    ],
+)
+def test_web_input_is_strict_and_never_provisions_policy_or_secrets(deployment, options):
+    path = deployment.source / installer._WEB_INPUT
+    path.write_text(options)
+    deployment.release["files"][installer._WEB_INPUT] = digest(path.read_bytes())
+    with pytest.raises(ValueError, match=r"unknown web build input|invalid web manifest identity"):
+        staged(deployment)
+    assert not (deployment.prefix / "releases/.container-stage-0.2.0").exists()
+    assert not deployment.calls
+    assert_preserved(deployment)
+
+
+def test_web_origin_refuses_noncanonical_hostname_before_rendering(deployment):
+    enabled_web(deployment)
+    deployment.release["hostname"] = "Writer.example.test"
+    target = deployment.source.parent / "rendered-new"
+    with pytest.raises(ValueError, match="canonical lowercase"):
+        installer.render(deployment.source, target, deployment.release, deployment.default)
+    assert not target.exists()
+    assert_preserved(deployment)
+
+
+@pytest.mark.parametrize("section", ["basic", "web"])
+def test_enabled_web_refuses_ambiguous_template_before_render_effects(deployment, section):
+    enabled_web(deployment)
+    template = deployment.source / "packaging/containers/server.toml.in"
+    template.write_bytes(template.read_bytes() + f"\n[{section}]\n".encode())
+    deployment.release["files"]["packaging/containers/server.toml.in"] = digest(
+        template.read_bytes()
+    )
+    target = deployment.source.parent / "rendered-new"
+    with pytest.raises(ValueError, match="ambiguous web"):
+        installer.render(deployment.source, target, deployment.release, deployment.default)
+    assert not target.exists()
+    assert_preserved(deployment)
 
 
 @pytest.mark.parametrize("hostname", ["writer.example.test", "localhost", "127.0.0.1"])

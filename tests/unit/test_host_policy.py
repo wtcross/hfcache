@@ -8,6 +8,7 @@ fixed-prefix conformance evidence.
 import ast
 import copy
 import hashlib
+import importlib.util
 import json
 import os
 import stat
@@ -22,10 +23,13 @@ import pytest
 from hfcache import host_policy as policy
 from hfcache import host_selinux
 from hfcache.host_models import HostStatus
+from hfcache.models import dump
+from hfcache.ui_models import UiAssetManifest
+from tests.fixtures.ui_examples import UI_BODIES, ui_asset_manifest
 from tests.unit.test_container_release_installer import (
     deployment as deployment,  # noqa: PLC0414 - original indexed-stage fixture
 )
-from tests.unit.test_container_release_installer import staged
+from tests.unit.test_container_release_installer import enabled_web, staged
 
 REPOSITORY = Path(__file__).parents[2]
 ARCHIVE_ID = "e6a53ffd-c362-4aa4-bb6a-9cda7d5d021b"
@@ -313,6 +317,104 @@ def native(tmp_path, monkeypatch):
 
 
 @pytest.fixture
+def native_web(native):
+    selected = native.selected
+    bodies = UI_BODIES | {"assets/app-12345678.js": b"", "assets/image-12345678.png": b"\x00\xff"}
+    manifest = json.loads(dump(ui_asset_manifest()))
+    manifest["build"].update(
+        application_version="0.2.0", source_commit="c" * 40, source_dirty=False
+    )
+    members = {member["path"]: member for member in manifest["members"]}
+    members["assets/image-12345678.png"] = {"mime": "image/png"}
+    manifest["members"] = [
+        members[name] | {"path": name, "bytes": len(body), "sha256": digest(body)}
+        for name, body in sorted(bodies.items())
+    ]
+    files = {"ui/" + name: body for name, body in bodies.items()}
+    files["ui/manifest.json"] = dump(UiAssetManifest.model_validate(manifest))
+    helper_sources = {
+        relative
+        for name, (_host, relative) in policy.binding_paths("native").items()
+        if name.startswith("helper_")
+    }
+    files.update(
+        {
+            "host-helper/" + Path(name).name: (selected / name).read_bytes()
+            for name in helper_sources
+        }
+    )
+    assert len(helper_sources) == 9
+    for name, body in files.items():
+        write(selected / name, body)
+    source_names = helper_sources | {"pyproject.toml", "uv.lock", ".python-version"}
+    index = {
+        "schema_version": 1,
+        "kind": "hfcache_web_release",
+        "version": "0.2.0",
+        "source_commit": "c" * 40,
+        "source_files": {name: digest((selected / name).read_bytes()) for name in source_names},
+        "files": {name: digest(body) for name, body in files.items()}
+        | {"wheels/hfcache-0.2.0-py3-none-any.whl": "e" * 64},
+        "ui_manifest_sha256": digest(files["ui/manifest.json"]),
+    }
+    write(
+        selected / "web-release.json", (json.dumps(index, sort_keys=True, indent=2) + "\n").encode()
+    )
+    native.index = authority("native", selected)
+    publish(native)
+    return native
+
+
+def test_native_full_web_closure_uses_binary_capture_and_bounded_walk(native_web, monkeypatch):
+    monkeypatch.setattr(
+        os, "walk", lambda *_args, **_kwargs: pytest.fail("native helper bypassed captured walk")
+    )
+    snapshot = policy.inspect_authority()
+    assert snapshot.status()["state"] == "supported"
+    assert snapshot.status()["profile"] == "native"
+    captured = snapshot._inspection.capture.files
+    assert native_web.selected / "web-release.json" in captured
+    assert native_web.selected / "ui/assets/image-12345678.png" in captured
+    assert native_web.selected / "ui/assets/app-12345678.js" in captured
+    assert (
+        len([name for name in captured if name.is_relative_to(native_web.selected / "host-helper")])
+        == 9
+    )
+    assert (native_web.selected / "ui/assets/app-12345678.js").read_bytes() == b""
+    policy.revalidate(snapshot)
+
+
+@pytest.mark.parametrize("change", ["source-commit", "missing-authority", "empty-helper"])
+def test_native_web_refuses_wrong_provenance_or_incomplete_authority(native_web, change):
+    selected = native_web.selected
+    index_path = selected / "web-release.json"
+    index = json.loads(index_path.read_bytes())
+    if change == "source-commit":
+        index["source_commit"] = "f" * 40
+    elif change == "empty-helper":
+        name = "host-helper/host_policy.py"
+        (selected / name).write_bytes(b"")
+        index["files"][name] = digest(b"")
+    index_path.write_bytes((json.dumps(index, sort_keys=True, indent=2) + "\n").encode())
+    native_web.index = authority("native", selected)
+    if change == "missing-authority":
+        del native_web.index["authority_files"]["ui/assets/image-12345678.png"]
+    publish(native_web)
+    with pytest.raises(policy.InspectionError):
+        policy.inspect_authority()
+
+
+def test_native_absent_web_index_is_pinned_for_the_captured_generation(native):
+    snapshot = policy.inspect_authority()
+    index = native.selected / "web-release.json"
+    assert index in snapshot._inspection.capture.absent
+    write(index, b'{"new": "unindexed appearance"}\n')
+    with pytest.raises(policy.InspectionError):
+        policy.revalidate(snapshot)
+    assert index.read_bytes() == b'{"new": "unindexed appearance"}\n'
+
+
+@pytest.fixture
 def rootless(deployment, tmp_path, monkeypatch):
     common_sources(deployment.source, "rootless")
     for path in (deployment.source / "host-helper").iterdir():
@@ -322,6 +424,73 @@ def rootless(deployment, tmp_path, monkeypatch):
     (deployment.prefix / "current").unlink()
     (deployment.prefix / "current").symlink_to("releases/0.2.0")
     return configure(selected, "rootless", monkeypatch, tmp_path, deployment=deployment)
+
+
+@pytest.fixture(params=[False, True], ids=["nonempty-ui", "empty-ui-member"])
+def rootless_web(deployment, tmp_path, monkeypatch, request):
+    enabled_web(deployment)
+    if request.param:
+        manifest_path = deployment.source / "ui/manifest.json"
+        manifest = json.loads(manifest_path.read_bytes())
+        name = "assets/app-12345678.js"
+        (deployment.source / "ui" / name).write_bytes(b"")
+        member = next(item for item in manifest["members"] if item["path"] == name)
+        member.update(bytes=0, sha256=digest(b""))
+        manifest_path.write_bytes((json.dumps(manifest, sort_keys=True, indent=2) + "\n").encode())
+        expected = digest(manifest_path.read_bytes())
+        options = deployment.source / "packaging/containers/web.toml"
+        options.write_text(f'schema_version = 1\nenabled = true\nmanifest_sha256 = "{expected}"\n')
+        for path in (manifest_path, options, deployment.source / "ui" / name):
+            deployment.release["files"][path.relative_to(deployment.source).as_posix()] = digest(
+                path.read_bytes()
+            )
+    common_sources(deployment.source, "rootless")
+    for path in (deployment.source / "host-helper").iterdir():
+        relative = path.relative_to(deployment.source).as_posix()
+        deployment.release["files"][relative] = digest(path.read_bytes())
+    selected = staged(deployment)
+    (deployment.prefix / "current").unlink()
+    (deployment.prefix / "current").symlink_to("releases/0.2.0")
+    return configure(selected, "rootless", monkeypatch, tmp_path, deployment=deployment)
+
+
+def test_rootless_web_reuses_captured_parser_and_bounded_indexed_reads(rootless_web, monkeypatch):
+    monkeypatch.setattr(
+        importlib.util,
+        "spec_from_file_location",
+        lambda *_args, **_kwargs: pytest.fail("helper attempted a pathname module import"),
+    )
+    snapshot = policy.inspect_authority()
+    assert snapshot.status()["state"] == "supported"
+    assert snapshot.status()["profile"] == "rootless"
+    asset = rootless_web.selected / "ui/assets/app-12345678.js"
+    assert asset in snapshot._inspection.capture.files
+    assert snapshot.budget.bytes >= sum(
+        record["bytes"] for record in rootless_web.index["authority_files"].values()
+    )
+    policy.revalidate(snapshot)
+    asset.write_bytes(b"changed after capture")
+    with pytest.raises(policy.InspectionError):
+        policy.revalidate(snapshot)
+
+
+def test_rootless_empty_ordinary_authority_still_refuses(rootless):
+    path = rootless.selected / "scripts/extra.py"
+    path.write_bytes(b"")
+    release_path = rootless.selected / "container-release.json"
+    release = json.loads(release_path.read_bytes())
+    release["files"]["scripts/extra.py"] = digest(b"")
+    release_path.write_bytes((json.dumps(release, sort_keys=True, indent=2) + "\n").encode())
+    index_path = rootless.selected / "artifact-index.json"
+    index = json.loads(index_path.read_bytes())
+    index["files"]["scripts/extra.py"] = digest(b"")
+    index["files"]["container-release.json"] = digest(release_path.read_bytes())
+    index_path.write_bytes((json.dumps(index, sort_keys=True, indent=2) + "\n").encode())
+    rootless.index = authority("rootless", rootless.selected)
+    publish(rootless)
+    with pytest.raises(policy.InspectionError):
+        policy.inspect_authority()
+    assert path.read_bytes() == b""
 
 
 @pytest.mark.parametrize("fixture", ["native", "rootless"])

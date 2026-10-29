@@ -223,6 +223,46 @@ not replace the later Chromium, Firefox and WebKit workflows through real Caddy
 and installed native/rootless services. See [UI availability](web-ui/README.md)
 for the current user-facing status.
 
+### Clean backend/UI/helper release construction
+
+Use [build-web-release.py](../scripts/build-web-release.py) from a clean worktree
+at the exact reviewed commit, preferably a detached build worktree. Keep output
+outside that worktree on local storage, and run as the login builder:
+
+```bash
+uv run --locked --extra server --extra mcp python scripts/build-web-release.py \
+  --output /var/tmp/hfcache-web-release
+```
+
+The output directory must be new. The builder freezes `SOURCE_DATE_EPOCH` to the
+commit time, runs locked Python/frozen pnpm installation, builds a wheel/source
+distribution and UI, validates the original Python UI schema, then repeats the UI
+build and compares the manifest and every member byte. Dirty source or source
+changes during construction refuse. It captures the committed source into
+`source/` and artifacts into `wheels/`, `ui/` and `host-helper/`, with build logs
+and canonical `web-release.json`. Keep the printed index/UI-manifest SHA256 values
+with the release inventory. Failed output remains for diagnosis; use a new
+directory for another attempt.
+
+The existing UI manifest binds the prebundle input snapshot, application/wire/UI
+schema, frozen pnpm lock, exact Node/pnpm/TypeScript/Vite versions and shipped
+license inventory/notices. The outer release index binds the committed source,
+backend artifacts, complete UI and fixed protected-helper closure. This build
+does not read credentials or the archive, access managers/containers, select
+`current` or activate a policy. Normal `uv build` and base/server/server+MCP wheel
+installation remain Node-independent.
+
+Native staging requires both `--web-release` and `--web-release-sha256` with
+`HFCACHE_SOURCE` set to the captured source. Rootless app image construction uses
+both `--web-assets` and `--web-manifest-sha256`; static assets join the existing
+pinned UBI 10 micro API image. Its foundation probe checks actual ordered base
+ancestry, image size and runtime tool absence. Image recipes/labels, dirty
+fixtures and component tests do not establish clean-release or installed browser
+acceptance. See the [operator procedure](web-ui/deployment.md#build-and-select-a-clean-release)
+for explicit optional enablement, Basic provisioning and separate host-helper
+installation. Use the documented owned functional manifest and all three engines
+for installed acceptance; no source build grants production rollout authority.
+
 ### Generated browser contracts
 
 The browser's wire boundary is generated from the Python public models and the

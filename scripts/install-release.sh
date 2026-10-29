@@ -10,6 +10,8 @@
 #   sudo scripts/install-release.sh                 # build and switch
 #   sudo scripts/install-release.sh --no-switch     # stage only, leave `current`
 #   sudo scripts/install-release.sh --with-mcp      # include optional MCP transport
+#   sudo scripts/install-release.sh --no-switch --web-release /absolute/release \
+#     --web-release-sha256 <reviewed-index-sha256>  # stage explicitly indexed UI/helper
 #   sudo scripts/install-release.sh --switch 0.1.0  # point `current` at a release
 #   scripts/install-release.sh --list               # what is installed, and what is live
 #   scripts/install-release.sh --dry-run            # review only; no writes or service calls
@@ -127,16 +129,36 @@ PY
   fi
 )
 
+web_release() {
+  # The host's standard-library verifier runs before candidate code or Node.
+  PYTHONDONTWRITEBYTECODE=1 python3 "${SCRIPT_DIRECTORY}/web-release.py" "$1" \
+    --release "${WEB_RELEASE}" --index-sha256 "${WEB_RELEASE_SHA256}" \
+    --source "${SOURCE}" "${@:2}"
+}
+
 MODE=install
 SWITCH_TARGET=
 DRY_RUN=false
 WITH_MCP=false
-for argument in "$@"; do
+WEB_RELEASE=
+WEB_RELEASE_SHA256=
+while [[ $# -gt 0 ]]; do
+  argument=$1
   case "${argument}" in
     --no-switch) MODE=stage ;;
     --list) MODE=list ;;
     --dry-run) DRY_RUN=true ;;
     --with-mcp) WITH_MCP=true ;;
+    --web-release)
+      [[ $# -ge 2 && -n $2 && -z ${WEB_RELEASE} ]] || die '--web-release requires one release directory'
+      WEB_RELEASE=$2
+      shift
+      ;;
+    --web-release-sha256)
+      [[ $# -ge 2 && -n $2 && -z ${WEB_RELEASE_SHA256} ]] || die '--web-release-sha256 requires one digest'
+      WEB_RELEASE_SHA256=$2
+      shift
+      ;;
     --switch)
       MODE=switch
       SWITCH_TARGET=pending
@@ -150,12 +172,21 @@ for argument in "$@"; do
       SWITCH_TARGET=${argument}
       ;;
   esac
+  shift
 done
 [[ ${SWITCH_TARGET} == pending ]] && die '--switch requires a version'
 canonical_absolute_path "${PREFIX}" || die 'unsafe install prefix'
 [[ -z ${SWITCH_TARGET} ]] || valid_release_version "${SWITCH_TARGET}"
 if ${WITH_MCP} && [[ ${MODE} == switch || ${MODE} == list ]]; then
   die '--with-mcp applies only when building or staging a release'
+fi
+if [[ -n ${WEB_RELEASE} || -n ${WEB_RELEASE_SHA256} ]]; then
+  [[ -n ${WEB_RELEASE} && -n ${WEB_RELEASE_SHA256} ]] || \
+    die '--web-release and --web-release-sha256 are required together'
+  [[ ${MODE} == install || ${MODE} == stage ]] || \
+    die '--web-release applies only when building or staging a release'
+  canonical_absolute_path "${WEB_RELEASE}" || die '--web-release requires a canonical absolute path'
+  [[ ${WEB_RELEASE_SHA256} =~ ^[0-9a-f]{64}$ ]] || die '--web-release-sha256 requires lowercase SHA256'
 fi
 RELEASE_EXTRAS=(--extra server)
 if ${WITH_MCP}; then
@@ -174,6 +205,8 @@ if ${DRY_RUN}; then
   printf 'orphan guard: noncreating exclusive shared-lock check retained through switch\n'
   printf 'archive operations: none; no service stop/start or timer activation\n'
   printf 'profile: native system services; intent only, no current/source/target validation\n'
+  [[ -z ${WEB_RELEASE} ]] || printf 'web release: %s; index SHA256: %s; explicit staging only\n' \
+    "${WEB_RELEASE}" "${WEB_RELEASE_SHA256}"
   [[ -z ${SWITCH_TARGET} ]] || printf 'switch target: %s\n' "${SWITCH_TARGET}"
   exit 0
 fi
@@ -195,6 +228,11 @@ if [[ ${MODE} == switch ]]; then
 fi
 
 VERSION=$(native_profiles --source "${SOURCE}" --print-source-version)
+if [[ -n ${WEB_RELEASE} ]]; then
+  web_release verify-native
+  [[ ! -e ${PREFIX}/releases/${VERSION} && ! -L ${PREFIX}/releases/${VERSION} ]] ||
+    die 'immutable web release already exists; preserve it and select a new version'
+fi
 [[ ${EUID} -eq 0 ]] || die "must run as root to write ${PREFIX}"
 PYTHON_VERSION=$(cat "${SOURCE}/.python-version")
 [[ -n ${VERSION} ]] || die "could not read the version from ${SOURCE}/pyproject.toml"
@@ -226,6 +264,13 @@ case "${INTERPRETER}" in
   "${UV_PYTHON_INSTALL_DIR}"/*) : ;;
   *) die "uv resolved ${INTERPRETER}, which is outside ${UV_PYTHON_INSTALL_DIR}" ;;
 esac
+SYNC_PYTHON=${PYTHON_VERSION}
+if [[ -n ${WEB_RELEASE} ]]; then
+  step 'release-owned Python without optional package installers'
+  INTERPRETER=$(web_release prepare-python --interpreter "${INTERPRETER}" \
+    --python-root "${UV_PYTHON_INSTALL_DIR}")
+  SYNC_PYTHON=${INTERPRETER}
+fi
 printf '%s\n' "${INTERPRETER}"
 
 step "release tree ${RELEASE}"
@@ -239,7 +284,11 @@ step "release tree ${RELEASE}"
 STAGING="${PREFIX}/releases/.${VERSION}.$$"
 RESTORE=
 cleanup() {
-  rm -rf "${STAGING}"
+  if [[ -n ${WEB_RELEASE} && -n ${STAGING} && -d ${STAGING} ]]; then
+    printf 'preserved incomplete web release stage: %s\n' "${STAGING}" >&2
+  else
+    rm -rf "${STAGING}"
+  fi
   # A same-version rebuild moved the old tree aside. Put it back, so a failed
   # build leaves the release that was there rather than nothing at all.
   [[ -n ${RESTORE} && -d ${RESTORE} ]] && {
@@ -254,6 +303,9 @@ for item in "${RELEASE_CONTENT[@]}"; do
   [[ -e "${SOURCE}/${item}" ]] || die "the source tree has no ${item}"
   cp -R "${SOURCE}/${item}" "${STAGING}/"
 done
+if [[ -n ${WEB_RELEASE} ]]; then
+  web_release stage-native --destination "${STAGING}"
+fi
 
 if [[ -d ${RELEASE} ]]; then
   # Reinstalling a version that is already installed. `current` is a symlink to
@@ -276,7 +328,8 @@ step "uv sync --frozen ${RELEASE_EXTRAS[*]} --no-dev --no-editable"
 (
   cd "${RELEASE}"
   "${UV}" sync --frozen "${RELEASE_EXTRAS[@]}" --no-dev --no-editable --no-python-downloads \
-    --python "${PYTHON_VERSION}"
+    --link-mode copy \
+    --python "${SYNC_PYTHON}"
 )
 
 step 'ownership and modes'

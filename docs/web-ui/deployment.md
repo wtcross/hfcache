@@ -68,7 +68,7 @@ require a reviewed service restart. Archive policy reload does not rotate them.
 
 ## Deliver the record to the selected profile
 
-For native system services, the operator encrypts the protected hash record into
+For native system services without the optional host helper, the operator encrypts the protected hash record into
 the machine's systemd credential store and adds an explicit API-only service
 drop-in containing:
 
@@ -83,6 +83,17 @@ worker or CLI observer services. Installing the encrypted credential/drop-in,
 reloading a manager and restarting services are deployment actions, requiring a
 separate authorized rollout and normal executor-drain checks. This source change
 does none of them.
+
+The native host helper verifies the exact indexed API unit and refuses API
+drop-ins. A native installation enabling that helper uses the existing protected
+`file` source for the administrator and optional reader credentials, under
+`/etc/hfcache/credentials`. The base unit can continue delivering its writer
+credential through systemd. Provision the native file as root-owned `0640` with
+the measured API group, or `0600` owned by the API identity, beneath a protected
+parent searchable by that identity. Keep the helper-denied credential label.
+The packaged verifier masks this directory; the shared Caddy service must mask
+it as well. Verify those actual roles before enabling the provider. An additional
+credential drop-in is not an accepted helper deployment.
 
 For the existing rootless profile, the API already reads the protected policy
 directory. An explicitly reviewed release may select:
@@ -143,9 +154,98 @@ The artifact must match the installed application's version and Python-derived
 wire authority. Keep its source commit, source snapshot, dirty flag, lock,
 toolchain, license inventory and notices with release evidence. A dirty local
 artifact can exercise an owned test fixture; it does not establish a clean
-release. Current release installers do not automatically stage this new asset
-tree. Clean release packaging, migration and Cockpit retirement remain separate
-work; do not describe an ad-hoc copy as an accepted production release.
+release. Full web releases use the indexed construction and installation below.
+Building or staging artifacts grants no production rollout authority and does
+not select a running release, enable policies or retire Cockpit.
+
+### Build and select a clean release
+
+Use a clean worktree at the exact reviewed committed source, preferably a detached
+worktree dedicated to the build. Provision its pinned Node/pnpm, uv/Python and
+locked dependencies as described in [development](../development.md#web-workspace).
+Run as the login builder, with a new absolute local output directory outside that
+worktree:
+
+```bash
+uv run --locked --extra server --extra mcp python scripts/build-web-release.py \
+  --output /var/tmp/hfcache-web-release
+```
+
+The builder refuses dirty source and existing output. It builds the backend
+wheel/source distribution and indexed UI, repeats both builds and compares
+every byte, then captures the committed source and fixed host-helper closure.
+Keep `source/`, `wheels/`, `ui/`, `host-helper/`, build logs and `web-release.json`
+together. Record the printed release-index SHA256 and UI-manifest SHA256 in the
+release inventory. The index binds source, artifacts and application version;
+the UI manifest additionally binds the UI/wire schema, source snapshot, frozen
+pnpm lock, pinned toolchain and license/notices. Preserve failed outputs for
+inspection. Neither successful construction nor a matching hash proves installed
+service confinement, TLS or application acceptance.
+
+For a separately authorized native staging operation, use the captured source
+and both explicit release arguments. Replace the digest placeholder with the
+reviewed release-index SHA256:
+
+```bash
+sudo env HFCACHE_SOURCE=/var/tmp/hfcache-web-release/source \
+  /var/tmp/hfcache-web-release/source/scripts/install-release.sh --no-switch \
+  --web-release /var/tmp/hfcache-web-release \
+  --web-release-sha256 RELEASE_INDEX_SHA256
+```
+
+The native installer verifies source/artifact identities before installation
+tools or manager access, then stages `ui/`, the helper closure and release index
+in the protected versioned release. `--no-switch` leaves `current` unchanged.
+Configure the native `[basic]` and `[web]` fragments explicitly using the staged
+physical release path and reviewed UI-manifest digest. The indexed helper files
+are inputs to the separate protected installation below; staging does not install
+or activate the helper. Omitting the two web-release arguments retains the
+Python-only native installation path and requires no Node. Native dependency
+installation copies locked package bytes into the release, independently of
+cache hardlinks or filesystem reflink support. Full web installations use a new
+protected version/source interpreter copy with optional pip/ensurepip omitted;
+the shared managed donor and older runtimes remain unchanged. See
+[native runtime delivery](../adr/decision-158.md). An existing same-version full web
+release refuses replacement; retain failed stages and choose a fresh reviewed
+stage rather than rebuilding over them.
+
+For rootless construction, add both options to the existing authenticated image
+build, keeping its wheel hash, portable interpreter, new context and local tag:
+
+```text
+--web-assets /var/tmp/hfcache-web-release/ui
+--web-manifest-sha256 UI_MANIFEST_SHA256
+```
+
+The builder verifies the indexed bytes and copies them into the existing API
+image at `/opt/hfcache/ui`. Its build record retains the UI identity alongside
+the backend/lock/base/final-image identities. All build/runtime FROM stages keep
+the pinned UBI 10 micro base; the CA donor supplies only reviewed CA data.
+Run the foundation probe against the actual final image and retain its ordered
+base-layer proof, image size and runtime tool-absence results. No separate UI
+image, Node, package manager, compiler or browser belongs in runtime.
+
+Rootless staging uses the existing `container-release.json` files map. Include
+the exact `ui/` closure, `scripts/web-release.py` and the optional authenticated
+`packaging/containers/web.toml`:
+
+```toml
+schema_version = 1
+enabled = true
+manifest_sha256 = "REPLACE_WITH_THE_REVIEWED_64_CHARACTER_LOWERCASE_MANIFEST_SHA256"
+```
+
+The installer requires clean matching source/version and exact indexed asset and
+verifier bytes before staging. This explicit input renders `[web]` for
+`/opt/hfcache/ui` and Basic for the same canonical lowercase hostname and existing
+HTTPS port `8443`, with the fixed API-only administrator record described above.
+It refuses conflicting `[basic]`/`[web]` template settings or a missing listener
+origin. Missing hash provisioning then refuses API startup; staging never creates
+a credential. An absent input, or exactly `schema_version = 1` and
+`enabled = false`, preserves the backend-only configuration. See
+[rootless staging](../containers.md#optional-web-release-input) for index bounds
+and the separate protected host-reader opt-in. No timer, policy grant, service
+activation or runtime image pull follows from these inputs.
 
 Use a protected local tree on ext4, xfs, btrfs, tmpfs or overlay. Every ancestor,
 directory and file must be owned by root or the effective API service identity
@@ -259,6 +359,12 @@ changes the six permission booleans or the existing key.
    `hfcache_host_helper` at priority400, preserving any unknown existing module.
    Use an exact-byte staging basename `hfcache_host_helper.cil` for module
    installation; the fixed installed authority copy retains its hyphenated name.
+   Install the reviewed staged file with
+   `semodule -X 400 -i /absolute/reviewed-staging/hfcache_host_helper.cil`.
+   Installing the hyphenated authority filename can create a separate module;
+   exit0 alone does not prove the intended module changed. Check
+   `semodule --list-modules=full --checksum` for the exact underscore module,
+   priority400 and reviewed loaded checksum before recording the receipt.
    Require Enforcing and the exact first-exec domain; no permissive or
    unconfined fallback is valid. Install the selected tmpfiles fragment as
    `/etc/tmpfiles.d/hfcache-host-helper.conf`, with the measured API group.
@@ -306,7 +412,25 @@ changes the six permission booleans or the existing key.
    that reviewed obsolete rule explicitly. Do not leave an overlapping old rule
    winning at the API path or remove an unknown rule. Apply tmpfiles and restore
    the expected labels on this fixed runtime subtree.
+   Before the first helper start and after each boot, independently provision
+   the fixed `/run/hfcache-host-helper` parent if absent: an ordinary root:root0755
+   directory with that runtime type. Also provision its fixed `api` child as
+   root:hfcache0750 with the same type and the actual indexed service group.
+   Verify existing parents without changing unsafe or unexplained objects.
+   The daemon publishes its socket/binding inside that protected API parent.
+   The confined system manager has the required mount permission, not permission
+   to create this custom-typed parent; `RuntimeDirectory=` alone does not supply
+   this provisioning. Missing root setup can produce233/RUNTIME_DIRECTORY;
+   a missing API parent refuses the initial fixed-label proof before publication.
    Preserve protected systemd symlinks and their `systemd_unit_file_t` label.
+   For native read/configuration support, also provision that type on the exact
+   immutable unit targets referenced by the deployment index, including the
+   target, API/verifier services and sockets, and sync/verify services and timers.
+   A new version under `/opt` can otherwise inherit `usr_t`; the helper's fixed
+   manager queries then refuse it. Use narrow persistent rules for those ordinary
+   files in the physical selected release, verify effective contexts, and retain
+   their original inodes, bytes, modes and ownership. Do not recursively relabel
+   the release or substitute a rule through `current`.
    Optional native host effects additionally label only the selected immutable
    sync-timer target as described below; this does not relabel other units.
    The reviewed helper policy must permit only `getattr`/`read` on that type's
@@ -324,7 +448,20 @@ changes the six permission booleans or the existing key.
    receipt before preparing the index. Keep Enforcing. No production archive
    relabel, recursive user-home relabel, `:z` mount flag, allow-all policy or
    label-disable setting is part of this procedure.
-   For rootless use, after genuine stock engine/image preparation, independently
+   For enabled rootless use, independently label exactly the existing
+   `/run/hfcache/hfcache.lock` as `hfcache_host_helper_archive_lock_t`. Pin the
+   original ordinary single-link service-owned0600 inode, apply a narrow
+   persistent rule and label through the held descriptor, then rejoin the fixed
+   path and verify unchanged device/inode, mode, ownership and the `object_r`
+   role/type/`s0` context. Never replace, create, truncate or chmod that lock to
+   make provisioning pass. Both API and worker preserve this one bind without
+   `:z`; enabled launch refuses an unproved label even with an inactive guard.
+   The helper can inspect metadata only and cannot open/read/write/map/lock this
+   file. Native guard labels are unchanged. This is a fixed direct check, not an
+   additional receipt role. Recreated locks require fresh root provisioning;
+   install the matching CIL and refresh receipt/deployment bindings before
+   restarting. See [the lock-label rationale](../adr/decision-159.md).
+   After genuine stock engine/image preparation, independently
    pin and label only the existing `overlay-images/images.lock` and
    `overlay-layers/layers.lock` leaves under the fixed graphroot, plus
    `/run/user/<protected host UID>/libpod/tmp/alive.lck` and
