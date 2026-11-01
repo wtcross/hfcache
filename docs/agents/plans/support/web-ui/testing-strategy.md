@@ -2,6 +2,50 @@
 
 Testing is part of every work package, not an end-of-project phase. A screen backed only by mocked HTTP responses is not functional acceptance. A green test count does not prove host/NAS safety or deployment. Requirements and planned checks are not passing evidence; completion records must identify what actually ran.
 
+## WEB-023–026: bounded product testing and effort
+
+Applied after WEB-022/9d11738 and before WEB-023 on2026-11-01. This is execution
+policy, not new acceptance evidence. Retain all95 underlying new-web behaviors
+and minimum layers; apply the latest explicit amendment below to legacy scope.
+The adopted product-focused criteria govern: actual installed
+native/rootless Chromium/Firefox/WebKit at root and `/management`, with deeper
+fault/domain/privilege checks at the relevant boundary. The mandatory85×18/95×18
+normal-runner cross-product is superseded; optional runner protocols remain
+strict when explicitly invoked. Required web/backend source/build gates stay
+mandatory. Legacy Cockpit checks are superseded by the user amendment below.
+
+Test the actual product workflow first. Add no new harness, proof schema,
+framework or binder. Reuse retained artifacts, fixtures and passing evidence only
+where source/artifact/profile/assertion scope still matches, recording the reason.
+Repair existing machinery only for a concrete missing product assertion; retain
+its failed result, make the smallest supported fix and return to the workflow.
+Stop a machinery-only loop and record the specific unblock condition. Never repeat
+an accepted mutation or unresolved operation to replace missing observation.
+Rerun for a relevant source/artifact change, failure/contradiction, uncovered clause
+or required gate, with the reason and affected scope recorded.
+
+Use `gpt-6.1-sol`: WEB-023 high, WEB-024 medium, WEB-025 high, WEB-026 medium.
+Use low for routine edits/commands. Raise medium to high only for a concrete
+unresolved safety, compatibility or implementation contradiction. Consider
+xhigh/max only after naming the unresolved issue and expected benefit; neither
+is a default or permission to expand infrastructure/repeat accepted effects.
+
+### Latest user amendment: deprecate Cockpit, preserve legacy material
+
+On2026-11-01 the user explicitly instructed us to “ignore the cockpit plugin
+moving forward” and deprecate it once the new web UI is complete. This supersedes
+pending requirements for further plugin validation, exhaustive retirement/caller
+inventories, harness ports, dependency cleanup, source removal and live uninstall.
+Preserve legacy source, history, licenses, old evidence and the live installation,
+including generic clients/runtime helpers and shared policy/lock identities.
+
+WEB-025 is a proportional deprecation and handoff package. RELEASE-08 still
+requires evidence that the new web UI operates independently, reusing matching
+actual web/release results at its existing minimum layers; physically removing
+or testing the legacy plugin is no longer a prerequisite. All95 underlying
+new-web behaviors and minimum layers, remaining WEB-023/024/026 work and required
+web/backend gates remain. This amendment records scope, not a pass or execution.
+
 ## 1. Layers and ownership
 
 | Layer | What runs | What it proves and does not prove |
@@ -13,18 +57,14 @@ Testing is part of every work package, not an end-of-project phase. A screen bac
 | Platform functional | Disposable, isolated CentOS-compatible guests with actual systemd/rootless runtime/helper/Caddy, private test PKI and owned local fixture state | Effective manager/peer/mount-policy/cgroup/permission behavior, supported native positive paths and guarded rootless denials. Never uses the production writer's managers or archive. |
 | Human workflow acceptance | The same built test deployment, following published operator/user guides | Discoverability, explanations, safe task completion and screenshot accuracy; manual records supplement, not replace, automated tests. |
 
-Preserve existing backend/CLI/MCP/worker regressions and real-browser Cockpit tests until the retirement task explicitly ports or retires each test with rationale. Do not delete difficult tests to obtain a green gate. New host/config/card behavior must have unit **and** integration **and** functional coverage where observable. Pure utility cases may use unit coverage, while their callers still need functional proof.
+Preserve existing backend/CLI/MCP/worker regressions and all required new-web coverage. Preserve legacy Cockpit source/tests as historical material without further validation or ports under the latest user amendment. Do not delete difficult new-web tests to obtain a green gate. New host/config/card behavior must have unit **and** integration **and** functional coverage where observable. Pure utility cases may use unit coverage, while their callers still need functional proof.
 
 ## 2. Provider-neutral execution interface
 
 The existing contract intentionally avoids CI-provider-specific configuration. Extend `scripts/check.sh`; do not introduce GitHub Actions or another CI platform merely for this feature.
 
-Baseline commands already exist:
-
-```bash
-scripts/check.sh --require-cockpit
-scripts/check.sh --with-build --require-cockpit
-```
+Earlier baseline gates included Cockpit. Their recorded commands/results remain
+historical evidence; the latest user amendment requires no further plugin gate.
 
 WEB-002 introduces the strict web gate and a documented `web/package.json` script contract:
 
@@ -38,17 +78,17 @@ pnpm --dir web run build
 scripts/check.sh --require-web
 ```
 
-These commands define the existing web source gate. `--require-web` refuses missing toolchain, generated schemas, browser prerequisites for selected component tests, failed tests, and skipped checks. It runs the existing backend gate too. Keep Cockpit required until the retirement task explicitly ports or retires its checks.
+These commands define the existing web source gate. `--require-web` refuses missing toolchain, generated schemas, browser prerequisites for selected component tests, failed tests, and skipped checks. It runs the existing backend gate too. Legacy plugin validation is outside the remaining scope.
 
 ### Required source gate and direct installed acceptance
 
 The required full source gate remains:
 
 ```bash
-scripts/check.sh --require-web --require-cockpit --with-build
+scripts/check.sh --require-web --with-build
 ```
 
-Keep its web, build, backend and Cockpit checks strict until authorized retirement.
+Keep its web, build and backend checks strict.
 Source checks and installed product acceptance are separate requirements. Account
 for all 85 scenarios owned through WEB-022 and all 95 at final acceptance, including
 every required clause and the existing `minimum_layers` in
@@ -84,7 +124,7 @@ validators unchanged. Its safe help command does not inspect runtimes or
 credentials. The following composition is optional:
 
 ```bash
-scripts/check.sh --require-web --require-cockpit --with-build --with-web-functional
+scripts/check.sh --require-web --with-build --with-web-functional
 ```
 
 When explicitly invoked, `--with-web-functional` still requires **both** completed
@@ -108,6 +148,8 @@ Subsequent packages extend that strict required set in task order. This avoids
 requiring WEB-025's Cockpit-absence case before its prerequisites without
 waiving any case. `--final` and `scripts/check.sh --with-web-functional` remain
 the optional runner's all 95×18 final gate and cannot be combined with a through-task selector.
+Its historical Cockpit-absence wording is superseded for remaining acceptance by
+the latest user amendment; do not invoke legacy plugin diagnostics to satisfy it.
 
 Historical 2026-10-31 optional-runner execution correction: run canonical native/application and rootless
 profiles on their explicitly owned, boot-bound guests without moving or mixing
@@ -157,7 +199,7 @@ These historical private protocol corrections do not require that optional path
 for current acceptance and grant no runtime or invariant change.
 
 
-Where the execution host cannot provision isolated guests safely, retain the task as blocked and run independent source work that is genuinely ready. Do not weaken acceptance, run production host operations, or retire Cockpit based on component fixtures alone.
+Where the execution host cannot provision isolated guests safely, retain the task as blocked and run independent source work that is genuinely ready. Do not weaken new-web acceptance, run production host operations or claim installed independence from component fixtures alone. Legacy deprecation follows the explicit user amendment, with no plugin removal or further plugin validation.
 
 ## 3. Hermetic fixtures and safe environment
 

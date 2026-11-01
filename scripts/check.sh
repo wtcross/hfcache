@@ -11,7 +11,7 @@
 # Usage:
 #   scripts/check.sh              # the §8.4 gate
 #   scripts/check.sh --with-build # additionally build and smoke-test the wheel
-#   scripts/check.sh --require-cockpit # fail if frontend checks cannot execute
+#   scripts/check.sh --require-cockpit # explicit legacy Cockpit validation only
 #   scripts/check.sh --require-web # strict web, generated contracts and real API read fixture
 #   scripts/check.sh --with-web-functional # final installed shared-Caddy acceptance
 #
@@ -33,7 +33,7 @@ for arg in "$@"; do
       printf '%s\n' \
         'Usage: scripts/check.sh [--with-build] [--require-cockpit] [--require-web] [--with-web-functional]' \
         '  --with-build       additionally smoke-test the installed wheel' \
-        '  --require-cockpit  refuse missing Cockpit sources or tools' \
+        '  --require-cockpit  explicit legacy Cockpit opt-in; refuse missing sources or tools' \
         '  --require-web      require frozen web/contracts, preliminary browser smoke and real API read fixture' \
         '  --with-web-functional require all installed shared-Caddy functional cases in all profiles' \
         '                       requires explicit HFCACHE_WEB_FUNCTIONAL_MANIFEST; implies --require-web' \
@@ -138,23 +138,14 @@ uv build
 step 'locked base, server and server-plus-MCP wheel installations'
 uv run --locked --extra server --extra mcp python scripts/check-installations.py
 
-# Cockpit plugin gate (docs/cockpit.md §8): frozen install, lint, unit tests,
-# and a production build, when cockpit/ and the toolchain are both present.
-# The skip is loud so a green gate on a toolchain-less host cannot be mistaken
-# for plugin coverage; a CPT package lands only from a host where this stage
-# ran (decision 88).
+# Legacy Cockpit validation runs only when explicitly requested.
+# Replacement web acceptance uses --require-web independently.
 if [[ $REQUIRE_COCKPIT -eq 1 ]]; then
   require_cockpit
   step 'cockpit plugin gate'
   make -C cockpit check PNPM="$PNPM_BIN"
 else
-  find_pnpm
-  if [[ -d cockpit && -n $PNPM_BIN ]] && command -v make > /dev/null 2>&1; then
-    step 'cockpit plugin gate'
-    make -C cockpit check PNPM="$PNPM_BIN"
-  elif [[ -d cockpit ]]; then
-    printf '\nNOTE: cockpit/ exists but pnpm or make is missing — plugin gate SKIPPED (docs/cockpit.md §8)\n' >&2
-  fi
+  printf '\nNOTE: legacy Cockpit validation is opt-in; use --require-cockpit.\n' >&2
 fi
 
 if [[ $REQUIRE_WEB -eq 1 ]]; then

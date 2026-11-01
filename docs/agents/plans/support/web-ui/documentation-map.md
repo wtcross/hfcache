@@ -18,7 +18,7 @@ Create a human-facing `docs/web-ui/` section, indexed from `docs/README.md` and 
 | `administration.md` | Which host controls are available and why might they be disabled? Explain supported profiles, policy provisioning, fixed systemd schedule/observer semantics and journals as diagnostics. | WEB-006, WEB-018, WEB-019 |
 | `deployment.md` | How do I provision one Basic user and serve the static UI behind the existing Caddy? Include protected hash input, compatible versions, asset identity, native/rootless differences, same origin/prefix, no extra port/server, TLS/CSRF and validation. | WEB-004, WEB-005, WEB-021 |
 | `troubleshooting.md` | What should I do for a login failure, HTTP/Envelope error, stale draft/cursor, missing card, unavailable helper, blocked profile or uncertain operation? Give safe checks, exact labels/codes, and escalation without replay/cleanup. | WEB-004 onward |
-| `migration-from-cockpit.md` | How do I replace the plugin without losing operational capability or evidence? Include parity, handles/candidates, rollback constraints, uninstall scope and production acceptance checklist. | WEB-021, WEB-023, WEB-025 |
+| `migration-from-cockpit.md` | How do I move to the independent web UI without losing operational capability or evidence? Include parity, handles/candidates, rollback constraints, preserved deprecated legacy material/live installation and production acceptance checklist. | WEB-021, WEB-023, WEB-025 |
 
 These are target paths, not files already supplied as completed user documentation. Create each with functioning content when its behavior first exists; no placeholder guide presented as finished.
 
@@ -32,7 +32,14 @@ Update `docs/containers.md`, `docs/deployment-centos-stream-10.md`, and packagin
 
 Update `docs/development.md` with exact strict/unit/integration/functional commands, test infrastructure setup, safe fixture boundaries, no-skip rules and evidence interpretation. Update `docs/scripts.md` for every new executable helper/runner, including dependency/effect/inspection classification and safe help. Human guides may link to technical references, but must explain operator consequences in their own words.
 
-During transition, mark `docs/cockpit.md` and `docs/cockpit-plugin/` clearly as legacy with replacement guidance. Preserve historical material and redirects/links where needed; do not delete source evidence blindly or leave the main README directing new installations to Cockpit. Reference screenshots use only synthetic data, identify UI version, have useful alt text, and match actual built screens—not just this design prototype.
+Per the user's2026-11-01 instruction to ignore and deprecate the plugin once the
+new web UI is complete, mark `docs/cockpit.md` and `docs/cockpit-plugin/` as
+deprecated legacy with replacement guidance. Preserve source, history, licenses,
+generic clients/runtime helpers and the live installation. Do not require more
+plugin validation, inventory, harness ports, dependency cleanup or uninstall.
+Human navigation leads to the independent web UI without claiming production
+migration. Reference screenshots use only synthetic data, identify UI version,
+have useful alt text, and match actual built screens—not this design prototype.
 
 ## 3. Style and safety standard
 
@@ -43,6 +50,11 @@ Avoid credential literals, passwords in argv, copied production endpoints/tokens
 Examples explain account/profile context and do not assume UID 981 is the host user's identity. Port 8443 is the current Caddy endpoint, not a request to open an additional firewall port. Prefix examples must work for both empty and nonempty configured roots. Links to Hugging Face contain no credentials and distinguish dataset paths. Source/code examples in model cards are inert upstream text, not endorsed execution instructions.
 
 ## 4. Verification in every package
+
+For WEB-024 use medium effort and the [bounded-testing policy](testing-strategy.md#web-023026-bounded-product-testing-and-effort).
+Reuse valid fixture evidence; update changed/missing guide steps without a new
+documentation-test framework. Required examples, safety, accessibility and human
+workflow outcomes remain; source availability is separate from deployment.
 
 Run the repository's `scripts/check-docs.py` through `scripts/check.sh`. Test new human links/anchors, image paths/alt text, exact CLI commands without invoking effectful callbacks, server examples against strict models, endpoint matrix against actual routes and authorization, helper inventory coverage, and defaults/bounds against code. Do not execute every code fence—installation, service and NAS examples have effects. Keep independent golden expectations so generating both code and docs from a wrong schema cannot make the test vacuous.
 

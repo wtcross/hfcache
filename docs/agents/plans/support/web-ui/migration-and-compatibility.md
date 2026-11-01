@@ -12,6 +12,14 @@ A coherent release comprises the Python wheel/locked optional closures, static U
 
 Keep current TLS termination and API/MCP addresses unchanged. No additional Caddy container, application port, development server, CDN, or global Basic layer is introduced. Caddy sees the existing Unix API upstream only. Its secret/network/mount boundaries stay unchanged. The API receives only the new protected Basic hash and narrowly scoped helper socket where enabled; the verifier receives neither. Review/re-pin artifact hashes and all affected strict role schemas rather than bypass their validation. Reuse old Caddy image where unchanged; don't rebuild it solely to house frontend files.
 
+## WEB-023 and WEB-025 execution
+
+Use the [bounded-testing policy](testing-strategy.md#web-023026-bounded-product-testing-and-effort)
+and task-specific high effort. Reuse retained targets and owned fixture copies;
+investigate actual compatibility/rollback gaps. Required real-client, drain,
+preservation and independent new-web operation remain mandatory. The2026-11-01
+user direction excludes further legacy plugin maintenance or validation.
+
 ## Compatibility checks before feature completion
 
 Run actual installed old base CLI, REST writer/reader and MCP clients against the new server on owned fixtures. Preserve old route response schemas, capability fields, operation class grammar, candidate APIs, JSON Envelopes, no-Origin bearer behavior and separate MCP allowlist. Capture additions must not silently break old refresh/sync results. Do not substitute newly compiled source under an old version string for a compatibility test. Record exact source, wheel and dependency closure.
@@ -24,15 +32,21 @@ Password/provider changes do not change the stable human subject or silently reb
 
 Before a real migration, the operator inventories unfinished operations, candidate/base/predecessor configuration, fixed client profile, effective host permissions, actual executor state and original locks. The future UI must offer lookup/observation by an operator-supplied original safe key/ID against the same verified authority. It cannot directly read Cockpit's browser session storage from another origin. Do not promise automatic migration of that browser state, invent handles, treat missing history as nonexecution, or replay work to recreate a result.
 
-Keep configuration candidate/backup lock paths and ownership semantics stable, or design an explicitly tested, non-destructive adapter. A new helper must refuse conflicting/incompatible candidate state, not adopt/delete it silently. Its ownership of mutations and journals cannot overlap with still-active Cockpit writes without the original common lock and exact-byte guards. Test concurrent legacy/new config clients before retiring the plugin.
+Keep configuration candidate/backup lock paths and ownership semantics stable, or design an explicitly tested, non-destructive adapter. A new helper must refuse conflicting/incompatible candidate state, not adopt/delete it silently. Its ownership of mutations and journals cannot overlap with still-active Cockpit writes without the original common lock and exact-byte guards. Retain the existing common-lock and exact-byte conflict protections. Further
+legacy-client testing is excluded by the2026-11-01 user direction.
 
-## Cockpit source/package retirement
+## Legacy deprecation and independent web operation
 
-WEB-025 happens only after all parity rows have executable coverage, real platform functional tests pass, new human documentation is usable, and compatibility/rollback has been exercised. It removes Cockpit as a shipped/supported UI and removes production dependencies on its bridge, while preserving generic API clients, runtime helpers, licensed reused code, relevant tests, historical plans/ADRs and rollback artifacts.
+After compatibility, new-web workflows and usable documentation pass, WEB-025
+records proportional deprecation and handoff. The new UI works independently
+without opening Cockpit or forwarding to old plugin pages. New-web safety
+coverage and supported native controls/rootless denials remain required.
 
-Create an inventory for each file/test/install hook before removal: retained generic behavior, moved reusable component/test, replaced and covered integration, legacy historical document, or retired plugin-only artifact. Update artifact allowlists/indexers/installers so new releases no longer require a Cockpit build. Port safety tests before deleting the old harness. Preserve uninstall/migration instructions and historical evidence. Do not uninstall the actual host's Cockpit package or remove global Cockpit services as part of source work. Other host applications may depend on them.
-
-The new UI remains complete on supported profiles without opening Cockpit, running a browser shell, or forwarding to old plugin pages. A guarded profile's denied schedule/observer state is valid, but unsupported implementation is not a permanent excuse to drop positive native controls.
+The2026-11-01 user direction supersedes the former removal, per-file inventory,
+test-porting and dependency-cleanup project. Preserve legacy source/tests,
+licenses/history, rollback artifacts, generic clients and shared runtime helpers.
+Do not maintain or validate the plugin, alter its live installation or remove
+shared Cockpit packages/services as part of this goal.
 
 ## Rollback runbook requirements
 

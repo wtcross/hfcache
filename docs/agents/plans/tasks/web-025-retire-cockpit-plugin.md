@@ -1,4 +1,4 @@
-# WEB-025: Retire Cockpit packaging only after proven complete replacement
+# WEB-025: Deprecate legacy Cockpit and hand off the independent web UI
 
 | Field | Value |
 | --- | --- |
@@ -8,42 +8,80 @@
 | Depends on | [WEB-024](web-024-human-documentation-acceptance.md) |
 | Branch | `feat/web-ui` |
 | Work-package commit | `WEB-025: <completed outcome>` |
+| Model / effort | `gpt-6.1-sol` / high |
+
+## Execution approach
+
+Apply the [shared bounded-testing policy](../support/web-ui/testing-strategy.md#web-023026-bounded-product-testing-and-effort).
+Latest user amendment (2026-11-01): “ignore the cockpit plugin moving forward”
+and deprecate it once the new web UI is complete. This supersedes this task's
+previous exhaustive retirement, plugin-testing and harness-porting scope.
+Use existing actual new-web/release evidence for independence and a concise
+deprecation handoff. Routine edits use low effort; investigate only a concrete
+new-web dependency or safety contradiction. Add no replacement test framework.
 
 ## Read before implementation
 
-Completed parity register and functional/compatibility evidence; cockpit source/tests/license; all installer/build/index/client references; migration guide.
+Completed new-web parity, release and functional/compatibility evidence; migration
+guide and existing human navigation. No new legacy plugin inventory is required.
 
 Also read the relevant sections of [architecture](../support/web-ui/architecture.md), [API contracts](../support/web-ui/api-contracts.md), [testing strategy](../support/web-ui/testing-strategy.md), [acceptance matrix](../support/web-ui/acceptance-matrix.md), and [human documentation map](../support/web-ui/documentation-map.md). Load only affected living contracts and ADRs through their indexes. Refer to the [source review](../support/web-ui/source-review.md) for pinned baseline evidence; current git wins over it.
 
 ## Scope and implementation requirements
 
-Inventory every Cockpit-only source file, test, asset, build/install hook and documentation entry and classify retention/move/replacement/removal. Port reusable pure logic and all safety regressions before removing the old harness; preserve LGPL notices for copied code. Keep generic fixed CLI clients, container runtime helpers, shared policy/lock behavior and other users of them.
+Record Cockpit as deprecated legacy once the new web UI is complete. Preserve
+its source, tests, history, licenses, old immutable artifacts and live installed
+state. Preserve generic fixed CLI clients, runtime helpers, shared policy/lock
+identities and all required new-web safety coverage.
 
-Remove Cockpit as the newly shipped management UI and retire its runtime dependency paths. Update gate flags/install manifests/index checks to require web rather than Cockpit for new full releases; legacy flag handling must produce a clear documented message, not silent skip. Preserve backend-only gates and all equivalent test coverage. Remove no production Cockpit package, global service or browser storage in this source task.
+Require the web/backend gate for new work; make obsolete plugin-gate handling
+clear rather than silently skipping a requested check. Perform no further plugin
+validation, exhaustive retirement inventory, harness ports, dependency cleanup,
+source deletion or live uninstall. Preserve backend-only profiles and generic
+clients. Required new-web behavior remains independently tested.
 
-Preserve historical plans, ADR reasoning, deployment evidence and old immutable release artifacts. Mark old human docs legacy with migration links as appropriate rather than breaking history. Every parity row must point to a covered new screen/action or a legitimate profile-specific denial; link-to-Cockpit and 'future work' fail replacement acceptance. Remaining original handles/candidates are supported through safe manual lookup/reconciliation, not automatic adoption/replay.
+RELEASE-08 remains the new web UI's independence requirement at its existing
+minimum layers. Reuse the actual indexed web artifacts, installed workflows and
+matching source evidence; it does not require an uninstalled/absent legacy
+package or another full browser matrix. A legacy link or future feature cannot
+substitute for a required new screen/action or legitimate profile-specific denial.
+Preserve original handles/candidates through safe lookup, never adoption/replay.
 
 ## Unit and component validation
 
-Test new gate/install manifests and absence of frontend Cockpit imports/bridge calls in production web/app code. Prove all ported critical failure/operation/config tests still run.
+Validate changed current gate/help behavior and the relevant independent web
+source/build boundaries. Reuse matching existing new-web safety checks; do not
+test or port the preserved legacy plugin.
 
 ## Integration validation
 
-Run full backend/frontend/doc/build and installed artifact checks without cockpit build artifacts or installed plugin. Verify generic client/runtime helper callers remain functional.
+Use existing indexed artifact/import/runtime evidence that the web UI and generic
+clients do not depend on the plugin. Required web/backend/doc/build checks remain;
+no plugin removal or legacy dependency cleanup is part of validation.
 
 ## Functional validation
 
-Run full three-browser/native/rootless Caddy functional workflows with no Cockpit package/runtime available in the test target; observe denied profile paths and permitted supported controls. Repeat original-key migration lookup.
+Adopt matching actual native/rootless web workflows and release evidence for
+RELEASE-08 independence. Retain required profile denials, original-handle recovery
+and compatibility proofs from the preceding tasks. Repeat only a concretely
+changed or missing new-web assertion; never replay an accepted operation.
 
 ## Human documentation deliverables
 
-Finalize migration-from-cockpit.md, supported UI/navigation/install pages and legacy annotations; update script/build/gate help. Preserve historical evidence and document limited uninstall scope for future operator authorization.
+Finalize accurate migration/navigation and deprecated-legacy annotations, current
+gate help and operator handoff. State that preserved source/history/licenses and
+the live installation remain; no uninstall or production migration is performed.
 
 ## Acceptance
 
-New releases no longer depend on or ship Cockpit as their UI; all retained capabilities and safety tests have proven replacements; source retirement does not modify the live host or erase history.
+The new web UI operates independently with evidenced required behaviors, while
+Cockpit is explicitly deprecated and preserved as legacy material. No plugin
+retirement inventory, validation, code/test port or live uninstall is required.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+The task requires the current web/backend `scripts/check.sh` gate and scoped
+independence evidence above. All95 underlying new-web behaviors and minimum
+layers remain; this user amendment supplies no pass or fabricated execution.
+Update mappings using actual checks or explicitly scoped retained evidence.
 
 ## Execution notes and blockers
 

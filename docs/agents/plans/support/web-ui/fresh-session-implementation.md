@@ -51,10 +51,14 @@ claim an optional command passed when it did not run.
 The full source/build gate remains required:
 
 ```bash
-rtk proxy scripts/check.sh --require-web --require-cockpit --with-build
+rtk proxy scripts/check.sh --require-web --with-build
 ```
 
-Keep Cockpit checks until the authorized retirement step. Reuse actual passing
+Later2026-11-01 user direction supersedes legacy requirements in this historical
+resume prompt: ignore the Cockpit plugin moving forward, deprecate it when the
+new web UI is complete, and do no further plugin maintenance or validation.
+WEB-025 is proportional deprecation/handoff; preserve legacy source/history,
+licenses, shared helpers and the live installation. Reuse actual passing
 evidence with a stated unchanged-subsystem justification. Retain original
 failed exits, named passing clauses within failed runs, uncertainty and scope.
 Missing product behavior still blocks completion. A passing continuation does

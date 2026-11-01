@@ -20,8 +20,9 @@ Firefox and WebKit at root and `/management`, with fresh browser contexts and
 real Caddy/API/worker/helper boundaries. Exercise deeper faults/domain behavior
 where the boundary is relevant, including supported native controls and
 maintenance/Repair and guarded rootless denials. HTTP mocks alone never satisfy
-an installed/browser assertion. The full source web/build/Cockpit gate remains
-required until authorized retirement.
+an installed/browser assertion. The full source web/backend/docs/build gate remains required. The2026-11-01
+user direction excludes legacy Cockpit validation; its flag is explicit opt-in
+only and is not run for this goal.
 
 The existing instrumented runner and its `acceptance-evidence.json`, run IDs,
 fresh-fixture joins and exact private proofs remain optional diagnostics. Their
@@ -29,6 +30,10 @@ validators and `--require-through`/`--final` requirements stay strict if invoked
 direct installed evidence does not claim those commands passed. See the
 [testing strategy](testing-strategy.md) for the required acceptance path, unchanged
 scenario clauses and optional-runner contract.
+
+For WEB-023–026 apply the [bounded-testing policy](testing-strategy.md#web-023026-bounded-product-testing-and-effort).
+Reuse matching executed evidence with explicit scope; no case/clause is omitted,
+no failed aggregate becomes passed and no mandatory runner cross-product returns.
 
 ## AUTH
 
@@ -158,7 +163,7 @@ scenario clauses and optional-runner contract.
 | `RELEASE-05` / [WEB-023](../../tasks/web-023-compatibility-and-rollback-drill.md) | Actual legacy client compatibility | Pinned installed old CLI reader/writer and MCP clients validate actual new server envelopes/capabilities/receipts and literal candidate behavior. |
 | `RELEASE-06` / [WEB-023](../../tasks/web-023-compatibility-and-rollback-drill.md) | Durable format downgrade drill | Old binaries inspect copied new cards/helper/config operation state and either work or refuse as documented, preserving all unknown/new evidence. |
 | `RELEASE-07` / [WEB-023](../../tasks/web-023-compatibility-and-rollback-drill.md) | Evidence-preserving rollback | Actual isolated upgrade/rollback drains executors, retains original locks/stores/handles/candidates and refuses unsafe target observation; no forced kill/delete/replay. |
-| `RELEASE-08` / [WEB-025](../../tasks/web-025-retire-cockpit-plugin.md) | Cockpit-independent full replacement | Built/staged release and full browser flows function without Cockpit installed; generic helpers/history/licenses and all ported safety tests remain. |
+| `RELEASE-08` / [WEB-025](../../tasks/web-025-retire-cockpit-plugin.md) | Independent web UI and legacy deprecation | Built/staged release and browser workflows operate independently of Cockpit; new-web safety coverage, generic helpers, history and licenses remain. The legacy plugin is deprecated without further maintenance or validation. |
 | `RELEASE-09` / [WEB-026](../../tasks/web-026-final-gate-and-handoff.md) | No production or remote publication claims | Final evidence separates source/fixture acceptance from unperformed live deployment, Caddy reload, NAS, push, tag and production Cockpit removal. |
 
 ## DOC

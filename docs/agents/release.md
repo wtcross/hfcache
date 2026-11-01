@@ -83,6 +83,12 @@ becomes the release's rollback rule in `docs/deployment-centos-stream-10.md`
 `docs/schemas.md` §1.1, or record which widening precedent (decision 78) lets
 the version stand.
 
+For the web UI and Cockpit transition, the
+[migration guide](../web-ui/migration-from-cockpit.md#compatibility-and-backups)
+records actual old-reader results and distinguishes copied-state checks from
+installed transport and rollback checks. Carry those limits into the selected
+release's rollback rule.
+
 ## Cut
 
 1. Bump `[project] version` in `pyproject.toml` — the single source;

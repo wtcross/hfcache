@@ -1,7 +1,7 @@
-"""The explicit plugin gate cannot succeed by skipping frontend execution.
+"""Legacy plugin validation is explicit; the default gate omits it.
 
 These are isolated gate-control fixtures, not actual frontend acceptance. The
-real package gate separately runs the pinned toolchain and mounted Firefox suite.
+legacy opt-in separately runs the pinned toolchain and mounted Firefox suite.
 """
 
 import os
@@ -81,12 +81,29 @@ def test_required_frontend_executes_make_and_composes_with_extended_gate(tmp_pat
     assert "SKIPPED" not in result.stderr + result.stdout
 
 
-def test_default_backend_mode_keeps_a_loud_unaccepted_frontend_skip(tmp_path):
-    script, environment, calls = gate_fixture(tmp_path, pnpm=False)
+@pytest.mark.parametrize(
+    ("plugin", "pnpm", "make"),
+    [(True, True, True), (True, False, True), (True, True, False), (False, True, True)],
+)
+def test_default_backend_mode_omits_legacy_frontend_regardless_of_tools(
+    tmp_path, plugin, pnpm, make
+):
+    script, environment, calls = gate_fixture(tmp_path, plugin=plugin, pnpm=pnpm, make=make)
     result = invoke_gate(script, environment)
     assert result.returncode == 0, result.stderr
-    assert "plugin gate SKIPPED" in result.stderr
-    assert all(not call.startswith("make|") for call in calls.read_text().splitlines())
+    assert "legacy Cockpit validation is opt-in" in result.stderr
+    assert "--require-cockpit" in result.stderr
+    invocations = calls.read_text().splitlines()
+    assert all(not call.startswith(("make|", "pnpm|")) for call in invocations)
+    assert invocations[-1].endswith("|python|scripts/check-installations.py")
+
+
+def test_help_identifies_cockpit_as_explicit_legacy_opt_in_without_running_tools(tmp_path):
+    script, environment, calls = gate_fixture(tmp_path)
+    result = invoke_gate(script, environment, "--help")
+    assert result.returncode == 0, result.stderr
+    assert "explicit legacy Cockpit opt-in" in result.stdout
+    assert not calls.exists()
 
 
 def test_required_frontend_rechecks_tools_instead_of_accepting_a_late_skip(tmp_path):

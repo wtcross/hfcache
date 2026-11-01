@@ -1,7 +1,7 @@
 # Retire shipped Cockpit only after complete replacement proof
 
 - Decision identity: 144.
-- Status: Proposed; retirement is conditional on implemented parity and acceptance.
+- Status: Amended by the2026-11-01 user directive; deprecation/handoff follows new-web acceptance, with no further plugin maintenance or validation. Earlier removal/porting proposal remains historical.
 - Date: 2026-10-20.
 
 ## Context and proposed decision
@@ -47,3 +47,12 @@ domain safety constraints. See [140](decision-140.md), [141](decision-141.md),
 [142](decision-142.md), [143](decision-143.md),
 [web UI status](../web-ui/README.md), [Cockpit contract](../cockpit.md) and
 [recorded deployment status](../deployment-status.md).
+
+## User-directed deprecation scope (2026-11-01)
+
+[Decision160](decision-160.md) supersedes the earlier current-validation and
+legacy inventory/porting/removal conditions by explicit user direction. Current
+acceptance requires strict web/backend/docs/build checks; Cockpit is legacy
+opt-in and is not validated for this goal. Preserve its history/source/licenses,
+shared runtime helpers and live installation. All95 new-web behaviors and their
+minimum layers remain required; deprecation and handoff follow guide acceptance.

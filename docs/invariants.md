@@ -749,8 +749,12 @@ payload parity. No server capability or execution authority is added.
 
 The accepted [replacement browser design](#replacement-browser-ui-design)
 preserves applicable CP safety rules while changing the future transport.
-[Conditional retirement](adr/decision-144.md) remains proposed; current plugin
-implementation/packaging and its required checks remain in force until parity.
+The [2026-11-01 user amendment](adr/decision-144.md#user-directed-deprecation-scope-2026-11-01)
+selects legacy deprecation after new-web completion and excludes further plugin
+maintenance/validation now. Preserve legacy implementation/history and shared
+safety behavior; current acceptance requires the strict web/backend/docs/build
+gates. An explicitly requested legacy gate is not new-web acceptance. No live
+uninstall or production change follows.
 
 Contract: [Cockpit rules and pipelines](cockpit.md#1-rules).
 Enforcement: [CLI/unit API](../cockpit/src/api/hfcache.ts),
@@ -1270,7 +1274,9 @@ remain mandatory.
 Source availability alone
 does not establish installed behavior or retire the existing Cockpit boundary.
 See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
-[144](adr/decision-144.md); retirement remains proposed until parity is proved.
+[144](adr/decision-144.md). [Decision160](adr/decision-160.md) selects legacy
+deprecation after new-web acceptance and excludes further plugin validation or
+removal work; production migration remains separately authorized.
 
 - **`INV-019` — Authenticate browser presentation inside the application.** The
   existing Caddy/TLS/Unix upstream serves one API-owned SPA; no global edge Basic

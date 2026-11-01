@@ -8,9 +8,21 @@
 | Tracker | `docs/agents/plans/current.md` — sole active selector; intentionally not overwritten by extraction |
 | Baseline | `6b8fae2e0997403ae5c716a2e92148af0a972af9` — main reviewed October 20, 2026 |
 | Branch | `feat/web-ui` |
-| Latest completed package | WEB-022, this commit; WEB-023 is next after the authorized testing/effort amendments |
+| Latest completed package | WEB-023, this commit; WEB-024 is next |
 | Work-package family | WEB, deliberately introduced for this feature after collision check; one task = one work package = one implementation commit |
 | References | [Bundle entrypoint](support/web-ui/README.md), [kickoff](support/web-ui/KICKOFF.md), [source review](support/web-ui/source-review.md) |
+
+## Compatibility and rollback completed (2026-11-01)
+
+WEB-023 completes with actual old0.2.2 transport/copied-state classifications and
+owned native/rootless78→77→78 roundtrips. Both fixtures return to78; no operation
+is replayed or unknown evidence deleted. Rootless candidate refusals and known77
+configuration-read limits remain explicit. Required Gate1 passes9650 backend,
+4051 combined web and16 wheel checks,1547 inputs unchanged; Cockpit is excluded
+per the latest user instruction. All88 completed cases retain their required
+layers, seven later-owner cases remain pending. WEB-024 guide acceptance is next.
+See [WEB-023](tasks/web-023-compatibility-and-rollback-drill.md#completion-evidence)
+for exact source/artifact and retained failure scope; no production acceptance.
 
 ## Installed acceptance through WEB-022 (2026-11-01)
 
@@ -62,7 +74,7 @@ frontend build tools from runtime. WEB-021 must verify actual image ancestry,
 installed asset hashes and absence of Node/package managers; labels alone do not
 prove this requirement. Isolated browser test images are unshipped tooling.
 
-The source result includes necessary missing config/card/host REST capabilities, strict runtime wire validation, immutable release asset packaging for native/rootless profiles, real unit/integration/functional coverage, human-facing guides and migration/rollback procedures, and removal of Cockpit as the newly shipped UI only after parity is proven. Source retirement does not uninstall the live host's Cockpit or erase historical records.
+The source result includes necessary missing config/card/host REST capabilities, strict runtime wire validation, immutable release asset packaging for native/rootless profiles, real unit/integration/functional coverage, human-facing guides and migration/rollback procedures. Per the latest user amendment below, deprecate Cockpit once the new web UI is complete and preserve its legacy source, history, licenses and live installation. No further plugin validation, exhaustive retirement work or uninstall is required.
 
 ## Explicit non-goals and authority limits
 
@@ -86,9 +98,9 @@ Every task follows `AGENTS.md`, `docs/agents/planning.md`, `docs/agents/invarian
 
 Affected living contracts: `docs/api.md`, `server.md`, `api-client.md`, `mcp.md`, `configuration.md`, `discovery.md`, `schemas.md`, `security.md`, `cockpit.md`, `containers.md`, `operations.md`, `recovery.md`, `consumers.md`, `development.md`, `scripts.md`, deployment/release and human docs indexes. Human additions are mapped in [documentation requirements](support/web-ui/documentation-map.md).
 
-Review at minimum INV-001/002/003/005/006/007 and current metadata/operation/supplemental/browser invariants; AD-01/06/12/14/15/16/17/18/21; FS-05–11/15/16/19 and initialization exclusion; relevant CP-01–14; FW-01–04. Confirm actual IDs/wording at execution. Review numbered ADRs 108–125 (services/REST/receipts/client/candidates/MCP), 126–129 (guarded rootless runtime), 133 (tags/discovery), 134–139 (Cockpit repair) and current amendments. Allocate new ADR numbers from the live index, not hard-coded future numbers in this draft. Preserve old reasons/IDs and explicitly amend/supersede changed current requirements.
+Review at minimum INV-001/002/003/005/006/007 and current metadata/operation/supplemental/browser invariants; AD-01/06/12/14/15/16/17/18/21; FS-05–11/15/16/19 and initialization exclusion; relevant CP-01–14; FW-01–04. Confirm actual IDs/wording at execution. Review numbered ADRs 108–125 (services/REST/receipts/client/candidates/MCP), 126–129 (guarded rootless runtime), 133 (tags/discovery) and current amendments. Preserve134–139 Cockpit repair history without further plugin review under the latest user amendment. Allocate new ADR numbers from the live index, not hard-coded future numbers in this draft. Preserve old reasons/IDs and explicitly amend/supersede changed current requirements.
 
-Particular contract changes need explicit rationale: Basic principal and CSRF, new privileged administration capability/helper, exact config application outcome protocol, new README presentation adjunct and any bounded source hashing, application static serving, separate frontend release artifact/dependencies/test gates, and Cockpit retirement. Never loosen unrelated archive/security invariants to make a browser feature pass.
+Particular contract changes need explicit rationale: Basic principal and CSRF, new privileged administration capability/helper, exact config application outcome protocol, new README presentation adjunct and any bounded source hashing, application static serving, separate frontend release artifact/dependencies/test gates, and legacy deprecation handoff. Never loosen unrelated archive/security invariants to make a browser feature pass.
 
 ## Phases
 
@@ -100,7 +112,7 @@ Particular contract changes need explicit rationale: Basic principal and CSRF, n
 | P3 | Library/detail/README/tags/operations/maintenance SPA workflows | WEB-011–017 |
 | P4 | Fixed host schedule/observer/journal parity and Administration | WEB-018–019 |
 | P5 | Cross-browser hardening, immutable packaging, installed acceptance and rollback | WEB-020–023 |
-| P6 | Human documentation acceptance, Cockpit retirement and final handoff | WEB-024–026 |
+| P6 | Human documentation acceptance, legacy deprecation and final handoff | WEB-024–026 |
 
 Each feature task includes tests and human documentation. Later testing/documentation phases broaden and verify prior work; they are not permission to defer initial coverage or guides. Tasks are serial by default. Necessary task splits get fresh WEB work-package IDs with explicit dependencies and acceptance, preserving completed evidence.
 
@@ -134,7 +146,7 @@ Task files own status and dependencies. This table lists order only; do not dupl
 | 22 | [WEB-022 — Prove full installed functionality on isolated native and rootless targets](tasks/web-022-installed-functional-acceptance.md) | WEB-021 |
 | 23 | [WEB-023 — Verify old clients, durable formats and evidence-preserving rollback](tasks/web-023-compatibility-and-rollback-drill.md) | WEB-022 |
 | 24 | [WEB-024 — Complete the human operator and user documentation walkthrough](tasks/web-024-human-documentation-acceptance.md) | WEB-023 |
-| 25 | [WEB-025 — Retire Cockpit packaging only after proven complete replacement](tasks/web-025-retire-cockpit-plugin.md) | WEB-024 |
+| 25 | [WEB-025 — Deprecate legacy Cockpit and hand off the independent web UI](tasks/web-025-retire-cockpit-plugin.md) | WEB-024 |
 | 26 | [WEB-026 — Close the implementation with complete evidence and an operator handoff](tasks/web-026-final-gate-and-handoff.md) | WEB-025 |
 
 ## Execution and resumption
@@ -146,6 +158,26 @@ Task files own status and dependencies. This table lists order only; do not dupl
 5. On interruption, inspect code/status/evidence before resuming; never rerun a completed mutation or discard unresolved fixture/operation state. A required infrastructure or safety blocker remains explicit. Continue only genuinely ready independent work; do not mark skipped host/browser tests as complete.
 6. Close the plan only after final acceptance. Keep all dated/task paths stable, clear current active selection, and give a human-ready handoff that distinguishes implementation/fixture readiness from unperformed production migration.
 
+## WEB-023–026 execution amendment (2026-11-01)
+
+After completing WEB-022/9d11738, apply the [bounded-testing and effort policy](support/web-ui/testing-strategy.md#web-023026-bounded-product-testing-and-effort).
+The four task records select GPT-6.1-sol high/medium/high/medium with rationale
+and concrete escalation criteria. All95 behaviors, required layers, real installed
+browser/profile coverage, compatibility/rollback and safety outcomes remain.
+The accepted product-focused method replaces mandatory runner cross-products;
+optional diagnostics remain strict. Preserve original failed results and do not
+repeat accepted effects. Historical bundle hashes/reviews remain intact.
+
+Latest user amendment,2026-11-01: the user explicitly said to “ignore the cockpit
+plugin moving forward” and deprecate it once the new web UI is complete. This
+supersedes pending plugin validation, exhaustive retirement inventories, harness
+ports, dependency cleanup and source/live removal. WEB-025 now records a
+proportional deprecation/handoff while preserving legacy source/history/licenses,
+generic clients/runtime helpers and the live installation. RELEASE-08 still
+proves new-web independence using actual matching web/release evidence at its
+existing minimum layers. All95 underlying new-web behaviors and remaining
+WEB-023/024/026 work remain; this amendment claims no pass.
+
 ## Acceptance and validation
 
 The [testing strategy](support/web-ui/testing-strategy.md), [95-scenario acceptance matrix](support/web-ui/acceptance-matrix.md), [interface/parity register](support/web-ui/interface-and-parity.md) and [migration specification](support/web-ui/migration-and-compatibility.md) are mandatory scoped acceptance, not optional suggestions. Machine-readable case and task indexes support execution audits but do not replace individual task evidence.
@@ -156,8 +188,8 @@ Completion requires:
 - The same actual Caddy fixture serves UI, existing REST bearer clients and fourteen read-only MCP tools with verified test TLS. Empty/nonempty prefixes, deep links, missing assets, errors and auth isolation work in Chromium, Firefox and WebKit. No fallback consumes API/MCP paths; no new public/privileged surface is introduced.
 - Basic authentication, CSRF, strict types/runtime decoding, bounded reads/operations, exact publication identity, guarded config installs/locks, helper peer policy, untrusted README controls and no-replay uncertainty each have unit, integration and real functional failure coverage.
 - Every new feature has human user/operator documentation created with its implementation, tested examples/links, accurate screenshots and useful troubleshooting. Agent docs/ADRs alone do not satisfy this requirement.
-- Immutable UI/backend/helper artifacts are tested in actual isolated native/rootless profiles. Existing base/server/MCP installation and old client compatibility survive; durable-format/rollback drills preserve unknown state and unfinished evidence. Source retirement of Cockpit occurs only after these proofs.
-- `scripts/check.sh --require-web --with-build --with-web-functional` (introduced by this plan) passes on final source with no required skip, alongside preserved applicable baseline gates. Exact test node IDs, commands/exits, coverage/budgets, artifact hashes, browser/profile and safe evidence locators cover every matrix row.
+- Immutable UI/backend/helper artifacts are tested in actual isolated native/rootless profiles. Existing base/server/MCP installation and old client compatibility survive; durable-format/rollback drills preserve unknown state and unfinished evidence. The independent new web UI and legacy deprecation handoff preserve Cockpit source/history/licenses and the live installation.
+- `scripts/check.sh --require-web --with-build` passes on final source with no required new-web/backend skip; no further legacy plugin validation is required. Separate direct installed final acceptance follows the adopted product-focused criteria and accounts for all95 scenarios with exact nodes, commands/exits, coverage/budgets, artifact hashes, browser/profile scopes and locators. `--with-web-functional` remains an optional strict diagnostic, never a claimed pass when unexecuted.
 - No production deployment, NAS acceptance, Caddy reload, credential/service/timer change, remote push/tag or live plugin uninstall is claimed. Remaining production authorization/acceptance is a separate operator handoff, not hidden source incompleteness.
 
 ## Lifecycle and amendments

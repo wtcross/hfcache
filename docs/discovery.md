@@ -599,6 +599,10 @@ compatibility evidence, without a production switch or live NFS acceptance.
 
 ### Guarded rollback and backup
 
+The [Cockpit migration guide](web-ui/migration-from-cockpit.md#compatibility-and-backups)
+records the observed old-binary results for cards, curation, observations and
+operation state. Review those limits alongside this backup procedure.
+
 1. Follow the selected profile's [executor drain](deployment-centos-stream-10.md#upgrade-and-drain).
    Retain operation IDs/keys and scheduled handles, wait for actual API/private
    executor completion, and keep original locks and independent host guards.

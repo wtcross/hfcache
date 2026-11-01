@@ -4,28 +4,30 @@
 | --- | --- |
 | State | active |
 | Active plan | [Web UI replacement](2026-10-20-plan-web-ui.md) |
-| Next task | [WEB-023 — Compatibility and rollback drill](tasks/web-023-compatibility-and-rollback-drill.md) (**pending amendments**) |
-| Branch / completed package | feat/web-ui / WEB-022 (this commit) |
-| Last completed task | [WEB-022 — Installed functional acceptance](tasks/web-022-installed-functional-acceptance.md) (completed2026-11-01) |
-| Last completed plan | [Cockpit repair local rollout](2026-10-20-plan-cockpit-rest-rollout.md) |
+| Current task | [WEB-024 — Human documentation acceptance](tasks/web-024-human-documentation-acceptance.md) (**pending**, ready) |
+| Branch / completed package | feat/web-ui / WEB-023, this commit |
+| Last completed task | [WEB-023 — Compatibility and rollback](tasks/web-023-compatibility-and-rollback-drill.md) (completed 2026-11-01) |
 | Updated | 2026-11-01 |
 
-Accepted product-focused criteria retain all95 behaviors:85 owned through WEB-022
-are reconciled, ten later-owner cases remain pending. Required Gate21 passes
-9646 backend/4051 combined frontend/581 Cockpit/16 wheel checks,1545 inputs
-unchanged. See [human acceptance](../../web-ui/test-release-acceptance.md) and
-[WEB-022 evidence](tasks/web-022-installed-functional-acceptance.md#completion-evidence)
-for exact installed/source scope and preserved failures/uncertainty.
+All88 completed cases retain their minimum layers; seven later-owner cases remain
+pending. WEB-023 Required Gate1 passes9650 backend/4051 combined web/16 wheel
+checks with1547 frozen inputs unchanged. Actual old0.2.2 clients/copied-state
+readers and owned native/rootless78→77→78 roundtrips are recorded in the task.
+Both fixtures are restored78. Original failures, classified refusals, the known77
+configuration-read limitation and unknown handles remain preserved.
 
-After WEB-022's local commit and before WEB-023 implementation, refresh/apply all
-related WEB-023–026 bounded-testing amendments against the accepted criteria.
-Use GPT-6.1-sol efforts high/medium/high/medium. Do not restore superseded mandatory
-85×18/95×18 runner requirements; optional diagnostics stay strict if invoked.
-Continue sequential local work-package commits through final validation and plan
-closure. Preserve production/NAS, live Cockpit, original locks/unknown operations,
-credentials, user caches and disabled calendars; no merge/push/tag/deployment.
+Continue sequential local work-package commits through WEB-026 and plan closure.
+The [bounded-testing policy](support/web-ui/testing-strategy.md#web-023026-bounded-product-testing-and-effort)
+retains all95 new-web behaviors and layers, scoped reuse and task-specific effort.
+Do not restore mandatory runner cross-products or replay accepted effects.
 
-The [fresh-session prompt](support/web-ui/fresh-session-implementation.md) and
-[goal](support/web-ui/fresh-session-goal.md) retain the earlier resumption scope.
-Current task records and Git now own execution state; old pause checkpoints are
-historical, not a renewed blocker or instruction to repeat accepted effects.
+The user's2026-11-01 direction excludes further Cockpit plugin maintenance and
+validation. Required validation is strict web/backend/docs/build; WEB-025 is
+proportional deprecation/handoff. Preserve legacy source/history/licenses, shared
+runtime helpers and the live installation. No plugin cleanup, porting or uninstall.
+
+Preserve production/NAS, original locks/stores/unknown operations, credentials,
+user caches, disabled calendars and remote holds. No merge/push/tag/deployment.
+See [human acceptance](../../web-ui/test-release-acceptance.md) and the completed
+task for actual source/artifact/profile scope. The earlier fresh-session prompt
+is historical; this selector, task evidence and Git own current state.

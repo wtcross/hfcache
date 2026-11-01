@@ -455,6 +455,7 @@ readers before switching. Preserve all independent compatibility domains:
 | RepositoryCard schema1 (unreleased) | The isolated 0.2.2 released-source drill preserves cards and keeps status/inventory readable, but its catalog read refuses the new namespace with `HFVER007`/exit40. Preserve adjuncts and a compatible catalog reader before rollback; never delete cards to make the old reader accept the archive. |
 | Optional MCP | Disable deliberately before server-only/pre-MCP startup; no automatic fallback or schema migration |
 | Protected host reader | For a predecessor with host-reader support, preserve current bootstrap inodes before restoring matching copies/labels and the reviewed release/index/policy binding; retain the original key and six explicit permission values. For a pre-helper target, restore a preserved target-compatible server configuration and keep the helper stopped while retaining its files, policy, receipt, key and evidence. Review SELinux policy compatibility separately; a selector rollback alone is insufficient. |
+| Web administration configuration | The exact released0.2.2 / source `1c68501` strict server model rejects newer `host_helper`, `basic` and `web` fields. Preserve the installed original and validate a separate target-compatible server configuration; never discard newer metadata, receipts or private helper outcomes to force old startup. |
 | Explicit verifier socket owner | An older strict server rejects the new configuration key. Validate the intended target with a preserved compatible server configuration before selection; do not change socket ownership or discard operation state to force rollback. |
 | Rootless 0.2.0 | Recorded API-to-worker SELinux connection limitation returns; do not weaken policy to bypass it |
 
@@ -471,6 +472,13 @@ that result is not attributed to the card extension. Exact commands/results:
 `b4c2e6d525f6060aea6e6fb8e92ccd2d1cd8706705388d0b749557f5cf7453d2`).
 This is an isolated read/format drill, not production, NFS workload or old-writer
 effect acceptance. The [card guide](web-ui/readme-cards.md) describes preservation.
+
+The [Cockpit migration guide](web-ui/migration-from-cockpit.md#compatibility-and-backups)
+records the later retained-wheel copied-state results, actual old-client TLS
+successes/refusals and disposable indexed77/78 rollback scope. Old generic receipt
+readability does not supply missing private helper readers or establish safe
+rollback with unresolved outcomes; retain their original evidence and a compatible
+observer. These observations grant no production selection or data migration.
 
 Native switch refuses retained scheduled handles if target Python lacks
 `hfcache.scheduled_client`; unknown/future/temp/symlink evidence stays preserved.

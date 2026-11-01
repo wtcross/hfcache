@@ -58,3 +58,12 @@ test dependency or changing the build/runtime separation.
 
 [Decision 143](decision-143.md) amends this record for the accepted
 replacement design. Accepted replacement asset/build and strict gate design preserves Node as build-only and Python wheel independence; executable replacement conformance remains pending.
+
+## User-directed deprecation scope (2026-11-01)
+
+[Decision160](decision-160.md) supersedes the earlier current-validation and
+legacy inventory/porting/removal conditions by explicit user direction. Current
+acceptance requires strict web/backend/docs/build checks; Cockpit is legacy
+opt-in and is not validated for this goal. Preserve its history/source/licenses,
+shared runtime helpers and live installation. All95 new-web behaviors and their
+minimum layers remain required; deprecation and handoff follow guide acceptance.

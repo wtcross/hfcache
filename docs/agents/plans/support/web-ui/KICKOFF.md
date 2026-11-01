@@ -2,6 +2,13 @@
 
 Copy the following prompt into the coding agent running in the repository after extraction. Issuing it authorizes implementation within the stated limits.
 
+2026-11-01 amendment, after WEB-022/9d11738 and before WEB-023: follow the
+[bounded-testing and effort policy](testing-strategy.md#web-023026-bounded-product-testing-and-effort)
+and each task's GPT-6.1-sol rationale. Reuse valid evidence, repair only concrete
+product-test blockers and retain every required behavior under the accepted
+product-focused method. Original prompt text below is historical where its
+mandatory runner method is superseded; no production authority is added.
+
 ```text
 Implement the hfcache web UI replacement plan in:
 

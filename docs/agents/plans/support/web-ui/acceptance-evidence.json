@@ -19606,21 +19606,117 @@
       "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "layer": "integration",
+          "command": "rtk python3 .scratch/web-023-run-native-old-tls3.py",
+          "evidence_locator": ".scratch/web-023-native-old-tls3/native/client-result.json",
+          "exit_status": 0,
+          "source_sha256": "1c7115f92f565067800a4ac0c0cfe0f3029d17f12c0ec3ff6bc26a07e9e8a4a1",
+          "artifact_sha256": "62b71e478c8b8d9f263bf7ad8a1c200d058f78c04104877362be92406d543098",
+          "node_ids": [
+            ".scratch/web-023-old-client-checks1.py::cli",
+            ".scratch/web-023-old-client-checks1.py::main"
+          ],
+          "profile": "Actual installed old1c68501/0.2.2 CLI/MCP against native f829857e/0.2.78 through trusted Caddy, root+/management",
+          "observed_assertion": "Seven CLI calls pass: reader/writer status at both prefixes, literal candidate validation, one disabled-policy Plan and same-original lookup. All14 strict MCP ClientRead tools pass at each prefix (28). Existing genuine75 reports are read; no new worker or browser claim. Exact old wheelb88ffd0f and90 installed modules equal old Git. Source is retained host runner; all owned SSH forwards close normally."
+        },
+        {
+          "layer": "integration",
+          "command": "rtk python3 .scratch/web-023-run-rootless-old-mcp1.py",
+          "evidence_locator": ".scratch/web-023-rootless-old-mcp1/rootless/client-result.json",
+          "exit_status": 0,
+          "source_sha256": "dbe9df6b95a02df2659ec25709c1079608887c477f6773ab8a5226bb1a013e55",
+          "artifact_sha256": "cd003cc31bc7bd8790ac62c085c4e17efc604f92789cd4228d2e403cd3bf53b8",
+          "node_ids": [
+            ".scratch/web-023-old-rootless-mcp-only1.py::main"
+          ],
+          "profile": "Actual old0.2.2 MCP against guarded rootless f829857e/0.2.78, root+/management",
+          "observed_assertion": "All14 tools at both prefixes pass (28); empty resources/prompts and strict read model verified. Reads labelled synthetic report seeds. Raw client scope incorrectly says no POST; adjacent scope-label-correction1.md preserves that original and explains JSON-RPC transport POST is used for read-only tools, with no Plan/job/replay. TLS verifies normally; forward closes/-15."
+        },
+        {
+          "layer": "functional",
+          "command": "rtk python3 .scratch/web-023-old-original-lookups77-1.prepared.py",
+          "evidence_locator": ".scratch/web-023-old-original-lookups77-1/result.json",
+          "exit_status": 0,
+          "source_sha256": "5b8371f3b943be4787f92a42c59e0c1e235a57cc3eb2ca784cfba10efdeb0c46",
+          "artifact_sha256": "37bb04992b83aaca4bda6faf48329ed61a9e806fac66067dc7c96fc9fd0d8a80",
+          "node_ids": [
+            "PROFILES",
+            "operations lookup"
+          ],
+          "profile": "Actual old0.2.2 writer CLI after coherent native/rootless77 selection",
+          "observed_assertion": "Both original keys return exactly the retained entire operation objects: native0dcbe97e succeeded, rootlessf302dad7 failed. No candidate/new key/Plan/replay. Existing credential classes and trusted renewed CA retained; forwards normally close/-15."
+        },
+        {
+          "layer": "functional",
+          "command": "rtk python3 .scratch/web-023-old-original-lookups78-1.sealed.py",
+          "evidence_locator": ".scratch/web-023-old-original-lookups78-1/result.json",
+          "exit_status": 0,
+          "source_sha256": "74c67d12871b446167d1eb8721eb9b169946694074927cc40ad0f56b5b73b4ff",
+          "artifact_sha256": "62a8162be297d3092e2dcb82c2714a232057939230bd325480f5f5962dbb4427",
+          "node_ids": [
+            "PROFILES",
+            "operations lookup"
+          ],
+          "profile": "Actual old0.2.2 writer CLI after native/rootless return78",
+          "observed_assertion": "Both exact original operation objects remain unchanged after the complete roundtrip. No replay or credential namespace adoption; original handles/inputs remain unchanged and both narrow forwards normally close/-15."
+        },
+        {
+          "layer": "integration",
+          "command": "rtk python3 .scratch/web-023-run-rootless-old-tls3.prepared.py",
+          "evidence_locator": ".scratch/web-023-rootless-old-tls3/result.json",
+          "exit_status": 1,
+          "source_sha256": "825f1b89b1729282761251f66d693a3f4d5b92b3bdd771b1d6169155a4400fd8",
+          "artifact_sha256": "8c7fa5f87078fc9bc0e28580b215b34f84f42aac60540e3ff16b98c751fe2832",
+          "node_ids": [
+            ".scratch/web-023-old-client-checks1.py::cli"
+          ],
+          "profile": "Original rootless aggregate remains failed; five named CLI successes and classified original Plan refusal",
+          "observed_assertion": "Four status calls and literal candidate validation return0. One actual original Plan returns10/HFARG002: disabled token mode conflicts with the installed explicit Hub credential. Later original lookup proves its failed receipt. This raw aggregate remains1; no effect is replayed."
+        },
+        {
+          "layer": "integration",
+          "command": "rtk python3 .scratch/web-023-run-rootless-old-tls4.py",
+          "evidence_locator": ".scratch/web-023-rootless-old-tls4/result.json",
+          "exit_status": 1,
+          "source_sha256": "61f3f08a20edde52d4377acdc86eec82fb4bec2b0b2cfd7c0d808dbc5d92b789",
+          "artifact_sha256": "cecd29d9a850d8af5e24fa5d5f43cae71c085f5a56592b903f21bd441a20613a",
+          "node_ids": [
+            ".scratch/web-023-old-rootless-client-continuation1.py::main"
+          ],
+          "profile": "Original rootless continuation remains failed; separate reviewed all29-disabled optional-token candidate",
+          "observed_assertion": "Original failed Plan lookup and separate candidate validation return0. A distinct Plan returns10/HFAPI007 at installed-authority assessment. Both keys/raw results stay preserved; no installed policy/credentials change to force success and no further Plan submission. Native supplies positive literal Plan behavior."
+        },
+        {
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_api_client_adversarial.py::test_read_requires_explicit_integer_versions_at_every_layer",
+            "tests/unit/test_api_client_adversarial.py::test_malformed_wrapper_identity_or_unknown_field_is_protocol_failure"
+          ],
+          "command": "rtk proxy scripts/check.sh --require-web --with-build (pytest default selection inside required WEB-023 Gate1)",
+          "exit_status": 0,
+          "source_sha256": "08f7ac8951c9c8ff3053af2da0506b9ec9abe91f7153f03370e06924e56e9828",
+          "artifact_sha256": "be2257a63bb2bd3cd48c6f1f0d3b9837bee9bbb1f1b853f7b27c1e55d043b29c",
+          "profile": "Full locked repository offline gate as loginUID1000, private empty read-only NAS shadow; unit/schema/refusal boundary, separate installed evidence retained",
+          "evidence_locator": ".scratch/web-023-validation/gate1.log; gate1-result.json; source-before-required-gate1.json",
+          "observed_assertion": "All9650 selected backend tests pass, including these exact existing nodes. Strict version/unknown-format, UI-disabled/missing-assets and coherent rollback/unsafe accounting/no-replay refusals retain original state. Required web/build checks also pass; no legacy plugin command executes. Unit success does not replace actual old-binary/copied-state/installed roundtrip records in this case."
+        }
+      ],
       "id": "RELEASE-05",
       "owner": "WEB-023",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_release.py::test_release_05"
+          "node_id": "tests/unit/test_api_client_adversarial.py::test_read_requires_explicit_integer_versions_at_every_layer"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_release.py::test_release_05"
+          "node_id": ".scratch/web-023-old-client-checks1.py::cli"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/release.spec.ts::RELEASE-05"
+          "node_id": "PROFILES"
         }
       ],
       "required_layers": [
@@ -19628,24 +19724,72 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "layer": "integration",
+          "command": "Actual retained old installed Python executed .scratch/web-023-old-copy-readers1.py; original outer argv unretained, not reconstructed",
+          "evidence_locator": ".scratch/web-023-old-copy-readers1-result.json",
+          "exit_status": 0,
+          "source_sha256": "f456994f740c1389bfebbd3f3e088e22c8d361aaebbb1056c209f6eef5cc92df",
+          "artifact_sha256": "84fcb7f0723a4ea3434f3b2bed27f3d3368e1540d6315cc1e0bbdfc2bfd94d41",
+          "node_ids": [
+            "parse",
+            "main"
+          ],
+          "profile": "Exact old1c68501/0.2.2 installed wheelb88ffd0f; private copied owned fixture state",
+          "observed_assertion": "Actual old readers accept44 TOMLs, curation/six observations,12 generic receipts/results and scheduled handle parsing only. Card/config-helper/host-outcome readers are unavailable; strict old server rejects host_helper/basic/web. All138 input files including two manifests stay byte-identical;90 old installed modules equal Git/wheel. Its95 raw reader observations are not95 acceptance scenarios."
+        },
+        {
+          "layer": "functional",
+          "command": "Same retained old installed Python probe; exact outer argv unretained, see main/archive_inspection result",
+          "evidence_locator": ".scratch/web-023-old-copy-readers1-result.json",
+          "exit_status": 0,
+          "source_sha256": "f456994f740c1389bfebbd3f3e088e22c8d361aaebbb1056c209f6eef5cc92df",
+          "artifact_sha256": "84fcb7f0723a4ea3434f3b2bed27f3d3368e1540d6315cc1e0bbdfc2bfd94d41",
+          "node_ids": [
+            "main",
+            "archive_inspection"
+          ],
+          "profile": "Actual old archive inspector on separate mode-restored copied archive; NFS mount table simulated",
+          "observed_assertion": "Old inspector reports HFMNT014/unusable and15 unknown paths, including cards plus pre-existing staging/quarantine/journal/publication/run paths. Earlier no-cards control also refused; cards alone are not the cause. Original exported copies and unknown evidence remain untouched; no full daemon startup or production/NAS acceptance is inferred."
+        },
+        {
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_scheduled_client.py::test_unknown_or_missing_version_is_preserved_without_http",
+            "tests/unit/test_host_configuration.py::test_authenticated_but_incompatible_private_schema_remains_unknown",
+            "tests/unit/test_server_config.py::test_schema_version_requires_integer_one",
+            "tests/unit/test_server_config.py::test_unknown_keys_values_and_literal_tokens_never_enter_config_diagnostics",
+            "tests/unit/test_web_ui_routes.py::test_disabled_ui_retains_bearer404_and_never_loads_installed_ui_contract",
+            "tests/unit/test_container_release_installer.py::test_enabled_web_refuses_incomplete_or_mismatched_assets_before_effects",
+            "tests/unit/test_ui_models.py::test_bootstrap_versions_refuse_coercion_and_future_contracts"
+          ],
+          "command": "rtk proxy scripts/check.sh --require-web --with-build (pytest default selection inside required WEB-023 Gate1)",
+          "exit_status": 0,
+          "source_sha256": "08f7ac8951c9c8ff3053af2da0506b9ec9abe91f7153f03370e06924e56e9828",
+          "artifact_sha256": "be2257a63bb2bd3cd48c6f1f0d3b9837bee9bbb1f1b853f7b27c1e55d043b29c",
+          "profile": "Full locked repository offline gate as loginUID1000, private empty read-only NAS shadow; unit/schema/refusal boundary, separate installed evidence retained",
+          "evidence_locator": ".scratch/web-023-validation/gate1.log; gate1-result.json; source-before-required-gate1.json",
+          "observed_assertion": "All9650 selected backend tests pass, including these exact existing nodes. Strict version/unknown-format, UI-disabled/missing-assets and coherent rollback/unsafe accounting/no-replay refusals retain original state. Required web/build checks also pass; no legacy plugin command executes. Unit success does not replace actual old-binary/copied-state/installed roundtrip records in this case."
+        }
+      ],
       "id": "RELEASE-06",
       "owner": "WEB-023",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_release.py::test_release_06"
+          "node_id": "tests/unit/test_scheduled_client.py::test_unknown_or_missing_version_is_preserved_without_http"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_release.py::test_release_06"
+          "node_id": "parse"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/release.spec.ts::RELEASE-06"
+          "node_id": "main"
         }
       ],
       "required_layers": [
@@ -19653,24 +19797,333 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B - drain-select; retained guest source .scratch/web-023-native-rollback77-phases1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-native-rollback77-drain-select1-result.json",
+          "exit_status": 0,
+          "source_sha256": "b9fdc90f97a6a95b333808fa49ce20674d676820a995bb0b81be9af1bf235e6e",
+          "artifact_sha256": "975d9fb4dfe19b997c88ab00408791acbc11ce95007007d359f70e6229278f63",
+          "node_ids": [
+            "phase_drain_select"
+          ],
+          "profile": "Actual owned native rollback77; immutable77/004ea9e2 and78/f829857e",
+          "observed_assertion": "Normal actual executor drain/pidfd/cgroup/socket and original-lock stock selection; matching indexed bootstrap/UI/server/protected authority; original stores, pending handles, credential metadata, labels and masks preserved. Stage exits0; no jobs, force kill, automatic rollback or record cleanup. Native owned RW state remains unchanged; rootless retains NFSRO and original1790 guard."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B - prepare; retained guest source .scratch/web-023-native-rollback77-phases1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-native-rollback77-prepare1-result.json",
+          "exit_status": 0,
+          "source_sha256": "b9fdc90f97a6a95b333808fa49ce20674d676820a995bb0b81be9af1bf235e6e",
+          "artifact_sha256": "4a01ebcb46dbcd56edf82c27630bd91da6a75feb802096f2d174ea90221578ad",
+          "node_ids": [
+            "phase_prepare"
+          ],
+          "profile": "Actual owned native rollback77; immutable77/004ea9e2 and78/f829857e",
+          "observed_assertion": "Normal actual executor drain/pidfd/cgroup/socket and original-lock stock selection; matching indexed bootstrap/UI/server/protected authority; original stores, pending handles, credential metadata, labels and masks preserved. Stage exits0; no jobs, force kill, automatic rollback or record cleanup. Native owned RW state remains unchanged; rootless retains NFSRO and original1790 guard."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B - publish-start; retained guest source .scratch/web-023-native-rollback77-phases1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-native-rollback77-publish-start1-result.json",
+          "exit_status": 0,
+          "source_sha256": "b9fdc90f97a6a95b333808fa49ce20674d676820a995bb0b81be9af1bf235e6e",
+          "artifact_sha256": "0b1c1242355d2ed85950653cb4cf427d33d9154c884d3744c254cba3e0887a67",
+          "node_ids": [
+            "phase_publish_start"
+          ],
+          "profile": "Actual owned native rollback77; immutable77/004ea9e2 and78/f829857e",
+          "observed_assertion": "Normal actual executor drain/pidfd/cgroup/socket and original-lock stock selection; matching indexed bootstrap/UI/server/protected authority; original stores, pending handles, credential metadata, labels and masks preserved. Stage exits0; no jobs, force kill, automatic rollback or record cleanup. Native owned RW state remains unchanged; rootless retains NFSRO and original1790 guard."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B - drain-select; retained guest source .scratch/web-023-native-return78-phases1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-native-return78-drain-select1-result.json",
+          "exit_status": 0,
+          "source_sha256": "85f16e232ee731981a15f690cc94562ac4b078c5b66f6f9fe249fb5053b3fe25",
+          "artifact_sha256": "34b519425b6bc3e1c081840b1a4108b0b4824c3d445ad3b11609dd1695df42d9",
+          "node_ids": [
+            "phase_drain_select"
+          ],
+          "profile": "Actual owned native return78; immutable77/004ea9e2 and78/f829857e",
+          "observed_assertion": "Normal actual executor drain/pidfd/cgroup/socket and original-lock stock selection; matching indexed bootstrap/UI/server/protected authority; original stores, pending handles, credential metadata, labels and masks preserved. Stage exits0; no jobs, force kill, automatic rollback or record cleanup. Native owned RW state remains unchanged; rootless retains NFSRO and original1790 guard."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B - prepare; retained guest source .scratch/web-023-native-return78-phases1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-native-return78-prepare1-result.json",
+          "exit_status": 0,
+          "source_sha256": "85f16e232ee731981a15f690cc94562ac4b078c5b66f6f9fe249fb5053b3fe25",
+          "artifact_sha256": "b06894974757abfb57fc62fec0b3eac367cf8360f847df8bf5b3038f73415a79",
+          "node_ids": [
+            "phase_prepare"
+          ],
+          "profile": "Actual owned native return78; immutable77/004ea9e2 and78/f829857e",
+          "observed_assertion": "Normal actual executor drain/pidfd/cgroup/socket and original-lock stock selection; matching indexed bootstrap/UI/server/protected authority; original stores, pending handles, credential metadata, labels and masks preserved. Stage exits0; no jobs, force kill, automatic rollback or record cleanup. Native owned RW state remains unchanged; rootless retains NFSRO and original1790 guard."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B - publish-start; retained guest source .scratch/web-023-native-return78-phases1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-native-return78-publish-start1-result.json",
+          "exit_status": 0,
+          "source_sha256": "85f16e232ee731981a15f690cc94562ac4b078c5b66f6f9fe249fb5053b3fe25",
+          "artifact_sha256": "17189a7468091d6d97e3588f809902753653c36207d1947582a1a33fe58c8459",
+          "node_ids": [
+            "phase_publish_start"
+          ],
+          "profile": "Actual owned native return78; immutable77/004ea9e2 and78/f829857e",
+          "observed_assertion": "Normal actual executor drain/pidfd/cgroup/socket and original-lock stock selection; matching indexed bootstrap/UI/server/protected authority; original stores, pending handles, credential metadata, labels and masks preserved. Stage exits0; no jobs, force kill, automatic rollback or record cleanup. Native owned RW state remains unchanged; rootless retains NFSRO and original1790 guard."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B - drain-select; retained guest source .scratch/web-023-rootless-rollback77-phases1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-rootless-rollback77-drain-select1-result.json",
+          "exit_status": 0,
+          "source_sha256": "b31be7a435aacc1250d1aec76a83732dd388ab27c4a881faf1d1f2ed32c654dd",
+          "artifact_sha256": "e9cf685cdfd9b335516780cc40b2b864bc6038238790e0a314e42a8ccd08754d",
+          "node_ids": [
+            "phase_drain_select"
+          ],
+          "profile": "Actual owned rootless rollback77; immutable77/004ea9e2 and78/f829857e",
+          "observed_assertion": "Normal actual executor drain/pidfd/cgroup/socket and original-lock stock selection; matching indexed bootstrap/UI/server/protected authority; original stores, pending handles, credential metadata, labels and masks preserved. Stage exits0; no jobs, force kill, automatic rollback or record cleanup. Native owned RW state remains unchanged; rootless retains NFSRO and original1790 guard."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B - prepare; retained guest source .scratch/web-023-rootless-rollback77-phases1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-rootless-rollback77-prepare1-result.json",
+          "exit_status": 0,
+          "source_sha256": "b31be7a435aacc1250d1aec76a83732dd388ab27c4a881faf1d1f2ed32c654dd",
+          "artifact_sha256": "d09afd74ab3719c6a178058513823831802b6209ce2bbe7eabefbcea4b1733c8",
+          "node_ids": [
+            "phase_prepare"
+          ],
+          "profile": "Actual owned rootless rollback77; immutable77/004ea9e2 and78/f829857e",
+          "observed_assertion": "Normal actual executor drain/pidfd/cgroup/socket and original-lock stock selection; matching indexed bootstrap/UI/server/protected authority; original stores, pending handles, credential metadata, labels and masks preserved. Stage exits0; no jobs, force kill, automatic rollback or record cleanup. Native owned RW state remains unchanged; rootless retains NFSRO and original1790 guard."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B - publish-start; retained guest source .scratch/web-023-rootless-rollback77-phases1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-rootless-rollback77-publish-start1-result.json",
+          "exit_status": 1,
+          "source_sha256": "b31be7a435aacc1250d1aec76a83732dd388ab27c4a881faf1d1f2ed32c654dd",
+          "artifact_sha256": "40d45b922c59bd1232063c181b09e9d6865c36b633bfdb94757a22106b1a30af",
+          "node_ids": [
+            "phase_publish_start"
+          ],
+          "profile": "Actual owned rootless rollback77; immutable77/004ea9e2 and78/f829857e",
+          "observed_assertion": "Normal actual executor drain/pidfd/cgroup/socket and original-lock stock selection; matching indexed bootstrap/UI/server/protected authority; original stores, pending handles, credential metadata, labels and masks preserved. Original rootless77 publish aggregate remains failed: duplicate exclusive reload evidence filename after binding publication, before startup. Separate start-only continuation and read-only security qualification preserve this failure; no publication replay."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B - drain-select; retained guest source .scratch/web-023-rootless-return78-phases1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-rootless-return78-drain-select1-result.json",
+          "exit_status": 0,
+          "source_sha256": "3c2d48cea15c96f22d40258749c7b5dfda6361bf156994705bfe0633a7b151c1",
+          "artifact_sha256": "f0310ffcb1e2347a5b0cd58102a1eb1c911a608aa12e27226c73a36be4b107a9",
+          "node_ids": [
+            "phase_drain_select"
+          ],
+          "profile": "Actual owned rootless return78; immutable77/004ea9e2 and78/f829857e",
+          "observed_assertion": "Normal actual executor drain/pidfd/cgroup/socket and original-lock stock selection; matching indexed bootstrap/UI/server/protected authority; original stores, pending handles, credential metadata, labels and masks preserved. Stage exits0; no jobs, force kill, automatic rollback or record cleanup. Native owned RW state remains unchanged; rootless retains NFSRO and original1790 guard."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B - prepare; retained guest source .scratch/web-023-rootless-return78-phases1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-rootless-return78-prepare1-result.json",
+          "exit_status": 0,
+          "source_sha256": "3c2d48cea15c96f22d40258749c7b5dfda6361bf156994705bfe0633a7b151c1",
+          "artifact_sha256": "2cbf62c278266fd5cb7c767de94564900aec047a2556515d69a5b2cd358c9424",
+          "node_ids": [
+            "phase_prepare"
+          ],
+          "profile": "Actual owned rootless return78; immutable77/004ea9e2 and78/f829857e",
+          "observed_assertion": "Normal actual executor drain/pidfd/cgroup/socket and original-lock stock selection; matching indexed bootstrap/UI/server/protected authority; original stores, pending handles, credential metadata, labels and masks preserved. Stage exits0; no jobs, force kill, automatic rollback or record cleanup. Native owned RW state remains unchanged; rootless retains NFSRO and original1790 guard."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B - publish-start; retained guest source .scratch/web-023-rootless-return78-phases1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-rootless-return78-publish-start1-result.json",
+          "exit_status": 0,
+          "source_sha256": "3c2d48cea15c96f22d40258749c7b5dfda6361bf156994705bfe0633a7b151c1",
+          "artifact_sha256": "6489803635b1399c5ac8c71b639874ce5042a12d42dd6527db4a8a0785b6da95",
+          "node_ids": [
+            "phase_publish_start"
+          ],
+          "profile": "Actual owned rootless return78; immutable77/004ea9e2 and78/f829857e",
+          "observed_assertion": "Normal actual executor drain/pidfd/cgroup/socket and original-lock stock selection; matching indexed bootstrap/UI/server/protected authority; original stores, pending handles, credential metadata, labels and masks preserved. Stage exits0; no jobs, force kill, automatic rollback or record cleanup. Native owned RW state remains unchanged; rootless retains NFSRO and original1790 guard."
+        },
+        {
+          "layer": "integration",
+          "command": "Root-owned SSH stdin: retained .scratch/web-023-native-rollback-preflight1.sealed.py; no service/selector/lock/network effects",
+          "evidence_locator": ".scratch/web-023-native-rollback-preflight1-result.json",
+          "exit_status": 0,
+          "source_sha256": "af4915dd5a970e35f021b22537cfa133620e32cfc3de2ea14df63dfe03238241",
+          "artifact_sha256": "e332f298b1727c9cbe67bd004569bf199586ef6dc9376dd7ccdcef225b595c88",
+          "node_ids": [
+            "main",
+            "TARGET_PROBE"
+          ],
+          "profile": "Actual installed native77/78 interpreters, original native pending95048553 parse-only",
+          "observed_assertion": "Both119-module installed packages equal each indexed source. Target-specific UI/server copies validate and original scheduled schema parses; eight operation/observer/server/switch modules are byte-identical. Three bootstrap leaves require coherent selection. Original pending stays byte/inode identical and is not looked up online or replayed. This is parser compatibility, not drain."
+        },
+        {
+          "layer": "integration",
+          "command": "Root-owned SSH stdin: .scratch/web-023-rootless77-image-parser1.sealed.py",
+          "evidence_locator": ".scratch/web-023-rootless77-image-parser1-result.json",
+          "exit_status": 0,
+          "source_sha256": "22bb9600b15c4f9123e8ed13f5350dbd35a3838da22def74ef5176d9707ad57e",
+          "artifact_sha256": "ae8b9927ec8420a38c8b764192b8dc40fc1ebab1c464cb08b455d65911f4b9d3",
+          "node_ids": [
+            "main",
+            "PROBE"
+          ],
+          "profile": "Actual retained indexed77 image in one finite no-network/read-only/no-mount/no-secret parser container",
+          "observed_assertion": "All119 actual image modules equal indexed source; current78 server copy with target77 UI digest parses strictly. Stopped parser object retained; original secret stores/server metadata unchanged. No daemon or helper execution."
+        },
+        {
+          "layer": "integration",
+          "command": "Root-owned SSH stdin: .scratch/web-023-rootless78-image-parser1.sealed.py",
+          "evidence_locator": ".scratch/web-023-rootless78-image-parser1-result.json",
+          "exit_status": 0,
+          "source_sha256": "520856c974974a797fc7ea59b181cd02523a4b1be21d907f8ce8b542a558ad86",
+          "artifact_sha256": "af9563bc3e55403d521e1d4d2f578129d9214642a4f1237c51a98db8241be91b",
+          "node_ids": [
+            "main",
+            "PROBE"
+          ],
+          "profile": "Actual retained indexed78 image return-target parser on current77 server copy",
+          "observed_assertion": "All119 image modules and target78 UI/server copy validate. Explicit existing image/pull-never; no network, mounts, secrets, build or service action; distinct stopped parser retained."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: .scratch/web-023-rootless77-start-security-qualification1.prepared.py",
+          "evidence_locator": ".scratch/web-023-rootless77-start-security-qualification1-result.json",
+          "exit_status": 0,
+          "source_sha256": "23f69285ecb5f375c572d732703d7601d7bb8fbd3f716774617f80d13b0fbddf",
+          "artifact_sha256": "097c66148cbd6eaf3177fc4e23e3d77a59942e6e885fdf55de8bee9e278ebcc4",
+          "node_ids": [
+            "qualify",
+            "same_indexed_security_options"
+          ],
+          "profile": "Read-only qualification of the same once-started rootless77 roles; original publish/continuation aggregates remain failed",
+          "observed_assertion": "Original unique reload/helper/bridge commands each0. Actual three roles, all UID/GID983, all caps0, NNP1/seccomp2/SELinux, same remaining security options and preserved guard/stores/secret metadata/other objects qualify. Only worker seccomp physical77-vs78 pathname differs; both independently deployment-bound artifact indexes authenticate identical08f97ffb profile bytes. No weaker filter, repeated start/publication or unknown cleanup. Separate actual TLS observation7e5a6d50 proves same renewed leaf/TLS1.3. Known77 configuration-read503 is not reclassified; no unresolved helper-outcome compatibility claim."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: .scratch/web-023-rootless77-start-continuation1.prepared.py",
+          "evidence_locator": ".scratch/web-023-rootless77-start-continuation1-result.json",
+          "exit_status": 1,
+          "source_sha256": "bf1cb726bd2d26217b9fcb767675b95916f0a8b33aa666f2780a58e6d8755936",
+          "artifact_sha256": "508aea5a56f8d4b86a54aa653c54dc2624e98de39b7344607d60d45a0d3e24c4",
+          "node_ids": [
+            "precheck",
+            "continue_after_binding"
+          ],
+          "profile": "Original start-only continuation remains failed after all normal starts0",
+          "observed_assertion": "Read-only precheck qualifies exact already-published authority and retained originals. Only not-yet-invoked reload/helper/bridge starts execute; literal cross-release worker SecurityOpt comparison fails. Later independent indexed-byte/kernel qualification supplies the pass, without repeating those effects or rewriting this aggregate."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B -; retained .scratch/web-023-native-browser-rollback77-run1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-native-browser-rollback77-run1-result.json",
+          "exit_status": 0,
+          "source_sha256": "f1ef2745846ef62dd8fbdd0144aecdff62ba9d8c2f7c0ec4d823777332efaa82",
+          "artifact_sha256": "621412bf7837ae39b2be27fcf732419d5c6806bee9a556bc1e21e47d7cb2e558",
+          "node_ids": [
+            "unchanged",
+            "Library .library-results before/after reload",
+            "bootstrap exact build/manifest/subject",
+            "browser/context/cgroup closure"
+          ],
+          "profile": "Actual native Chromium/root rollback77; same retained browser rootfs and persistent profile",
+          "observed_assertion": "Trusted renewed TLS and actual unprivileged sandbox verified. Both Library loads/reload settle, exact UI/backend source+manifest and stable Basic subject match. No domain writes/external requests/5xx/page errors; only precisely observed same-origin read ERR_ABORTED cancellations are retained separately. Context/browser/container/cgroups close normally; app state, original locks/stores/handles/credentials unchanged. Representative boundary, not new3-engine×2-prefix matrix."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B -; retained .scratch/web-023-native-browser-restored78-run1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-native-browser-restored78-run1-result.json",
+          "exit_status": 0,
+          "source_sha256": "db695ff2ebddfb9f209f368b0d8017061dd4dd5c53b3161580a91472ff933ee7",
+          "artifact_sha256": "47226e81bb93dc8326f23e6a967441957eff6a25505df28b63fda274a9532f82",
+          "node_ids": [
+            "unchanged",
+            "Library .library-results before/after reload",
+            "bootstrap exact build/manifest/subject",
+            "browser/context/cgroup closure"
+          ],
+          "profile": "Actual native Chromium/root restored78; same retained browser rootfs and persistent profile",
+          "observed_assertion": "Trusted renewed TLS and actual unprivileged sandbox verified. Both Library loads/reload settle, exact UI/backend source+manifest and stable Basic subject match. No domain writes/external requests/5xx/page errors; only precisely observed same-origin read ERR_ABORTED cancellations are retained separately. Context/browser/container/cgroups close normally; app state, original locks/stores/handles/credentials unchanged. Representative boundary, not new3-engine×2-prefix matrix."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B -; retained .scratch/web-023-rootless-browser-rollback77-run1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-rootless-browser-rollback77-run1-result.json",
+          "exit_status": 0,
+          "source_sha256": "e688b40b8fd8bc05c7ecef14bd3f95c8cec62a573aba5e29e860c9d87a227720",
+          "artifact_sha256": "108e2b3771af6a636374bb95d84f0abd4d24fcadaa3ab54380451d521a55e946",
+          "node_ids": [
+            "unchanged",
+            "Library .library-results before/after reload",
+            "bootstrap exact build/manifest/subject",
+            "browser/context/cgroup closure"
+          ],
+          "profile": "Actual rootless Chromium/root rollback77; same retained browser rootfs and persistent profile",
+          "observed_assertion": "Trusted renewed TLS and actual unprivileged sandbox verified. Both Library loads/reload settle, exact UI/backend source+manifest and stable Basic subject match. No domain writes/external requests/5xx/page errors; only precisely observed same-origin read ERR_ABORTED cancellations are retained separately. Context/browser/container/cgroups close normally; app state, original locks/stores/handles/credentials unchanged. Representative boundary, not new3-engine×2-prefix matrix."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B -; retained .scratch/web-023-rootless-browser-restored78-run1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-rootless-browser-restored78-run1-result.json",
+          "exit_status": 0,
+          "source_sha256": "eccbeba639f17450690833a89f4e9dc1528cf40b1d02772ee685b05cc8be9ef6",
+          "artifact_sha256": "55b7f0deee262bc9828d97b6a77ac62b87573fd309f7b44f48d655049cb91a1b",
+          "node_ids": [
+            "unchanged",
+            "Library .library-results before/after reload",
+            "bootstrap exact build/manifest/subject",
+            "browser/context/cgroup closure"
+          ],
+          "profile": "Actual rootless Chromium/root restored78; same retained browser rootfs and persistent profile",
+          "observed_assertion": "Trusted renewed TLS and actual unprivileged sandbox verified. Both Library loads/reload settle, exact UI/backend source+manifest and stable Basic subject match. No domain writes/external requests/5xx/page errors; only precisely observed same-origin read ERR_ABORTED cancellations are retained separately. Context/browser/container/cgroups close normally; app state, original locks/stores/handles/credentials unchanged. Representative boundary, not new3-engine×2-prefix matrix."
+        },
+        {
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_release_installer.py::test_upgrade_then_rollback_uses_same_guard_and_atomic_switch",
+            "tests/unit/test_release_installer.py::test_any_live_timer_observer_socket_or_executor_refuses_switch",
+            "tests/unit/test_release_installer.py::test_rollback_without_observer_support_preserves_pending_state",
+            "tests/unit/test_container_release_installer.py::test_two_release_switch_and_rollback_pin_helper_profile_and_units_together",
+            "tests/unit/test_container_release_installer.py::test_unknown_or_surviving_service_accounting_refuses",
+            "tests/unit/test_scheduled_client.py::test_unknown_history_is_preserved_and_never_replayed"
+          ],
+          "command": "rtk proxy scripts/check.sh --require-web --with-build (pytest default selection inside required WEB-023 Gate1)",
+          "exit_status": 0,
+          "source_sha256": "08f7ac8951c9c8ff3053af2da0506b9ec9abe91f7153f03370e06924e56e9828",
+          "artifact_sha256": "be2257a63bb2bd3cd48c6f1f0d3b9837bee9bbb1f1b853f7b27c1e55d043b29c",
+          "profile": "Full locked repository offline gate as loginUID1000, private empty read-only NAS shadow; unit/schema/refusal boundary, separate installed evidence retained",
+          "evidence_locator": ".scratch/web-023-validation/gate1.log; gate1-result.json; source-before-required-gate1.json",
+          "observed_assertion": "All9650 selected backend tests pass, including these exact existing nodes. Strict version/unknown-format, UI-disabled/missing-assets and coherent rollback/unsafe accounting/no-replay refusals retain original state. Required web/build checks also pass; no legacy plugin command executes. Unit success does not replace actual old-binary/copied-state/installed roundtrip records in this case."
+        }
+      ],
       "id": "RELEASE-07",
       "owner": "WEB-023",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_release.py::test_release_07"
+          "node_id": "tests/unit/test_release_installer.py::test_upgrade_then_rollback_uses_same_guard_and_atomic_switch"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_release.py::test_release_07"
+          "node_id": "main"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/release.spec.ts::RELEASE-07"
+          "node_id": "phase_drain_select"
         }
       ],
       "required_layers": [
@@ -19678,7 +20131,7 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "executions": [],

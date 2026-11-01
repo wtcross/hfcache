@@ -61,25 +61,18 @@ See the [script reference](scripts.md) for each helper’s dependencies and effe
 
 The provider-neutral gate checks the lock, synchronizes the locked environment,
 checks Ruff formatting and lint, checks Pyrefly types, validates documentation,
-runs offline pytest,
-builds the distribution and smoke-installs locked base, server and
-server-plus-MCP wheels. With pnpm and make it also runs the Cockpit frozen
-install, lint, tests and production build. A skipped Cockpit stage does not
-validate plugin changes. `--with-build` adds isolated wheel-install tests.
-Use `scripts/check.sh --require-cockpit` for plugin work and acceptance that needs
-frontend coverage. It refuses missing plugin sources, pnpm or make before
-running the backend checks, and never accepts a skipped frontend stage. Combine
-it with `--with-build` when both gates are required. Firefox remains mandatory
-for the executed frontend tests; its absence fails that stage. The default mode
-retains its loud toolchain skip for backend-only development; that result is not
-plugin proof.
+runs offline pytest, builds the distribution and smoke-installs locked base,
+server and server-plus-MCP wheels. `--with-build` adds isolated wheel-install
+tests. Cockpit validation is omitted by default, including when its sources and
+tools are present. `--require-cockpit` remains an explicit legacy opt-in: it
+requires plugin sources, pnpm and make before backend checks and refuses a
+skipped legacy stage. It is not required for replacement web acceptance.
 
-Use `scripts/check.sh --require-web --require-cockpit --with-build` for replacement
-web interface acceptance. Keep Cockpit required until its checks are explicitly
-ported or retired. `--require-web` first requires the web package manifest, frozen
+Use `scripts/check.sh --require-web --with-build` for replacement web interface
+acceptance. `--require-web` first requires the web package manifest, frozen
 pnpm lock, TypeScript configuration, Node and pnpm. It checks the authoritative
 Python contract export after locked Python synchronization, then retains every
-backend and applicable Cockpit check above. Its web stage runs frozen
+backend check above. Its web stage runs frozen
 installation, then `check:wire`, lint, types, deliberately
 invalid strictness fixtures, `test:auth-sandbox`, `test:functional-metadata`, unit tests, component tests,
 a production build and the preliminary real-browser smoke in that order.
@@ -192,7 +185,7 @@ pnpm --dir web run test:component
 pnpm --dir web run build
 pnpm --dir web run test:browser
 uv run --locked --extra server --extra mcp python scripts/check-web-read-fixture.py
-scripts/check.sh --require-web --require-cockpit
+scripts/check.sh --require-web
 ```
 
 Strict fixtures must demonstrate that unsafe assignments and deliberately invalid
@@ -539,7 +532,7 @@ To explicitly request the combined source gate and final instrumented diagnostic
 
 ```bash
 HFCACHE_WEB_FUNCTIONAL_MANIFEST=/absolute/owned/fixture.json \
-  scripts/check.sh --require-web --require-cockpit --with-build --with-web-functional
+  scripts/check.sh --require-web --with-build --with-web-functional
 ```
 
 The flag still selects the runner's complete final mode and never accepts its
@@ -705,9 +698,9 @@ mount tables and temporary state establish only offline behavior; no archive
 initialization command, real mount, service, credential or Hub workload is used.
 
 
-The Cockpit test command includes actual mounted React tests in
+The explicit legacy Cockpit test command includes actual mounted React tests in
 `/usr/bin/firefox` with fresh temporary profiles and owned loopback fixtures.
-Firefox must be present for an executed frontend gate; absence fails rather than
+Firefox must be present for an executed legacy gate; absence fails rather than
 silently skipping those tests. The fixtures control Cockpit's process/D-Bus and
 privilege event boundaries, never access the installed archive or credentials,
 and add no shipped browser dependency. Real Cockpit/PAM/systemd/rootless acceptance

@@ -46,6 +46,13 @@ provenance. Their mutable plan/task/support file hashes naturally differ after
 execution updates; do not rewrite them to manufacture a clean extraction.
 Reference-asset bytes remain unchanged and are checked by the plan tests.
 
+## WEB-023–026 execution amendment
+
+Applied after WEB-022/9d11738 and before WEB-023: follow the [bounded-testing policy](testing-strategy.md#web-023026-bounded-product-testing-and-effort)
+and task-specific GPT-6.1-sol high/medium/high/medium rationale. All95 underlying
+behaviors remain under accepted product-focused criteria. This does not rewrite
+original bundle hashes/reviews/kickoff or authorize production work.
+
 ## Execution boundaries
 
 Default implementation branch: `feat/web-ui`. Commit one work package at a time. Do not merge, push, tag, deploy, reload the production Caddy instance, change production services/timers/credentials, touch NAS contents, or infer renewed authority from historical rollout records. Use owned local fixtures and isolated guests. Build-time dependency acquisition is allowed where repository/environment policy permits, without production credentials or automatic image pulls. Missing required test infrastructure is a blocker, never a pass.

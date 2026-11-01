@@ -984,7 +984,7 @@
         "integration",
         "functional"
       ],
-      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+      "test_binding": "Actual default source tests and retained old0.2.2/copy/installed77\u219478 executions are bound in acceptance-evidence.json; required WEB-023 source gate remains pending."
     },
     {
       "id": "RELEASE-06",
@@ -996,7 +996,7 @@
         "integration",
         "functional"
       ],
-      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+      "test_binding": "Actual default source tests and retained old0.2.2/copy/installed77\u219478 executions are bound in acceptance-evidence.json; required WEB-023 source gate remains pending."
     },
     {
       "id": "RELEASE-07",
@@ -1008,19 +1008,19 @@
         "integration",
         "functional"
       ],
-      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+      "test_binding": "Actual default source tests and retained old0.2.2/copy/installed77\u219478 executions are bound in acceptance-evidence.json; required WEB-023 source gate remains pending."
     },
     {
       "id": "RELEASE-08",
       "owner": "WEB-025",
-      "requirement": "Cockpit-independent full replacement",
-      "required_assertions": "Built/staged release and full browser flows function without Cockpit installed; generic helpers/history/licenses and all ported safety tests remain.",
+      "requirement": "Independent web UI and legacy deprecation",
+      "required_assertions": "Built/staged release and browser workflows operate independently of Cockpit; new-web safety coverage, generic helpers, history and licenses remain. The legacy plugin is deprecated without further maintenance or validation.",
       "minimum_layers": [
         "unit",
         "integration",
         "functional"
       ],
-      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+      "test_binding": "WEB-025 follows the explicit2026-11-01 user deprecation instruction; retain unit/integration/functional proof of new-web independence without a legacy maintenance or test-port project."
     },
     {
       "id": "RELEASE-09",

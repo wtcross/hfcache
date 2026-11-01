@@ -1317,8 +1317,10 @@ reconstruction and outcomes §18.2, static manifest/bootstrap §18.3,
 administrator record §18.4 and managed projections §18.5 are implemented in
 unreleased source.** Current archive durable formats above remain unchanged;
 source implementation is not installed compatibility or release acceptance.
-The card GET uses an independent read projection below; browser rendering remains
-later work. Neither capture nor read adds a browser card view.
+The card GET uses an independent read projection below; the unreleased browser
+also renders that projection. Recorded installed fixture checks and old-reader
+compatibility limits are in the
+[migration guide](web-ui/migration-from-cockpit.md#compatibility-and-backups).
 The independent card/helper/static/bootstrap
 families below must each validate their own strict integer version, reject
 unknown fields/duplicate JSON keys/coercions, enforce bounds before allocation

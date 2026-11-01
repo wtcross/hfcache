@@ -20,6 +20,10 @@ the page never asks for a REST or Hub token. All interface documents and assets
 require administrator authentication. REST bearer and read-only MCP access remain
 separate on the same Caddy endpoint.
 
+For an interface transition or release rollback, follow the
+[migration and compatibility guide](migration-from-cockpit.md). Preserve original
+operation handles, protected configuration and compatible observers before switching.
+
 After sign-in, **Administrator session** identifies the authenticated human.
 **Configured archive** shows the UUID from installed policy; it does not mean
 archive health, inventory or writability has been checked. The current interface

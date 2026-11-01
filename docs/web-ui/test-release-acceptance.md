@@ -1,10 +1,10 @@
 # Candidate test-release acceptance
 
-As of November 1, 2026, the 85 acceptance scenarios in the installed functional review have
-been reconciled against executed unit, integration and installed workflow
-evidence. **Installed functional acceptance is complete.** The
-remaining ten scenarios belong to compatibility/rollback, human documentation,
-Cockpit retirement and final handoff tasks; overall plan acceptance is incomplete.
+As of November 1, 2026, **88 of 95 acceptance scenarios are complete**, with
+executed evidence at every required layer. Installed functional acceptance and
+the compatibility/rollback drill are complete. The remaining seven scenarios
+cover human guide acceptance, legacy deprecation and final handoff; overall
+plan acceptance remains incomplete.
 
 The installed test candidate is **0.2.78**, from application source
 `f829857ec045ce4616055e357e7d6aa7047287ca`. It uses matching immutable interface,
@@ -30,14 +30,25 @@ test layers; every scenario was not repeated in every browser/profile combinatio
 | Administration | Supported native schedule controls and matching original-observer Stop have real protected effects. Stopping the observer does not cancel accepted backend work; its later genuine completion is observed separately. Guarded rootless controls show actual denial reasons and refuse unsupported schedule/observer actions. Verification scheduling remains read-only. Installed process, socket, mount, credential and confinement observations verify the role boundaries. |
 | CLI, MCP and worker | All14 read-only MCP tools and existing CLI credential classes traverse shared Caddy at both entrypoints. Native0.2.78 has actual browser/client overlap:32 CLI/MCP calls occur during nine visible Library workflows. Rootless client reads are sequential and use labelled synthetic reports. One genuine native0.2.78 revision-verification job reads eight objects/6,286bytes for one exact revision; its original result/report survive reload. Two subsequent MCP reads match that new report. Concurrency with the new worker job is not claimed. |
 
-The required source/build check **passes**:
-`scripts/check.sh --require-web --require-cockpit --with-build` exits0 with
-9,646 backend,4,051 combined frontend,581 Cockpit and16 wheel checks, three
-locked installation profiles, two built-browser checks and the real HTTP/API
-fixture. All1,545 frozen inputs remain unchanged. Frontend coverage is95.02%
-of lines and90.13% of branches. The acceptance ledger and closure documentation
-are reconciled after that source check and validated separately. The optional instrumented functional-runner command was not run as
-this acceptance path and is not claimed to have passed.
+The current required source/build check **passes**:
+`scripts/check.sh --require-web --with-build` exits 0 with 9,650 backend tests,
+4,051 unique combined web tests and 16 wheel checks, three locked installation
+profiles, two built-browser checks and the real HTTP/API fixture. All 1,547 frozen
+inputs remain unchanged. Frontend coverage is 95.02% of lines and 90.13% of branches.
+Legacy Cockpit validation is excluded from current acceptance. The acceptance
+ledger and closure documents are reconciled after the source check and validated
+separately. The optional instrumented functional runner was not run as this
+acceptance path and is not claimed to have passed.
+
+The exact previous 0.2.2 client accepts the new server's existing routes and all 14
+MCP tools through both aliases in both profiles. Native literal validation/Plan
+and original lookup pass; rootless positive reads/validation and two classified
+credential/candidate-authority refusals are retained. Actual old copied-state
+readers preserve all inputs and document unsupported formats. Both disposable
+installations complete indexed78→77→78, with matching UI/backend/helper selection,
+trusted TLS, Library/reload, stable subject and unchanged original-operation
+outcomes. The [migration guide](migration-from-cockpit.md) records exact limits,
+including the predecessor's configuration-read limitation and preserved failures.
 
 ## Retained qualifications
 
@@ -57,10 +68,10 @@ case records rather than being silently credited as broader browser proof.
 
 ## What remains
 
-The remaining work is real older-client compatibility and evidence-preserving
-format/rollback drills, the complete guide walkthrough and screenshots, conditional
-Cockpit source retirement, final validation and operator handoff. Their ten
-acceptance scenarios remain pending.
+The remaining work is the complete guide walkthrough and screenshot review,
+proportional legacy deprecation, final validation and operator handoff. Seven
+acceptance scenarios remain pending. No further Cockpit plugin maintenance or
+validation is required for the replacement.
 
 This summary supplies **no production rollout or real NAS acceptance proof**.
 Production archive permissions, original guards, unresolved handles, disabled

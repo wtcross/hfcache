@@ -29,6 +29,28 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-023 Verify old clients and evidence-preserving rollback
+  (2026-11-01, this commit — [task](plans/tasks/web-023-compatibility-and-rollback-drill.md)).
+  Exact old1c68501/0.2.2 clients exercise trusted Caddy and copied durable state;
+  native CLI7/MCP28 pass, rootless positive reads/all28MCP and two classified
+  candidate-authority Plan refusals remain honest. Copied-state readers preserve
+  all138 inputs; legacy unsupported formats stay unsupported. Actual indexed
+  native/rootless78→77→78 selection, normal executor drain/original locks,
+  matching helper/UI/bootstrap, stable Basic subject, Library/reload and old-client
+  original outcomes pass within recorded scope. Both fixtures restored78;
+  original failed scripts and separate read-only qualifications are retained.
+  Human migration/rollback guidance and contract links accompany the evidence.
+  Decision160 records user-directed legacy deprecation/default-gate omission,
+  preserving source/history/licenses/shared helpers/live state. Required Gate1
+  exits0/1649.060s:9650 backend/4051 combined web/16 wheel, three locked installs,
+  two built-browser checks and real API fixture;95.02% lines/90.13% branches,
+  all1547 frozen inputs unchanged, log SHA7bd994794cc58ad68f1dbb55e6f189e26fed750ad6ce96a8c55e2582604e2352.
+  All88 completed cases retain minimum layers; seven later cases remain pending.
+  Post-adoption closure checks pass224 human docs/29 helpers,9 plan tests and
+  git diff --check. WEB-024 is next; no production/NAS,
+  remote publication, live-plugin action or replay follows.
+
+
 - [x] WEB-022 Prove installed native/rootless functionality
   (2026-11-01, this commit — [task](plans/tasks/web-022-installed-functional-acceptance.md)).
   All85 through-task scenarios have existing minimum-layer and actual installed
@@ -3040,6 +3062,18 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-01 WEB-023 completes source/owned-fixture compatibility and rollback;
+both native/rootless fixtures are restored78. Continue WEB-024 guide acceptance,
+then proportional legacy deprecation and final handoff. Native original SDK
+pending inode95048553 remains unknown/preserved; rootless original guard1790,
+NFSRO, stores, seven publications, credential identities and disabled calendars
+remain. Never replay original Applies/Plans or infer execution from missing
+history. Fixture PKI renewal/strictTLS is separate from production PKI. All88
+completed cases retain minimum layers; seven remain. The user's latest direction
+excludes further legacy plugin work/validation. Production/NAS/remote/live-install
+holds remain, with no merge/push/tag/deployment or uninstall.
+
 
 2026-11-01 WEB-022 source/owned-installed acceptance completes with actual
 Gate21 inner/outer0 and required-layer reconciliation of85 scenarios. Ten later
@@ -14455,3 +14489,13 @@ frontend/build checks, with1005 product files frozen unchanged. The earlier
 conformance-pending notes describe their decision-time state; task021 now owns
 completed source/isolated packaging evidence. This does not authorize a production
 rollout or establish WEB-022's full functional matrix.
+
+160. **Focus completion on the new web UI; legacy Cockpit validation is opt-in**
+   (2026-11-01, WEB-023, this commit). The user's latest instruction excludes
+   further plugin work and selects deprecation when the web UI is complete.
+   Default validation retains strict web/backend/docs/build checks and all95
+   new-web behaviors/layers. Legacy source/history/licenses, shared helpers and
+   the live installation remain preserved; no retirement/porting project or
+   uninstall follows. [Decision160](../adr/decision-160.md) amends088/143/144;
+   WEB-025 becomes proportional deprecation/handoff. This changes development
+   gate orchestration, with no runtime authority or production effect.

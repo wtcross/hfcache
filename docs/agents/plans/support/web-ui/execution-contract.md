@@ -5,6 +5,25 @@ WEB-001 accepts these design boundaries against exact baseline
 not implemented feature claims. Standing contracts/ADRs state their conformance
 gaps. Changes during implementation require explicit amendments and evidence.
 
+## WEB-023–026 execution amendment (2026-11-01)
+
+After WEB-022/9d11738, the [bounded-testing policy](testing-strategy.md#web-023026-bounded-product-testing-and-effort)
+governs remaining tasks under adopted product-focused acceptance. All product
+authority, safety boundaries, scenarios and minimum layers remain. Historical
+runner lifecycle/proof details below stay strict for optional diagnostic use;
+they do not require new machinery or a mandatory85×18/95×18 acceptance path.
+Valid evidence reuse is not new execution. Original baseline records remain.
+
+Latest user amendment,2026-11-01: explicitly “ignore the cockpit plugin moving
+forward” and deprecate it once the new web UI is complete. This supersedes
+pending legacy-plugin validation, exhaustive retirement inventories, harness
+ports, dependency cleanup and source/live removal obligations. Preserve legacy
+source/history/licenses, generic clients/runtime helpers and the live install.
+WEB-025 is a proportional deprecation/handoff; RELEASE-08 still requires actual
+new-web independence evidence at its existing minimum layers. All95 underlying
+new-web behaviors and remaining WEB-023/024/026 requirements remain. No pass or
+execution is supplied by this amendment.
+
 ## Baseline and decisions
 
 No source drift exists. Initial checkout was `main`, with only this intended
@@ -15,7 +34,8 @@ catalog/maintenance/job routes; none needs a duplicate UI endpoint.
 
 Allocated decisions: 140 authentication/static serving, 141 protected host and
 configuration administration, 142 card adjuncts, 143 frontend/tool gates, and
-144 conditional Cockpit retirement. Decision 144 remains proposed until parity.
+144 conditional Cockpit retirement. That historical proposed retirement scope
+does not override the later explicit user deprecation amendment above.
 Dependency versions are selected and verified in WEB-002/004/014, as required by
 their tasks; this package adds no runtime dependency.
 

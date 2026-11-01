@@ -591,6 +591,10 @@ Replacing the parent, changing the index or rebooting requires a reviewed API
 restart. Keep old indexes, keys, bindings and original operation handles through
 rollback review; do not remove unknown records to force an older binary to start.
 
+Use the [Cockpit migration guide](migration-from-cockpit.md#select-a-rollback-scope)
+to select the rollback scope and review the recorded old-client and durable-state
+compatibility limits before selecting a target.
+
 A selector rollback alone does not restore `/usr/local` bootstrap copies. If the
 predecessor supports the protected host reader, preserve the current copies and
 original inodes before restoring its reviewed matching copies and required labels.

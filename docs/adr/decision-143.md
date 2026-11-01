@@ -259,3 +259,12 @@ immutable publication identity and production/NAS limits are unchanged.
 This amendment supersedes only the mandatory instrumented-runner and exhaustive
 cross-product execution method above. See the current
 [development acceptance procedure](../development.md#installed-shared-caddy-functional-fixture).
+
+## User-directed deprecation scope (2026-11-01)
+
+[Decision160](decision-160.md) supersedes the earlier current-validation and
+legacy inventory/porting/removal conditions by explicit user direction. Current
+acceptance requires strict web/backend/docs/build checks; Cockpit is legacy
+opt-in and is not validated for this goal. Preserve its history/source/licenses,
+shared runtime helpers and live installation. All95 new-web behaviors and their
+minimum layers remain required; deprecation and handoff follow guide acceptance.

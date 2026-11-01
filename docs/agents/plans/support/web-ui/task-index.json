@@ -222,7 +222,7 @@
     {
       "id": "WEB-025",
       "path": "docs/agents/plans/tasks/web-025-retire-cockpit-plugin.md",
-      "title": "Retire Cockpit packaging only after proven complete replacement",
+      "title": "Deprecate legacy Cockpit and hand off the independent web UI",
       "phase": "P6",
       "depends_on": [
         "WEB-024"

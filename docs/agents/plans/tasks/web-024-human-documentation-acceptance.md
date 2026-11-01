@@ -8,6 +8,13 @@
 | Depends on | [WEB-023](web-023-compatibility-and-rollback-drill.md) |
 | Branch | `feat/web-ui` |
 | Work-package commit | `WEB-024: <completed outcome>` |
+| Model / effort | `gpt-6.1-sol` / medium |
+
+## Execution approach
+
+Apply the [shared bounded-testing policy](../support/web-ui/testing-strategy.md#web-023026-bounded-product-testing-and-effort).
+Effort rationale: The work is guide accuracy, representative installed walkthroughs and documentation edits.
+Follow existing guides on the accepted fixture and reuse matching screenshots/results. Rerun changed or missing steps and required checks. Escalate to high for a concrete documentation/runtime mismatch affecting safe operation or necessary code diagnosis.
 
 ## Read before implementation
 
@@ -43,7 +50,7 @@ This package completes and verifies documentation already delivered throughout W
 
 A human can operate and troubleshoot the UI from the guides without agent context; examples, routes, screenshots and safety statements match actual tested behavior and no production readiness is fabricated.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+The task also requires the existing `scripts/check.sh` gate plus strict applicable web and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
 
 ## Execution notes and blockers
 
