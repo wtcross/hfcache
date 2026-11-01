@@ -1,9 +1,11 @@
 # The hfcache Cockpit plugin
 
-The [standalone replacement web interface](../web-ui/README.md) is under
-development. This plugin remains shipped and supported during that transition.
-Do not uninstall an installed plugin or change its host controls based on the
-replacement design alone.
+**Deprecated legacy interface.** Use the independent
+[web interface](../web-ui/README.md) for new work. These guides and the plugin
+source, tests, history and licenses remain for existing installations and
+historical reference. Deprecation does not uninstall the plugin or change a
+production release; follow the [migration guide](../web-ui/migration-from-cockpit.md)
+for a separately authorized transition.
 
 Browser administration for one deployed hfcache writer, as a
 [Cockpit](https://cockpit-project.org/) package. It is static files served

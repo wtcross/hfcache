@@ -176,8 +176,11 @@ boxes for the production installation.
 
 ## Legacy plugin deprecation
 
-The hfcache Cockpit plugin is deprecated when the independent web UI is complete.
-Further plugin maintenance and validation are outside the replacement work.
+The hfcache Cockpit plugin is deprecated. New management-interface work uses the
+independent [web UI](README.md). Indexed native/rootless test releases and actual
+browser workflows demonstrate that independence; the
+[acceptance summary](test-release-acceptance.md) records their source, artifacts
+and profile limits. Further plugin maintenance and validation are outside this work.
 Legacy source, tests, licenses, historical evidence and rollback artifacts remain
 available. Generic API clients, private helpers, durable operation state and
 configuration candidates/backups retain their existing roles.

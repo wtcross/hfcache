@@ -71,6 +71,12 @@ See [discovery](docs/discovery.md) for provenance, incomplete coverage and rollb
 
 ## Status
 
+The independent [web interface](docs/web-ui/README.md) is available in unreleased
+source with installed native/rootless test-release evidence. Cockpit is deprecated
+for new work; its source, history, licenses and live installation are preserved.
+See [migration and rollback](docs/web-ui/migration-from-cockpit.md) before a
+separately authorized production transition.
+
 The source package and recorded local deployment are **0.2.2**. Clean application
 source `1c68501` is identified by local annotated `v0.2.2`. This release combines
 configured tags and evidence-backed discovery with Cockpit error handling,
@@ -99,7 +105,8 @@ an operation. Live NAS/workload and other-host acceptance remain separate.
 | --- | --- |
 | `src/hfcache/` | Archive services, HTTP client, CLI and optional REST/MCP transports |
 | `docs/` | Human guides, technical contracts and architectural rationale |
-| `cockpit/` | Browser administration through the installed CLI and approved host interfaces |
+| `web/` | Independent React/TypeScript interface, frozen build inputs and bundled browser assets |
+| `cockpit/` | Deprecated legacy plugin source, preserved with its history and licenses |
 | `packaging/` | Native and container units, configuration, image inputs and runtime templates |
 | `scripts/` | Reviewed build, install, diagnostic, test and consumer helpers; [complete catalog](docs/scripts.md) |
 | `examples/` | Archive policy, independent copy helper and protected-file MCP client |

@@ -4,27 +4,28 @@
 | --- | --- |
 | State | active |
 | Active plan | [Web UI replacement](2026-10-20-plan-web-ui.md) |
-| Current task | [WEB-025 — Legacy deprecation and independent web handoff](tasks/web-025-retire-cockpit-plugin.md) (**pending**, ready) |
-| Branch / completed package | feat/web-ui / WEB-024, this commit |
-| Last completed task | [WEB-024 — Human documentation acceptance](tasks/web-024-human-documentation-acceptance.md) (completed 2026-11-01) |
+| Current task | [WEB-026 — Final validation and handoff](tasks/web-026-final-gate-and-handoff.md) (**pending**, ready) |
+| Branch / completed package | feat/web-ui / WEB-025, this commit |
+| Last completed task | [WEB-025 — Legacy deprecation](tasks/web-025-retire-cockpit-plugin.md) (completed 2026-11-01) |
 | Updated | 2026-11-01 |
 
-All92 completed cases retain their minimum layers; three later-owner cases remain
-pending. WEB-024 Gate1 passes9650 backend/4051 combined web/16 wheel checks with1547
-inputs unchanged. Final guides,40 retained workflow steps,13 historical synthetic
-screenshots and19 inert/strict-model examples are reviewed. No accepted effect
-or manual reader listening is repeated. WEB-023/490694e preserves actual old-client
-and native/rootless78→77→78 compatibility, both fixtures restored78, original
-failures and unknown handles.
+All93 completed cases retain minimum layers; RELEASE-09 and DOC-05 remain pending.
+WEB-025 Gate1 passes9650 backend/4051 combined web/16 wheel checks with1547 inputs
+unchanged. Deprecation notices and actual web/runtime independence are recorded,
+without plugin code/test/dependency maintenance, validation, removal or uninstall.
+Legacy source/history/licenses, shared helpers and live installed state remain.
 
-Continue WEB-025 then WEB-026 as sequential local commits and close the plan.
-The [bounded-testing policy](support/web-ui/testing-strategy.md#web-023026-bounded-product-testing-and-effort)
-retains all95 new-web behaviors/layers and scoped reuse. The user's latest
-instruction excludes further Cockpit maintenance/validation: WEB-025 records
-proportional deprecation, preserving legacy source/history/licenses, shared
-helpers and live state. No plugin inventory/ports/cleanup or uninstall project.
+WEB-024/1d53024 completes human guides; WEB-023/490694e completes actual old-client
+and native/rootless78→77→78 compatibility, both fixtures restored78. Original
+failures, known predecessor limitations and unknown handles remain preserved.
+Continue final source gate, narrowly scoped read-only installed smoke and
+unchanged deep-evidence reconciliation under the
+[bounded-testing policy](support/web-ui/testing-strategy.md#web-023026-bounded-product-testing-and-effort).
+Do not restore mandatory runner cross-products or replay accepted effects.
 
-Preserve production/NAS, original locks/stores/unknown operations, credentials,
-user caches, disabled calendars and remote holds. No merge/push/tag/deployment.
-See [human acceptance](../../web-ui/test-release-acceptance.md) and completed tasks
-for exact source/artifact/profile scope. Current task evidence and Git own state.
+Complete the final local commit and clear this selector only after all95 cases
+and required gates/handoff pass. Preserve production/NAS, locks/stores/unknown
+operations, credentials, caches, disabled calendars and remote holds. No
+merge/push/tag/deployment or live plugin action. See
+[human acceptance](../../web-ui/test-release-acceptance.md) for exact source/profile
+scope. Current task evidence and Git own execution state.

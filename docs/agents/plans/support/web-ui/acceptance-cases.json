@@ -1020,7 +1020,7 @@
         "integration",
         "functional"
       ],
-      "test_binding": "WEB-025 follows the explicit2026-11-01 user deprecation instruction; retain unit/integration/functional proof of new-web independence without a legacy maintenance or test-port project."
+      "test_binding": "tests/unit/test_web_release.py::test_full_native_index_binds_original_helper_source_and_exact_shipped_tree; ::test_native_stage_rechecks_copies_and_normalizes_modes; current gate-control/runtime tests; exact retained f829 native/rootless release/build and restored78 browser evidence with scope/absence qualifiers."
     },
     {
       "id": "RELEASE-09",

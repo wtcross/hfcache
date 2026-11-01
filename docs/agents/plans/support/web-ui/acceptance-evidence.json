@@ -20134,21 +20134,115 @@
       "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "layer": "integration",
+          "node_ids": [
+            "scripts/build-web-release.py::main",
+            "clean repeated backend/UI construction"
+          ],
+          "command": "Original canonical clean-source16 scripts/build-web-release.py construction; actual build-evidence.json retained; outer argv unretained in this report, not reconstructed; no rerun",
+          "exit_status": 0,
+          "source_sha256": "d86e963871d25e37b087d0eed1ef1e26f2ebbb34e66027efccfc1f6aa0c4584e",
+          "artifact_sha256": "8c4f8dc6c821607c4d1db66146448cb5a88b7846efb6917b8f4c94b19751e7e1",
+          "profile": "Original clean f829857e/0.2.78 native releasea251b77e/UI57828b50; actual backend/UI reproducibility true; source snapshot includes preserved legacy provenance, payload remains independent",
+          "evidence_locator": "/var/tmp/w22b16/release/build-evidence.json",
+          "observed_assertion": "Actual clean canonical web release construction produces19 indexed backend/UI/helper payload members, without a plugin runtime payload or plugin build step. Whole source_files provenance may include107 preserved legacy paths; this is not an execution dependency. Current nine relevant web/build/runtime/notice bytes equal that installed source. No new clean build or final2.2 installation is claimed."
+        },
+        {
+          "layer": "integration",
+          "node_ids": [
+            "nine public source/index joins",
+            "native/rootless immutable artifact identities"
+          ],
+          "command": "rtk proxy python3 .scratch/web-025-validation/adopt-independence1.py",
+          "exit_status": 0,
+          "source_sha256": "ac0d01bea056c253d5c2abcebb5991bb4ab5b91dac2c5f7b3b1ac0b70196e4b2",
+          "artifact_sha256": "58ec1d28280f2283f98dd3e85476fcb255b861a990aab673bead40da9cb7843e",
+          "profile": "Read-only current1d53024 source joins to exact retained clean native/rootless78/f829 artifacts and actual browser results; artifact/member observation only",
+          "evidence_locator": ".scratch/web-025-validation/current-source-artifact-join1.json",
+          "observed_assertion": "Nine source hashes equal retained Git sourcef829; nativea251 and rootlessf8b037 manifests retain19/68 payload members and existing roles, with no added frontend server/image/Node. New UI uses direct same-Caddy API/static flow; no Cockpit import/bridge call is present in the bounded original source observation. Generic helpers/notices/history remain. Actual runtime/build results remain their original scope, not plugin absence/uninstall proof."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B -; retained .scratch/web-023-native-browser-restored78-run1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-native-browser-restored78-run1-result.json",
+          "exit_status": 0,
+          "source_sha256": "db695ff2ebddfb9f209f368b0d8017061dd4dd5c53b3161580a91472ff933ee7",
+          "artifact_sha256": "47226e81bb93dc8326f23e6a967441957eff6a25505df28b63fda274a9532f82",
+          "node_ids": [
+            "unchanged",
+            "Library .library-results before/after reload",
+            "bootstrap exact build/manifest/subject",
+            "browser/context/cgroup closure"
+          ],
+          "profile": "Actual native Chromium/root restored78; same retained browser rootfs and persistent profile; reused for new-web independence under byte-identical runtime/UI/control source",
+          "observed_assertion": "Trusted renewed TLS and actual unprivileged sandbox verified. Both Library loads/reload settle, exact UI/backend source+manifest and stable Basic subject match. No domain writes/external requests/5xx/page errors; only precisely observed same-origin read ERR_ABORTED cancellations are retained separately. Context/browser/container/cgroups close normally; app state, original locks/stores/handles/credentials unchanged. Representative boundary, not new3-engine×2-prefix matrix. This same-Caddy direct API/static workflow uses the indexed UI/backend/helper and no plugin page or bridge. Legacy source/install remains present; no absent/uninstalled-plugin claim or new browser execution."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B -; retained .scratch/web-023-rootless-browser-restored78-run1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-rootless-browser-restored78-run1-result.json",
+          "exit_status": 0,
+          "source_sha256": "eccbeba639f17450690833a89f4e9dc1528cf40b1d02772ee685b05cc8be9ef6",
+          "artifact_sha256": "55b7f0deee262bc9828d97b6a77ac62b87573fd309f7b44f48d655049cb91a1b",
+          "node_ids": [
+            "unchanged",
+            "Library .library-results before/after reload",
+            "bootstrap exact build/manifest/subject",
+            "browser/context/cgroup closure"
+          ],
+          "profile": "Actual rootless Chromium/root restored78; same retained browser rootfs and persistent profile; reused for new-web independence under byte-identical runtime/UI/control source",
+          "observed_assertion": "Trusted renewed TLS and actual unprivileged sandbox verified. Both Library loads/reload settle, exact UI/backend source+manifest and stable Basic subject match. No domain writes/external requests/5xx/page errors; only precisely observed same-origin read ERR_ABORTED cancellations are retained separately. Context/browser/container/cgroups close normally; app state, original locks/stores/handles/credentials unchanged. Representative boundary, not new3-engine×2-prefix matrix. This same-Caddy direct API/static workflow uses the indexed UI/backend/helper and no plugin page or bridge. Legacy source/install remains present; no absent/uninstalled-plugin claim or new browser execution."
+        },
+        {
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_web_release.py::test_full_native_index_binds_original_helper_source_and_exact_shipped_tree",
+            "tests/unit/test_web_release.py::test_original_schema_manifest_and_all_indexed_bytes_are_captured",
+            "tests/unit/test_container_service.py::test_human_role_matrix_matches_actual_runtime_network_secrets_and_executable",
+            "tests/unit/test_check_frontend_gate.py::test_default_backend_mode_omits_legacy_frontend_regardless_of_tools",
+            "tests/unit/test_check_frontend_gate.py::test_help_identifies_cockpit_as_explicit_legacy_opt_in_without_running_tools"
+          ],
+          "command": "rtk proxy scripts/check.sh --require-web --with-build",
+          "exit_status": 0,
+          "source_sha256": "5e8a998fa928f040c081731044319f3362726f30dd093549d81bb6617928ceb3",
+          "artifact_sha256": "e4d19966c6cf8a18fb63e27e798662b5da346b7a7603fba8e23c07572fd3c5de",
+          "profile": "Current WEB025 whole-source strict gate, loginUID1000/private empty read-only NAS shadow; release/runtime and gate-control units, no actual plugin validation",
+          "evidence_locator": ".scratch/web-025-validation/gate1.log; gate1-result.json; source-before-required-gate1.json",
+          "observed_assertion": "All9650 backend tests pass, including exact independent web/index/helper/runtime checks and default/help omission fixtures. Strict web/build checks also pass; no plugin command executes. Existing actual build and native/rootless browser records separately supply integration/functional independence, with original source/profile/metadata qualifications."
+        },
+        {
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_web_release.py::test_native_stage_rechecks_copies_and_normalizes_modes",
+            "tests/unit/test_container_runtime.py::test_indexed_web_bytes_share_runtime_image_and_have_exact_build_provenance",
+            "tests/unit/test_container_release_installer.py::test_explicit_web_release_indexes_assets_and_renders_only_api_authentication",
+            "tests/unit/test_container_release_installer.py::test_backend_only_release_needs_no_web_verifier_or_authentication"
+          ],
+          "command": "rtk proxy scripts/check.sh --require-web --with-build",
+          "exit_status": 0,
+          "source_sha256": "5e8a998fa928f040c081731044319f3362726f30dd093549d81bb6617928ceb3",
+          "artifact_sha256": "e4d19966c6cf8a18fb63e27e798662b5da346b7a7603fba8e23c07572fd3c5de",
+          "profile": "Current existing bounded staging/render/runtime source integration seams; synthetic engine/storage limits remain, separate actual retained build/guest records are not replaced",
+          "evidence_locator": ".scratch/web-025-validation/gate1.log; gate1-result.json",
+          "observed_assertion": "Actual current-source stage/copy/index/render checks pass. Web assets and authentication remain API-only, backend-only profiles stay independent, and there is no plugin build/runtime requirement. These source seams do not certify production or absent/uninstalled legacy packages."
+        }
+      ],
       "id": "RELEASE-08",
       "owner": "WEB-025",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_release.py::test_release_08"
+          "node_id": "tests/unit/test_web_release.py::test_full_native_index_binds_original_helper_source_and_exact_shipped_tree"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_release.py::test_release_08"
+          "node_id": "tests/unit/test_web_release.py::test_native_stage_rechecks_copies_and_normalizes_modes"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/release.spec.ts::RELEASE-08"
+          "node_id": "unchanged"
         }
       ],
       "required_layers": [
@@ -20156,7 +20250,7 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "executions": [],

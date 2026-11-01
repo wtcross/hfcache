@@ -2,12 +2,12 @@
 
 | Field | Value |
 | --- | --- |
-| Status | pending |
+| Status | completed |
 | Plan | [Web UI replacement](../2026-10-20-plan-web-ui.md) |
 | Phase | P6 |
 | Depends on | [WEB-024](web-024-human-documentation-acceptance.md) |
 | Branch | `feat/web-ui` |
-| Work-package commit | `WEB-025: <completed outcome>` |
+| Work-package commit | `WEB-025: deprecate legacy UI and record web independence` |
 | Model / effort | `gpt-6.1-sol` / high |
 
 ## Execution approach
@@ -85,14 +85,58 @@ Update mappings using actual checks or explicitly scoped retained evidence.
 
 ## Execution notes and blockers
 
-Not started. Record exact source/files, material decisions, additional test cases and any blocker with an unblock condition here. Do not change a dependency's completed evidence. Split oversized work into new work packages rather than silently making several implementation commits for this ID. No production effects, force resets, remote pushes or historical authorization reuse.
+2026-11-01: Activated after WEB-024/1d53024. Apply only proportional deprecation
+notices and adopt existing actual independent web/release evidence. The earlier
+exhaustive retirement preparation is superseded by the user's explicit direction.
+No plugin code/test/dependency change, validation, inventory/port or uninstall.
+All95 new-web behaviors/layers remain. Root preserves live state and shared
+helpers/history/licenses; the required gate is strict web/backend/docs/build.
+
 
 ## Completion evidence
 
-Not executed; no acceptance is claimed by this draft. On completion, replace this section with:
+Deprecation notices are implemented in root/web navigation, the migration guide
+and only the legacy guide entrypoint header. Legacy plugin code/tests/dependencies,
+licenses/history, shared runtime helpers and live installation are unchanged.
+README now identifies the independent web source tree. Dated ADR144/160 notes
+record this accepted user-selected implementation; no new architecture is chosen.
 
-- Date and exact source/artifact identities; for an uncommitted result use `WEB-025, this commit`, never a fabricated commit hash.
-- Actual unit/component/integration/functional commands, exit status, relevant test node IDs, test profile/browser and safe evidence locators; explicitly separate simulated storage, isolated platform, and unperformed production/NAS acceptance.
-- Acceptance-case coverage and failure-injection outcomes, required gate output, coverage/budget measurements where relevant, and zero skipped required checks.
-- Human documentation created/updated and example/link validation; invariant/ADR review outcome and amendments or justified no-impact statement.
-- Link to completed progress entry, operator handoff, next-task/current-selector update, and any retained limitation. A required unresolved limitation keeps this task blocked rather than completed.
+RELEASE-08 completes at its unchanged unit/integration/functional minimum
+layers. Current source/artifact join `.scratch/web-025-validation/current-source-artifact-join1.json`
+SHA `58ec1d28280f2283f98dd3e85476fcb255b861a990aab673bead40da9cb7843e`
+checks nine public web/build/runtime/notice sources equal installed cleanf829.
+Native indexa251b77e/UI57828b50 and rootless indexf8b03759 retain19/68 actual
+payload members; no plugin payload or extra frontend server/image/Node runtime.
+Whole-source provenance can retain107 legacy paths; it is not a runtime/build
+execution dependency. Generic clients/helpers and attribution remain.
+
+The actual clean source16 build evidence has SHA
+`8c4f8dc6c821607c4d1db66146448cb5a88b7846efb6917b8f4c94b19751e7e1`,
+source snapshotd86e9638, backend/UI reproducibility true. Its original construction
+is not rerun and unretained outer argv is not reconstructed. Actual restored78
+native/rootless trusted-TLS Library/reload/original-subject browser records
+`47226e81…`/`55b7f0de…` are reused for independent direct API/static operation,
+with original source/profile/closure and failed-script qualifications retained.
+No absent/uninstalled-plugin proof or new browser matrix is claimed.
+
+Required current Gate1 supplies passing fresh unit/integration default-gate/release-stage assertions before completion. Real bindings include native exact shipped/index
+source, original schema/member capture, role matrix, actual bounded staging and
+web-only runtime/authentication, backend-only install, and default omission/help
+control fixtures. These last fixtures invoke fake tools, never the plugin.
+
+Reviewed CP boundary and INV019/020/021 with ADR088/140/143/144/160. Existing
+source and profile safety constraints remain; only already authorized deprecation
+status changes. No runtime, durable format, dependency or privilege change follows.
+All92 earlier completed cases stay intact; this case completes and two final cases remain pending. Strict web/backend/docs/build Gate1 passes before final adoption.
+Production/NAS/guard/credential/calendar/unknown-handle/remote holds are unchanged.
+
+Completed2026-11-01, WEB-025, this commit. Required Gate1 exits0/1631.925s:9650 backend/4051 combined web/16 wheel, three locked profiles, two built browsers and real API fixture;95.02% lines/90.13% branches. All1547 frozen inputs unchanged. Freeze SHA `5e8a998fa928f040c081731044319f3362726f30dd093549d81bb6617928ceb3`, result SHA `e4d19966c6cf8a18fb63e27e798662b5da346b7a7603fba8e23c07572fd3c5de`, log SHA `66126a01187ab3a47577a28c3f96cd41c143c8bff5995a0746964d87624af1a9`. Outer shadow also0; no actual legacy plugin command.
+
+All93 completed cases retain minimum layers; final RELEASE-09/DOC-05 remain pending. Post-gate adoption changes only evidence/status/handoff documents, checked again with current docs/plan/diff validators. WEB-026 final validation and closure is next. No production/NAS/remote or live-plugin action.
+
+Post-adoption closure1 passes0:224 human documents/29 helpers, all9 plan tests
+and git diff --check. Output `.scratch/web-025-validation/closure1-shadow.log`
+SHA `101e19fe620adf76e755ce173fae2cefcc5ab5881cac1e37a5da33f51e1f1294`.
+Only six evidence/status/handoff documents differ from the successful source
+freeze; runtime/build/gate code is unchanged. Completed progress, operator
+handoff and the next-task selector are recorded in this commit.

@@ -56,3 +56,12 @@ acceptance requires strict web/backend/docs/build checks; Cockpit is legacy
 opt-in and is not validated for this goal. Preserve its history/source/licenses,
 shared runtime helpers and live installation. All95 new-web behaviors and their
 minimum layers remain required; deprecation and handoff follow guide acceptance.
+
+## Deprecation implementation (2026-11-01)
+
+The user-selected [deprecation amendment](decision-160.md) is implemented in
+current source/navigation after independent UI functional, compatibility and
+guide acceptance. The original file-removal/test-port proposal remains
+superseded, not silently reported as executed. Historical material, attribution,
+shared runtime helpers and live installed state remain. Current evidence and
+its final-validation scope are in [candidate acceptance](../web-ui/test-release-acceptance.md).

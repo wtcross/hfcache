@@ -1,10 +1,10 @@
 # Candidate test-release acceptance
 
-As of November 1, 2026, **92 of 95 acceptance scenarios are complete**, with
-executed evidence at every required layer. Installed functional acceptance,
-compatibility/rollback and human guide acceptance are complete. The remaining
-three scenarios cover legacy deprecation and final validation/handoff; overall
-plan acceptance remains incomplete.
+As of November 1, 2026, **93 of 95 acceptance scenarios are complete**, with
+executed evidence at every required layer. Installed functionality,
+compatibility/rollback, human guides and independent-web deprecation acceptance
+are complete. Two scenarios remain for final validation and operator handoff;
+overall plan acceptance remains incomplete.
 
 The installed test candidate is **0.2.78**, from application source
 `f829857ec045ce4616055e357e7d6aa7047287ca`. It uses matching immutable interface,
@@ -76,9 +76,13 @@ case records rather than being silently credited as broader browser proof.
 
 ## What remains
 
-The remaining work is proportional legacy deprecation, final validation and
-operator handoff. Three acceptance scenarios remain pending. No further Cockpit
-plugin maintenance or validation is required for the replacement.
+The hfcache Cockpit plugin is deprecated. The new web UI operates independently
+through its indexed API/static artifacts and existing Caddy endpoint. Legacy
+source, history, licences, shared helpers and installed state remain; no plugin
+validation or uninstall was performed.
+
+The remaining work is final validation and operator handoff. Two acceptance
+scenarios remain pending.
 
 This summary supplies **no production rollout or real NAS acceptance proof**.
 Production archive permissions, original guards, unresolved handles, disabled

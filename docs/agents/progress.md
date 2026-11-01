@@ -29,6 +29,24 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-025 Deprecate legacy UI and record web independence
+  (2026-11-01, this commit — [task](plans/tasks/web-025-retire-cockpit-plugin.md)).
+  Root/web/migration/legacy-entrypoint notices implement the explicit user scope;
+  no plugin code/test/dependency maintenance, validation, port, cleanup or live
+  uninstall. Generic helpers, attribution, history, old artifacts and installed
+  state remain. Nine current public source joins equal cleanf829; native/rootless
+  indexed19/68 payload members and real restored78 browser records preserve
+  exact source/profile/unknown/failure scope. Whole-source legacy provenance is
+  distinguished from runtime dependency. ADR144/160 record implementation;
+  no new architecture, runtime or privilege change. Required Gate1 passes0/
+  1631.925s:9650 backend/4051 web/16 wheel, three locked profiles, two built
+  browsers and real API fixture;95.02% lines/90.13% branches,1547 inputs unchanged,
+  log SHA66126a01187ab3a47577a28c3f96cd41c143c8bff5995a0746964d87624af1a9.
+  All93 cases retain minimum layers; final RELEASE-09/DOC-05 remain. Post-adoption
+  checks pass224 docs/29 helpers,9 plan tests and git diff --check. WEB-026 is
+  next. No production/NAS/remote/live effect.
+
+
 - [x] WEB-024 Complete human guides and workflow acceptance
   (2026-11-01, this commit — [task](plans/tasks/web-024-human-documentation-acceptance.md)).
   Web-first root/docs navigation, implemented job/tag links, accurate historical
@@ -3082,6 +3100,17 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-01 WEB-025 deprecation/independence completes under the user's explicit
+no-further-plugin-work instruction.93 of95 cases retain all minimum layers.
+Continue WEB-026 final gate, read-only current installed observations/original
+lookups, final evidence/human handoff and local plan closure. Both fixtures stay
+restored78; original stores/locks/unknown SDK pending, credentials, guards, disabled
+calendars, user caches and live plugin remain. No production/NAS workload,
+merge/push/tag/deploy/uninstall. Exact successful generated Gate24 TMP alone is
+inventoried/retired with logs/manifests/13 outputs retained; generated frontend
+reports remain byte-verified behind their canonical paths. No unknown cleanup.
+
 
 2026-11-01 WEB-024 guides and required source gate complete;92 of95 cases retain
 all minimum layers. Continue proportional WEB-025 deprecation then final WEB-026

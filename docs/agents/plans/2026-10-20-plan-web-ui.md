@@ -8,9 +8,21 @@
 | Tracker | `docs/agents/plans/current.md` — sole active selector; intentionally not overwritten by extraction |
 | Baseline | `6b8fae2e0997403ae5c716a2e92148af0a972af9` — main reviewed October 20, 2026 |
 | Branch | `feat/web-ui` |
-| Latest completed package | WEB-024, this commit; WEB-025 is next |
+| Latest completed package | WEB-025, this commit; WEB-026 is next |
 | Work-package family | WEB, deliberately introduced for this feature after collision check; one task = one work package = one implementation commit |
 | References | [Bundle entrypoint](support/web-ui/README.md), [kickoff](support/web-ui/KICKOFF.md), [source review](support/web-ui/source-review.md) |
+
+## Legacy deprecation and independent web handoff (2026-11-01)
+
+WEB-025 implements the user's proportional deprecation direction. Current
+notices preserve legacy source/history/licenses, shared helpers and live state;
+no plugin validation, code/test port, dependency cleanup or uninstall occurs.
+Actual clean indexed payloads and native/rootless browser observations prove
+new-web independence within their recorded scope. Required Gate1 passes9650
+backend/4051 combined web/16 wheel checks,1547 inputs unchanged. All93 cases
+retain minimum layers; final RELEASE-09/DOC-05 remain. See
+[WEB-025](tasks/web-025-retire-cockpit-plugin.md#completion-evidence).
+WEB-026 final validation, human handoff and plan closure are next.
 
 ## Human guide acceptance (2026-11-01)
 

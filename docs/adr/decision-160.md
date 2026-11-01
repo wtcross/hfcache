@@ -46,3 +46,15 @@ Amends [088](decision-088.md), [143](decision-143.md) and [144](decision-144.md)
 The earlier requirements and executed results remain historical. See the
 [development gate](../development.md#web-workspace) and
 [replacement migration guide](../web-ui/migration-from-cockpit.md).
+
+## Source deprecation conformance (2026-11-01)
+
+The independent UI is implemented with owned native/rootless functional,
+compatibility and guide evidence. Current navigation and the legacy guide
+entrypoint record deprecation; preserved legacy source/tests/licenses/history and
+shared runtime helpers remain. Indexed web payloads and actual browser workflows
+establish independence without requiring plugin absence or another legacy test.
+The default gate omission is implemented and separately tested with strict web,
+backend and build checks. See [candidate acceptance](../web-ui/test-release-acceptance.md)
+for exact source/profile limits and remaining final validation. No production
+migration or installed-plugin removal follows.
