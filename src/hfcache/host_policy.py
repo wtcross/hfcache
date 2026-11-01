@@ -39,6 +39,7 @@ REVISION_KEY = Path("/etc/hfcache/host-helper.key")
 SELINUX_INSTALLATION = Path("/etc/hfcache/host-helper-selinux.json")
 SELINUX_CONTEXT = "system_u:system_r:hfcache_host_helper_t:s0"
 SYNC_OBSERVER_CONTEXT = "system_u:system_r:hfcache_sync_observer_t:s0"
+SYNC_OBSERVER_CREDENTIAL_MOUNT = Path("/run/credentials/hfcache-sync.service")
 SYNC_OBSERVER_STATE_TYPE = "hfcache_sync_observer_state_t"
 SYNC_OBSERVER_STATE = Path("/var/lib/hfcache/scheduled/sync")
 SYNC_OBSERVER_DROP_IN = Path("/etc/systemd/system/hfcache-sync.service.d/50-hfcache-observer.conf")
@@ -368,8 +369,9 @@ class _Capture:
         finally:
             os.close(fd)
 
-    def mount_rows(self) -> list[tuple[Path, str, set[str], set[str]]]:
+    def mount_table(self) -> tuple[list[tuple[Path, str, set[str], set[str]]], str | None]:
         rows = []
+        credential = None
         for line in self.accounting(MOUNTINFO).splitlines():
             left, separator, right = line.partition(" - ")
             before, after = left.split(), right.split()
@@ -380,10 +382,28 @@ class _Capture:
             raw = re.sub(r"\\([0-7]{3})", lambda m: chr(int(m[1], 8)), before[4])
             path = Path(raw)
             _need(path.is_absolute() and str(path) == raw and ".." not in path.parts)
-            rows.append((path, after[0], set(before[5].split(",")), set(after[2].split(","))))
+            flags = set(before[5].split(","))
+            rows.append((path, after[0], flags, set(after[2].split(","))))
+            if path == SYNC_OBSERVER_CREDENTIAL_MOUNT:
+                _need(
+                    credential is None
+                    and re.fullmatch(r"[1-9][0-9]*", before[0])
+                    and re.fullmatch(r"0|[1-9][0-9]*", before[1])
+                    and re.fullmatch(r"(?:0|[1-9][0-9]*):(?:0|[1-9][0-9]*)", before[2])
+                    and before[3] == "/"
+                    and len(after) == MOUNT_TRAILING_FIELDS
+                    and after[0] == after[1] == "tmpfs"
+                    and {"ro", "nosuid", "nodev", "noexec"} <= flags
+                    and "rw" not in flags,
+                    "facts-unavailable",
+                )
+                credential = line
             _need(len(rows) <= MAX_MOUNT_ROWS, "facts-unavailable")
         _need(rows, "facts-unavailable")
-        return rows
+        return rows, credential
+
+    def mount_rows(self) -> list[tuple[Path, str, set[str], set[str]]]:
+        return self.mount_table()[0]
 
     def local(self, path: Path) -> None:
         _need(path.is_absolute() and ".." not in path.parts and not path.is_relative_to("/srv"))
@@ -1125,7 +1145,7 @@ class _Inspection:
     def __init__(self, budget: InspectionBudget, host_labels: object | None = None) -> None:
         self.host_labels = cast("Any", host_labels)
         self.capture = _Capture(budget)
-        self.capture.mounts = self.capture.mount_rows()
+        self.capture.mounts, self.observer_credential_mount = self.capture.mount_table()
         self.policy_body = b""
         self.deployment_body = b""
         self.config_body = b""
@@ -1729,7 +1749,7 @@ class _Inspection:
                 _need(len(entries) <= 1, "facts-unavailable")
         return entries
 
-    def validate(self) -> None:
+    def validate(self, *, observer_exited: bool = False) -> None:
         self.capture.budget.remaining()
         self.selinux()
         _need(
@@ -1754,7 +1774,18 @@ class _Inspection:
             "key-invalid",
         )
         self.capture.link(PREFIX / "current", self.deployment["release"]["selector_target"])
-        _need(self.capture.mount_rows() == self.capture.mounts, "facts-unavailable")
+        mounts, credential = self.capture.mount_table()
+        if observer_exited and self.observer_credential_mount is not None and credential is None:
+            retained = [
+                row for row in self.capture.mounts if row[0] != SYNC_OBSERVER_CREDENTIAL_MOUNT
+            ]
+            _need(mounts == retained, "facts-unavailable")
+            self.capture.mounts = retained
+            self.observer_credential_mount = None
+        _need(
+            mounts == self.capture.mounts and credential == self.observer_credential_mount,
+            "facts-unavailable",
+        )
         _need(
             self.guard_state() == self.guard,
             "facts-unavailable",
@@ -2072,10 +2103,46 @@ def confirm_configuration(
         raise InspectionError(msg) from None
 
 
-def read_config_base(snapshot: AuthoritySnapshot) -> dict[str, Any]:
+def read_config_base(
+    snapshot: AuthoritySnapshot, body: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """CONFIG-01: projection and opaque revision describe the same private capture."""
+    _need(type(body) is dict or body is None, "invalid-request")
+    if body:
+        _need(set(body) == {"expected_archive_id", "expected_archive_root"}, "invalid-request")
+        identifier, root = body["expected_archive_id"], body["expected_archive_root"]
+        _need(
+            type(identifier) is str
+            and re.fullmatch(r"[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}", identifier) is not None
+            and type(root) is str
+            and 0 < len(root) <= MAX_PATH_LENGTH
+            and root.startswith("/")
+            and root.isprintable(),
+            "invalid-request",
+        )
     revalidate(snapshot)
-    _need(snapshot.status()["permissions"]["configuration"], "operation-denied")
+    status = snapshot.status()
+    if body:
+        _need(
+            type(status) is dict
+            and type(status.get("schema_version")) is int
+            and status["schema_version"] == 1
+            and status.get("state") in {"supported", "guarded"}
+            and type(status.get("binding")) is dict
+            and type(status.get("permissions")) is dict
+            and type(status["permissions"].get("configuration")) is bool,
+            "config-unavailable",
+        )
+    _need(status["permissions"]["configuration"], "operation-denied")
+    if body:
+        # Decision153: compare the API's lifespan tuple; never open its supplied root.
+        binding = status["binding"]
+        _need(
+            status["profile"] in {"native", "rootless"}
+            and binding["archive_id"] == body["expected_archive_id"]
+            and binding["archive_root"] == body["expected_archive_root"],
+            "config-unavailable",
+        )
     document = parse_configuration(snapshot._inspection.config_body)  # noqa: SLF001 - same captured bytes
     result = {
         "schema_version": 1,
@@ -2461,10 +2528,8 @@ def _configuration_reply_limit(value: dict[str, Any], operation: str) -> None:
         _config_need(size <= MAX_CONFIGURATION_REPLY)
 
 
-def prepare_configuration(snapshot: AuthoritySnapshot, managed: object) -> dict[str, Any]:
-    """CONFIG-02/03: exact non-installing reconstruction under the original HMAC base."""
-    revalidate(snapshot)
-    _need(snapshot.status()["permissions"]["configuration"], "operation-denied")
+def _prepare_configuration(snapshot: AuthoritySnapshot, managed: object) -> dict[str, Any]:
+    """Decision154: pure captured reconstruction; the caller owns authority rechecks."""
     _config_need(type(managed) is dict and set(managed) == {"base_revision", "edits"})  # type: ignore[arg-type]
     base = managed["base_revision"]  # type: ignore[index]
     _config_need(type(base) is str and HEX.fullmatch(base))
@@ -2484,6 +2549,14 @@ def prepare_configuration(snapshot: AuthoritySnapshot, managed: object) -> dict[
         "required_selectors": selectors,
     }
     _configuration_reply_limit(result, "config-prepare")
+    return result
+
+
+def prepare_configuration(snapshot: AuthoritySnapshot, managed: object) -> dict[str, Any]:
+    """CONFIG-02/03: exact non-installing reconstruction under the original HMAC base."""
+    revalidate(snapshot)
+    _need(snapshot.status()["permissions"]["configuration"], "operation-denied")
+    result = _prepare_configuration(snapshot, managed)
     revalidate(snapshot)
     return result
 
@@ -2575,7 +2648,11 @@ def confirm_schedule(
     capture.absent = original.capture.absent.copy()
     capture.mounts = original.capture.mounts.copy()
     inspection.unit_states = original.unit_states.copy()
-    if action != "observer":
+    if action == "observer":
+        # ADR156: the sole observer caller has observed the retained original
+        # pidfd exit. The clone's final mount read handles its credential teardown.
+        _need(snapshot.profile == "native", "facts-unavailable")
+    else:
         capture.files.pop(SCHEDULE, None)
         capture.labels.pop(SCHEDULE, None)
         capture.absent.discard(SCHEDULE)
@@ -2592,4 +2669,4 @@ def confirm_schedule(
         inspection.unit_states["hfcache-sync.timer"] = timer
     inspection.unit_states["hfcache-sync.service"] = _show("hfcache-sync.service", capture.budget)
     inspection.legacy = inspection.legacy_namespace()
-    inspection.validate()
+    inspection.validate(observer_exited=action == "observer")

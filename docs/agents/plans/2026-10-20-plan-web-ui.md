@@ -8,9 +8,40 @@
 | Tracker | `docs/agents/plans/current.md` — sole active selector; intentionally not overwritten by extraction |
 | Baseline | `6b8fae2e0997403ae5c716a2e92148af0a972af9` — main reviewed October 20, 2026 |
 | Branch | `feat/web-ui` |
-| Latest completed package | WEB-021, this commit; WEB-022 is next under the 2026-10-29 continuation goal |
+| Latest completed package | WEB-022, this commit; WEB-023 is next after the authorized testing/effort amendments |
 | Work-package family | WEB, deliberately introduced for this feature after collision check; one task = one work package = one implementation commit |
 | References | [Bundle entrypoint](support/web-ui/README.md), [kickoff](support/web-ui/KICKOFF.md), [source review](support/web-ui/source-review.md) |
+
+## Installed acceptance through WEB-022 (2026-11-01)
+
+WEB-022 completes under the adopted product-focused criteria: all85 owned-through
+scenarios have required-layer and actual installed evidence; ten later-owner cases
+remain pending. Required Gate21 passes9646 backend/4051 combined frontend/581
+Cockpit/16 wheel checks with1545 inputs unchanged. Original failed aggregates,
+unknown operations and qualified observations remain preserved. See the task's
+completion evidence and human test-release summary for exact scope. This is not
+production rollout or NAS acceptance. Next, refresh/apply the WEB-023–026 bounded-
+testing/effort amendments before compatibility/rollback implementation.
+
+## Resumption (2026-11-01)
+
+The user's fresh-session execution goal resumes this plan and authorizes
+WEB-022–026 in dependency order, local commits, final validation and closure.
+WEB-022 remains in_progress. Reconcile retained evidence under the accepted
+product-focused criteria before adding checks for any concrete missing clause.
+The pause below is historical; its preservation limits remain in force.
+
+## Pause handoff (2026-11-01)
+
+The user explicitly requests a stopping point and pause after accepting the
+product-focused proposal. Implementation is paused; WEB-022 stays in_progress,
+WEB-023–026 pending, with no completion or partial package commit claimed.
+The [fresh-session prompt](support/web-ui/fresh-session-implementation.md) and
+[copyable goal](support/web-ui/fresh-session-goal.md) record current state,
+accepted criteria, evidence and preservation limits. A new execution request
+using that prompt authorizes resumption as active. No acceptance decision is
+pending. The untouched ledger has73 completed/12 unfinished through WEB-022;
+Gate21 is prepared/unrun and Gate20 remains the last full passing gate.
 
 ## Outcome and scope
 
@@ -4345,3 +4376,403 @@ product files stay unchanged. This is isolated packaging acceptance; no full
 positive fourteen-tool MCP, complete workflow, rollback, NAS or production claim.
 WEB-022 is next under the existing continuation authorization. The plan stays
 active; no merge/push/tag or live Cockpit removal is authorized.
+
+## Installed-gate dependency sequencing correction (2026-10-29, WEB-022)
+
+The original task022 command invoked the final95-case gate, including the
+WEB-025 Cockpit-absence and WEB-026 handoff cases before their prerequisites.
+Implement the existing early-versus-final rule precisely: the same installed
+runner requires all85 cases owned throughWEB022 in all18 profile/prefix/browser
+cells, later packages add their owned cases, and the final WEB026 command remains
+all95×18. A through-task invocation reports later cases pending and cannot use
+the final flag. No case is waived, no required omission passes and no Cockpit
+retirement moves ahead of its dependency. The task/testing contracts carry the
+commands; this clarification implements ADR143 without a new runtime authority
+or fixture framework.
+
+2026-10-31 continuation: the focused native Chromium/root configuration read
+passes0 (87aad721…), HTTP200/exact draft base/disabled actions and normal closure;
+old native-six aggregate remains failed. Check5 docs/plan/shadow pass0 on their
+prior record snapshot. Public differential inputs generate/check0 (cf86b621…/
+7a65c192…): three tiny revisions total29821B, no archive records preseeded. The
+owned Hub successor setup passes0 (bc8c26fd…), normal old listener exit0 and
+unchanged app/archive/config/credentials/CA; extra backing masks retain confinement.
+The first differential UI launcher then refuses at host capacity preflight,
+before intent/SSH/browser/POST: Home84574208B is below268435456B. No Apply/Sync
+occurs; refusal10f234d0… is retained on rootFS. Safe completed-build preservation
+continues; no reserve reduction, guest/image action or acceptance claim follows.
+
+2026-10-30 WEB-022 progress: native75 C2/D1/E1 counters, READ3 and same-original
+NEW/E2 verification pass; old full reports/last_full remain. Rootless75 six-cell
+read UI and a separate Chromium/root18-refresh/4CLI/28MCP overlap pass, with seed
+reports not new worker jobs. Same-VM903118a5 corpus activation A2/B passes after
+A1's four drains/timer-property failure, without repeat stops or authority/server/
+credential writes. Pilot1 passes three steps, then fails step4's45s aggregate
+budget after27 queries; seven steps remain unrun, all preservation holds and no
+new mapped-row pass is credited. Pilot2 also fails step4's10s wait after23 states;
+focused AND-zero/Clear29 diagnostic0 establishes no cause or full-step acceptance.
+Pilot3 fails after nine passes on a premature tenth loading check; two driver
+readiness waits precede actual pilot4's all-eleven transport/browser0 in one
+Chromium/root cell. QA1 passes three combined technical-filter checks and keyboard/
+filter pagination, then its retained-tab focus observation fails before async
+restoration; remaining checks unrun. QA2 also remains1: six checks pass including
+retained keyboard/README/390px, step7 real200% zoom unobserved, later checks unrun;
+closed/zero effects/other preservation hold. Root visually reviews390px images,
+explicit metadata loading state retained. Rootless corpus A1 remains1 after stock
+bridge0/CID-observation race; exact-checkpoint A2/B2 now pass0 without stop replay,
+with byte-identical reviewed authority/config-only grants/original1790/RO/old
+state retained and zero authority/server/credential writes. Rich rootless pilot1
+remains1 after ten passes/last exact-base wait with two GETs pending; closed/zero
+effects/errors/four other proofs hold. Fresh rootless6v2/3855 now passes0/all six
+cells/66 fresh steps, all closures/five proofs/zero effects/errors;120s pilot/
+10s DOM/15s navigation scope gives no mapped/full85×18 stamp. Separate Settings200%
+zoom0 proves Files layout/restores
+100%/closes/preserves state; README is still Loading in the reviewed cropped image,
+so zoom1 alone leaves loaded README unproven. Separate zoom2/3855 actual0 now
+proves exact loaded README/table/code and Files at100/200%, correct1440×913
+viewport images/restored100%/closed/all five proofs/no effects. Native07fe completes1:
+all6 first ten Library/Files/README pass, configuration5/6 with Chromium/root's
+original10s base-wait false; all close/zero effects/errors/four other root proofs
+true, aggregate flag false. Focused native Chromium/root configuration follow-up
+passes0 for that cell only; no old aggregate or full-case pass is relabelled.
+QA2 stays false, no copied full-case credit.
+Three completed release trees preserve to root/old-path links; Home258334720→
+378793984B without guest changes. Exact green gate11 TMPDIR retirement0 restores
+root1349586944→2272735232B, preserving logs/results/freeze/inventory. Prior check4 docs/plan/shadow0
+predates this update. Gate10 types1 stays;
+gate11 inner/outer0 covers its prior1006-file source,9580 backend/4049 frontend/
+581 Cockpit/16 wheel/two browser checks. Current driver3855cebb/freeze4 adds a
+test35s HTTP-response wait before existing10s DOM base; fetch30s/queue caveat and
+strict45s unchanged. The current full gate is required, source13's other1002
+unchanged. Task022 retains scope/
+failures;16 mappings/34 steps and full85×18 remain open, CARD-10/12 partial,
+23–26 pending and old unknown outcomes untouched.
+
+2026-10-31 WEB-022 progress: eight static outputs preserve0 on same-host root/old-
+path links, Home76840960→516915200B, without guest changes. Capacity and retained-
+cache-symlink observation failures remain. Installed pure plan0 observes903a88
+58.93h/24h/actionable1/blocked0/problems0 without jobs/writes. Present2 remains1:
+two UI steps pass, original Sizing succeeds and original Apply confirms/pendingfalse,
+adding only one enabled7-SHA model to28 unchanged disabled entries. Late Edit
+lookup fails on25-row pagination; no Sync/Sync admission occurs. Old seven sets/
+unknowns/private originals/roles1722 preserve, all browser closures/zero errors.
+Present3 remains1 on dynamic request_id comparison; present4 remains1 after
+both SAME-original UI observations/host confirmation pass, on nested entry-tags
+locator scope. Both zero-POST/operations/closed/preserved, no Sync. Present5 now
+remains parent/browser1 after five passed steps and one FIRST genuine selected
+Sync:7-SHA/e6ad4b8a/gen1/8files16926B, reused0, HFWRN011. Known a88 normal TX-07
+quarantine/failedHFTXN003 plus one RecoveryReport and three committed journals are
+actual. Present5 browser/parent failures stay; qualification2 effects/preservation0
+(2539ceed…) allows only the exact191B HF marker beyond reviewed changes. Present6
+remains1 after four read steps/four AND queries on CDP response-body timing.
+Fresh present7 passes0/five fresh steps/nine AND queries/zero POSTs or operations/
+all closures/six proofs in one Chromium/root cell, no replay/mapped/full85×18 stamp.
+Native29/30/8 versus independent rootless28/29/7 stays explicit. Static artifacts
+remain same-host root `/var/tmp` with home aliases, after7 free root1815605248B/
+home470507520B, historical preservation figures untouched. Revision8 attempts1/2
+remain1 before POST/operations:10s draft-base wait, then35s completed-response
+observer. Attempt2's actual DOM/root-viewed image shows loaded base38cc00c9…/
+29 clean rows/no alerts; HTTP200→ERR_ABORTED is consistent with the UI client's
+unconditional finally abort after strict decode, not proof of failed UI reading
+or completed transfer. Both close/preserve; no app defect is established.
+Actual3 browser passes all six steps/closed/zero errors: original Sizing/Apply/
+selected Sync publishes8/5ef704ee…/gen2,6609B published/382B downloaded/6227B
+reused/HFWRN011; retained7 README/source and current8 withheld/no-fallback UI pass.
+Its original parent1/cache-lock expectation and qualification1/2 failures stay.
+Independent read-only qualification3 passes0/9ca547c1…/all seven boolean proofs:
+only14 shared-payload link/ctime rows plus seven exact empty lock timestamps and
+the exact8-origin tree inventory are allowed; all other state stays exact.
+Native reaches29/30/9/current8, with root-viewed README images retaining other-
+panel Loading limits. Actual9 now passes transport/browser0/all six UI STEPS in
+ONE Chromium/root cell/8a34e9c1…: original Sizing/Apply/selected Sync publishes
+ed17f321…/gen3,6286B published/59B downloaded/6227B reused/HFWRN011, no Recovery.
+Unsafe9 withheld, unsupported8/present7 retained, explicit current9 no-fallback,
+all closures/six boolean proofs pass; only21 payload link/ctime rows/seven exact
+cache-lock timestamps change. Native now29/30/10, rootless28/29/7 unchanged.
+Actual six-cell aggregate1/a44f42d9… retains four Chromium/Firefox cells×six
+passed steps; WebKit both aliases pass authority/README assertions but screenshot-
+induced CSP console errors fail strict health. All close/preserve/no effects;
+aggregate false/final probe unrun. Separate real q→Models75.2ms probe1/21598052…
+finds the actual search-reset bug/15 results instead of1. Three-file contract-first
+DOM-q/type composition fix passes23/23 component tests plus lint/format after
+two fail-before regressions; INV018/021/ADR145 reviewed. Screenshot diagnostic0/
+6f6094d6… proves Playwright's transient HEAD `body {}` caused CSP only at capture;
+no product CSP change. Fresh strict WebKit follow-up0/818d8c17… passes both aliases/
+six steps/nine AND queries each, console0/closures/six root proofs. With the four
+earlier Chromium/Firefox cells, native source75 read coverage reaches six cells;
+original aggregate remains false. Nine-query aggregates46.14/77.52s use pilot120s,
+not strict45s/performance acceptance. Historical pre-fix gate12 stays green;
+exact generated temps retire0/3a91b6d7…/179508 inventory/two no-reference proofs/
+logs retained. Post-fix gate13 now passes inner/outer0/dca41acd…/0a0c45c8…,
+frozen1006 unchanged:9580 backend/4051 frontend/Cockpit/wheel/built-browser/HTTP.
+Clean source14/.76 cut0/d4d99f8d… leaves main refs/index/product exact. Native14
+build0/b4eaf3ae…/18 reproducible artifacts and postproof620873aa… pass; API76
+canonical build0/98aae0b4… and canonical runtime foundation0/e529c2eb…/proof93c873f6…
+pass; stores/main/reserves stay exact. Native76 A/B/C0/8228400d… now runs new
+helper86976/worker86996/API87017/Caddy87027 on RW903, preserving original1722/
+keys/old reports/stores/Hub and all19 bindings/six grants/SELinux receipt.
+Original native q6 remains1/71235451…: five cells/ten cases pass, WK-management406ms
+typed is timing-unobserved/clear unrun, all health/closures/preservation hold.
+Fresh WK-management2 pass0/6f35217a… qualifies both85/84ms cases/strict health/
+closures/seven proofs. Installed q fix thus has six-cell coverage from5+1 receipts;
+old aggregate/source75 failure stay false, no merged matrix stamp. Rootless76
+normal app start0/bda51883… and fresh q/type six-cell0/19d7e7c3… now prove12 cases
+in97.165s, strict health/closures/six preservation proofs/zero effects; its28/29/7
+corpus remains separate from native29/30/10. Native first schedule530db125… stays
+failed after one accepted replacement: ec674 interrupted/no result, foreign3f
+history rejected before protected work. GET observer830efb44… remains aggregate1
+for expected409 console; scope184ac01a… qualifies its actual original-key UI reads/
+unknown-pendingfalse guidance/closures/preservation, not reconciliation. Fresh
+same-VM control prepare0/eee774bc… plus review3627a890… retain old API/history/
+backups/server/903/reports/keys/locks and identical65e929fe… authority. First restart
+7ec644f8… remains failed after four starts; read-only qualification2 passes0/
+a72d807a… in5.279s using the SAME roles/new store and all preservation joins,
+zero new starts. Scoped schedule summary0/cd798799… now joins five full sessions
+and Firefox-management's original2+new PauseReset2,24 distinct confirmed originals,
+all six final default/inactive. Raw9dae3804… stays false; GET diagnostic0/35bcc3ad…
+shows current enabled controls/both confirmed originals without proving the old
+page's cause; new-only PauseReset0/4dbc97db… reloads all four. Both unrun WebKit
+cells pass0/abd3239d…/89679218…. This gives no full HOST/matrix stamp. Rootless76
+admin1/8f027823… remains1/919.435s (locator404 console/read deadlines), admin2/
+5bdb14be… remains1/301.809s (abort/deadlines/expected400 versus actual422). All
+close/preserve, zero operations/effects; one pure validation422 in admin2. Ordinary
+workload3 passes0/740d46ba… in580.334s: six cells/six callbacks each,12 pure UI
+validations, zero operations, all seven preservation flags/closures, maximum32.101s.
+35/36 UI bodies are captured; one Chromium-management body is unavailable, so no
+complete wire-transfer claim.
+Focused rootless tag19 passes0/231f8cc6… in479.852s: six cells/19 fresh callbacks
+each,114 passes, maximum10.165s; each joins16 queries and three client refusals.
+Zero POSTs/operations, all seven preservation flags/closures and strict console/
+CSP checks pass. Split tag-provenance/bounds scope adds no full-case/matrix stamp
+or completed-transfer claim. Earlier aggregate failures stay false.
+The tracked test driver now replaces the overlong tag aggregate with19 named
+45s callbacks; CATALOG-02 requires all19, with52 baseline assertion IDs and16
+case mappings. Exact query/hash/settled-DOM and client-side no-request refusals
+remain; no receipt import or timeout relaxation is added. Driver8cba6cd6…/
+runner70b3a8fb… and the existing unit fixture's ID list are the only new test
+changes. Existing Node metadata18 and Python functional-runner545 checks pass0;
+the initial27 stale-fixture-ID failures stay retained. Ruff/ESLint/format/syntax
+pass; no new full gate covers this test-only integration. Installed tools3855
+and source76 runtime/UI are unchanged, ordinary/negative integration is pending.
+Rootless configuration-negatives1 remains transport/browser1/1320d5a6… in699.559s:
+five cells each pass25 callbacks/24 local refusals; WebKit-root times out on its
+first10s Administration navigation click before config GET. Zero POSTs/operations,
+strict health/all closures and all other preservation flags pass. Focused fresh
+WebKit-root2 is running, not yet qualified; any later coverage must join original
+five plus its actual result, retaining the failed aggregate. No server422 claim
+comes from these local form refusals.
+Native maintenance4 remains transport/browser1/fa102fc6… in1084.098s: seven UI
+steps pass, publishing only the new903 copy's B/C/D pairs, each2files/4751B,
+with four successful Sizings and three confirmed Applys. Apply-E original
+7d6d6295954ab6087f8f1ec8bc344a2b fails20/HFAPI022 on protected policy inspection
+timeout before helper handoff; it is not resubmitted. Read-only0d8be27c…/
+cb8b2777… prove empty events, configuration-D/retention5 and no pending host or
+configuration intent/application audit for that failed original. The UI correctly
+fails closed under ADR154; no product defect is established. All browsers close,
+with zero unexpected page/console/5xx errors, and the old ten publications,
+worker reports, private originals, roles/keys/1722/Hub remain protected. E Sync,
+retention reduction, prune and purge are unrun. Fresh-context M5 preparation is
+for a distinct reviewed remaining workflow, not replay or a false M4 pass.
+TARs4 preservation passes0/12807934… at same-host ROOT
+`/var/tmp/web022-retained-public-source-tars4`: four completed public source6–9
+TARs retain bytes/semantic metadata/old HOME aliases and88 producer/artifact
+hashes. HOME276353024→346816512B/net70463488B; ROOT1975537664→1904615424B.
+FIEMAP70660096 exclusive bytes remains separate from actual net free movement.
+Source10–13 capture-only originals stay untouched; no VM/image/checkout/venv/
+private-store cleanup, off-machine backup or lowered reserve occurs. WEB-022
+and full85×18 remain open; check18 is historical to these new records.
+
+Native maintenance1 stays1/6e15398a…/41.963s before POST on the outdated clean-
+paragraph locator. Numbered2's pre-intent capacity refusal30089af6… remains;
+after preservation its actual run fails1/3bedfaff…/41.378s at baseline4!==30.
+Numbered3 also fails1/2c45b00c…/95.402s at baseline404!==200 with one console404.
+Both send zero POSTs/operations/publications and close all contexts; old payloads/
+stores/config/roles preserve. Observer/backend Stop remains unsealed pending
+genuine maintenance success. No replay or app-cause claim follows. Driver16 mappings/52 baseline IDs,
+full85×18 and CARD gaps remain open; check17 historical.
+Gate13 TMP retirement0/1b7149ee… preserves logs/source/inventory. Root dependency
+retirements retain all sources/artifacts/venvs; later two-cache0/56fd4000… gains
+648273920B/2069 hashes safe. One HOME completed source21 cache retires0/c93f7fda…,
+Home277278720→572784640B net/6602 protected records. Exclusive FIEMAP284188672B/
+shared0 is qualified separately; both preparations remain. No VM/image/service
+cleanup or lowered reserve. Old .venv donor refuses on3.4MB exclusive/86.2MB
+shared, no effects. Three public source TARs preserve3/0/4d53b464… onto same-host
+ROOT `/var/tmp/web022-retained-public-source-tars1`; three original HOME-path
+links/all63 artifact hashes stay. HOME278671360→331792384B/net53.12MB, distinct
+from53.20MB exclusive FIEMAP; no off-machine backup/checkout/venv/guest moves.
+Four more completed public TARs22–25 preserve4/0/c99ad8a6… on this same host's
+root `/var/tmp/web022-retained-public-source-tars2`:84 producer/artifact hashes,
+original HOME aliases and bytes/semantic metadata retained. HOME270708736→
+341733376B/net71024640B; ROOT2236841984→2165592064B. No VM/image/checkout/venv/
+store/unknown-evidence moves or off-machine backup. Existing reserves stay fixed.
+Four public fixture-projection TARs19/21/22/23 then preserve4/0/5fc485f6… at
+same-host ROOT `/var/tmp/web022-retained-public-source-tars3`, with all100 producer/
+artifact hashes, original HOME aliases, bytes and semantic metadata intact.
+HOME257499136→328552448B/net71053312B; ROOT2153357312→2082168832B. FIEMAP70975488
+exclusive bytes is separate from shared-filesystem free-space movement. No guest,
+VM/image, checkout/.venv, private-state moves or off-machine backup.
+Remaining HOST branches/full85×18 remain pending.
+Source75 worker UI0/a65fcdaf… passes five steps/one Chromium-root: genuine clean
+full4/10/23/41279B and revision9 scope1/1/8/6286B, both original/reload/report joins,
+18 Library refreshes/all nine preservation proofs/closures/errors0. Separate
+clients0/ed69d827… pass four CLI+28 MCP reads/both prefixes during SAMEbrowser
+refresh2→5; both report tools join the new full/revision jobs, no seeded-job credit.
+Old reports/payloads/new lastFull remain, original1722/roles/Hub counter exact.
+That source75 concurrency checkpoint gives no installed-qfix/full85×18/client-matrix/
+CARD acceptance. Old failures/unknowns remain protected, cheap checks historical.
+
+2026-10-31 [checkpoint](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-10-31-gate15-and-installed-doctor77): historical Gate15 passes all1541 frozen files;
+Source15/native77 Doctor, API77 inputs and rootless77 upgrade/SDK pass. UI2's five
+passing cells plus focused UI4's seven Chromium/root callbacks give six scoped
+observations on reused browser storage, not fresh lifecycle/matrix acceptance.
+UI1/2/3 stay false; helper-refusal cause remains unestablished without relaxation.
+Existing573 Python/18 Node checks pass. CONFIG03 pilot1 passes28 read/local
+refusals, then fails blank-session navigation before any Apply/operation; its
+implicit favicon404 is separately under review. Gate16, complete CONFIG03,
+fresh canonical profiles and85×18 acceptance remain pending. Pilot2 also stops
+before Apply after28 passing callbacks; focused pilot3 finds config GET503 from
+peer-observer deadline expiry, with no POST/operation or configuration change.
+Single bound-read implementation passes568 focused regressions and canonical
+wire regeneration; deadlines/public DTOs remain intact. Gate16 stops at ADR143
+documentation alignment before tests/build with all1542 files unchanged; the
+record-placement wording is corrected. Gate17 passes9645 backend/three wheel
+profiles/581 Cockpit, then fails test-driver cleanup lint. The minimal correction
+passes full web lint without product-runtime changes. Full Gate18 and new
+Source16/version78 installed SPA proof are pending; no extra test layer is added.
+
+Historical checkpoint before C qualification and repair: [task details](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-10-31-maintenance-authentication-and-source-validation)
+separate M10 browser success from parent failure/qualification0, partial Origin
+refusals and pending observer C qualification. Role joins remain unmapped;
+source-only23 drift checks add no installed credit. WEB-02285×18 remains open;
+WEB-023–026 stay pending.
+
+2026-10-31 [latest checkpoint](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-10-31-gate18-and-source16version78): Gate18 full pass (0), Source16/version78 native 19 artifacts,
+API78 build/foundation/export, input16 pack/render and native A/B/C pass (0).
+Rootless78 and the existing 41-callback SPA flow remain pending; WEB-022's 85×18 matrix
+and WEB-023–026 are incomplete. After WEB-022 and before WEB-023, revise all
+remaining task/plan/testing guidance for bounded product-focused testing and
+explicit `gpt-6.1-sol` efforts high/medium/high/medium, task-specific rationale
+and escalation criteria. This records the user directive; later-plan edits wait.
+
+2026-10-31 [UI continuation](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-10-31-rootless78-configuration-observations): rootless78 upgrade passes0 and configuration GETs return200/no503.
+Pilots1/2 pass30 callbacks each; pilot3 passes six including one confirmed tag-only
+Apply, independently qualified60a2fdce. All three aggregates remain false; no Apply
+replay, stale409/13-callback acceptance or normal85×18 credit. The existing normal
+manifest is Source13, not78; WEB-022 stays open and WEB-023–026 pending. Two test-only
+driver corrections postdate Gate18. User model data/HOME alias remain preserved.
+
+2026-10-31 [tag/SDK checkpoint](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-10-31-rootless78-tag-propagation-and-sdk): Tag2 `9af356bc` passes six cells/36 read callbacks0,
+zero POSTs/operations, strict health/closures/seven proofs; SDK78 `0ee0aacf` passes0
+without selected-role changes. Tag1 remains false. Normal85×18 is unproved: the
+stock lifecycle branch is missing and only18 case IDs are mapped. Scope-decision
+proposal is unapproved; no harness implementation has started. WEB-022 remains
+in_progress/WEB-023–026 pending; the future-plan patch remains unapplied.
+
+2026-11-01 [CLI/MCP and original-handle checkpoint](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-11-01-climcp-reads-and-original-handle-observation): rootless `c6bf5fb4` and native `423e1a85` pass4CLI/28MCP
+reads each; synthetic rootless versus genuine Source75 native reports stay distinct,
+with no new-job/concurrency claim. Import/reload `6812c64e` passes eight UI phases0,
+zero POSTs and original Apply confirmed twice. Full13/old-B stale409/AUTH-05/85×18
+remain open; WEB-022 in_progress, scope proposal unapproved, future patch unapplied.
+
+2026-11-01 direct stale-B API probe `a03d6af5` passes0/409 HFAPI007 without
+admission/configuration change; this adds no old-B UI stale-submit/full13 credit.
+
+2026-11-01 [management/gate checkpoint](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-11-01-management-conflict-and-interrupted-gate): Management1 raw1/40of41 includes actual UI409 and
+qualified A-Apply74c9794a (43c10d4c); never replay it or root Apply1dc6b7fd. Final
+unsaved-draft navigation is corrected in the driver; read-only recovery is pending.
+Gate19 ends2 after ordinary pytest interruption/1953 passed/1542 unchanged; Gate20
+is prepared, not started. Firefox multipart remains unqualified AUTH-05; no form
+reruns. Human summary is INCOMPLETE;85×18/full13/scope decision remain open and the
+future23–26 patch unapplied.
+
+2026-11-01 [separate read-only follow-up](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-11-01-separate-read-only-navigation-and-b-recovery) `d008066c` passes0/23.266s: explicit discard navigation,
+exact saved-B preview/stale records/results across reload, zero POSTs/state changes.
+Original40/41 remains false; no same-run all41/full13/matrix pass. AUTH-05 stays
+unqualified after empty same-attempt logs/journal; Gate20 prepared/not started.
+
+2026-11-01 [Gate20/product-gap checkpoint](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-11-01-gate20-passes-product-acceptance-remains-open): innerfa2b6d86/outer2596cc63 pass0/1723s,
+9645 backend/4051 frontend/581 Cockpit/16 wheel/three locked profiles/two built-browser+
+real HTTP/all1543 unchanged. Successful TMP retirement48f3300c retains inventory/13
+outputs and gains953991168 B; Gate19/VMs/originals/user cache untouched. CONFIG-12's
+model+dataset add/remove20-callback workflow is prepared, unexecuted; existing28+13
+callbacks omit it. Full13/AUTH-05/85×18 remain open; stock-branch attempt scratch-only,
+no weakening. WEB-022 in_progress, optional scope decision pending/requirements
+unchanged;23–26 pending/future effort patch unapplied.
+
+2026-11-01 [CONFIG-12 add checkpoint](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-11-01-config-12-add-succeeds-workflow-remains-incomplete): browser4 b19649b3 raw1/first8 pass before wrong-fingerprint
+comparison, but real model+dataset Add Applyc00f41e4 succeeds/host confirmed/exact30
+disabled; seven publications and three preservation claims pass. Never replay it
+or prior1dc/74c. Original recovery/removal are prepared, NOT executed; CONFIG-12/
+full20/matrix remain incomplete. Gate20/retirement unchanged; optional scope
+unanswered, requirements unchanged/WEB-022 in_progress/23–26 pending. Future13-doc
+patch2 b189fe19 is prepared/unapplied with high/medium/high/medium efforts.
+
+2026-11-01 [scoped add/remove continuation](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-11-01-scoped-config-12-addremove-continuation-passes):335c8e20 passes0/12callbacks/152.825s, original Add
+recovery and one new removal21f81fd4 host confirmed. Final29 all disabled; seven
+publications/old evidence/roles/guard unchanged, removed dataset unmanaged/Tags not
+observed. Never repeat Addc00/removal21f/prior1dc/74c. Older aggregates remain failed;
+scoped add/remove passes do not stamp full20/whole CONFIG-12/matrix. WEB-022
+in_progress/requirements unchanged/futurepatch2 unapplied/023–026 pending.
+
+2026-11-01 [native overlap checkpoint](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-11-01-native-uiclient-overlap-qualifies):73611ddb/qualified052f7b3a pass0,9 actual Library intents plus
+4CLI/28MCP, all32 client intervals inside native Chromium/root UI window with40 UI
+API requests during clients. Strict health/closures/preservation pass; old0.2.75
+reports read exactly, no new worker/rootless concurrency/matrix claim. Overlap1
+remains failed before clients. CONFIG-12/Gate20/status/futurepatch2 unchanged.
+
+2026-11-01 [native78 worker/report checkpoint](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-11-01-genuine-native78-revision-worker-and-mcp-report): UI once-only5a4d8703 succeeds clean/1repo/1rev/
+8objects6286B, browser5of5; raw1779478a outer1 retains lock-timestamp collector failure,
+qualification04dd2f88 passes0/preservation joined.19 aborted requests retained, not
+zero. Two MCP reads39b8a777 join exact new0.2.78 report separately; prior overlap
+still uses old0.2.75 reports/no new-worker concurrency. Never repeat the job.
+Gate20/CONFIG-12/status/futurepatch2 unchanged; overall INCOMPLETE.
+
+2026-11-01 [current README/Files checkpoint](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-11-01-current-readmefiles-pass-in-native-and-rootless): nativee60ce316/rootless8db31b1f each pass six
+cells/12 checks for exact current TWO-file publications; strict health/closures/
+preservation/no effects, abort diagnostics retained. Native1 failed Library lookup
+stays failed/cause unqualified; direct-link success supplies no full CARD-12/
+CATALOG-08/matrix credit. One bounded query probe prepared; Gate20/worker/MCP/
+CONFIG-12/status/futurepatch2 unchanged.
+
+2026-11-01 [bounded query/card-metadata checkpoint](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-11-01-query-loss-not-reproduced-in-one-bounded-attempt):3792865a passes0/17.513s/two callbacks, exactly
+one attempt/q+URL+one row retained. Loss not reproduced once; older failure stays
+unqualified/no fix or resolution/no diagnostic loop. Both retained-card metadata
+reads0/pairs match; fail-closed/deep/link actual UI checks are prepared, unexecuted,
+using existing fixtures. Gate20/positive scopes/status/futurepatch2 unchanged.
+
+2026-11-01 [retained-card UI checkpoint](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-11-01-retained-readme-card-state-ui-passes): nativef540f7b6/rootlessfdfcd805 each pass0/six cells/24callbacks,
+unsafe/unsupported failclosed, deep refusal/source and table/code/placeholder/link
+protections. Strict health/closures/preservation/no effects; cancellation diagnostics
+retained, no zero-failure claim. Existing browser image reused/stopped7cfc165d;
+selected-state scope only, no fullCARD12/CATALOG08/family/matrix. Query failure
+unqualified/one successful probe/no loop; Gate20/worker/MCP/config/status/patch2 unchanged.
+
+2026-11-01 [dataset checkpoint](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-11-01-dataset-detail-scope-passes-with-retained-continuation): nativefcf279a3 passes six cells/18callbacks; rootless033f2297 passes
+remaining four cells/12callbacks plus retained Chromium2cells from failed10e0d8b0,
+without replaying Chromium. Exact dataset pair/twofiles319B/attributed fields,
+Files404/nonHTML/reload-history pass; supplemental Firefox401event retained while
+actual fetch404 required. Strict health/preservation/closures/no effects, cancellations
+retained. No fullCATALOG07/08/family/matrix claim; all prior positives/status/patch2 unchanged.
+
+2026-11-01 [rootless host visibility](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-11-01-rootless-administration-denial-visibility-passes):3a2bd481 passes0/121.763s/six cells/12callbacks,
+actual guarded reasons and disabled/absent controls/read-only timer. GET-only/
+health/closures/five preservation proofs pass, cancellations retained. Denial
+visibility only, no backend mutating refusal/fullHOST08/family/matrix claim.
+All test executors terminal; prior outcomes/status/futurepatch2 unchanged.
+
+2026-11-01 [required acceptance-basis blocker](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-11-01-blocked-on-required-acceptance-basis-decision): WEB-022 **blocked** after the third consecutive
+impasse; final prepared outcome **blocking decision required; goal blocked**.
+Plan remains active/not paused,023–026 pending. Unblock by adopting the prepared
+product/safety-preserving acceptance proposal OR explicitly authorizing necessary
+runner implementation retaining original85×18/95×18. No default waiver/subset
+substitute/repeated checks/observer loops. All product evidence and futurepatch2
+unapplied status remain unchanged; Root verifies goal status after record validation.
+
+2026-11-01 [acceptance adoption](tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-11-01-acceptance-proposal-adopted-task-continues): user “i accept the new proposal”. WEB-022 returns to
+in_progress/plan active; prior decision blocker resolved. Product-focused criteria
+supersede only governing mandatory normal-runner85×18/95×18, retaining historical
+evidence/all95 behaviors+clauses/missing list/failures/IDs. Appropriate unit/integration/
+direct installed UI evidence; three engines/native-rootless/root-management remain,
+deeper cases once where relevant/full source gate unchanged. Tool status remains
+blocked/no resume-method claim; user authorizes continuation. No completion/023
+activation/futurepatch2 application follows; effort update still AFTER22/BEFORE23.

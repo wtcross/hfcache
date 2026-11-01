@@ -11,13 +11,16 @@ import pytest
 
 from hfcache.api.app import create_app
 from hfcache.api.lifecycle import MetadataPool
+from hfcache.archive import initialize_archive
 from hfcache.config import load_config
 from hfcache.errors import SafetyError
-from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity, RunId
+from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity, RunId, TransactionId
 from hfcache.logging import current_correlation, reset
+from hfcache.paths import ArchiveLayout
 from hfcache.server_config import validate_server_config_mapping
 from hfcache.services.context import ServiceResult
 from hfcache.services.queries import ALL_REPOSITORIES, LocalQueries, PublicationQuery
+from hfcache.storage import parse_mount_table
 from tests.fixtures import examples
 
 WRITER = "writer_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
@@ -149,6 +152,70 @@ def test_factory_has_no_io_and_lifespan_never_initializes_archive(configured):
     asyncio.run(client_context(app, read))
     assert lock.is_file()
     assert not archive.exists()
+
+
+@pytest.mark.parametrize("intrusion", [None, "unknown", "symlink"])
+def test_populated_initialized_archive_health_preserves_managed_files(
+    configured, monkeypatch, intrusion
+):
+    """FS-16/17 and decision029: normal durable files do not invalidate initialization."""
+    data, policy, archive, lock = configured
+    archive.mkdir()
+    table = parse_mount_table(
+        f"457 47 0:68 / {archive} rw,nosuid,nodev - nfs4 fixture.invalid:/archive rw,vers=4.2"
+    )
+    monkeypatch.setattr("hfcache.archive.read_mount_table", lambda: table)
+    layout = ArchiveLayout(root=archive)
+    initialize_archive(layout, archive_id=examples.ARCHIVE_ID, table=table)
+    publish(policy)
+    write_model(layout.repositories_catalog, examples.repositories_catalog())
+    write_model(layout.verification_catalog, examples.verification_catalog())
+    journal = examples.journal().model_copy(
+        update={"state": "committed", "completed_at": examples.at("2026-07-24T20:42:00Z")}
+    )
+    write_model(layout.journal(TransactionId(journal.transaction_id)), journal)
+    report = examples.run_report()
+    write_model(layout.run_report(report.started_at, RunId(report.run_id)), report)
+    outside = archive.parent / "unrelated"
+    outside.write_bytes(b"preserve unrelated content")
+    if intrusion == "unknown":
+        (layout.runs / "operator-notes.txt").write_text("preserve unknown content")
+    elif intrusion == "symlink":
+        (layout.transactions / ("f" * 32 + ".json")).symlink_to(outside)
+    before = {
+        path: path.read_bytes()
+        for path in archive.rglob("*")
+        if not path.is_symlink() and path.is_file()
+    }
+    app = create_app(validate_server_config_mapping(data), instance_lock_path=lock)
+    expected = "initialized" if intrusion is None else "unusable"
+
+    async def read(client):
+        health = await client.get("/api/v1/health")
+        assert health.status_code == 200
+        body = health.json()["envelope"]["data"]
+        assert body["ready"] is True
+        assert body["policy_valid"] is True
+        assert body["archive"]["state"] == expected
+        assert body["archive"]["initializable"] is False
+        inspected = await client.get("/api/v1/archive/inspection")
+        assert inspected.status_code == 200
+        envelope = inspected.json()["envelope"]
+        assert envelope["data"]["state"] == expected
+        assert envelope["exit_code"] == (0 if intrusion is None else 20)
+        if intrusion is None:
+            assert body["archive"]["unknown_entries"] == []
+        elif intrusion == "unknown":
+            assert body["archive"]["unknown_entries"] == ["runs/operator-notes.txt"]
+        else:
+            assert [problem["code"] for problem in envelope["errors"]] == ["HFMNT015"]
+        assert not app.state.operations.list()
+
+    asyncio.run(client_context(app, read))
+    assert {path: path.read_bytes() for path in before} == before
+    assert outside.read_bytes() == b"preserve unrelated content"
+    if intrusion == "symlink":
+        assert (layout.transactions / ("f" * 32 + ".json")).is_symlink()
 
 
 def test_exact_namespace_name_refs_manifests_and_report_run_identity(configured):

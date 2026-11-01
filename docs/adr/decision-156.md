@@ -1,9 +1,10 @@
 # Bind fixed host effects to original intent and independently observable outcomes
 
 - Decision identity: 156.
-- Status: Accepted; implemented in `84221bf` with scoped installed
-  native and guarded-rootless API-contract acceptance. Full platform and
-  production acceptance remain separate.
+- Status: Amended; the original implementation in `84221bf` has scoped installed
+  native and guarded-rootless API-contract acceptance. The credential-mount
+  teardown amendment dated 2026-10-30 requires fresh implementation and installed validation.
+  Full platform and production acceptance remain separate.
 - Date: 2026-10-27.
 
 ## Context and decision
@@ -120,6 +121,41 @@ Post-effect validation rebases only the exact independently verified managed
 schedule leaf and fixed timer/observer observations changed by that original
 operation. Policy, release, peer, unrelated unit and guard checks remain active;
 there is no generic bypass or mutable-authority adoption.
+
+## Original observer credential-mount teardown amendment (2026-10-30)
+
+Installed native observation found an original SDK exit followed by rejection of
+the final mount-table comparison. A separate controlled systemd probe, using
+only a known public dummy credential, proved that normal original-process exit
+removes exactly its systemd credential mount while restoring the prior ordered
+mount observations. Requiring that expected mount to survive exit prevents a
+correct original observer stop from confirming its effect.
+
+Before signaling, capture the exact fixed native SDK credential mount at
+`/run/credentials/hfcache-sync.service`, including its full raw mount identity,
+alongside the existing ordered mount observations. It must be a single mount
+rooted at `/`, with filesystem and source `tmpfs` and options
+`ro,nosuid,nodev,noexec`. A malformed, duplicate, writable or non-tmpfs target
+supplies no exception. Optional flags such as `noswap` and `nosymfollow` need not
+be present; retain any captured flags in the exact identity.
+Only the trusted original-stop
+flow, after its retained original pidfd proves exit, may permit that one captured
+mount's disappearance in its post-effect capture. An unchanged table still
+requires identical raw credential-mount identity; matching projected path,
+filesystem and flags cannot authenticate a replacement. Every other ordered
+captured mount observation must remain identical. Missing or ambiguous original
+mount proof grants no delta; added, changed, replaced, duplicate or unrelated
+removed mounts refuse. The original capture remains strict.
+
+This is a narrow extension of the original-effect observation rule above, not a
+generic mount-baseline refresh or credential-path exclusion. All protected
+policy, release, peer, namespace/mask, unrelated-unit and guard checks and existing
+budgets remain active. The helper gains no credential payload read, mount/unmount,
+cleanup, capability or policy right. Rootless observer control remains denied. Original
+SDK exit, backend completion, API receipt certainty and private Stop certainty
+stay distinct; no pending handle is cleared, replayed or retrospectively repaired.
+The controlled probe proves this mount lifecycle only. Fresh source regressions
+and actual installed observer-control acceptance remain required.
 
 ## Finite journal diagnostics and confinement
 

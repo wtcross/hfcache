@@ -72,6 +72,7 @@ __all__ = [
     "delete_cache_revisions",
     "download_estimate",
     "endpoint_host",
+    "endpoint_port",
     "hub_problem",
     "identity_problems",
     "resolve_host",
@@ -819,6 +820,12 @@ def endpoint_host(endpoint: str) -> str:
     return urlsplit(endpoint).hostname or ""
 
 
+def endpoint_port(endpoint: str) -> int:
+    """The configured HTTPS port, already validated by `HubConfig` (`HFCFG014`)."""
+    port = urlsplit(endpoint).port
+    return port if port is not None else TLS_PORT
+
+
 def resolve_host(host: str) -> tuple[str, ...]:
     """Resolve a hostname, or report `HFHUB001`.
 
@@ -847,10 +854,10 @@ def verify_tls(
     is to prove the deployment's trust store and clock agree with the Hub's
     certificate, and a check that disabled verification would prove nothing.
 
-    `context` and `port` exist so a test can perform a *real* handshake against a
-    local server with its own certificate authority. Injecting the trust anchor
-    rather than the answer is what keeps the test honest — the code under test
-    still verifies, it simply verifies against a CA the test created.
+    `port` selects the configured HTTPS authority. `context` lets a test perform
+    a *real* handshake against a local server with its own certificate authority.
+    Injecting the trust anchor rather than the answer keeps the test honest —
+    the code under test still verifies against a CA the test created.
     """
     verifier = ssl.create_default_context() if context is None else context
     try:

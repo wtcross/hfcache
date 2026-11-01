@@ -30,9 +30,13 @@ from tests.unit.test_verification_executor import listening
 def real_services(configured, monkeypatch):
     # The inherited fixture supplies only owned local storage/Hub data. Restore
     # real business preflight and substitute its external DNS/TLS boundaries.
+    def verifies(_host, *, port):
+        assert port == 443
+        return "TLSv1.3"
+
     monkeypatch.setattr("hfcache.services.commands.hub_checks", hub_checks)
     monkeypatch.setattr("hfcache.preflight.resolve_host", lambda _host: ("192.0.2.1",))
-    monkeypatch.setattr("hfcache.preflight.verify_tls", lambda _host: "TLSv1.3")
+    monkeypatch.setattr("hfcache.preflight.verify_tls", verifies)
     return configured
 
 

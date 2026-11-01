@@ -452,8 +452,9 @@ class HostHelperClient:
     def status(self) -> dict[str, object]:
         return self._execute(self._reserve(), "status")
 
-    def config_read(self) -> dict[str, object]:
-        return self._execute(self._reserve(), "config-read")
+    def config_read(self, body: dict[str, object] | None = None) -> dict[str, object]:
+        incoming = _request_body("config-read", {} if body is None else body)
+        return self._execute(self._reserve(), "config-read", incoming)
 
     def config_prepare(self, body: dict[str, object]) -> dict[str, object]:
         incoming = _request_body("config-prepare", body)
@@ -519,8 +520,9 @@ class HostHelperClient:
     async def async_status(self) -> dict[str, object]:
         return await self._async("status")
 
-    async def async_config_read(self) -> dict[str, object]:
-        return await self._async("config-read")
+    async def async_config_read(self, body: dict[str, object] | None = None) -> dict[str, object]:
+        incoming = _request_body("config-read", {} if body is None else body)
+        return await self._async("config-read", incoming)
 
     async def async_config_prepare(self, body: dict[str, object]) -> dict[str, object]:
         return await self._async("config-prepare", _request_body("config-prepare", body))

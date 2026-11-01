@@ -29,6 +29,17 @@ the eleven documented settings and complete repository entries, including tags
 and declared dependencies. Metadata identifies the supported fields and gives
 fixed safe descriptions of protected fields; it contains no protected values.
 The API requires explicit configuration-read capability and independent policy.
+For a configuration read it sends its immutable lifespan archive ID/root in the
+existing private `config-read` operation, with both comparison selectors present.
+The helper uses the same fresh protected snapshot and preserves the API's
+check order: supported/guarded status and nonnull binding, configuration
+permission, then nonnull profile and exact archive equality. Only after every
+check may it return the existing projection. Unproved status or an otherwise
+valid mismatched tuple is unavailable; denied permission is denied even when
+the expected tuple also mismatches. Legacy empty-body private reads remain
+supported. This removes only the redundant preceding API status exchange,
+without changing either peer reauthentication, configuration revalidation,
+deadlines, capacity, filesystem rights or public DTOs.
 
 Managed validation and planning accept the documented exclusive `{managed:
 {base_revision, edits}}` form. There are at most256 edits, one touch per repository

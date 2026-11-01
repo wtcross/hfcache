@@ -48,7 +48,7 @@ if TYPE_CHECKING:
 
 
 class ConfigHelper(Protocol):
-    async def async_config_read(self) -> dict[str, Any]: ...
+    async def async_config_read(self, body: dict[str, Any] | None = None) -> dict[str, Any]: ...
     async def async_config_prepare(self, body: dict[str, Any]) -> dict[str, Any]: ...
     def config_prepare(self, body: dict[str, Any]) -> dict[str, Any]: ...
     def config_apply(self, body: dict[str, Any]) -> dict[str, Any]: ...
@@ -494,9 +494,13 @@ def install_configuration_route(app: FastAPI, render: Render, server: ServerConf
     async def read_configuration(request: Request) -> Response:
         _no_query(request)
         require_admin_capability(request.state.principal, AdminCapability.CONFIG_READ)
-        await authorize_request(request, frozenset({"configuration"}))
         try:
-            raw = await _helper(request).async_config_read()
+            raw = await _helper(request).async_config_read(
+                {
+                    "expected_archive_id": request.app.state.policy.archive_id,
+                    "expected_archive_root": str(request.app.state.policy.root),
+                }
+            )
         except Exception as error:  # noqa: BLE001 - no partial configuration or raw failures
             _failure(error)
 

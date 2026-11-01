@@ -1,6 +1,6 @@
 # Testing strategy and required gates
 
-Testing is part of every work package, not an end-of-project phase. A screen backed only by mocked HTTP responses is not functional acceptance. A green test count does not prove host/NAS safety or deployment. All tests and evidence are **planned, not executed**, at bundle creation.
+Testing is part of every work package, not an end-of-project phase. A screen backed only by mocked HTTP responses is not functional acceptance. A green test count does not prove host/NAS safety or deployment. Requirements and planned checks are not passing evidence; completion records must identify what actually ran.
 
 ## 1. Layers and ownership
 
@@ -38,15 +38,124 @@ pnpm --dir web run build
 scripts/check.sh --require-web
 ```
 
-These are **target commands to implement**, not commands present in the reviewed baseline. `--require-web` refuses missing toolchain, generated schemas, browser prerequisites for selected component tests, failed tests, and skipped checks. It runs the existing backend gate too. Continue requiring Cockpit while its code/integration is affected.
+These commands define the existing web source gate. `--require-web` refuses missing toolchain, generated schemas, browser prerequisites for selected component tests, failed tests, and skipped checks. It runs the existing backend gate too. Keep Cockpit required until the retirement task explicitly ports or retires its checks.
 
-WEB-005 introduces a provider-neutral functional runner, for example `scripts/check-web-functional.py`, with explicit `application`, `platform`, and `all` profiles and a validated owned workspace. Its safe help command does not inspect runtimes/credentials. The strict release gate becomes:
+### Required source gate and direct installed acceptance
+
+The required full source gate remains:
 
 ```bash
-scripts/check.sh --require-web --with-build --with-web-functional
+scripts/check.sh --require-web --require-cockpit --with-build
 ```
 
-`--with-web-functional` requires **both** completed application and platform profiles at final acceptance. Missing Caddy, browsers, immutable images, certificate tooling, guest support, private-worker support or offline dependency closure exits nonzero with an unblock instruction. It never marks 'SKIP' as successful functional acceptance. Early tasks run the real subset their functionality introduces; WEB-026 requires every applicable matrix case and all supported release profiles. The runner must report source/artifact/fixture identities, command arguments excluding secrets, return codes, test node IDs, browser versions and pending/blocked cases.
+Keep its web, build, backend and Cockpit checks strict until authorized retirement.
+Source checks and installed product acceptance are separate requirements. Account
+for all 85 scenarios owned through WEB-022 and all 95 at final acceptance, including
+every required clause and the existing `minimum_layers` in
+`acceptance-cases.json`. Use appropriate unit/component, integration and direct
+installed workflow evidence; every case need not run in every browser/profile
+cell. A source review, intended test name or mocked response is not an executed
+product observation.
+
+On both installed native and rootless profiles, exercise Chromium, Firefox and
+WebKit at the root and `/management` Caddy entrypoints with fresh browser
+contexts and the existing browser installations. Cover authentication/routing,
+Library/filter/detail/README/Files, configuration forms and representative
+request/error handling. Run deeper domain and fault combinations at the actual
+boundary where they matter, once where equivalent and repeated where a runtime
+difference requires it. Supported native controls and maintenance/Repair remain
+required, as do rootless schedule/observer denials. Real CLI and all 14 MCP tools
+must traverse the trusted shared Caddy at both aliases, including actual
+browser/client overlap; distinguish protocol checks from genuine worker reports.
+
+Reuse existing scripts, fixtures and passing unchanged-subsystem evidence with
+an explicit scope and unchanged-source/artifact justification. Repeat work for
+changed behavior, unresolved failures or uncovered required clauses. Preserve
+original failures, accepted-operation identities and uncertainty; never replay
+an accepted effect to manufacture a passing aggregate. Missing clauses block
+completion. This acceptance path requires no new framework, schema, proof model,
+binder, run-ID join or fresh instrumented lifecycle expansion.
+
+### Existing optional instrumented-runner contract
+
+The existing provider-neutral `scripts/check-web-functional.py` runner remains
+an optional diagnostic, with its current profiles, owned workspace and strict
+validators unchanged. Its safe help command does not inspect runtimes or
+credentials. The following composition is optional:
+
+```bash
+scripts/check.sh --require-web --require-cockpit --with-build --with-web-functional
+```
+
+When explicitly invoked, `--with-web-functional` still requires **both** completed
+application and platform profiles with its existing final selector. Missing
+Caddy, browsers, immutable images, certificate tooling, guest support,
+private-worker support or offline dependency closure exits nonzero; 'SKIP' never
+passes. Its reports retain source/artifact/fixture identities, nonsecret command
+arguments, exits, test node IDs, browser versions and pending/blocked cases.
+Neither this flag nor the runner's `--require-through`/`--final` path is required
+for direct installed acceptance, and direct evidence must not be reported as a
+passing runner invocation. All private fixture/proof requirements below apply
+only when that optional instrumented runner is used.
+
+Historical 2026-10-29 optional-runner sequencing, superseded as the mandatory
+acceptance path: WEB-022's complete installed
+application acceptance precedes rollback, human walkthrough and conditional
+Cockpit retirement. The existing runner's `--require-through WEB-022` requires
+all 85 cases owned through that task in all 18 application/native/rootless ×
+root/prefix × browser cells and reports the ten later-owner cases pending.
+Subsequent packages extend that strict required set in task order. This avoids
+requiring WEB-025's Cockpit-absence case before its prerequisites without
+waiving any case. `--final` and `scripts/check.sh --with-web-functional` remain
+the optional runner's all 95×18 final gate and cannot be combined with a through-task selector.
+
+Historical 2026-10-31 optional-runner execution correction: run canonical native/application and rootless
+profiles on their explicitly owned, boot-bound guests without moving or mixing
+`/opt/hfcache/current` layouts. Application may use canonical native confinement,
+with distinct fresh executions. Explicit local `--profile
+application|native|rootless` keeps the existing exact3 manifest profile keys,
+validating complete common source/wheel/UI/toolchain authority and only selected
+bindings. Rootless additionally requires root-owned immutable unselected
+`installed.tooling={prefix,python:{path,sha256}}` with actual interpreter/import and
+complete same-indexed-wheel verification; this SDK never substitutes for live
+container/actor/selected-image evidence.
+
+One fresh32hex `--run-id` binds the three local invocations. Before any role
+admission, persist exclusive fsynced schema1 `RUN-INTENT.json`: run_id, profile,
+fixture_id, guest{identity,boot_id}, manifest{path,sha256}, original workspace.
+Runtime/browser report/role RESULT/SUMMARY repeat run_id; SUMMARY retains the intent
+record and original context. Use existing `run_profile(browser_engine=...)` for each
+profile/prefix/engine:18 fresh fixtures and paired ready/stopped lifecycles, never
+one mutated fixture shared by three engines. The fixed helper stays identical within
+each pair; reviewed canonical preparation/rebinding between pairs preserves prior
+state. Browser-launcher parsers and driver/runner exact-key validators must bind
+run_id/browser_engine and expect only that selected engine. No new engine CLI,
+skipped prerequisite or changed45s callback/navigation/locator/launcher budget
+follows.
+
+After all close, the same runner joins exactly three fresh normal SUMMARYs using
+`--profile all --run-id ID --manifest ABSOLUTE_PROTECTED_JSON --join-summary PATH
+SHA256` (three summary arguments), plus `--require-through WEB-022` or `--final`.
+The explicit manifest validates common source/indexed wheel/UI/toolchain bytes only;
+no wrong-host boot, selected-native, service-account or live rootless checks run
+offline. Original profile manifests/intents/proofs supply guest/boot/selected-role
+authority. Common runtime artifacts and complete test-source/toolchain snapshots
+match; profile-specific fixture, boot and installation descriptors remain distinct.
+
+Launchers retain finite required public proof copies inside their workspaces, with
+originals/recorded metadata preserved. The offline resolver only strips the exact
+recorded original workspace prefix into supplied SUMMARY.parent; reject
+outside-workspace imports, symlink ancestry, `..`, arbitrary rewrites and
+missing/hash-mismatched bytes. Preserve original records/guest paths: copied
+device/inode/timestamps never claim remote re-observation, and finalization performs
+no remote/protected-selector/network/credential work. Reject old one-offs, status
+stamps, retries, missing/duplicate cells/generations, unknown drains and pending
+assertions. Recompute existing acceptance_executions→case_summary and unchanged
+require_cells/through/final:85×18 through WEB-022,95×18 final. An explicitly
+requested final instrumented-runner invocation must use this same strict path.
+These historical private protocol corrections do not require that optional path
+for current acceptance and grant no runtime or invariant change.
+
 
 Where the execution host cannot provision isolated guests safely, retain the task as blocked and run independent source work that is genuinely ready. Do not weaken acceptance, run production host operations, or retire Cockpit based on component fixtures alone.
 
@@ -61,6 +170,12 @@ Platform tests use actual isolated managers and rootless identities. Positive na
 Generate test-only credentials and TLS certificates in mode-restricted workspaces. Trust the test CA in browser contexts/OS trust inside the guest. `ignoreHTTPSErrors`, curl `-k`, wildcard host allowances or permissive CORS do not count as a positive TLS/auth test. Negative untrusted-certificate tests explicitly prove refusal. No external requests are allowed during test execution except isolated fixture services. Build dependency provisioning occurs separately, from pinned/hashed inputs, and never pulls images automatically during runtime/gates.
 
 Isolation tests inspect actual processes/peer credentials and bind visibility, not only rendered command strings. Worker cannot read Basic/bearer/Hub credentials or contact IP networks; Caddy cannot read archive/policy/host-helper state; UI assets contain no secret values; API remains non-root. Do not erase failed containers/workspaces/uncertain operation evidence automatically. Cleanup owns only positively identified fixture resources and runs only after observed process termination; failed drain is a retained blocker.
+
+### Existing optional instrumented proof details
+
+The following private metadata protocols remain strict if the instrumented runner
+is invoked; they do not require new proof machinery for direct installed
+acceptance. Actual installed confinement and denials remain required above.
 
 Retain actual rootless `cap_drop` inspection entries without normalization. Test
 both literal `ALL` and the exact unique11-name encoding in the
@@ -103,7 +218,15 @@ acceptance, even when packages, images and Caddy configuration are unchanged.
 
 ### Static stream interruption evidence
 
-Use [execution-proof schema2](execution-contract.md#static-streaming-execution-proof-schema2)
+Finite streaming deadlines, disconnect handling and resource-lease release remain
+required at the appropriate real integration and installed boundary. Retain
+actual browser behavior, source/artifact identity and normal process/resource
+closure; source review alone cannot establish an exercised runtime outcome.
+Client zero-DATA or a later reset must not be relabelled as proof of an upstream
+paused send or cancellation.
+
+The following is the existing optional instrumented-runner protocol, not a
+required new collector or lifecycle-proof expansion for direct acceptance. Use [execution-proof schema2](execution-contract.md#static-streaming-execution-proof-schema2)
 for the private six-probe transfer inventory. Preserve raw ASGI normal-return and
 exception counters; they are not protocol-submission or client-delivery counters.
 Capture passive before/after states from the exact pinned original bound H11
@@ -128,12 +251,14 @@ wrong method/cycle/flow/protocol/source/identity, copied boolean numerics,
 missing/extra fields, result/counter disagreement and generic/early failures.
 Keep all failed schema1 reports unchanged. This corrects private evidence only;
 it changes no product behavior, declared resource bound or public wire format.
-New source/gate identities and all six installed profile/prefix generations are
-required before scoped serving acceptance; later feature clauses remain pending.
+Within that optional protocol, new source/gate identities and all six installed
+profile/prefix generations remain required; old failures cannot supply them.
+Direct acceptance instead uses the appropriate required layers and installed
+observations above, without fabricating the private runtime counters.
 
 ## 5. Browser, accessibility and performance gates
 
-Application functional tests run in Chromium, Firefox and WebKit, pinned with the test tool version. Full critical workflows run in all three; use a documented representative deeper matrix only for expensive fault combinations, never to omit browser authentication/prefix/read/write paths. Use auto-waiting assertions, semantic role/name locators and explicit bounded timeouts; no arbitrary sleeps as correctness conditions. Record retry counts: a test that passes only on retry is flaky evidence to resolve, not a silently clean run.
+Installed browser acceptance covers native and rootless profiles in Chromium, Firefox and WebKit, pinned with the test tool version, at both prefixes. Cover core authentication, routing, reads/writes and workflows in those cells; use a documented representative deeper matrix for domain/fault boundaries rather than every case in every cell. Use auto-waiting assertions, semantic role/name locators and explicit bounded timeouts; no arbitrary sleeps as correctness conditions. Record retry counts: a test that passes only on retry is flaky evidence to resolve, not a silently clean run.
 
 Exercise keyboard-only navigation, visible focus, dialog focus trap/restoration, form labels and validation announcements, accessible status/error regions, table headings, reduced motion, contrast, and responsive layout at representative 1440px and 390px widths plus 200% zoom. Use automated axe checks with zero serious/critical violations in covered screens and manual keyboard/screen-reader smoke records; automation alone is not a claim of full accessibility conformance. Keep external fonts and network assets disabled.
 
@@ -143,6 +268,6 @@ New frontend code target: >=90% line and >=85% branch coverage, enforced for the
 
 ## 6. Evidence and release rule
 
-Each task records actual test commands, exits, relevant test node IDs, artifact hashes, fixture scope, invariant/ADR review, documentation changes and unresolved limitations in its completion evidence. Keep raw traces/screenshots/results in ignored or release-evidence artifacts and put safe summaries/locators in task records. Traces must never contain production credentials; even test Authorization headers are scrubbed before publishing. Do not commit giant test-output directories or passwords disguised as fixtures.
+Each task records actual test commands, exits, relevant test node IDs, artifact hashes, fixture scope, invariant/ADR review, documentation changes and unresolved limitations in its existing completion evidence. Map case clauses to those records without introducing another evidence schema. Earlier passing evidence may be reused only with its original result and a stated unchanged-subsystem justification; a failed aggregate remains failed even when a separate continuation establishes a narrower outcome. Keep raw traces/screenshots/results in ignored or release-evidence artifacts and put safe summaries/locators in task records. Traces must never contain production credentials; even test Authorization headers are scrubbed before publishing. Do not commit giant test-output directories or passwords disguised as fixtures.
 
 The [acceptance matrix](acceptance-matrix.md) is a minimum, not a ceiling. WEB-001 assigns exact executable tests; each implementing task updates coverage and evidence. WEB-026 checks every row has an actual covering passing test, or an explicitly blocked status that prevents completion. Platform availability is not grounds to mark rows not applicable. Human-doc tasks require proof that examples/links pass checks and representative workflows were exercised. Source completeness, disposable installed acceptance and actual production rollout are three separate statuses.

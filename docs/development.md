@@ -74,8 +74,9 @@ for the executed frontend tests; its absence fails that stage. The default mode
 retains its loud toolchain skip for backend-only development; that result is not
 plugin proof.
 
-Use `scripts/check.sh --require-web --require-cockpit` for replacement web
-interface work. `--require-web` first requires the web package manifest, frozen
+Use `scripts/check.sh --require-web --require-cockpit --with-build` for replacement
+web interface acceptance. Keep Cockpit required until its checks are explicitly
+ported or retired. `--require-web` first requires the web package manifest, frozen
 pnpm lock, TypeScript configuration, Node and pnpm. It checks the authoritative
 Python contract export after locked Python synchronization, then retains every
 backend and applicable Cockpit check above. Its web stage runs frozen
@@ -86,15 +87,18 @@ The real API React read fixture follows those checks.
 Any failed stage or missing required browser fails the gate. Backend-only mode
 prints an explicit web omission; that result does not validate the web interface.
 
-`--with-web-functional` implies `--require-web` and adds final installed
-application/platform acceptance after the source/build checks. Set
+The full source gate and installed workflow acceptance are separate requirements.
+The preliminary browser smoke does not establish real Caddy authentication, API,
+worker, helper or installed native/rootless behavior. Exercise those boundaries
+against the selected built release as described below.
+
+`--with-web-functional` is an optional instrumented diagnostic. It implies
+`--require-web` and invokes the existing runner with all profiles and `--final`;
+its strict case, cell, fixture and proof validators are unchanged. Set
 `HFCACHE_WEB_FUNCTIONAL_MANIFEST` to the explicit absolute protected fixture
 manifest path; there is no ambient fixture discovery or credential environment
-input. The flag always runs all profiles with `--final`, requiring every
-acceptance case with no required skip or pending result. Missing provisioned
-prerequisites fail before the source gate. The preliminary browser smoke does
-not establish Caddy, authentication, API, worker, helper or installed
-native/rootless acceptance.
+input. Missing provisioned prerequisites fail before the source gate. Direct
+installed acceptance does not claim that this optional command passed.
 
 Application safety checks raise exceptions instead of relying on assertions.
 Keep durable-format golden fixtures and checkpoint-contract tests synchronized
@@ -359,16 +363,58 @@ boundary only; it does not replace same-Caddy/TLS, Basic or installed native/
 rootless acceptance. The [troubleshooting guide](web-ui/troubleshooting.md)
 explains the visible read states.
 
+### Installed product workflow acceptance
+
+After the full source gate, exercise the selected built release on explicitly
+owned isolated native and rootless deployments. Use real Caddy/TLS, installed
+API/worker/helper roles and Chromium, Firefox and WebKit at both root and
+`/management` entrypoints, with fresh browser contexts. Cover authentication and
+routing, Library filters and details, README/Files, configuration forms and
+representative request/error handling. Source fixtures and mocked HTTP cannot
+replace these installed observations.
+
+Keep every required behavior and safety clause. Use unit/component and real
+integration tests for deterministic validation, interruption and fault
+boundaries, with direct installed workflows for browser and platform behavior.
+Run deeper domain/fault combinations at the relevant boundary rather than every
+scenario in every browser/profile cell. Supported native schedule/observer
+controls and maintenance/Repair require actual positive paths; rootless
+restrictions require actual denials. Record real CLI and all fourteen MCP tools
+through the shared trusted Caddy at both aliases, including browser/client
+overlap, and identify whether report reads refer to genuine worker outcomes.
+
+Identify source, indexed artifacts, installed roles, fixture scope, commands and
+observed results in the existing acceptance records. Retain actual hardening,
+peer, mount and process/resource-closure observations; no selected command or
+security setting may be weakened for a test. Finite stream/deadline/disconnect
+and resource-release behavior remains required at the appropriate real boundary;
+source review alone does not establish an exercised outcome. No new collector,
+evidence schema, binder or instrumented lifecycle framework is required.
+
+Reuse earlier passing evidence only with its original scope and a stated
+unchanged-subsystem/source/artifact justification. Repeat checks for changed
+behavior, unresolved failures or uncovered requirements. Preserve original
+failed results and accepted-operation identities; observe original outcomes and
+recovery rather than replaying an effect to manufacture a clean aggregate.
+Maintain an explicit missing-clause list: missing required behavior blocks
+completion. Source acceptance, disposable installed acceptance and production
+rollout remain separate statuses.
+
 ### Installed shared-Caddy functional fixture
 
-Inspect the runtime-free interface with:
+The existing instrumented runner is optional. Its private manifest, run-ID,
+fresh-fixture, join-summary and lifecycle/transfer-proof requirements remain
+strict if invoked; they do not prescribe additional test-tool implementation
+for the direct installed acceptance path above. Legacy reports retain their
+original scope and failures. Inspect its runtime-free interface with:
 
 ```bash
 python -S scripts/check-web-functional.py --help
 ```
 
-The runner accepts `--profile application|platform|all --manifest ABSOLUTE_JSON`
-and optional `--workspace NEW_OWNED_SCRATCH_DIR` and `--final`. Platform selects
+The runner accepts explicit `--profile` and `--manifest ABSOLUTE_JSON` selectors,
+with optional `--workspace NEW_OWNED_SCRATCH_DIR` and `--final`; use `--help` for
+its existing profile choices. Platform selects
 both native and rootless deployments. Each selected profile runs empty and
 `/management` prefixes in Chromium, Firefox and WebKit through real Caddy/TLS,
 one installed API over Unix and actual restricted workers. Node-side bearer
@@ -388,7 +434,8 @@ invocation and retains its original evidence. Check API problem exit codes
 against the CLI taxonomy: a known `HFAPI002` denial is HTTP403/exit10, while
 unavailable protected authority is `HFAPI022`/HTTP503/exit20.
 
-Provision an explicitly owned isolated guest before invocation. Its protected
+For this optional runner, provision an explicitly owned isolated guest before
+invocation. Its protected
 manifest binds the exact source/wheel/installed bytes, built artifact, guest
 boot, Caddy origin/configuration, private-CA trust, pinned browser/tool closure,
 fixed role launchers and confined image identities. The negative browser profile
@@ -396,6 +443,60 @@ must refuse the same Caddy certificate before the trusted profile succeeds.
 Role proof must record actual PID/start identities, worker-origin denials,
 listener/peer facts, API lifecycle/pool/stream drains and exact browser/container
 termination. A process wrapper exiting or a released lock is insufficient.
+
+Modern shared-Caddy functional role records also retain the live privileged
+helper as a separate prerequisite: root UID/GID, only caps `c0`, no ambient or
+inheritable caps, NNP/seccomp and the fixed helper domain. This never permits a
+root API, worker or Caddy. Selected helper copies, deployment/policy/SELinux
+receipt, live executable identities and canonical image inputs must join the
+same protected release. The helper stays live with the same PID/start/invocation
+while the owned application roles drain. Raw enforcing state and actual bind
+projections accompany the existing authority/network denials. Native inaccessible
+masks are identified by held path descriptors and mount IDs; their hidden lower
+archive mounts are not treated as effective archive access. Missing installed
+captures leave installed hardening and release acceptance incomplete; these
+source checks add no browser or platform acceptance by themselves.
+
+Execution tooling and application artifacts have separate provenance. A current
+fixture keeps `source` as the runner checkout's exact input inventory, parent
+commit and existing validated source label. Its `installed` object has exactly
+`wheel`, `package_root` and `release`; `release` is the existing `{path, sha256}`
+record for the original canonical `web-release.json` in a complete, protected
+release bundle below that checkout's private `.scratch`. The bundle retains
+`source/`, `wheels/`, `ui/` and `host-helper/`. Its original source commit, source
+map and UI identity remain unchanged when only test tools change. Runtime Python,
+helper, packaging and browser application inputs in the tooling checkout must
+still match that release's source map; test-tool updates cannot relabel a build.
+
+Only this explicit release form permits `package_root` outside `.scratch`. It
+must be the ordinary physical `hfcache` package in the native release selected by
+the fixed `/opt/hfcache/current` selector. The runner checks the existing native
+layout classifier, exact original native index and root-owned, nonwritable,
+no-follow local ancestry before reading package bytes. The selector is the sole
+link exception and must retain its exact relative release target. The runner
+must execute through that verified installed package. This read-only exception
+does not permit other `/opt` paths, external selectors, writable workspaces or
+evidence outside the protected `.scratch` boundary.
+
+The existing fixture marker binds its canonical fixture UUID, repository,
+explicit guest identity and actual boot, checked before any fixed native-prefix
+read. Native role principals come from the
+fixed `hfcache` account and the explicit protected Caddy fixture account, plus
+their independently observed units and kernel identities. Current application
+and native profile bindings require `caddy_account`: a bounded local account
+name whose nonzero UID and matching primary GID join both the actual unit's
+`User`/`Group` and process credentials. No account named `caddy` is assumed.
+Current rootless principals retain the indexed container
+role configuration and actual host/namespace mapping. Network positive-control
+unit names derive from that fixture and generation, never an arbitrary caller
+unit. Current rootless profile bindings add exactly `network`, containing
+`worker_policy` and `stock_control` file records under the owned `.scratch`.
+They also require `storage_driver`, exactly `overlay` or `vfs`, matching the
+inspected engine; an unknown storage driver refuses acceptance.
+Their independently read bytes, exact policy derivation, applied security option,
+read-only mounts, image/process identities and complete control drain must all
+join. Historical initial-fixture inputs retain their exact old source, installed,
+guest and profile shapes; they grant no current installed-path exception.
 
 Rootless capability proof preserves raw engine inspection metadata. The pinned
 fixture may report literal `ALL` or its exact measured eleven-name expansion;
@@ -416,7 +517,8 @@ Caddy configuration or existing isolation/drain requirements. Missing historical
 observations stay missing; proof-validator changes need fresh source/gate and
 installed acceptance while unchanged artifacts retain their build provenance.
 
-Static-stream checks distinguish three observations: an ASGI send call returning,
+Within the optional instrumented protocol, static-stream checks distinguish
+three observations: an ASGI send call returning,
 the original HTTP protocol submitting bytes, and the client receiving bytes.
 A normal return after disconnect may submit nothing. The fixture must retain raw
 call outcomes, passively bind the original protocol state and independently
@@ -424,20 +526,29 @@ observe client cancellation/deadline behavior; it must not alter send/receive or
 transport-write behavior to fit a counter. Real stalled sends and exact resource
 drains remain required alongside those observations.
 
-During feature development, invoke the runner directly without `--final` to run
-all currently implemented cases and retain an explicit pending-case list. That
-result is partial evidence. The final gate is:
+When using this optional diagnostic during development, invocation without an
+acceptance selector retains an explicit pending-case list and produces partial
+evidence. Its existing `--require-through` selector remains strict for its
+selected ordered subset, requiring each selected case in all 18 instrumented
+profile/prefix/browser cells. `--final` requires all 95 cases in those cells; it
+cannot combine with the through selector. Missing, duplicate, unknown, failed or
+retried required evidence cannot pass. These rules do not make the optional
+runner the required installed acceptance path or promote partial mappings.
+
+To explicitly request the combined source gate and final instrumented diagnostic:
 
 ```bash
 HFCACHE_WEB_FUNCTIONAL_MANIFEST=/absolute/owned/fixture.json \
-  scripts/check.sh --require-web --with-build --with-web-functional
+  scripts/check.sh --require-web --require-cockpit --with-build --with-web-functional
 ```
 
-The final flag never accepts the partial mode. Unique reports and failed
-attempts remain under the selected owned workspace. Missing dependencies,
-malformed manifests, unknown resources, timeouts, unclosed roles and pending
-required cases fail honestly. Synthetic ordinary-file fixture metadata proves
-local behavior; it does not establish live NAS or production acceptance.
+The flag still selects the runner's complete final mode and never accepts its
+partial mode. Unique reports and failed attempts remain in the selected owned
+workspace. Missing dependencies, malformed manifests, unknown resources,
+timeouts, unclosed roles and pending required cases fail honestly. Direct
+installed evidence is recorded separately and must not be relabelled as a
+passing invocation of this command. Synthetic ordinary-file fixtures establish
+local behavior, not live NAS or production acceptance.
 
 ### Protected host-reader validation
 
@@ -461,12 +572,13 @@ actual UID/GID maps or Caddy/built-UI behavior. The isolated installed fixture m
 use genuine fixed `/opt/hfcache/current` profile bindings and actual managers,
 engine and installed bytes. A relocated layout or copied proof is insufficient.
 Retain every failed attempt and actual process/cgroup/container drain evidence.
-Each fresh WEB006 guest may use its own source-number and32-hex identity.
+Each owned isolated guest may use its own source label and32-hex identity.
 Its root-owned marker still binds the exact fixture UUID, repository,
 guest identity and current boot; earlier guest histories are not prerequisites.
 Required missing kernel/runtime/browser support is a blocker, never a skip or a
-reason to weaken hardening. The final strict gate still requires all implemented
-cases and the separate final acceptance set.
+reason to weaken hardening. The full source gate and every required installed
+behavior remain necessary; the optional instrumented runner retains its own
+strict final acceptance set if requested.
 
 ## Offline tests
 

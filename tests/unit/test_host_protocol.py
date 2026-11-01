@@ -40,6 +40,71 @@ def request():
     return protocol.HostRequest("a" * 32, "status")
 
 
+@pytest.mark.parametrize("bound", [False, True])
+def test_config_read_preserves_legacy_body_and_accepts_only_complete_binding(bound):
+    body: dict[str, object] = (
+        {
+            "expected_archive_id": "6ce912b6-141f-4bd2-a871-c19625c86aa9",
+            "expected_archive_root": "/srv/hfcache",
+        }
+        if bound
+        else {}
+    )
+    value = protocol.HostRequest("a" * 32, "config-read", body)
+    assert (
+        protocol.HostRequest.parse(protocol.decode_object(protocol.encode_object(value.wire())))
+        == value
+    )
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"expected_archive_id": "6ce912b6-141f-4bd2-a871-c19625c86aa9"},
+        {"expected_archive_root": "/srv/hfcache"},
+        {"expected_archive_id": True, "expected_archive_root": "/srv/hfcache"},
+        {
+            "expected_archive_id": "6CE912B6-141F-4BD2-A871-C19625C86AA9",
+            "expected_archive_root": "/srv/hfcache",
+        },
+        {"expected_archive_id": "not-a-uuid", "expected_archive_root": "/srv/hfcache"},
+        {
+            "expected_archive_id": "6ce912b6-141f-4bd2-a871-c19625c86aa9",
+            "expected_archive_root": False,
+        },
+        {
+            "expected_archive_id": "6ce912b6-141f-4bd2-a871-c19625c86aa9",
+            "expected_archive_root": "",
+        },
+        {
+            "expected_archive_id": "6ce912b6-141f-4bd2-a871-c19625c86aa9",
+            "expected_archive_root": "relative",
+        },
+        {
+            "expected_archive_id": "6ce912b6-141f-4bd2-a871-c19625c86aa9",
+            "expected_archive_root": "/srv/\x00hfcache",
+        },
+        {
+            "expected_archive_id": "6ce912b6-141f-4bd2-a871-c19625c86aa9",
+            "expected_archive_root": "/srv/\nhfcache",
+        },
+        {
+            "expected_archive_id": "6ce912b6-141f-4bd2-a871-c19625c86aa9",
+            "expected_archive_root": "/" + "a" * protocol.MAX_ARCHIVE_ROOT_CHARS,
+        },
+        {
+            "expected_archive_id": "6ce912b6-141f-4bd2-a871-c19625c86aa9",
+            "expected_archive_root": "/srv/hfcache",
+            "path": "/elsewhere",
+        },
+    ],
+)
+def test_config_read_rejects_partial_coercive_or_unbounded_binding(body):
+    value = protocol.HostRequest("a" * 32, "config-read", body)
+    with pytest.raises(protocol.HostProtocolError, match="invalid-request"):
+        protocol.HostRequest.parse(value.wire())
+
+
 def fd_count():
     return len(list(Path("/proc/self/fd").iterdir()))
 

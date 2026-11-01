@@ -209,6 +209,7 @@ original-operation controller. To observe again, use the original handle.
 | Missing or expired history | The result is unknown. Keep the original key/ID and operator evidence; do not submit again or remove evidence. |
 | Observation stopped, unavailable or limited | Only local observation ended. Work may continue. Keep the original handles and explicitly resume a bounded read when appropriate. |
 | Restored prepared or terminal record | Saved metadata is unverified until an authenticated original lookup/read establishes its current meaning. A stored terminal summary is not backend success. |
+| Submit job stays disabled after reload despite Allowed job permission evidence | A saved host action may still need fresh protected outcome evidence. In its recovery record, choose **Observe original host outcome** and check **Protected host outcome** and **Pending protected work**. Permission evidence or a generic receipt alone cannot release this precaution. |
 | Storage failed before submission | The browser refuses transmission because it cannot durably retain the original key. Correct storage availability without deleting unresolved handles. |
 | Storage failed after possible transmission | Preserve the learned handles in memory and copy them. Further conflicting submissions remain blocked; absence of a saved acknowledgement does not prove nonexecution. |
 
@@ -218,6 +219,12 @@ The local **Not submitted** summary is memory-only, not a saved terminal outcome
 If removal cannot persist, the original key and block remain. Restored records
 cannot assert this exception, and a missing receipt never triggers automatic
 registry cleanup.
+
+For a saved schedule change or observer Stop, follow
+[Recover an original host action](administration.md#recover-an-original-host-action).
+A matching fresh `confirmed` or `unchanged` outcome with pending work **No** can
+resolve the browser's precaution. Preserve the original handle and history;
+never repeat Stop or delete recovery records to enable a new job.
 
 For configuration application, **unknown** and **installed_unconfirmed** remain
 separate host effects. A generic failed/interrupted API receipt cannot clear

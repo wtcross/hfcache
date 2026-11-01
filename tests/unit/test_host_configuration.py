@@ -132,6 +132,7 @@ def _file_writer(tmp_path, monkeypatch):  # noqa: PLR0915 - shared actual-filesy
         InspectionError=host_policy.InspectionError,
         _json=host_policy._json,
         prepare_configuration=host_policy.prepare_configuration,
+        _prepare_configuration=host_policy._prepare_configuration,
         parse_configuration=host_policy.parse_configuration,
         revalidate=revalidate,
         confirm_configuration=confirm_configuration,
@@ -242,6 +243,88 @@ def test_confirmed_history_and_backup_handover_survive_policy_change(writer):
     assert archived.lstat().st_ino == backup.st_ino
     assert archived.read_bytes() == writer.original
     assert writer.outcome(first)["state"] == "confirmed"
+
+
+@pytest.mark.parametrize("drift", ["policy", "configuration"])
+def test_captured_reconstruction_drift_refuses_before_first_pending_write(
+    writer, monkeypatch, drift
+):
+    """Decision154: pure reconstruction never makes stale authority writable."""
+    body = writer.request()
+    captured = writer.snapshot()
+    # Match AuthoritySnapshot: only full revalidation can see later revocation.
+    captured_permissions = captured.status()["permissions"]
+    captured.status = lambda: {"permissions": dict(captured_permissions)}
+    reconstruct = writer.policy._prepare_configuration
+
+    def changed(snapshot, managed):
+        result = reconstruct(snapshot, managed)
+        if drift == "policy":
+            writer.state.policy = b"revoked-policy"
+            writer.state.permissions["configuration"] = False
+        else:
+            with configuration.CONFIGURATION.open("ab") as output:
+                output.write(b"# concurrent editor\n")
+        return result
+
+    monkeypatch.setattr(writer.policy, "_prepare_configuration", changed)
+    with pytest.raises(host_policy.InspectionError if drift == "policy" else ValueError):
+        configuration.apply_configuration(writer.policy, captured, body)
+    assert configuration.CONFIGURATION.read_bytes() == (
+        writer.original + (b"# concurrent editor\n" if drift == "configuration" else b"")
+    )
+    for path in (
+        configuration.PENDING,
+        configuration.APPLICATIONS,
+        configuration.CANDIDATE,
+        configuration.BACKUP,
+    ):
+        assert not path.exists()
+
+
+def test_policy_revocation_after_backup_refuses_exchange_and_preserves_original(
+    writer, monkeypatch
+):
+    """Decision154: staged evidence and the original inode survive a lost grant."""
+    body = writer.request()
+    original = configuration.CONFIGURATION.lstat()
+    fired = False
+
+    def revoke(name):
+        nonlocal fired
+        if name == "backup_ready:target:after_directory_fsync":
+            fired = True
+            writer.state.policy = b"revoked-policy"
+            writer.state.permissions["configuration"] = False
+
+    monkeypatch.setattr(configuration, "checkpoint", revoke)
+    with pytest.raises(host_policy.InspectionError):
+        writer.apply(body)
+    assert fired
+    assert configuration.CONFIGURATION.lstat() == original
+    assert configuration.CONFIGURATION.read_bytes() == writer.original
+    assert configuration.PENDING.is_file()
+    assert configuration.CANDIDATE.is_file()
+    assert configuration.BACKUP.read_bytes() == writer.original
+    operation = configuration.APPLICATIONS / body["operation_id"]
+    assert (
+        json.loads((operation / "outcome.json").read_bytes())["record"]["phase"] == "backup_ready"
+    )
+    retained = {
+        str(path): (configuration._identity(path.lstat()), path.read_bytes())
+        for path in writer.root.rglob("*")
+        if path.is_file()
+    }
+    # Same original ID is observation only; it cannot finish or clear the stage.
+    observed = writer.outcome(body)
+    assert observed["state"] == "staged"
+    assert observed["pending"] is True
+    assert writer.apply(body) == observed
+    assert {
+        str(path): (configuration._identity(path.lstat()), path.read_bytes())
+        for path in writer.root.rglob("*")
+        if path.is_file()
+    } == retained
 
 
 @pytest.mark.parametrize("name", ["CANDIDATE", "BACKUP", "PENDING"])

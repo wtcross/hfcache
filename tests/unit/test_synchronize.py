@@ -351,12 +351,76 @@ def test_the_run_report_is_durable_and_reads_back(client, layout, config):
     )
 
 
-def test_the_run_report_counts_what_was_moved(client, layout, config):
+@pytest.mark.parametrize("continue_on_error", [False, True])
+def test_the_run_report_counts_what_was_moved(client, layout, config, continue_on_error):
+    config = config.model_copy(
+        update={
+            "sync": config.sync.model_copy(
+                update={"continue_on_repository_error": continue_on_error}
+            )
+        }
+    )
     outcome = run(client, layout, config)
 
     expected = sum(len(payload) for payload in CONTENT.values()) * 2
     assert outcome.report.totals.downloaded_bytes == expected
     assert outcome.report.totals.hashed_bytes == expected
+    assert outcome.report.totals.published_bytes == expected
+    durable = RunReport.model_validate_json(outcome.report_path.read_bytes())
+    assert durable.totals.published_bytes == expected
+
+
+@pytest.mark.parametrize("continue_on_error", [False, True])
+def test_published_bytes_count_cached_paths_and_reused_objects(
+    client, layout, config, hub, continue_on_error
+):
+    """INV-005 logical publication bytes differ from AD-18 physical reads."""
+    config = config.model_copy(
+        update={
+            "sync": config.sync.model_copy(
+                update={"continue_on_repository_error": continue_on_error}
+            )
+        }
+    )
+    content = {"first.bin": b"one shared object", "second.bin": b"one shared object"}
+    hub.revisions[SHA_A] = content
+    client.download(MODEL, CommitSha(SHA_A), cache_dir=layout.hub_cache, max_workers=1)
+    snapshot = client.verify_local(MODEL, CommitSha(SHA_A), cache_dir=layout.hub_cache)
+    shared = (snapshot / "first.bin").resolve()
+    (snapshot / "second.bin").unlink()
+    (snapshot / "second.bin").symlink_to(shared)
+
+    first = run(client, layout, config, selected=(config.repositories[0],))
+
+    logical = sum(map(len, content.values()))
+    assert statuses(first) == {MODEL.selector: "published"}
+    assert first.report.totals.downloaded_bytes == 0
+    assert first.report.totals.reused_bytes == logical
+    assert first.report.totals.hashed_bytes == len(content["first.bin"])
+    assert first.report.totals.published_bytes == logical
+
+    # A new SHA can reuse those exact retained, verified inodes without hashing
+    # or downloading them again, but still publishes both logical file paths.
+    hub.revisions[SHA_B] = content
+    hub.heads[MODEL.selector] = SHA_B
+    client.download(MODEL, CommitSha(SHA_B), cache_dir=layout.hub_cache, max_workers=1)
+    snapshot = client.verify_local(MODEL, CommitSha(SHA_B), cache_dir=layout.hub_cache)
+    for name in content:
+        (snapshot / name).unlink()
+        (snapshot / name).symlink_to(shared)
+
+    second = run(client, layout, config, selected=(config.repositories[0],))
+
+    assert statuses(second) == {MODEL.selector: "published"}
+    assert second.report.totals.downloaded_bytes == second.report.totals.hashed_bytes == 0
+    assert second.report.totals.reused_bytes == logical
+    assert second.report.totals.published_bytes == logical
+    reference = read_reference(layout, RepositoryLayout(archive=layout, identity=MODEL).current_ref)
+    manifest = RevisionManifest.model_validate_json(
+        (layout.published / str(reference.manifest)).read_bytes()
+    )
+    assert manifest.verification.reused_digests == 2
+    assert manifest.total_bytes == logical
 
 
 def test_the_catalog_describes_both_repositories_as_managed(client, layout, config):
@@ -698,9 +762,18 @@ def test_same_sha_prefetch_is_consumed_before_any_global_retention(
         ]
 
 
-def test_a_deferred_prune_failure_reports_failure_but_keeps_the_publication(
-    client, layout, config, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize("continue_on_error", [False, True])
+def test_a_prune_failure_counts_the_publication_before_reporting_failure(
+    client, layout, config, monkeypatch: pytest.MonkeyPatch, continue_on_error
 ):
+    config = config.model_copy(
+        update={
+            "sync": config.sync.model_copy(
+                update={"continue_on_repository_error": continue_on_error}
+            )
+        }
+    )
+
     def fail_model_prune(_layout, identity, _config, *, run_id):
         del run_id
         if identity == MODEL:
@@ -712,19 +785,53 @@ def test_a_deferred_prune_failure_reports_failure_but_keeps_the_publication(
     outcome = run(client, layout, config)
 
     assert outcome.exit_code == ExitCode.RETENTION
-    assert statuses(outcome) == {MODEL.selector: "failed", DATASET.selector: "published"}
+    assert statuses(outcome) == (
+        {MODEL.selector: "failed", DATASET.selector: "published"}
+        if continue_on_error
+        else {MODEL.selector: "failed"}
+    )
+    logical = sum(len(payload) for payload in CONTENT.values())
+    assert outcome.report.totals.published_bytes == logical * (2 if continue_on_error else 1)
     model = next(
         result for result in outcome.report.repositories if result.repository_id == MODEL.id
     )
-    logical = sum(len(payload) for payload in CONTENT.values())
     assert model.errors == ("HFRET002",)
     assert model.downloaded_bytes == logical
-    assert model.hashed_bytes == logical
-    assert model.publication_id is not None
-    assert model.publication_generation == 1
-    assert model.resolved_commit_sha == SHA_A
-    assert model.pruned is None
+    if continue_on_error:
+        assert model.hashed_bytes == logical
+        assert model.publication_id is not None
+        assert model.publication_generation == 1
+        assert model.resolved_commit_sha == SHA_A
+        assert model.pruned is None
     assert RepositoryLayout(archive=layout, identity=MODEL).current_ref.is_file()
+
+
+@pytest.mark.parametrize("continue_on_error", [False, True])
+def test_published_bytes_survive_post_publication_cleanup_failure(
+    client, layout, config, monkeypatch: pytest.MonkeyPatch, continue_on_error
+):
+    config = config.model_copy(
+        update={
+            "sync": config.sync.model_copy(
+                update={"continue_on_repository_error": continue_on_error}
+            )
+        }
+    )
+
+    def fail_cleanup(_layout, _transaction_id):
+        message = "completed publication staging could not be cleaned"
+        raise SynchronizationError.single(message, code="HFSYN008")
+
+    monkeypatch.setattr(sync_module, "discard_staging", fail_cleanup)
+
+    outcome = run(client, layout, config, selected=(config.repositories[0],))
+
+    assert statuses(outcome) == {MODEL.selector: "failed"}
+    assert outcome.report.totals.published_bytes == sum(map(len, CONTENT.values()))
+    reference = read_reference(layout, RepositoryLayout(archive=layout, identity=MODEL).current_ref)
+    assert (layout.published / str(reference.tree) / "weights.bin").read_bytes() == CONTENT[
+        "weights.bin"
+    ]
 
 
 def test_a_disabled_repository_is_reported_rather_than_omitted(client, layout, tmp_path):
@@ -742,6 +849,7 @@ def test_a_disabled_repository_is_reported_rather_than_omitted(client, layout, t
 
     assert statuses(outcome)[DATASET.selector] == "disabled"
     assert statuses(outcome)[MODEL.selector] == "published"
+    assert outcome.report.totals.published_bytes == sum(map(len, CONTENT.values()))
 
 
 # --------------------------------------------------------------------------- #
@@ -758,6 +866,7 @@ def test_a_second_sync_of_an_unchanged_repository_downloads_nothing(client, layo
     assert hub.downloads == []
     assert set(statuses(outcome).values()) == {"skipped"}
     assert outcome.report.totals.downloaded_bytes == 0
+    assert outcome.report.totals.published_bytes == 0
 
 
 def test_a_second_sync_leaves_the_current_reference_alone(client, layout, config):
@@ -811,6 +920,7 @@ def test_returning_to_a_retained_sha_moves_the_reference_without_downloading(
 
     assert hub.downloads == []
     assert statuses(outcome)[MODEL.selector] == "ref_moved_to_retained_revision"
+    assert outcome.report.totals.published_bytes == 0
     repository = RepositoryLayout(archive=layout, identity=MODEL)
     assert read_reference(layout, repository.current_ref).commit_sha == SHA_A
 
@@ -1162,6 +1272,7 @@ def test_a_snapshot_missing_a_listed_file_fails_completeness(client, layout, con
 
     assert set(statuses(outcome).values()) == {"failed"}
     assert "HFSYN002" in outcome.report.repositories[0].errors
+    assert outcome.report.totals.published_bytes == 0
 
 
 # --------------------------------------------------------------------------- #
@@ -1185,9 +1296,13 @@ def _wired(hub: FakeHub, monkeypatch: pytest.MonkeyPatch) -> None:
     def of(cls, token, *, endpoint):
         return cls(api=hub, token=token, endpoint=endpoint)
 
+    def verifies(_host, *, port):
+        assert port == 443
+        return "TLSv1.3"
+
     monkeypatch.setattr(HubClient, "of", classmethod(of))
     monkeypatch.setattr("hfcache.preflight.resolve_host", lambda _host: ("192.0.2.1",))
-    monkeypatch.setattr("hfcache.preflight.verify_tls", lambda _host: "TLSv1.3")
+    monkeypatch.setattr("hfcache.preflight.verify_tls", verifies)
 
 
 @pytest.mark.usefixtures("_wired")

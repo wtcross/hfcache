@@ -32,16 +32,26 @@ from hfcache.archive import (
 from hfcache.errors import SafetyError
 from hfcache.hashing import FileDigest
 from hfcache.hub import TreeEntry
-from hfcache.identity import CommitSha, RepositoryIdentity, new_publication_id, new_transaction_id
-from hfcache.metadata import MetadataReader
+from hfcache.identity import (
+    CommitSha,
+    PublicationId,
+    RepositoryIdentity,
+    RunId,
+    new_publication_id,
+    new_run_id,
+    new_transaction_id,
+)
+from hfcache.metadata import MetadataReader, QueryBounds, QueryLimitError
 from hfcache.models import SCHEMA_VERSION, ArchiveSentinel, Provenance, Reference, dump
 from hfcache.paths import ArchiveLayout
 from hfcache.publication import (
     create_staging,
     discard_staging,
     promote_staging,
+    publish_catalog,
     publish_current_reference,
     publish_revision_reference,
+    rebuild_catalog,
     stage_file,
 )
 from hfcache.storage import (
@@ -52,6 +62,8 @@ from hfcache.storage import (
     write_model,
 )
 from hfcache.sync import Timeline, build_manifest, hash_snapshot
+from hfcache.transactions import CHECKPOINTS, open_transaction
+from tests.fixtures import examples
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -101,8 +113,19 @@ def initialize(layout: ArchiveLayout, table: tuple[MountEntry, ...]):
     return initialize_archive(layout, archive_id=ARCHIVE_ID, table=table)
 
 
-def inspect(layout: ArchiveLayout, table: tuple[MountEntry, ...], *, archive_id: str = ARCHIVE_ID):
-    return inspect_archive(layout, archive_id=archive_id, table=table)
+def inspect(
+    layout: ArchiveLayout,
+    table: tuple[MountEntry, ...],
+    *,
+    archive_id: str = ARCHIVE_ID,
+    bounded_reader: bool = False,
+):
+    return inspect_archive(
+        layout,
+        archive_id=archive_id,
+        table=table,
+        reader=MetadataReader(layout.root) if bounded_reader else None,
+    )
 
 
 def codes(problems) -> list[str]:
@@ -396,6 +419,39 @@ def test_model_and_dataset_publications_do_not_make_archive_layout_unusable(
         publish_current_reference(layout, reference)
         discard_staging(layout, transaction)
 
+    # FS-16/17 and decision029: ordinary writer history does not undo init.
+    publish_catalog(layout, rebuild_catalog(layout, generated_at=now))
+    write_model(
+        layout.verification_catalog, examples.verification_catalog(), mode=0o640, code="HFMNT008"
+    )
+    for original in (examples.run_report(), examples.verification_report()):
+        report = original.model_copy(update={"run_id": new_run_id()})
+        write_model(
+            layout.run_report(report.started_at, RunId(report.run_id)),
+            report,
+            mode=0o600,
+            code="HFMNT008",
+        )
+    journal = open_transaction(
+        layout,
+        transaction_id=new_transaction_id(),
+        operation="publication",
+        run_id=new_run_id(),
+        archive_id=ARCHIVE_ID,
+        config_fingerprint=examples.FINGERPRINT,
+        repository_type=identity.type,
+        repository_id=identity.id,
+        commit_sha=sha,
+        publication_id=publication,
+    )
+    for checkpoint in CHECKPOINTS["publication"]:
+        journal.checkpoint(checkpoint)
+    journal.commit()
+    before = {
+        path: (path.read_bytes(), path.stat().st_ino, path.stat().st_mode, path.stat().st_mtime_ns)
+        for path in layout.root.rglob("*")
+        if path.is_file()
+    }
     inspection = inspect_archive(
         layout,
         archive_id=ARCHIVE_ID,
@@ -407,6 +463,182 @@ def test_model_and_dataset_publications_do_not_make_archive_layout_unusable(
     assert inspection.problems == ()
     assert inspection.unknown_entries == ()
     assert inspection.missing_directories == ()
+    assert before == {
+        path: (path.read_bytes(), path.stat().st_ino, path.stat().st_mode, path.stat().st_mtime_ns)
+        for path in before
+    }
+
+
+@pytest.mark.parametrize("bounded_reader", [False, True])
+def test_initialized_working_containers_and_audit_records_are_known_without_payload_walks(
+    layout, table, *, bounded_reader: bool
+):
+    """FS-13/18/20: original engines own cache, transaction payload and audit validity."""
+    initialize(layout, table)
+    staging = create_staging(layout, new_transaction_id())
+    (staging.tree / "payload.bin").write_bytes(b"ordinary staged payload")
+    trash = layout.trash_for(new_transaction_id()).directory
+    # Purge tombstones have a different shape from publication staging.
+    for name in ("refs", "revisions", "manifests"):
+        (trash / name).mkdir(parents=True)
+    quarantined = layout.quarantine_for(new_transaction_id())
+    quarantined.mkdir()
+    (quarantined / "README.md").write_text("retired publication payload", encoding="utf-8")
+    for cache in (layout.hub_cache, layout.repair_cache_for(new_transaction_id())):
+        repository = cache / "models--organization--repository"
+        blob = repository / "blobs" / ("a" * 40)
+        blob.parent.mkdir(parents=True)
+        blob.write_bytes(b"SDK-owned blob")
+        snapshot = repository / "snapshots" / ("b" * 40)
+        snapshot.mkdir(parents=True)
+        (snapshot / "config.json").symlink_to("../../blobs/" + "a" * 40)
+
+    repository = layout.repository(RepositoryIdentity.of("model", examples.REPOSITORY_ID))
+    publication = PublicationId(examples.PUBLICATION)
+    records = (
+        (repository.pruned_manifest(CommitSha(examples.SHA), publication), examples.manifest()),
+        (repository.prune_record(CommitSha(examples.SHA), publication), examples.pruned_record()),
+        (repository.retired_manifest(CommitSha(examples.SHA), publication), examples.manifest()),
+        (
+            repository.retirement_record(CommitSha(examples.SHA), publication),
+            examples.repair_retirement(),
+        ),
+    )
+    for path, model in records:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        write_model(path, model, mode=0o600, code="HFMNT008")
+    temporary = temporary_sibling(records[-1][0])
+    temporary.write_bytes(b"an interrupted ordinary atomic write")
+
+    inspection = inspect(layout, table, bounded_reader=bounded_reader)
+
+    assert inspection.state == "initialized"
+    assert inspection.problems == ()
+    assert inspection.unknown_entries == ()
+    assert inspection.leftover_temporaries == (str(layout.archive_relative(temporary)),)
+    assert (snapshot / "config.json").is_symlink()
+    assert blob.read_bytes() == b"SDK-owned blob"
+
+
+@pytest.mark.parametrize("bounded_reader", [False, True])
+@pytest.mark.parametrize(
+    ("relative", "directory"),
+    [
+        ("published/catalog/repositories.json", False),
+        ("published/catalog/verification.json", False),
+        (".store/transactions/" + "1" * 32 + ".json", False),
+        ("runs/20261030T120000Z-" + "2" * 32 + ".json", False),
+        ("audit/pruned/models/org/repo/" + "a" * 40 + "/" + "3" * 32 + ".prune.json", False),
+        (".store/staging/" + "4" * 32, True),
+        (".store/trash/" + "5" * 32, True),
+        (".store/quarantine/" + "6" * 32, True),
+        (".store/repair/" + "7" * 32, True),
+        (".store/hub", True),
+    ],
+)
+@pytest.mark.parametrize("entry", ["wrong_type", "fifo", "symlink"])
+def test_initialized_managed_names_refuse_unsafe_types_without_following_or_rewriting(  # noqa: PLR0913 - independent type and reader refusal matrix
+    layout,
+    table,
+    tmp_path: Path,
+    relative: str,
+    *,
+    directory: bool,
+    entry: str,
+    bounded_reader: bool,
+):
+    """FS-19: a recognized name grants neither arbitrary type nor deletion authority."""
+    initialize(layout, table)
+    child = layout.root / relative
+    if child.exists():
+        child.rmdir()  # Only the newly initialized empty SDK cache root.
+    child.parent.mkdir(parents=True, exist_ok=True)
+    outside = tmp_path / "outside"
+    if entry == "symlink":
+        outside.write_bytes(b"must not be followed")
+        child.symlink_to(outside)
+    elif entry == "fifo":
+        os.mkfifo(child)
+    elif directory:
+        child.write_bytes(b"not a directory")
+    else:
+        child.mkdir()
+    original = child.lstat()
+
+    inspection = inspect(layout, table, bounded_reader=bounded_reader)
+
+    assert inspection.state == "unusable"
+    assert ("HFMNT015" if entry == "symlink" else "HFMNT014") in codes(inspection.problems)
+    assert (child.lstat().st_ino, child.lstat().st_mode) == (original.st_ino, original.st_mode)
+    if entry == "symlink":
+        assert outside.read_bytes() == b"must not be followed"
+
+
+@pytest.mark.parametrize("bounded_reader", [False, True])
+@pytest.mark.parametrize(
+    "relative",
+    [
+        "published/catalog/unknown.json",
+        ".store/transactions/not-a-transaction.json",
+        "runs/not-a-run.json",
+        "audit/pruned/unknown",
+        "audit/repairs/models/org/repo/" + "a" * 40 + "/" + "1" * 32 + ".prune.json",
+        ".store/staging/not-a-transaction",
+        ".store/trash/not-a-transaction",
+        ".store/quarantine/not-a-transaction",
+        ".store/repair/not-a-transaction",
+        ".store/health/probe-" + "1" * 16,
+    ],
+)
+def test_initialized_layout_keeps_unknown_siblings_and_probe_leftovers_refused(
+    layout, table, relative: str, *, bounded_reader: bool
+):
+    """FS-19 and the probe contract: normal content is no license to accept unknowns."""
+    initialize(layout, table)
+    child = layout.root / relative
+    child.parent.mkdir(parents=True, exist_ok=True)
+    if child.parent == layout.health:
+        child.mkdir()
+        payload = child / "probe.json"
+    else:
+        payload = child
+    payload.write_bytes(b"preserved unknown entry")
+
+    inspection = inspect(layout, table, bounded_reader=bounded_reader)
+
+    assert inspection.state == "unusable"
+    assert relative in inspection.unknown_entries
+    assert payload.read_bytes() == b"preserved unknown entry"
+
+
+@pytest.mark.parametrize("bounded_reader", [False, True])
+def test_normal_post_init_content_is_not_adopted_without_the_sentinel(
+    layout, table, *, bounded_reader: bool
+):
+    """FS-22/23: post-init recognition cannot authorize initialization or a retry."""
+    initialize(layout, table)
+    layout.sentinel.unlink()
+    layout.repositories_catalog.write_bytes(b"{}")
+    (layout.hub_cache / "models--org--repo").mkdir()
+    layout.staging_for(new_transaction_id()).directory.mkdir()
+
+    inspection = inspect(layout, table, bounded_reader=bounded_reader)
+
+    assert inspection.state == "unusable"
+    assert not inspection.initializable
+    assert inspection.unknown_entries
+    assert not layout.sentinel.exists()
+
+
+def test_post_init_metadata_keeps_the_existing_reader_entry_budget(layout, table):
+    """The new recognition still enumerates through the one bounded reader."""
+    initialize(layout, table)
+    for _ in range(40):
+        layout.journal(new_transaction_id()).write_bytes(b"ordinary journal metadata")
+    reader = MetadataReader(layout.root, QueryBounds(maximum_entries=32))
+
+    with pytest.raises(QueryLimitError):
+        inspect_archive(layout, archive_id=ARCHIVE_ID, table=table, reader=reader)
 
 
 @pytest.mark.parametrize("parent", ["repos", "manifests"])

@@ -210,7 +210,7 @@ status and current-contract links before applying a historical choice.
 | 140 | [Serve an authenticated SPA through the existing application and Caddy](decision-140.md) — accepted design; conformance pending |
 | 141 | [Separate privileged host administration from the unprivileged API](decision-141.md) — accepted design; conformance pending |
 | 142 | [Capture publication-bound inert README presentation records](decision-142.md) — writer capture and exact card reads in unreleased source; rendering pending |
-| 143 | [Keep strict web assets separate from Python runtime and require real acceptance](decision-143.md) — accepted design; conformance pending |
+| 143 | [Keep strict web assets separate from Python runtime and require real acceptance](decision-143.md) — acceptance method amended; conformance pending |
 | 144 | [Retire shipped Cockpit only after complete replacement proof](decision-144.md) — proposed, conditional |
 | 145 | [Derive precise browser contracts and preserve numeric source before decoding](decision-145.md) |
 | 146 | [Verify one protected administrator without widening legacy credential classes](decision-146.md) |
@@ -223,7 +223,7 @@ status and current-contract links before applying a historical choice.
 | 153 | [Reconstruct bounded managed configuration privately from exact installed bytes](decision-153.md) — accepted design |
 | 154 | [Install exact managed configuration once and observe durable host outcomes](decision-154.md) — accepted design; implementation acceptance pending |
 | 155 | [Render archived Markdown through a bounded closed React pipeline](decision-155.md) — accepted; implementation in progress |
-| 156 | [Bind fixed host effects to original intent and independently observable outcomes](decision-156.md) — accepted design; implementation and installed conformance pending |
+| 156 | [Bind fixed host effects to original intent and independently observable outcomes](decision-156.md) — amended for original observer credential-mount teardown; amended implementation and installed conformance pending |
 | 157 | [Reuse parsed metadata only after reading identical authoritative bytes](decision-157.md) — implemented; final matching installed performance and profile acceptance remain separate |
 | 158 | [Copy a separate native interpreter for each immutable web release](decision-158.md) |
 | 159 | [Preserve a dedicated rootless archive-lock label for metadata-only guard proof](decision-159.md) |

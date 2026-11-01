@@ -1,12 +1,15 @@
 # Serve a bounded authenticated UI artifact with an independent bootstrap
 
 - Decision identity: 147.
-- Status: Accepted.
+- Status: Amended; product conformance uses the acceptance method below.
 - Date: 2026-10-20.
 - Introducing evidence: this commit; source and isolated acceptance remain separate.
 
 This decision fixes the concrete asset, bootstrap and routing contracts. It
 establishes no installed release or production availability by itself.
+The acceptance-method amendment at the end supersedes earlier mandatory
+instrumented-runner statements; all product, resource and security requirements
+remain in force.
 
 ## Decision scope and relationships
 
@@ -593,3 +596,20 @@ fixture versus clean release identity are deliberate parts of this decision.
 The fixed concurrent-stream/deadline bounds require meaningful actual
 backpressure/disconnect validation before conformance can be claimed. Implementation conformance requires the preceding executable evidence and
 synchronized contracts; the accepted design alone establishes no conformance.
+
+## Product acceptance method amendment (2026-11-01)
+
+The [acceptance-method amendment to decision143](decision-143.md#product-acceptance-method-amendment-2026-11-01)
+retains every required behavior while assigning its executable evidence to the
+appropriate test layer. Real built-UI/Caddy/installed native and rootless browser
+checks remain required, alongside actual boundary tests for stream limits,
+stalled sends, disconnects, deadlines and lease release. Source review or a
+downstream cancellation alone does not prove an unobserved upstream outcome.
+
+Direct installed workflow evidence and the complete source/build gate now form
+the acceptance path. Mandatory use of the normal instrumented runner and its
+full scenario/profile/browser/prefix cross product is superseded. The existing
+runner and final flag retain their strict protocol when explicitly selected;
+this amendment neither invents a new evidence schema nor reports that optional
+command as passed. A required missing clause still blocks conformance, and all
+failed or uncertain observations and original operation handles are preserved.

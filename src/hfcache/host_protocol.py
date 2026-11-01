@@ -36,6 +36,7 @@ CLIENT_SECONDS = 22.0
 MAX_EXCHANGES = 8
 MAX_MANAGED_EDITS = 256
 MAX_SELECTOR_CHARS = 256
+MAX_ARCHIVE_ROOT_CHARS = 4096
 SO_PEERPIDFD = 77
 SCM_PIDFD = 4
 _HEADER = struct.Struct("!I")
@@ -244,6 +245,23 @@ def _managed_request(value: object) -> None:
     _need(type(body["edits"]) is list and len(body["edits"]) <= MAX_MANAGED_EDITS)
 
 
+def _config_read_request(body: dict[str, object]) -> None:
+    if not body:
+        return
+    _need(set(body) == {"expected_archive_id", "expected_archive_root"})
+    identifier, root = body["expected_archive_id"], body["expected_archive_root"]
+    _need(
+        type(identifier) is str
+        and re.fullmatch(r"[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}", identifier) is not None
+    )
+    _need(
+        type(root) is str
+        and 0 < len(root) <= MAX_ARCHIVE_ROOT_CHARS
+        and root.startswith("/")
+        and root.isprintable()
+    )
+
+
 def _calendar_value(value: object, maximum: int) -> None:
     _need(
         type(value) is str
@@ -357,6 +375,8 @@ class HostRequest:
             "journal-read",
         }:
             _host_action_request(operation, body)
+        elif operation == "config-read":
+            _config_read_request(body)
         elif operation == "config-prepare":
             _managed_request(body)
         elif operation in {"config-apply", "config-outcome"}:

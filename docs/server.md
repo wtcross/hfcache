@@ -888,7 +888,11 @@ The API uses the same protected helper client for fixed `config-read` and
 non-installing `config-prepare`. GET `/api/v1/config` requires the internal
 configuration-read grant; managed validation/plans require configuration-write.
 Both also require fresh independent configuration permission. Service writer
-bearers receive no such grant. The private helper response may carry one bounded
+bearers receive no such grant. A configuration read uses one freshly authenticated
+helper exchange carrying the lifespan archive UUID/root as comparison values;
+the helper checks coherent status, permission and exact binding before projection.
+No preceding status exchange or authority cache is used for this read. The private
+helper response may carry one bounded
 candidate to the API for independent validation; it is never returned to the
 browser or stored in generic operations. Private encoded frames remain bounded
 at2MiB even when raw TOML fits1MiB.

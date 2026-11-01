@@ -1,10 +1,34 @@
 # Acceptance scenario matrix
 
-This matrix contains **95 required scenarios**. These are planned assertions, not passing test claims. Each primary owner must create real covering unit/component, integration and functional tests as appropriate. Later acceptance tasks repeat and verify the complete set; earlier ownership does not excuse missing final proof.
+This matrix contains **95 required scenarios**: 85 are owned through WEB-022 and
+all 95 remain required at final acceptance. These are assertions, not passing test
+claims. Every scenario and its clauses retain the existing `minimum_layers` in
+`acceptance-cases.json`; use appropriate unit/component, integration and direct
+installed workflow evidence. There is no requirement to execute every case in
+every application/native/rootless × prefix × browser cell.
 
-Use `acceptance-cases.json` as the machine-readable requirements list. During implementation create/update a separate `acceptance-evidence.json` with each case ID, real test node IDs, command, exit status, source/artifact hashes, browser/profile, evidence locator and observed assertion. No case is complete because its intended test name exists. Missing infrastructure is a blocker.
+Record case/clause coverage in the existing acceptance records with real test
+node IDs, commands/exits, source/artifact identities, fixture/browser/profile
+scope, evidence locators and observed outcomes. Reuse passing unchanged-subsystem
+evidence only with an explicit justification. Preserve original failures and
+accepted effects; never replay an operation to obtain a clean aggregate. Missing
+required assertions block completion, and a test name or source review alone is
+not a pass. No new framework, schema, proof model or binder is required.
 
-HTTP mocks alone never satisfy the functional layer. Read [testing strategy](testing-strategy.md) for strict Caddy/browser/guest requirements and the distinction between fixture and production evidence.
+Actual installed native and rootless product acceptance still covers Chromium,
+Firefox and WebKit at root and `/management`, with fresh browser contexts and
+real Caddy/API/worker/helper boundaries. Exercise deeper faults/domain behavior
+where the boundary is relevant, including supported native controls and
+maintenance/Repair and guarded rootless denials. HTTP mocks alone never satisfy
+an installed/browser assertion. The full source web/build/Cockpit gate remains
+required until authorized retirement.
+
+The existing instrumented runner and its `acceptance-evidence.json`, run IDs,
+fresh-fixture joins and exact private proofs remain optional diagnostics. Their
+validators and `--require-through`/`--final` requirements stay strict if invoked;
+direct installed evidence does not claim those commands passed. See the
+[testing strategy](testing-strategy.md) for the required acceptance path, unchanged
+scenario clauses and optional-runner contract.
 
 ## AUTH
 

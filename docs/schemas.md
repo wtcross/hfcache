@@ -525,6 +525,15 @@ failed. Run totals sum those per-repository counters across every final status;
 downloaded queue-ahead content is therefore reported even when it was not
 published in this run.
 
+For sync, `totals.published_bytes` counts the logical bytes in each new
+publication completed by this run: the manifest's file sizes, once per path,
+including cached content, reused digests, and multiple paths sharing one inode.
+It is independent of downloaded bytes, unique-object hashing, and filesystem
+allocation. A completed publication still counts if a later cleanup or retention
+step fails. Skipped/disabled repositories, moving `current.json` to an already
+retained revision, and failures before publication contribute zero. This counter
+does not retroactively recount publications completed by an earlier run.
+
 `pruned` is `null` or `{ "commit_sha", "publication_generation", "logical_bytes" }`
 describing the revision this repository's successful publication rotated out.
 
@@ -1410,6 +1419,10 @@ deployment/policy schemas and inspection budgets are specified in the
 provisioned fixed32-byte root-owned0600 file, never created by a read. Current
 `config-read` returns the strict nonsecret editable projection described below
 with its configured `archive_id` and opaque full-byte `base_revision`.
+Its body is either legacy `{}` or exactly `{expected_archive_id,expected_archive_root}`.
+The API always supplies both immutable lifespan values. These strict comparison
+values must match the fresh protected binding; the root never selects a path for
+I/O. Status, permission and tuple refusal order follows the host contract.
 `config-prepare` is also implemented as read-only reconstruction: its body is
 exactly `{base_revision,edits}`; its private response is `{schema_version,
 archive_id,base_revision,candidate_revision,candidate,editable,required_selectors}`.

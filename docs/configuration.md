@@ -72,7 +72,7 @@ credential_name = "hf-token"
 
 | Key | Type | Default | Constraint |
 | --- | --- | --- | --- |
-| `endpoint` | str | `"https://huggingface.co"` | Absolute `https://` URL, host required, no path, no query, no trailing `/` |
+| `endpoint` | str | `"https://huggingface.co"` | Absolute `https://` URL, host required, optional port `1`–`65535`, no path, no query, no trailing `/` |
 | `expected_account` | str | `""` | Empty, or a Hub username/organization matching `[A-Za-z0-9][A-Za-z0-9._-]{0,95}` |
 | `token_mode` | str | `"optional"` | `"disabled"` \| `"optional"` \| `"required"` |
 | `credential_name` | str | `"hf-token"` | `[A-Za-z0-9._-]{1,64}`, and not `.` or `..` |
@@ -80,6 +80,11 @@ credential_name = "hf-token"
 `endpoint` must be `https://`. A plaintext endpoint is `HFCFG014`: TLS
 verification is not optional, and an archive whose provenance came over an
 unauthenticated channel is not worth verifying afterwards.
+
+An explicit endpoint port must be an integer from `1` through `65535`; an
+invalid port is `HFCFG014`. When omitted, the HTTPS port is `443`. The diagnostic
+TLS check connects to that configured host and port, while certificate
+verification still uses the configured hostname.
 
 `expected_account` empty means no identity check. That is normal for anonymous
 public access; authenticated deployments should set it so `doctor` proves the

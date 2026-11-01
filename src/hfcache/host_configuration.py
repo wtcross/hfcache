@@ -653,7 +653,9 @@ def apply_configuration(policy: Any, snapshot: Any, body: object) -> dict[str, A
             return _observe(store, request)
         _need(not os.path.lexists(CANDIDATE))
         history, used = _history(store)
-        prepared = policy.prepare_configuration(snapshot, request["managed"])
+        # Decision154: the original flock and mutation-boundary rechecks bracket
+        # this pure reconstruction; do not nest the read-only opcode's checks.
+        prepared = policy._prepare_configuration(snapshot, request["managed"])  # noqa: SLF001 - fixed protected sibling module
         _need(prepared["candidate_revision"] == request["candidate_revision"])
         _need(prepared["required_selectors"] == request["required_selectors"])
         permissions = snapshot.status()["permissions"]

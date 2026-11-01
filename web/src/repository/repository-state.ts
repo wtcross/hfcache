@@ -58,6 +58,7 @@ export interface RepositorySnapshot {
     readonly generation: number;
     readonly authGeneration: number;
     readonly connected: boolean;
+    readonly pageActive: boolean;
     readonly target: RepositoryTarget | null;
     readonly view: RepositoryView;
     readonly selected: ExactPublication | null;
@@ -151,7 +152,8 @@ export function createRepositoryStore(controller: Controller) {
     let api = controller.apiReads,
         authGeneration = controller.snapshot().generation;
     let connected = controller.snapshot().connection === "connected",
-        disposed = false;
+        disposed = false,
+        pageActive = true;
     let target: RepositoryTarget | null = null;
     let view: RepositoryView = Object.freeze({ pair: null, tab: "overview" });
     let selected: ExactPublication | null = null,
@@ -358,6 +360,7 @@ export function createRepositoryStore(controller: Controller) {
             generation,
             authGeneration,
             connected,
+            pageActive,
             disposed,
             invalid,
             target,
@@ -494,6 +497,7 @@ export function createRepositoryStore(controller: Controller) {
             generation,
             authGeneration,
             connected: connected && !disposed,
+            pageActive: pageActive && !disposed,
             target,
             view,
             selected,
@@ -531,7 +535,7 @@ export function createRepositoryStore(controller: Controller) {
         return cached;
     }
     function current(value: number) {
-        return !disposed && connected && generation === value;
+        return !disposed && pageActive && connected && generation === value;
     }
     async function read(value: Slot<unknown>, force: boolean) {
         if (force || value.handle.snapshot().phase !== "ready")
@@ -810,7 +814,8 @@ export function createRepositoryStore(controller: Controller) {
         emit();
     }
     async function load(force = false, revalidateSelected = false) {
-        if (target === null || disposed || !connected || invalid) return;
+        if (target === null || disposed || !pageActive || !connected || invalid)
+            return;
         ensureCommon();
         const started = generation;
         if (currentRef === null) return;
@@ -875,6 +880,7 @@ export function createRepositoryStore(controller: Controller) {
         return current(started) && acceptSelectedReference();
     }
     function run(work: () => Promise<void>): Promise<void> {
+        if (disposed || !pageActive || !connected) return Promise.resolve();
         if (pending !== null) return pending;
         const started = generation;
         const task = Promise.resolve()
@@ -888,6 +894,13 @@ export function createRepositoryStore(controller: Controller) {
         pending = task;
         emit();
         return task;
+    }
+    function pause() {
+        generation++;
+        pending = null;
+        // Retire active owners while retaining the exact target/view bookmark.
+        retire();
+        emit();
     }
     function open(
         nextTarget: RepositoryTarget,
@@ -1027,13 +1040,12 @@ export function createRepositoryStore(controller: Controller) {
                 if (await rejoinSelected()) await read(value, false);
             });
         },
-        pause() {
-            generation++;
-            pending = null;
-            // A full route unmount releases active query owners and aggregate
-            // aliases. The exact target/view bookmark survives for a fresh open.
-            retire();
-            emit();
+        pause,
+        setPageActive(value: boolean) {
+            if (disposed || pageActive === value) return;
+            pageActive = value;
+            if (!value) pause();
+            else emit();
         },
         dispose() {
             disposed = true;

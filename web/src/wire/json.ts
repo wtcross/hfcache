@@ -246,7 +246,11 @@ export async function abortable<T>(
     signal?: AbortSignal,
 ): Promise<T> {
     if (signal === undefined) return operation;
-    if (signal.aborted) throw new DOMException("Read aborted.", "AbortError");
+    if (signal.aborted) {
+        // INV-021: observe the already-started read without waiting past abort.
+        void operation.catch(() => undefined);
+        throw new DOMException("Read aborted.", "AbortError");
+    }
     let onAbort: (() => void) | undefined;
     try {
         return await Promise.race([

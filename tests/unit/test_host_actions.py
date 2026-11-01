@@ -477,17 +477,27 @@ def test_actual_pidfd_stops_only_original_even_when_manager_replaces_invocation(
         "SubState": "start",
     }
     calls = []
+    descriptors = []
+    confirmations = []
 
     def child(_policy, _snapshot, observed, descriptor, *, send):
         assert observed == expected
         assert actions._live(descriptor)
         calls.append(send)
+        descriptors.append(descriptor)
         if send:
             manager.update(MainPID=str(replacement.pid), InvocationID="e" * 32)
             signal.pidfd_send_signal(descriptor, signal.SIGTERM)
 
+    def confirm(_snapshot, _managed, *, action, timer_was_active=None):
+        assert action == "observer"
+        assert timer_was_active is None
+        assert not actions._live(descriptors[-1])
+        confirmations.append(action)
+
     monkeypatch.setattr(actions, "_manager_observer", lambda _snapshot: dict(manager))
     monkeypatch.setattr(actions, "_child", child)
+    monkeypatch.setattr(writer.policy, "confirm_schedule", confirm)
     request = {
         "operation_id": "e" * 32,
         "request_digest": "e" * 64,
@@ -503,6 +513,7 @@ def test_actual_pidfd_stops_only_original_even_when_manager_replaces_invocation(
         assert original.wait(2) == -signal.SIGTERM
         assert replacement.poll() is None
         assert calls == [False, True]
+        assert confirmations == ["observer"]
         writer.state.permissions["observer"] = False
         assert actions.stop_sync_observer(writer.policy, writer.snapshot(), request) == outcome
         assert (
@@ -514,11 +525,105 @@ def test_actual_pidfd_stops_only_original_even_when_manager_replaces_invocation(
             == outcome
         )
         assert calls == [False, True]
+        assert confirmations == ["observer"]
     finally:
         for process in (original, replacement):
             if process.poll() is None:
                 process.terminate()
             process.wait()
+
+
+def test_acknowledged_original_signal_without_pidfd_exit_never_confirms(writer, monkeypatch):
+    """ADR156: even a later observed exit cannot adopt an uncertain original."""
+    original = subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import signal,time; signal.signal(signal.SIGTERM,signal.SIG_IGN); "
+                "print('ready',flush=True); time.sleep(30)"
+            ),
+        ],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    expected = {
+        "boot_id": actions._boot(),
+        "invocation_id": "d" * 32,
+        "main_pid": original.pid,
+        "start_ticks": actions._proc_start(original.pid),
+    }
+    signals = []
+    real_poll = actions.select.poll
+
+    class ImmediateUnconfirmedPoll:
+        def __init__(self):
+            self.actual = real_poll()
+
+        def register(self, *args):
+            return self.actual.register(*args)
+
+        def poll(self, timeout=0):
+            return [] if timeout > 0 else self.actual.poll(timeout)
+
+    def child(_policy, _snapshot, observed, descriptor, *, send):
+        assert observed == expected
+        assert send
+        signals.append(descriptor)
+        signal.pidfd_send_signal(descriptor, signal.SIGTERM)
+
+    monkeypatch.setattr(actions.select, "poll", ImmediateUnconfirmedPoll)
+    monkeypatch.setattr(
+        actions,
+        "_capture_observer",
+        lambda _policy, _snapshot: (expected, os.pidfd_open(original.pid)),
+    )
+    monkeypatch.setattr(
+        actions,
+        "_manager_observer",
+        lambda _snapshot: {"MainPID": str(original.pid), "InvocationID": expected["invocation_id"]},
+    )
+    monkeypatch.setattr(actions, "_child", child)
+    monkeypatch.setattr(
+        writer.policy,
+        "confirm_schedule",
+        lambda *_args, **_kwargs: pytest.fail("confirmation before retained original pidfd exit"),
+    )
+    request = {
+        "operation_id": "e" * 32,
+        "request_digest": "e" * 64,
+        "request": {"expected": expected},
+    }
+    try:
+        assert original.stdout is not None
+        assert original.stdout.readline() == "ready\n"
+        outcome = actions.stop_sync_observer(writer.policy, writer.snapshot(), request)
+        ObserverStopOutcome.model_validate(outcome)
+        assert outcome["state"] == "effect_unconfirmed"
+        assert outcome["pending"]
+        assert outcome["stop_state"] == "acknowledged"
+        assert original.poll() is None
+        assert len(signals) == 1
+        original.kill()  # Only this test's deliberately uncooperative child.
+        original.wait()
+        before = _tree(writer.root)
+        assert actions.stop_sync_observer(writer.policy, writer.snapshot(), request) == outcome
+        assert (
+            actions.read_observer_outcome(
+                writer.policy,
+                writer.snapshot(),
+                {key: request[key] for key in ("operation_id", "request_digest")},
+            )
+            == outcome
+        )
+        assert len(signals) == 1
+        assert _tree(writer.root) == before
+    finally:
+        if original.poll() is None:
+            original.kill()
+        original.wait()
+        if original.stdout is not None:
+            original.stdout.close()
 
 
 def test_stale_observer_binding_retains_known_no_signal_outcome(writer, monkeypatch):

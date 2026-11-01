@@ -36,7 +36,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Final, Literal, Self, final
 
 from hfcache.errors import Problem, SafetyError, SynchronizationError
-from hfcache.hub import endpoint_host, identity_problems, resolve_host, verify_tls
+from hfcache.hub import endpoint_host, endpoint_port, identity_problems, resolve_host, verify_tls
 from hfcache.locking import exclusive_lock, lock_path
 from hfcache.logging import emit
 from hfcache.services.requests import READ_ONLY, UNPROVABLE_READ_ONLY
@@ -524,7 +524,7 @@ def hub_checks(hub: HubConfig, client: HubClient) -> list[Check]:
     checks = [Check.passed("hub_dns", f"{host} resolves to {', '.join(addresses)}")]
 
     try:
-        detail = verify_tls(host)
+        detail = verify_tls(host, port=endpoint_port(hub.endpoint))
     except SynchronizationError as error:
         checks.append(Check.failed("hub_tls", error.problems))
         checks.append(Check.skipped("hub_identity", OFFLINE))

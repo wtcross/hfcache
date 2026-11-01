@@ -32,7 +32,11 @@ requires exact response identity and final EOF and never retries automatically.
 
 Request keys are exactly `schema_version`, `request_id`, `operation`, `body`.
 Version is integer1, never a boolean; request_id is32 lowercase hexadecimal
-characters. Implemented `status` and `config-read` have exact empty-object body.
+characters. Implemented `status` has an exact empty-object body. `config-read`
+accepts either the legacy empty object or exactly
+`{expected_archive_id,expected_archive_root}`: a canonical lowercase UUID and a
+bounded absolute root spelling, both strict strings. The pair supplies comparison
+values only; it never selects a path to open or adds filesystem authority.
 Read-only `config-prepare` accepts exactly `{base_revision,edits}`, using the
 closed managed edit grammar and bounds in the [API contract](api.md#managed-configuration-form).
 Fixed `config-apply` accepts only the bound application identity/managed edits
@@ -854,7 +858,17 @@ configuration/schedule revisions. It is independently provisioned, never created
 or rotated by reads, never returned or logged. Revisions are not raw configuration
 hashes. Safe config-base reads are bounded to1MiB strict UTF-8 installed bytes.
 They additionally require effective configuration permission after fresh
-revalidation. A known denial returns `operation-denied`, never revision data.
+revalidation. A bound read preserves API check order: valid supported/guarded
+status and a nonnull binding first; effective configuration permission next;
+then nonnull profile and exact equality between the supplied archive ID/root
+and that fresh binding. Unproved or mismatched authority returns
+`config-unavailable`; denied permission returns `operation-denied`, including
+when the supplied tuple also mismatches. No refusal returns revision data.
+The API always binds the pair to its immutable lifespan policy and uses this one
+exchange instead of a preceding status exchange. Empty-body private callers
+retain their existing behavior. Both peer inspections and all configuration
+revalidations remain mandatory; inspection/client deadlines, admission limits
+and owned-child drain are unchanged.
 Return only approved editable fields and opaque exact-byte binding, with no Hub,
 listener, secret, credential-path or arbitrary document projection. No read
 creates a configuration lock, candidate, backup or outcome record.
@@ -990,6 +1004,15 @@ uses the original `.configuration.lock` inode. The API supplies validated comple
 preview evidence; the helper does not read API receipt storage or acquire API
 admission/store/archive locks. No helper Hub request is introduced.
 
+Within that original configuration flock, Apply may reuse the pure managed
+reconstruction over its captured bytes without nesting the read-only preparation
+opcode's two full inspections. It must still fully revalidate the original
+authority before the first durable pending marker, again before exchanging the
+installed configuration, and after installation with only the intended
+configuration leaf changed. Public `config-prepare` retains both of its
+bracketing inspections. Every remaining check and file operation shares the
+original work and time budget; no result is cached across requests.
+
 The unit adds only `SupplementaryGroups=hfcache` and the fixed writable
 `/etc/hfcache` bind. The group permits root:hfcache0640 creation without CAP_CHOWN
 or per-thread credential switching. Preserve SETUID/SETGID ceiling, existing
@@ -1064,6 +1087,24 @@ Reload follows replace/reset; restart follows only if the timer was active.
 Pause/resume never enable/disable a timer. Observer stop uses one original pidfd
 and SIGTERM; a replacement invocation is untouched. Accepted API/worker jobs and
 pending observer handles are preserved independently.
+
+Capture the fixed native SDK's exact systemd credential mount at
+`/run/credentials/hfcache-sync.service`, including full raw mount identity, before
+signaling. Require one mount rooted at `/`, filesystem/source `tmpfs`, and
+`ro,nosuid,nodev,noexec`; malformed, duplicate, writable or non-tmpfs targets
+permit no exception. Capture optional flags without requiring `noswap` or
+`nosymfollow`. Only after the original-stop flow proves exit through its retained
+original pidfd may its post-effect capture accept removal of that one original
+mount. An unchanged table still requires the same raw credential-mount identity;
+an equal projected path/filesystem/flags row cannot stand in for a replacement.
+Every other ordered captured mount observation must remain identical. Missing or
+ambiguous original proof permits no delta; additions, changed/replaced/duplicate
+mounts and unrelated removals refuse. Keep the original capture strict and all
+other policy/index/release/configuration/key/receipt/label, peer, helper namespace/
+mask, unrelated-unit, guard and time/work checks active. No generic mount refresh,
+credential-path exclusion, payload read, helper mount/unmount or cleanup follows.
+This expected systemd teardown cannot settle backend work or an unknown original
+Stop, clear pending state or grant rootless observer control.
 
 Journal defaults to80 entries, maximum80,8KiB/entry and64KiB displayed bytes,
 256KiB raw output and a4-second child window within the existing inspection

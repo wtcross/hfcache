@@ -51,6 +51,7 @@ export interface LibrarySnapshot {
     readonly generation: number;
     readonly authGeneration: number;
     readonly connected: boolean;
+    readonly pageActive: boolean;
     readonly filters: LibraryFilters;
     readonly phase: LibraryPhase;
     readonly refreshing: boolean;
@@ -121,7 +122,8 @@ export function createLibraryStore(controller: Controller) {
     let cursors: (string | undefined)[] = [undefined];
     let catalogIdentity: string | null = null;
     let notice: LibraryNotice = null;
-    let disposed = false;
+    let disposed = false,
+        pageActive = true;
     let pending: Promise<void> | null = null;
     let catalog: Slot<CatalogSearchPayload> | null = null;
     let facets: Partial<Record<LibraryFacet, Slot<CatalogFacetPayload>>> = {};
@@ -291,6 +293,7 @@ export function createLibraryStore(controller: Controller) {
             generation,
             authGeneration,
             connected,
+            pageActive,
             disposed,
             filters,
             notice,
@@ -377,6 +380,7 @@ export function createLibraryStore(controller: Controller) {
             generation,
             authGeneration,
             connected: connected && !disposed,
+            pageActive: pageActive && !disposed,
             filters,
             phase,
             refreshing: pending !== null,
@@ -430,7 +434,7 @@ export function createLibraryStore(controller: Controller) {
         supplementVisible = true;
     }
     function current(value: number) {
-        return !disposed && connected && generation === value;
+        return !disposed && pageActive && connected && generation === value;
     }
     function prepareMain(
         main: Slot<CatalogSearchPayload>,
@@ -491,7 +495,7 @@ export function createLibraryStore(controller: Controller) {
             : (success(value.handle.snapshot(), true)?.next_cursor ?? null);
     }
     async function load(resetAllowed: boolean): Promise<void> {
-        if (disposed || !connected) return;
+        if (disposed || !pageActive || !connected) return;
         ensure();
         const currentGeneration = generation,
             main = catalog;
@@ -545,6 +549,7 @@ export function createLibraryStore(controller: Controller) {
         await load(false);
     }
     function run(work: () => Promise<void>): Promise<void> {
+        if (disposed || !pageActive || !connected) return Promise.resolve();
         if (pending !== null) return pending;
         const started = generation;
         const task = Promise.resolve()
@@ -558,6 +563,32 @@ export function createLibraryStore(controller: Controller) {
         pending = task;
         emit();
         return task;
+    }
+    function pause() {
+        const unfinished = pending !== null;
+        generation++;
+        pending = null;
+        const active = [
+            catalog,
+            ...Object.values(facets),
+            ...(supplements === null
+                ? []
+                : [
+                      supplements.inventory,
+                      supplements.status,
+                      supplements.revisions,
+                  ]),
+        ];
+        for (const value of active) {
+            const phase = value?.handle.snapshot().phase;
+            if (
+                phase === "loading" ||
+                phase === "stale" ||
+                (unfinished && value === catalog)
+            )
+                value?.handle.invalidate();
+        }
+        emit();
     }
     return Object.freeze({
         snapshot,
@@ -663,31 +694,16 @@ export function createLibraryStore(controller: Controller) {
                 if (change !== null) await restart(change);
             });
         },
-        pause() {
-            const unfinished = pending !== null;
-            generation++;
-            pending = null;
-            const active = [
-                catalog,
-                ...Object.values(facets),
-                ...(supplements === null
-                    ? []
-                    : [
-                          supplements.inventory,
-                          supplements.status,
-                          supplements.revisions,
-                      ]),
-            ];
-            for (const value of active) {
-                const phase = value?.handle.snapshot().phase;
-                if (
-                    phase === "loading" ||
-                    phase === "stale" ||
-                    (unfinished && value === catalog)
-                )
-                    value?.handle.invalidate();
+        pause,
+        setPageActive(value: boolean) {
+            if (disposed || pageActive === value) return;
+            pageActive = value;
+            if (!value) pause();
+            else {
+                // The mounted route parses its current fragment before reading.
+                catalog?.handle.invalidate();
+                emit();
             }
-            emit();
         },
         dispose() {
             disposed = true;

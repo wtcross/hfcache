@@ -484,6 +484,32 @@ test("authentication clears aggregate rows synchronously and late old response c
     expect(state.store.snapshot().rows).toHaveLength(2);
 });
 
+test("inactive page ownership fences queued and explicit reads while retaining filter intent", async () => {
+    const state = setup();
+    const queued = state.store.refresh();
+    state.store.setPageActive(false);
+    const generation = state.store.snapshot().generation;
+    state.store.setPageActive(false);
+    await queued;
+    await state.store.setFilters(
+        normalizeLibraryFilters({ q: "owned return" }),
+    );
+    await state.store.refresh();
+    await state.store.nextFacetPage("tag");
+    expect(state.requests).toHaveLength(0);
+    expect(state.store.snapshot()).toMatchObject({
+        pageActive: false,
+        filters: { q: "owned return" },
+    });
+    expect(state.store.snapshot().generation).toBe(generation + 1);
+    state.store.setPageActive(true);
+    expect(state.requests).toHaveLength(0);
+    await state.store.refresh();
+    expect(state.requests.length).toBeGreaterThan(0);
+    expect(state.requests[0]?.searchParams.get("q")).toBe("owned return");
+    expect(state.methods.every((method) => method === "GET")).toBe(true);
+});
+
 test("route pause aborts only owned reads and preserves validated same-session cache", async () => {
     const delayed = deferred<Response>();
     let hold = false,

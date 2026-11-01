@@ -1256,6 +1256,38 @@ test("full route pause releases active publication queries and payload aliases b
     }
 });
 
+test("inactive page ownership refuses queued opens and refresh until explicit route activation", async () => {
+    const { store, seen, moveCurrent } = setup();
+    await store.open(target, overview);
+    const selected = store.snapshot().selected;
+    const before = seen.length;
+    const queued = store.refresh();
+    store.setPageActive(false);
+    const generation = store.snapshot().generation;
+    store.setPageActive(false);
+    expect(store.snapshot().generation).toBe(generation);
+    await queued;
+    await store.open(target, { pair: first, tab: "activity" });
+    await store.refresh();
+    expect(seen).toHaveLength(before);
+    expect(store.snapshot()).toMatchObject({
+        pageActive: false,
+        selected,
+        view: { pair: first, tab: "activity" },
+    });
+    moveCurrent(second);
+    store.setPageActive(true);
+    expect(seen).toHaveLength(before);
+    await store.open(target, { pair: first, tab: "activity" });
+    expect(store.snapshot()).toMatchObject({ pageActive: true, selected });
+    expect(paths(seen.slice(before))).toContain(
+        "/api/v1/repositories/model/owner/model/references/" + first.commitSha,
+    );
+    expect(
+        paths(seen.slice(before)).some((path) => path.includes("/manifests/")),
+    ).toBe(true);
+});
+
 test("returning to a paused exact bookmark rereads membership and manifest without adopting a new current publication", async () => {
     const { store, seen, moveCurrent } = setup();
     await store.open(target, overview);

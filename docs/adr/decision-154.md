@@ -169,3 +169,18 @@ original-process observer stop, independent durable outcomes and finite diagnost
 reads. It preserves archive serialization, original operation identity and this
 record's unrelated requirements. Implementation and actual installed conformance
 are separately required.
+
+## Captured reconstruction inside guarded Apply (2026-10-30)
+
+Installed rootless acceptance reached `backup_ready` and correctly retained its
+original pending marker when repeated full guard observations exhausted the
+unchanged15-second aggregate inspection budget. The locked Apply had nested the
+read-only preparation opcode's entry and exit inspections in addition to its
+own mutation-boundary inspections. Share only the pure reconstruction from the
+same captured configuration; keep public `config-prepare` bracketed as required
+by decision153. Under the original configuration flock, Apply still fully checks
+the captured authority before its first pending write, before configuration
+exchange and after installed confirmation. Preserve every bound, original
+peer/capture check, history identity and uncertainty rule. No fresh snapshot,
+cross-request cache, timeout extension or replay is introduced. Source tests and
+fresh installed acceptance must establish the result separately.

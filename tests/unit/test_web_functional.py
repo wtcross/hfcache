@@ -6,10 +6,14 @@ import hashlib
 import json
 import os
 import runpy
+import shutil
 import stat
 import struct
 import sys
+import zipfile
+from functools import partial
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import httpx2
@@ -18,12 +22,14 @@ from fastmcp import Client
 from fastmcp.client.transports import StreamableHttpTransport
 from fastmcp.utilities.asgi_transport import StreamingASGITransport, run_asgi_lifespan
 
+import hfcache
 from hfcache.api.app import create_app
 from hfcache.config import load_config
 from hfcache.reporting import RunReport, VerificationReport
 from hfcache.server_config import validate_server_config_mapping
 from hfcache.services.queries import LocalQueries
 from tests.unit.test_web_auth_fixture import provisioned as auth_provisioned  # noqa: F401
+from tests.unit.test_web_release import assets, release, verifier  # noqa: F401
 from tests.web_functional_fixture import seed_archive, snapshot
 
 ROOT = Path(__file__).absolute().parents[2]
@@ -62,6 +68,90 @@ CASES = {
     "private-browser-storage",
     "same-origin-network",
     "same-origin-json-validation",
+    "exact-publication-refresh-history",
+    "api-pagination",
+    "credential-class-isolation",
+    "denied-basic-read-auth",
+    "denied-basic-csrf",
+    "no-browser-errors",
+    "library-type-and-repository-scopes",
+    "library-literal-id-tag-not-readme",
+    "library-current-and-retained-publications",
+    "library-tags-129-raw-refused",
+    "library-tags-64-accepted",
+    "library-tags-64-canonical-128-raw",
+    "library-tags-65-canonical-refused",
+    "library-tags-65-refused",
+    "library-tags-all-and-missing",
+    "library-tags-any",
+    "library-tags-canonical-all",
+    "library-tags-clear-after-all",
+    "library-tags-clear-before-count-bound",
+    "library-tags-clear-before-observed",
+    "library-tags-clear-before-unpublished",
+    "library-tags-current-only-withholds-old",
+    "library-tags-default-corpus",
+    "library-tags-disabled-unpublished",
+    "library-tags-groups-combine-with-and",
+    "library-tags-last-observed",
+    "library-tags-restore-default",
+    "library-tags-restore-valid-count",
+    "library-technical-primary-GGUF-all-predicates",
+    "library-technical-one-byte-below-excludes-GGUF",
+    "library-technical-primary-GPTQ-same-variant",
+    "library-technical-cross-variant-format-method-bits",
+    "library-technical-cross-variant-scheme-bits",
+    "library-technical-adapter-excluded",
+    "library-technical-projector-excluded",
+    "library-technical-unknown-role-excluded",
+    "library-technical-incomplete-members-excluded",
+    "library-total-page-coverage-and-zero",
+    "publication-files-locators-and-history",
+    "publication-model-dataset-static-evidence",
+    "readme-active-corpus-fails-closed",
+    "readme-blocked-resources-and-pinned-links",
+    "readme-sanitized-source-secret-and-format-bounds",
+    "ordinary-config-read-projection",
+    "ordinary-tag-draft-first-validation",
+    "ordinary-explicit-second-validation",
+    "ordinary-discard-fresh-UI-read",
+    "config-numeric-lexical-leading-zero",
+    "config-numeric-lexical-exponent",
+    "config-numeric-lexical-fraction",
+    "config-numeric-lexical-unsafe-integer",
+    "config-numeric-range-free-gib-upper",
+    "config-numeric-range-free-percent-upper",
+    "config-numeric-range-workers-upper",
+    "config-numeric-range-sync-wait-upper",
+    "config-numeric-range-staging-lower",
+    "config-numeric-range-verification-wait-upper",
+    "config-numeric-range-repair-grace-lower",
+    "config-tag-refusal-raw-count-before-deduplication",
+    "config-tag-refusal-raw-length-before-trim",
+    "config-tag-refusal-nonascii",
+    "config-tag-refusal-empty-line",
+    "config-json-refusal-malformed",
+    "config-json-refusal-mixed-managed-and-candidate",
+    "config-json-refusal-json-pointer",
+    "config-json-refusal-protected-root",
+    "config-json-refusal-coercive-integer",
+    "config-json-refusal-coercive-boolean",
+    "config-json-refusal-noninteger-lexeme",
+    "config-json-refusal-duplicate-identity",
+    "config-json-refusal-reordered-existing",
+    "config-two-sessions-same-full-byte-base",
+    "config-session-a-tag-only-validate",
+    "config-session-a-reviewed-empty-preview",
+    "config-session-b-tag-only-validate",
+    "config-session-b-reviewed-empty-preview",
+    "config-session-a-one-reviewed-apply",
+    "config-session-a-confirm-original-host-outcome",
+    "config-session-b-stale-apply-refusal",
+    "config-session-b-compare-retains-original-intent",
+    "config-session-a-original-preview-after-reload",
+    "config-session-a-original-apply-after-reload",
+    "config-session-a-original-host-outcome-after-reload",
+    "config-session-b-original-preview-after-reload",
 }
 
 
@@ -102,17 +192,17 @@ def provisioned(request):
             "guest": guest,
         },
     )
-    assets = bundle / "assets"
-    assets.mkdir(mode=0o700)
+    asset_root = bundle / "assets"
+    asset_root.mkdir(mode=0o700)
     members = []
     for name, body, mime in (
         ("index.html", b"<html></html>\n", "text/html"),
         ("licenses.json", b"{}\n", "application/json"),
         ("THIRD_PARTY_NOTICES.txt", b"fixture notice\n", "text/plain"),
     ):
-        (assets / name).write_bytes(body)
+        (asset_root / name).write_bytes(body)
         members.append(
-            {"path": name, "bytes": len(body), "sha256": sha(assets / name), "mime": mime}
+            {"path": name, "bytes": len(body), "sha256": sha(asset_root / name), "mime": mime}
         )
     artifact = {
         "schema_version": 1,
@@ -122,7 +212,7 @@ def provisioned(request):
         "build": {"application_version": "unit-only"},
         "members": sorted(members, key=lambda item: item["path"]),
     }
-    artifact_path = write(assets / "manifest.json", artifact)
+    artifact_path = write(asset_root / "manifest.json", artifact)
     tooling = old["launcher"]
     binding = {
         "launcher": tooling,
@@ -150,7 +240,7 @@ def provisioned(request):
             },
         },
         "installed": {"wheel": old["wheel"], "package_root": old["installed"]["module_root"]},
-        "assets": {"root": str(assets), "manifest_sha256": sha(artifact_path)},
+        "assets": {"root": str(asset_root), "manifest_sha256": sha(artifact_path)},
         "browser": {
             **dict.fromkeys(
                 (
@@ -177,6 +267,563 @@ def provisioned(request):
         value["profiles"]["rootless"][key] = "c" * 64
     write(path, value)
     return root, path, value
+
+
+@pytest.fixture
+def current_provisioned(provisioned, request, helper, monkeypatch):  # noqa: PLR0915 - one complete original-index/native fixture
+    """Real indexed metadata and physical native layout; never execute candidate code."""
+    root, path, value = provisioned
+    original, captured_source, index, _ = request.getfixturevalue("release")
+    release_verifier = request.getfixturevalue("verifier")
+    bundle = path.parent / "current-release"
+    shutil.copytree(original, bundle)
+    source = bundle / "source"
+    shutil.copytree(captured_source, source)
+    for name, body in {
+        "src/hfcache/__init__.py": b'__version__ = "0.2.2"\n',
+        "src/hfcache/cli.py": b"# inert CLI module\n",
+        "uv.lock": b'version=1\n[[package]]\nname="hfcache"\nversion="0.2.2"\n',
+        "packaging/containers/Containerfile": b"FROM fixture\nUSER 981:981\n",
+        "packaging/containers/Containerfile.caddy": b"FROM fixture\nUSER 981:981\n",
+    }.items():
+        target = source / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(body)
+    wheel = bundle / "wheels/hfcache-0.2.2-py3-none-any.whl"
+    with zipfile.ZipFile(wheel, "w") as archive:
+        for candidate in sorted((source / "src/hfcache").rglob("*.py")):
+            archive.writestr(
+                candidate.relative_to(source / "src").as_posix(), candidate.read_bytes()
+            )
+    index["source_files"] = {
+        candidate.relative_to(source).as_posix(): sha(candidate)
+        for candidate in source.rglob("*")
+        if candidate.is_file()
+    }
+    index["files"]["wheels/" + wheel.name] = sha(wheel)
+    (bundle / "web-release.json").write_bytes(release_verifier.encoded(index))
+
+    # The execution checkout can change test tools, while app inputs stay original.
+    shutil.copytree(source, root, dirs_exist_ok=True)
+    tool_names = {
+        "scripts/check-web-functional.py",
+        "scripts/web-release.py",
+        "scripts/release-profile.py",
+        "web/test/functional-api/driver.mjs",
+        "web/test/auth-api/sandbox.mjs",
+        "docs/agents/plans/support/web-ui/acceptance-cases.json",
+        "docs/agents/plans/support/web-ui/task-index.json",
+    }
+    for name in tool_names:
+        target = root / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((ROOT / name).read_bytes())
+    inventory = {name: sha(root / name) for name in {*index["source_files"], *tool_names}}
+    inventory_path = write(path.parent / "current-tooling.json", {"files": inventory})
+    value["source"] = {
+        "parent_commit": "2" * 40,
+        "snapshot_sha256": hashlib.sha256(
+            json.dumps(inventory, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest(),
+        "label": "WEB-022, this commit",
+        "input_manifest": record(inventory_path),
+    }
+    value["guest"]["identity"] = "web-022-" + value["fixture_id"].replace("-", "")
+    value["guest"]["boot_id"] = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+    marker = write(
+        Path(value["marker"]["path"]),
+        {
+            "schema_version": 1,
+            "fixture_id": value["fixture_id"],
+            "repository_root": str(root),
+            "guest": value["guest"],
+        },
+    )
+    value["marker"] = record(marker)
+
+    # A private test filesystem root models root ownership without changing the host.
+    anchor = root.parent / "native-filesystem"
+    prefix = anchor / "opt/hfcache"
+    selected = prefix / "releases/0.2.2"
+    selected.mkdir(parents=True)
+    for name in ("src", "scripts", "packaging", "docs", "examples"):
+        shutil.copytree(source / name, selected / name)
+    for name in release_verifier.SHIPPED_FILES:
+        shutil.copyfile(source / name, selected / name)
+    for name in ("ui", "host-helper"):
+        shutil.copytree(bundle / name, selected / name)
+    shutil.copyfile(bundle / "web-release.json", selected / "web-release.json")
+    binaries = selected / ".venv/bin"
+    binaries.mkdir(parents=True)
+    (selected / ".venv/pyvenv.cfg").write_text("home=/fixture\n")
+    (binaries / "hfcache").write_text("#!/fixture/python\n")
+    (binaries / "hfcache").chmod(0o755)
+    (binaries / "python").symlink_to(sys.executable)
+    package = selected / ".venv/lib/python3.14/site-packages/hfcache"
+    shutil.copytree(source / "src/hfcache", package)
+    (prefix / "current").symlink_to("releases/0.2.2")
+    value["installed"] = {
+        "wheel": record(wheel),
+        "package_root": str(package),
+        "release": record(bundle / "web-release.json"),
+    }
+    value["assets"] = {"root": str(bundle / "ui"), "manifest_sha256": index["ui_manifest_sha256"]}
+    policy = write(path.parent / "current-worker-policy.json", {"fixture_policy": True})
+    control = write(path.parent / "current-stock-control.json", {"fixture_control": True})
+    value["profiles"]["rootless"].update(
+        storage_driver="overlay",
+        network={"worker_policy": record(policy), "stock_control": record(control)},
+    )
+    for profile in ("application", "native"):
+        value["profiles"][profile]["caddy_account"] = "webcaddy"
+    namespace = helper["validate_manifest"].__globals__
+    monkeypatch.setitem(namespace, "ROOT", root)
+    monkeypatch.setitem(namespace, "NATIVE_PREFIX", prefix)
+    monkeypatch.setitem(namespace, "NATIVE_OWNER", os.getuid())
+    monkeypatch.setitem(namespace, "WORKER_POLICY_SHA256", sha(policy))
+    monkeypatch.setattr(
+        namespace["pwd"],
+        "getpwnam",
+        lambda name: SimpleNamespace(
+            pw_name=name,
+            pw_uid={"webcaddy": 982, "hfcache": 983, "root": 0}[name],
+            pw_gid={"webcaddy": 982, "hfcache": 983, "root": 0}[name],
+        ),
+    )
+    monkeypatch.setitem(
+        namespace, "native_path", partial(helper["native_path"], anchor=anchor, owner=os.getuid())
+    )
+    write(path, value)
+    return root, path, value, bundle, selected, helper
+
+
+def test_current_tooling_and_original_selected_release_have_separate_identity(current_provisioned):
+    root, path, value, bundle, selected, helper = current_provisioned
+    assert (
+        value["source"]["parent_commit"]
+        != json.loads((bundle / "web-release.json").read_bytes())["source_commit"]
+    )
+    assert helper["validate_manifest"](str(path), root=root) == value
+    assert (selected / "web-release.json").read_bytes() == (
+        bundle / "web-release.json"
+    ).read_bytes()
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [
+        "app-source",
+        "extra-app-source",
+        "wheel",
+        "release-index",
+        "selected-index",
+        "installed-module",
+        "external-selector",
+        "absolute-selector",
+        "selector-file",
+        "package-copy",
+        "package-symlink",
+        "package-mode",
+        "package-hardlink",
+        "package-fifo",
+        "wrong-marker",
+        "legacy-label",
+        "missing-network",
+        "wrong-policy",
+        "wrong-storage",
+        "root-caddy-account",
+    ],
+)
+def test_current_release_refuses_changed_or_unselected_authority(  # noqa: PLR0912, PLR0915 - independent refusal mutations
+    current_provisioned, damage
+):
+    root, path, value, bundle, selected, helper = current_provisioned
+    package = Path(value["installed"]["package_root"])
+    selector = selected.parents[1] / "current"
+    if damage in {"app-source", "extra-app-source"}:
+        name = "src/hfcache/cli.py" if damage == "app-source" else "src/hfcache/extra.py"
+        (root / name).write_text("# changed application source\n")
+        inventory_path = Path(value["source"]["input_manifest"]["path"])
+        inventory = json.loads(inventory_path.read_bytes())
+        inventory["files"][name] = sha(root / name)
+        write(inventory_path, inventory)
+        value["source"]["input_manifest"] = record(inventory_path)
+        value["source"]["snapshot_sha256"] = hashlib.sha256(
+            json.dumps(inventory["files"], sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+    elif damage == "wheel":
+        value["installed"]["wheel"] = record(bundle / "ui/index.html")
+    elif damage == "release-index":
+        value["installed"]["release"]["sha256"] = "0" * 64
+    elif damage == "selected-index":
+        (selected / "web-release.json").write_text("{}\n")
+    elif damage == "installed-module":
+        (package / "cli.py").write_text("# replaced installed code\n")
+    elif damage in {"external-selector", "absolute-selector", "selector-file"}:
+        selector.unlink()
+        if damage == "selector-file":
+            selector.write_text("not a selector\n")
+        else:
+            selector.symlink_to("../other" if damage == "external-selector" else selected)
+    elif damage == "package-copy":
+        copied = path.parent / "copied-package/hfcache"
+        shutil.copytree(package, copied)
+        value["installed"]["package_root"] = str(copied)
+    elif damage == "package-symlink":
+        renamed = package.with_name("original")
+        package.rename(renamed)
+        package.symlink_to(renamed)
+    elif damage == "package-mode":
+        package.chmod(0o777)
+    elif damage in {"package-hardlink", "package-fifo"}:
+        leaf = package / "cli.py"
+        if damage == "package-hardlink":
+            os.link(leaf, package / "extra-link")
+        else:
+            leaf.unlink()
+            os.mkfifo(leaf)
+    elif damage == "wrong-marker":
+        value["guest"]["identity"] = "another-owned-guest"
+    elif damage == "legacy-label":
+        value["source"]["label"] = "WEB-005, this commit"
+    elif damage == "missing-network":
+        del value["profiles"]["rootless"]["network"]
+    elif damage == "wrong-policy":
+        value["profiles"]["rootless"]["network"]["worker_policy"]["sha256"] = "0" * 64
+    elif damage == "wrong-storage":
+        value["profiles"]["rootless"]["storage_driver"] = "unproved"
+    else:
+        value["profiles"]["native"]["caddy_account"] = "root"
+    write(path, value)
+    with pytest.raises((ValueError, OSError)):
+        helper["validate_manifest"](str(path), root=root)
+
+
+def test_current_metadata_validation_performs_no_runtime_action(current_provisioned, monkeypatch):
+    root, path, _, _, _, helper = current_provisioned
+
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("metadata validator attempted a runtime action")
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", forbidden)
+    monkeypatch.setattr(os, "system", forbidden)
+    helper["validate_manifest"](str(path), root=root)
+
+
+def test_current_wrong_boot_refuses_before_native_prefix_access(current_provisioned, monkeypatch):
+    root, path, value, _, _, helper = current_provisioned
+    value["guest"]["boot_id"] = "00000000-0000-0000-0000-000000000001"
+    marker_path = Path(value["marker"]["path"])
+    marker = json.loads(marker_path.read_bytes())
+    marker["guest"] = value["guest"]
+    write(marker_path, marker)
+    value["marker"] = record(marker_path)
+    write(path, value)
+
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("native prefix accessed before the actual owned-boot check")
+
+    monkeypatch.setitem(helper["validate_manifest"].__globals__, "native_package", forbidden)
+    with pytest.raises(ValueError, match="owned guest boot"):
+        helper["validate_manifest"](str(path), root=root)
+
+
+def test_tool_update_keeps_original_application_and_installed_identity(current_provisioned):
+    root, path, value, bundle, selected, helper = current_provisioned
+    original_index = (bundle / "web-release.json").read_bytes()
+    tool_name = "web/test/functional-api/driver.mjs"
+    with (root / tool_name).open("ab") as stream:
+        stream.write(b"\n// separately recorded tooling-only change\n")
+    inventory_path = Path(value["source"]["input_manifest"]["path"])
+    inventory = json.loads(inventory_path.read_bytes())
+    inventory["files"][tool_name] = sha(root / tool_name)
+    write(inventory_path, inventory)
+    value["source"]["input_manifest"] = record(inventory_path)
+    value["source"]["snapshot_sha256"] = hashlib.sha256(
+        json.dumps(inventory["files"], sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    write(path, value)
+    helper["validate_manifest"](str(path), root=root)
+    assert (bundle / "web-release.json").read_bytes() == original_index
+    assert (selected / "web-release.json").read_bytes() == original_index
+
+
+@pytest.mark.parametrize("damage", ["owner", "network-filesystem", "selector-race"])
+def test_native_read_exception_stays_protected_and_selection_bound(
+    current_provisioned, monkeypatch, damage
+):
+    root, path, value, _, selected, helper = current_provisioned
+    namespace = helper["validate_manifest"].__globals__
+    original_native = namespace["native_path"]
+    original_backing = namespace["local_backing"]
+    original_bounded = namespace["bounded"]
+    if damage == "owner":
+        monkeypatch.setitem(
+            namespace,
+            "native_path",
+            partial(helper["native_path"], anchor=selected.parents[3], owner=os.getuid() + 1),
+        )
+    elif damage == "network-filesystem":
+
+        def backing(candidate, *args, **kwargs):
+            if candidate.is_relative_to(selected.parents[1]):
+                original_backing(candidate, "1 0 0:1 / / rw - nfs4 fixture ro\n")
+            return original_backing(candidate, *args, **kwargs)
+
+        monkeypatch.setitem(namespace, "local_backing", backing)
+    else:
+        leaf = Path(value["installed"]["package_root"]) / "cli.py"
+
+        def changing_read(candidate, *args, **kwargs):
+            body = original_bounded(candidate, *args, **kwargs)
+            if candidate == leaf:
+                selector = selected.parents[1] / "current"
+                selector.unlink()
+                selector.symlink_to("releases/another")
+            return body
+
+        monkeypatch.setitem(namespace, "bounded", changing_read)
+    assert original_native is not None
+    with pytest.raises((ValueError, OSError)):
+        helper["validate_manifest"](str(path), root=root)
+
+
+def test_current_principals_come_from_indexed_recipes_and_fixed_accounts(current_provisioned):
+    _, _, value, _, _, helper = current_provisioned
+    assert helper["native_principal"]("api") == 983
+    assert helper["native_principal"]("caddy", caddy_account="webcaddy") == 982
+    assert helper["container_principal"](value, "api") == 981
+    assert helper["container_principal"](value, "caddy") == 981
+    process = metadata_process()
+    process["status"]["Uid"] = process["status"]["Gid"] = [983] * 4
+    helper["role_process"](process, "worker", "native", expected_uid=983)
+    with pytest.raises(ValueError, match="unexpected identity"):
+        helper["role_process"](process, "worker", "native", expected_uid=981)
+
+
+@pytest.mark.parametrize("damage", [None, "image", "source", "wheel", "recipe", "extra-bind"])
+def test_selected_live_images_require_canonical_build_inputs_and_finite_binds(
+    current_provisioned, damage
+):
+    root, _path, value, bundle, selected, helper = current_provisioned
+    index = json.loads((bundle / "web-release.json").read_bytes())
+    for target in (
+        selected / "scripts/container-service.py",
+        root / "scripts/container-service.py",
+    ):
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((ROOT / "scripts/container-service.py").read_bytes())
+    index["source_files"]["scripts/container-service.py"] = sha(
+        root / "scripts/container-service.py"
+    )
+    for target in (bundle / "web-release.json", selected / "web-release.json"):
+        target.write_bytes(helper["canonical"](index))
+    value["installed"]["release"] = record(bundle / "web-release.json")
+    rendered = selected / "rendered"
+    rendered.mkdir()
+    runtime = {
+        "service_uid": 983,
+        "service_gid": 983,
+        "app_image": "sha256:" + "c" * 64,
+        "caddy_image": "sha256:" + "d" * 64,
+    }
+    write(rendered / "runtime.json", runtime)
+    (rendered / "server.toml").write_text("[host_helper]\nenabled=false\n")
+    names = (
+        "web-release.json",
+        "ui/manifest.json",
+        "packaging/containers/Containerfile",
+        "packaging/containers/Containerfile.caddy",
+        "scripts/container-service.py",
+    )
+    for name in names:
+        target = selected / name
+        if not target.exists():
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(b"# metadata-only selected source\n")
+    files = {name: sha(selected / name) for name in names}
+    container_release = {
+        "source_commit": index["source_commit"],
+        "version": index["version"],
+        "wheel_sha256": index["files"]["wheels/hfcache-0.2.2-py3-none-any.whl"],
+        "app_image": "sha256:" + "c" * 64,
+        "caddy_image": "sha256:" + "d" * 64,
+        "files": files,
+    }
+    release_path = write(selected / "container-release.json", container_release)
+    stage_path = write(
+        selected / "artifact-index.json",
+        {
+            "schema_version": 1,
+            "files": {
+                **files,
+                "rendered/runtime.json": sha(rendered / "runtime.json"),
+                "rendered/server.toml": sha(rendered / "server.toml"),
+            },
+        },
+    )
+    api = {
+        "source_commit": index["source_commit"],
+        "source_dirty": False,
+        "version": index["version"],
+        "wheel_sha256": container_release["wheel_sha256"],
+        "web_manifest_sha256": index["ui_manifest_sha256"],
+        "containerfile_sha256": files["packaging/containers/Containerfile"],
+        "image_id": container_release["app_image"],
+    }
+    caddy = {
+        "image_id": container_release["caddy_image"],
+        "containerfile_sha256": files["packaging/containers/Containerfile.caddy"],
+        "caddy_binary_sha256": value["profiles"]["rootless"]["caddy_binary_sha256"],
+    }
+    changes = {
+        "image": (api, "image_id", "sha256:" + "e" * 64),
+        "source": (api, "source_commit", "e" * 40),
+        "wheel": (api, "wheel_sha256", "e" * 64),
+        "recipe": (caddy, "containerfile_sha256", "e" * 64),
+    }
+    if damage in changes:
+        changed_record, field, replacement = changes[damage]
+        changed_record[field] = replacement
+    build_records = root / ".scratch/unit-build-records"
+    build_records.mkdir(parents=True, mode=0o700)
+    artifacts = {
+        "release": record(release_path),
+        "stage_index": record(stage_path),
+        "api_build": record(write(build_records / "unit-api-build.json", api)),
+        "caddy_build": record(write(build_records / "unit-caddy-build.json", caddy)),
+    }
+    proofs: dict[str, Any] = {"network": {"selected_artifacts": artifacts}}
+    constructor = helper["captured_tool"](
+        "container-service.py", files["scripts/container-service.py"]
+    )
+    constructor["PROFILE_DIRECTORY"] = rendered
+    for role in ("api", "worker", "caddy"):
+        argv = constructor["command"](
+            runtime, role, invocation_id="", preserve_archive_lock=role in {"api", "worker"}
+        )
+        binds = []
+        for position, argument in enumerate(argv):
+            if argument == "--volume":
+                source, destination, options = argv[position + 1].split(":")
+                binds.append(
+                    {
+                        "source": source,
+                        "destination": destination,
+                        "read_only": options.startswith("ro"),
+                    }
+                )
+        proofs[role] = {
+            "container": {
+                "image_sha256": ("d" if role == "caddy" else "c") * 64,
+                "mounts": copy.deepcopy(binds),
+            },
+            "mount_projection": {
+                "source_sha256": files["scripts/container-service.py"],
+                "binds": binds,
+            },
+        }
+    if damage == "extra-bind":
+        proofs["caddy"]["container"]["mounts"].append(
+            {"source": "/srv/hfcache", "destination": "/archive", "read_only": True}
+        )
+    if damage is None:
+        helper["selected_image_evidence"](proofs, value, index)
+    else:
+        with pytest.raises(ValueError, match=r"image|canonical|bind"):
+            helper["selected_image_evidence"](proofs, value, index)
+
+
+@pytest.mark.parametrize("raw", ["0", "", True, None])
+def test_installed_enforcing_flag_requires_the_raw_kernel_value(current_provisioned, raw):
+    _, _, value, _, _, helper = current_provisioned
+    proofs = {"network": {"selinux_enforce": raw, "selinux_enforcing": True}}
+    with pytest.raises(ValueError, match="raw installed SELinux"):
+        helper["installed_role_evidence"](proofs, value)
+
+
+def test_current_rootless_mapping_and_manager_cannot_borrow_legacy_identity(current_provisioned):
+    _, _, value, _, _, helper = current_provisioned
+    container, process, _ = metadata_rootless_container()
+    old_name = container["name"]
+    container["name"] = "hfcache-verification"
+    container["engine"] = "podman-rootless-overlay"
+    container["image_sha256"] = value["profiles"]["rootless"]["worker_image_sha256"]
+    container["manager_unit"] = {
+        key: item.replace(old_name, container["name"]).replace("user-1000", "user-983")
+        for key, item in container["manager_unit"].items()
+    }
+    for group in container["owned_cgroups"]:
+        group["path"] = (
+            group["path"].replace(old_name, container["name"]).replace("user-1000", "user-983")
+        )
+    process["status"]["Uid"] = process["status"]["Gid"] = [983] * 4
+    for key in ("uid_map", "gid_map"):
+        process[key] = process[key].replace("1000", "983")
+    helper["role_container"](container, process, value, "worker", stage="ready")
+    process["status"]["Uid"] = process["status"]["Gid"] = [1000] * 4
+    with pytest.raises(ValueError, match="mapped identity"):
+        helper["role_container"](container, process, value, "worker", stage="ready")
+
+
+def test_current_network_control_unit_uses_exact_fixture_and_generation(current_provisioned):
+    _, _, value, _, _, helper = current_provisioned
+    generation = "a" * 32
+    assert helper["fixture_unit"](value, generation, "network-control.service") == (
+        "web-functional-"
+        + value["fixture_id"].replace("-", "")
+        + "-"
+        + generation
+        + "-network-control.service"
+    )
+    with pytest.raises(ValueError, match="generation"):
+        helper["fixture_unit"](value, "../../another", "network-control.service")
+
+
+@pytest.mark.parametrize("damage", ["policy-path", "availability-hash", "writable-mount"])
+def test_current_network_paths_stay_explicit_and_independently_joined(
+    current_provisioned, monkeypatch, damage
+):
+    _, _, value, _, _, helper = current_provisioned
+    probe, _, network, worker, previous = metadata_rootless_network(helper, monkeypatch)
+    value["profiles"]["rootless"]["worker_image_sha256"] = previous["profiles"]["rootless"][
+        "worker_image_sha256"
+    ]
+    bindings = value["profiles"]["rootless"]["network"]
+    receipt = network["worker_network"]["body"]
+    receipt["guest_identity"] = value["guest"]["identity"]
+    receipt["boot_id"] = value["guest"]["boot_id"]
+    receipt["host_process"]["status"]["Uid"] = [983] * 4
+    receipt["host_process"]["status"]["Gid"] = [983] * 4
+    for key in ("uid_map", "gid_map"):
+        receipt["host_process"][key] = receipt["host_process"][key].replace("1000", "983")
+    for key, body in (
+        ("worker_policy", network["worker_policy"]["body"]),
+        ("stock_control", receipt),
+    ):
+        path = Path(bindings[key]["path"])
+        path.write_bytes(helper["canonical"](body))
+        bindings[key] = record(path)
+    network["worker_network"]["record"]["sha256"] = bindings["stock_control"]["sha256"]
+    probe["seccomp_context"]["policy"]["path"] = bindings["worker_policy"]["path"]
+    probe["seccomp_context"]["availability"] = copy.deepcopy(bindings["stock_control"])
+    worker["container"]["security_opt"] = [
+        "no-new-privileges",
+        "seccomp=" + bindings["worker_policy"]["path"],
+    ]
+    worker["container"]["mounts"] = [
+        {"source": bindings[key]["path"], "destination": bindings[key]["path"], "read_only": True}
+        for key in ("worker_policy", "stock_control")
+    ]
+    helper["rootless_origin_network"](probe, network, worker, value)
+    if damage == "policy-path":
+        probe["seccomp_context"]["policy"]["path"] = "/opt/hfcache-web005/worker-seccomp-v1.json"
+    elif damage == "availability-hash":
+        probe["seccomp_context"]["availability"]["sha256"] = "0" * 64
+    else:
+        worker["container"]["mounts"][0]["read_only"] = False
+    with pytest.raises(ValueError, match="rootless"):
+        helper["rootless_origin_network"](probe, network, worker, value)
 
 
 def test_metadata_guard_has_no_runtime_effect(helper, provisioned, monkeypatch):
@@ -236,7 +883,7 @@ def test_unsafe_prerequisite_cannot_become_functional_acceptance(  # noqa: PLR09
     helper, provisioned, kind
 ):
     root, path, value = provisioned
-    assets = Path(value["assets"]["root"])
+    asset_root = Path(value["assets"]["root"])
     if kind == "schema":
         value["schema_version"] = 2
     elif kind == "bool-schema":
@@ -266,18 +913,18 @@ def test_unsafe_prerequisite_cannot_become_functional_acceptance(  # noqa: PLR09
             else "https://127.0.0.1:48209?unsafe"
         )
     elif kind == "asset-bytes":
-        (assets / "index.html").write_text("changed\n")
+        (asset_root / "index.html").write_text("changed\n")
     elif kind == "asset-extra":
-        (assets / "unindexed.html").write_text("unknown\n")
+        (asset_root / "unindexed.html").write_text("unknown\n")
     elif kind == "asset-symlink":
-        (assets / "alias.html").symlink_to(assets / "index.html")
+        (asset_root / "alias.html").symlink_to(asset_root / "index.html")
     elif kind in {"asset-size", "asset-mime"}:
-        artifact = json.loads((assets / "manifest.json").read_text())
+        artifact = json.loads((asset_root / "manifest.json").read_text())
         artifact["members"][0]["bytes" if kind == "asset-size" else "mime"] = (
             999 if kind == "asset-size" else "image/svg+xml"
         )
-        write(assets / "manifest.json", artifact)
-        value["assets"]["manifest_sha256"] = sha(assets / "manifest.json")
+        write(asset_root / "manifest.json", artifact)
+        value["assets"]["manifest_sha256"] = sha(asset_root / "manifest.json")
     elif kind == "launcher-symlink":
         link = path.parent / "alias-launcher"
         link.symlink_to(value["browser"]["launcher"]["path"])
@@ -371,6 +1018,407 @@ def test_profiles_and_pending_final_refusal_are_explicit(helper):
         helper["require_final"](rows, "all")
     with pytest.raises(ValueError, match="actual evidence"):
         helper["require_final"]([{"status": "passed", "executions": []}] * 95, "all")
+
+
+def complete_case_rows(helper, *, through=None):
+    case_ids, required = helper["requirement_ids"](through)
+    executions = [
+        {
+            "case_ids": required,
+            "profile": profile,
+            "prefix": prefix,
+            "browser": browser,
+            "exit_code": 0,
+            "attempts": 1,
+        }
+        for profile in ("application", "native", "rootless")
+        for prefix in ("", "/management")
+        for browser in ("chromium", "firefox", "webkit")
+    ]
+    return helper["case_summary"](case_ids, executions)
+
+
+@pytest.mark.parametrize(
+    ("stage", "count"), [("WEB-022", 85), ("WEB-023", 88), ("WEB-024", 92), ("WEB-025", 93)]
+)
+def test_through_task_uses_original_owner_order_and_retains_later_pending(helper, stage, count):
+    case_ids, required = helper["requirement_ids"](stage)
+    assert len(case_ids) == 95
+    assert len(required) == count
+    rows = complete_case_rows(helper, through=stage)
+    helper["require_through"](rows, "all", stage)
+    assert sum(row["status"] == "pending" for row in rows) == 95 - count
+    with pytest.raises(ValueError, match="all95"):
+        helper["require_final"](rows, "all")
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [
+        "missing-case",
+        "duplicate-case",
+        "unknown-case",
+        "pending",
+        "missing-cell",
+        "duplicate-cell",
+        "unknown-profile",
+        "failed",
+        "boolean-exit",
+        "retried",
+        "partial-profile",
+    ],
+)
+def test_through_requirement_refuses_incomplete_or_substituted_evidence(helper, damage):
+    rows = complete_case_rows(helper, through="WEB-022")
+    profile = "all"
+    if damage == "missing-case":
+        rows.pop(0)
+    elif damage == "duplicate-case":
+        rows[-1] = copy.deepcopy(rows[0])
+    elif damage == "unknown-case":
+        rows[-1]["case_id"] = "UNKNOWN-01"
+    elif damage == "pending":
+        rows[0]["status"] = "pending"
+    elif damage == "missing-cell":
+        rows[0]["executions"] = rows[0]["executions"][:-1]
+    elif damage == "duplicate-cell":
+        rows[0]["executions"] = [*rows[0]["executions"], rows[0]["executions"][0]]
+    elif damage == "unknown-profile":
+        rows[0]["executions"][0]["profile"] = "unbound"
+    elif damage in {"failed", "boolean-exit"}:
+        rows[0]["executions"][0]["exit_code"] = 1 if damage == "failed" else False
+    elif damage == "retried":
+        rows[0]["executions"][0]["attempts"] = 2
+    else:
+        profile = "platform"
+    with pytest.raises(ValueError, match="functional acceptance through"):
+        helper["require_through"](rows, profile, "WEB-022")
+
+
+@pytest.mark.parametrize(
+    "damage", ["unknown-stage", "early-stage", "final-stage", "owner", "order", "empty"]
+)
+def test_through_selection_refuses_unsafe_task_or_owner_inventory(helper, damage):
+    requirements = json.loads(
+        (ROOT / "docs/agents/plans/support/web-ui/acceptance-cases.json").read_bytes()
+    )
+    tasks = json.loads((ROOT / "docs/agents/plans/support/web-ui/task-index.json").read_bytes())
+    stage = {"unknown-stage": "WEB-999", "early-stage": "WEB-003", "final-stage": "WEB-026"}.get(
+        damage, "WEB-022"
+    )
+    if damage == "owner":
+        requirements["cases"][0]["owner"] = "WEB-999"
+    elif damage == "order":
+        tasks["tasks"][0], tasks["tasks"][1] = tasks["tasks"][1], tasks["tasks"][0]
+    elif damage == "empty":
+        for case in requirements["cases"]:
+            case["owner"] = "WEB-026"
+    with pytest.raises(ValueError, match="functional"):
+        helper["select_requirement_ids"](requirements, tasks, stage)
+
+
+def test_frozen_six_case_partial_mapping_cannot_pass_stage_or_final(helper):
+    rows = complete_case_rows(helper)
+    partial = helper["case_summary"](
+        helper["requirement_ids"]()[0],
+        [
+            {
+                **item,
+                "case_ids": [
+                    "AUTH-09",
+                    "ROUTE-01",
+                    "ROUTE-04",
+                    "ROUTE-06",
+                    "ROUTE-07",
+                    "RELEASE-03",
+                ],
+            }
+            for item in rows[0]["executions"]
+        ],
+    )
+    assert sum(row["status"] == "passed" for row in partial) == 6
+    with pytest.raises(ValueError, match="owned case"):
+        helper["require_through"](partial, "all", "WEB-022")
+    with pytest.raises(ValueError, match="all95"):
+        helper["require_final"](partial, "all")
+
+
+def assertion_result(profile="application", prefix="") -> dict[str, Any]:
+    return {
+        "profile": profile,
+        "prefix": prefix,
+        "browser_report": {"path": "browser-report.json", "sha256": "1" * 64},
+        "role_report": {"path": "RESULT.json", "sha256": "2" * 64},
+        "browser": {
+            "profile": profile,
+            "prefix": prefix,
+            "engines": {
+                name: {
+                    "cases": [
+                        {"id": identifier, "passed": True, "attempts": 1}
+                        for identifier in sorted(CASES)
+                    ]
+                }
+                for name in ("chromium", "firefox", "webkit")
+            },
+        },
+    }
+
+
+def test_actual_engine_assertions_select_only_wired_acceptance_cases(helper):
+    results = [
+        assertion_result(profile, prefix)
+        for profile in ("application", "native", "rootless")
+        for prefix in ("", "/management")
+    ]
+    executions = helper["acceptance_executions"](results)
+    rows = helper["case_summary"](helper["requirement_ids"]()[0], executions)
+    expected = {
+        "AUTH-01",
+        "AUTH-04",
+        "AUTH-06",
+        "AUTH-09",
+        "ROUTE-01",
+        "ROUTE-02",
+        "ROUTE-03",
+        "ROUTE-04",
+        "ROUTE-06",
+        "ROUTE-07",
+        "RELEASE-03",
+        "CATALOG-01",
+        "CATALOG-02",
+        "CATALOG-03",
+        "CATALOG-04",
+        "CATALOG-07",
+        "CARD-11",
+        "CONFIG-03",
+    }
+    assert {row["case_id"] for row in rows if row["status"] == "passed"} == expected
+    for row in rows:
+        assert len(row["executions"]) == (18 if row["case_id"] in expected else 0)
+        for execution in row["executions"]:
+            assert execution["case_ids"] == [row["case_id"]]
+            assert execution["assertion_ids"] == sorted(
+                helper["CASE_ASSERTIONS"][row["case_id"]] | helper["COMMON_ASSERTIONS"]
+            )
+            assert execution["evidence"]["path"] == "browser-report.json"
+            assert execution["role_evidence"]["path"] == "RESULT.json"
+    with pytest.raises(ValueError, match="owned case"):
+        helper["require_through"](rows, "all", "WEB-022")
+    with pytest.raises(ValueError, match="all95"):
+        helper["require_final"](rows, "all")
+
+
+def test_selected_engine_extraction_never_invents_other_cells(helper):
+    results = []
+    for profile in ("application", "native", "rootless"):
+        for prefix in ("", "/management"):
+            for engine in ("chromium", "firefox", "webkit"):
+                result = assertion_result(profile, prefix)
+                result["browser_engine"] = engine
+                result["browser"]["engines"] = {engine: result["browser"]["engines"][engine]}
+                results.append(result)
+    one = helper["acceptance_executions"]([results[0]])
+    assert len(one) == len(helper["CASE_ASSERTIONS"])
+    assert {row["browser"] for row in one} == {"chromium"}
+    executions = helper["acceptance_executions"](results)
+    rows = helper["case_summary"](helper["requirement_ids"]()[0], executions)
+    for row in rows:
+        assert len(row["executions"]) == (18 if row["case_id"] in helper["CASE_ASSERTIONS"] else 0)
+    with pytest.raises(ValueError, match="owned case"):
+        helper["require_through"](rows, "all", "WEB-022")
+    for changed in (
+        {**results[0], "browser_engine": "firefox"},
+        {**results[0], "browser_engine": None},
+        assertion_result() | {"browser_engine": "chromium"},
+    ):
+        with pytest.raises(ValueError, match=r"cell|engine"):
+            helper["acceptance_executions"]([changed])
+
+
+@pytest.mark.parametrize("engine", ["", "all", "unknown", False])
+def test_invalid_internal_engine_refuses_before_generation_creation(helper, tmp_path, engine):
+    with pytest.raises(ValueError, match="selected browser engine"):
+        asyncio.run(
+            helper["run_profile"](
+                tmp_path / "manifest.json", {}, tmp_path, "native", "", browser_engine=engine
+            )
+        )
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize("engine", [None, "firefox"])
+def test_generation_binds_internal_selection_before_any_launcher_start(
+    helper, tmp_path, monkeypatch, engine
+):
+    manifest = {
+        "fixture_id": "71348794-30fb-4e1a-a609-c87cb4772429",
+        "assets": {"manifest_sha256": "a" * 64},
+        "profiles": {
+            "native": {"origin": "https://127.0.0.1:48209", "launcher": {"path": "/not-run"}}
+        },
+        "installed": {"package_root": str(Path(hfcache.__file__).parent)},
+        "mcp_arguments": {},
+    }
+    globals_ = helper["run_profile"].__globals__
+    monkeypatch.setitem(globals_, "asset_identity", lambda _assets: {})
+    observed = []
+
+    async def intercept(argv, **_kwargs):
+        workspace = Path(argv[argv.index("--workspace") + 1])
+        runtime = json.loads((workspace / "runtime.json").read_bytes())
+        assert workspace.name == "native-prefixed" + ("-firefox" if engine else "")
+        assert runtime.get("browser_engine") == engine
+        assert ("browser_engine" in runtime) is (engine is not None)
+        observed.append(argv[-1])
+        message = "intercepted launcher; no application process started"
+        raise RuntimeError(message)
+
+    monkeypatch.setitem(globals_, "command", intercept)
+    with pytest.raises(RuntimeError, match="intercepted launcher"):
+        asyncio.run(
+            helper["run_profile"](
+                tmp_path / "manifest.json",
+                manifest,
+                tmp_path,
+                "native",
+                "/management",
+                browser_engine=engine,
+            )
+        )
+    assert observed == ["start", "stop"]
+
+
+@pytest.mark.parametrize("requirement", [{"final": True}, {"final": False, "through": "WEB-022"}])
+def test_internal_single_engine_cannot_claim_full_acceptance(helper, tmp_path, requirement):
+    with pytest.raises(ValueError, match="selected browser evidence"):
+        asyncio.run(
+            helper["run"](
+                tmp_path / "manifest.json",
+                {},
+                tmp_path,
+                "all",
+                browser_engine="firefox",
+                **requirement,
+            )
+        )
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize("failed", [False, None])
+def test_assertions_are_never_borrowed_from_another_engine_or_cell(helper, failed):
+    original = assertion_result()
+    changed = copy.deepcopy(original)
+    records = changed["browser"]["engines"]["webkit"]["cases"]
+    specific = next(row for row in records if row["id"] == "exact-publication-refresh-history")
+    if failed is None:
+        records.remove(specific)
+    else:
+        specific["passed"] = False
+    executions = helper["acceptance_executions"](
+        [changed, assertion_result("native", "/management")]
+    )
+    route = [row for row in executions if row["case_ids"] == ["ROUTE-03"]]
+    assert len(route) == 5
+    assert not any(row["browser"] == "webkit" and row["profile"] == "application" for row in route)
+    assert any(row["browser"] == "webkit" and row["profile"] == "native" for row in route)
+    assert any(row["browser"] == "webkit" and row["case_ids"] == ["AUTH-01"] for row in executions)
+    changed["browser"]["engines"]["webkit"]["cases"] = [
+        row for row in records if row["id"] != "no-browser-errors"
+    ]
+    assert not any(row["browser"] == "webkit" for row in helper["acceptance_executions"]([changed]))
+
+
+@pytest.mark.parametrize(
+    "damage", ["unknown", "duplicate", "retry", "bool-attempt", "bool-result", "stamped-id"]
+)
+def test_actual_assertion_extraction_refuses_malformed_or_stamped_case_records(helper, damage):
+    result = assertion_result()
+    records = result["browser"]["engines"]["chromium"]["cases"]
+    if damage == "duplicate":
+        records.append(copy.deepcopy(records[0]))
+    elif damage == "unknown":
+        records[0]["id"] = "unknown-assertion"
+    elif damage == "stamped-id":
+        records[0]["id"] = "AUTH-01"
+    elif damage == "bool-attempt":
+        records[0]["attempts"] = True
+    elif damage == "bool-result":
+        records[0]["passed"] = 1
+    else:
+        records[0]["attempts"] = 2
+    with pytest.raises(ValueError, match="assertion"):
+        helper["acceptance_executions"]([result])
+
+
+@pytest.mark.parametrize("damage", ["profile", "prefix", "engines"])
+def test_assertion_execution_cell_must_match_its_actual_role_lifecycle(helper, damage):
+    result = assertion_result()
+    if damage == "engines":
+        del result["browser"]["engines"]["webkit"]
+    else:
+        result["browser"][damage] = "native" if damage == "profile" else "/management"
+    with pytest.raises(ValueError, match="cell"):
+        helper["acceptance_executions"]([result])
+
+
+@pytest.mark.parametrize(
+    "damage", ["missing-cell", "duplicate-cell", "duplicate-case", "unknown-case"]
+)
+def test_final_still_requires_all_original95_cases_and_unique_cells(helper, damage):
+    rows = complete_case_rows(helper)
+    helper["require_final"](rows, "all")
+    if damage == "missing-cell":
+        rows[-1]["executions"] = rows[-1]["executions"][:-1]
+    elif damage == "duplicate-cell":
+        rows[-1]["executions"] = [*rows[-1]["executions"], rows[-1]["executions"][0]]
+    elif damage == "duplicate-case":
+        rows[-1]["case_id"] = rows[0]["case_id"]
+    else:
+        rows[-1]["case_id"] = "UNKNOWN-01"
+    with pytest.raises(ValueError, match="actual evidence"):
+        helper["require_final"](rows, "all")
+
+
+@pytest.mark.parametrize(
+    "extra", [["--final", "--require-through", "WEB-022"], ["--require-through", "WEB-022"]]
+)
+def test_strict_cli_modes_refuse_conflicts_or_partial_profile_before_inputs(
+    helper, monkeypatch, extra
+):
+    monkeypatch.setattr(
+        sys, "argv", [str(HELPER), "--profile", "platform", "--manifest", "/forbidden", *extra]
+    )
+
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("invalid mode accessed fixture metadata")
+
+    monkeypatch.setitem(helper["main"].__globals__, "validate_manifest", forbidden)
+    with pytest.raises(SystemExit) as error:
+        helper["main"]()
+    assert error.value.code == 2
+
+
+def test_unknown_through_task_refuses_before_fixture_inputs(helper, monkeypatch):
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(HELPER),
+            "--profile",
+            "all",
+            "--manifest",
+            "/forbidden",
+            "--require-through",
+            "WEB-999",
+        ],
+    )
+
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("unknown through-task selection accessed fixture metadata")
+
+    monkeypatch.setitem(helper["main"].__globals__, "validate_manifest", forbidden)
+    assert helper["main"]() == 1
 
 
 def test_real_child_timeout_refuses_positive_json_even_when_sigterm_exits_zero(helper, tmp_path):
@@ -534,6 +1582,116 @@ def test_empty_state_is_not_an_actual_live_role_process(helper):
     process["identity"]["state"] = ""
     with pytest.raises(ValueError, match="process privilege"):
         helper["role_process"](process, "worker", "native")
+
+
+@pytest.mark.parametrize(
+    "damage",
+    ["api-root", "helper-capability", "helper-ambient", "helper-sid", "helper-interpreter"],
+)
+def test_installed_helper_is_a_separate_fixed_privilege_role(helper, damage):
+    process = metadata_process()
+    process["role"] = "helper"
+    process["status"].update(
+        Uid=[0] * 4,
+        Gid=[0] * 4,
+        CapEff="00000000000000c0",
+        CapBnd="00000000000000c0",
+        CapPrm="00000000000000c0",
+        CapInh="0" * 16,
+        CapAmb="0" * 16,
+        Seccomp_filters=1,
+    )
+    process["selinux_context"] = "system_u:system_r:hfcache_host_helper_t:s0"
+    process["cgroup"] = "0::/system.slice/hfcache-host-helper.service\n"
+    process["expected_executable"] = copy.deepcopy(process["executable"])
+    helper["helper_process"](process)
+    if damage == "api-root":
+        process["role"] = "api"
+        with pytest.raises(ValueError, match="process inspection"):
+            helper["role_process"](process, "api", "native")
+        return
+    if damage == "helper-capability":
+        process["status"]["CapEff"] = "00000000000000c1"
+    elif damage == "helper-ambient":
+        process["status"]["CapAmb"] = "0000000000000040"
+    elif damage == "helper-sid":
+        process["selinux_context"] = "system_u:system_r:unconfined_t:s0"
+    else:
+        process["expected_executable"]["sha256"] = "c" * 64
+    with pytest.raises(ValueError, match="helper"):
+        helper["helper_process"](process)
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [
+        None,
+        "inherited-local",
+        "effective-source-bind",
+        "effective-nfs",
+        "mask-replaced",
+        "writable-mask",
+        "wrong-mount-id",
+        "missing-helper",
+    ],
+)
+def test_effective_inaccessible_mask_distinguishes_hidden_nfs_from_forbidden_bind(helper, damage):
+    process = metadata_process("caddy")
+    paths = ("/srv/hfcache", "/etc/hfcache", "/run/hfcache-host-helper")
+    facts = {"device": 2, "inode": 10, "mode": stat.S_IFDIR, "uid": 0, "gid": 0}
+    rows: list[dict[str, Any]] = []
+    raw = ["9 1 0:58 / /srv/hfcache ro - nfs4 127.0.0.1:/owned/archive ro"]
+    for mount_id, path in enumerate(paths, 10):
+        line = f"{mount_id} 1 0:2 /systemd/inaccessible/dir {path} ro - tmpfs tmpfs rw"
+        raw.append(line)
+        rows.append(
+            {
+                "effective": {
+                    "pid": process["identity"]["pid"],
+                    "path": path,
+                    "mount_id": mount_id,
+                    "mountinfo": line,
+                    "stat": copy.deepcopy(facts),
+                },
+                "mask": {
+                    "pid": 1,
+                    "path": "/run/systemd/inaccessible/dir",
+                    "mount_id": 2,
+                    "mountinfo": "2 1 0:2 / /run rw - tmpfs tmpfs rw",
+                    "stat": copy.deepcopy(facts),
+                },
+            }
+        )
+    process["mountinfo"] = "\n".join(raw) + "\n"
+    if damage == "inherited-local":
+        inherited = "1 0 8:1 / / rw - ext4 /dev/owned rw"
+        process["mountinfo"] += inherited + "\n"
+        rows[0]["mask"] = None
+        rows[0]["effective"].update(mount_id=1, mountinfo=inherited)
+        rows[0]["effective"]["stat"]["mode"] = stat.S_IFDIR | 0o700
+    if damage in {None, "inherited-local"}:
+        helper["effective_mask_evidence"](rows, process)
+        return
+    if damage == "effective-source-bind":
+        exposed = "15 1 8:1 /owned/archive /srv/hfcache ro - ext4 /dev/owned ro"
+        process["mountinfo"] += exposed + "\n"
+        rows[0]["mask"] = None
+        rows[0]["effective"].update(mount_id=15, mountinfo=exposed)
+    elif damage == "effective-nfs":
+        rows[0]["effective"].update(mount_id=9, mountinfo=raw[0])
+    elif damage == "mask-replaced":
+        rows[0]["mask"]["stat"]["inode"] += 1
+    elif damage == "writable-mask":
+        rows[0]["effective"]["mountinfo"] = raw[1].replace(" ro -", " rw -")
+        process["mountinfo"] = process["mountinfo"].replace(
+            raw[1], rows[0]["effective"]["mountinfo"]
+        )
+    elif damage == "wrong-mount-id":
+        rows[0]["effective"]["mount_id"] = 99
+    else:
+        rows.pop()
+    with pytest.raises(ValueError, match=r"mount|mask|authority|protected-source"):
+        helper["effective_mask_evidence"](rows, process)
 
 
 @pytest.mark.parametrize(
@@ -711,6 +1869,47 @@ def metadata_browser() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
             "browser_closed": True,
             "descendants_closed": True,
             "cases": [{"id": case, "passed": True, "attempts": 1} for case in sorted(CASES)],
+            "page_errors": [],
+            "failed_responses": [],
+            "basic_read_refusals": [
+                {
+                    "label": label,
+                    "status": 401,
+                    "code": "HFAPI001",
+                    "request_id": f"{number + 1:032x}",
+                    "authorization_fields": 0
+                    if label == "missing"
+                    else 2
+                    if label == "duplicate-headers"
+                    else 1,
+                    "body_bytes": 112,
+                    "body_sha256": "d" * 64,
+                    "problem_sha256": hashlib.sha256(
+                        b'{"code":"HFAPI001","message":"Not authenticated","exit_code":10}'
+                    ).hexdigest(),
+                    "method": "GET",
+                    "path": "/api/v1/version",
+                    "origin": "https://127.0.0.1:48209",
+                    "transport": "trusted-node-https",
+                }
+                for number, label in enumerate(
+                    [
+                        "missing",
+                        "wrong-user",
+                        "wrong-password",
+                        "malformed-base64",
+                        "missing-colon",
+                        "noncanonical-base64",
+                        "invalid-utf8-user",
+                        "invalid-utf8-password",
+                        "duplicate-headers",
+                        "duplicate-schemes",
+                        "oversized-user",
+                        "oversized-password",
+                        "oversized-authorization",
+                    ]
+                )
+            ],
             "network_observation": {
                 "mode": "passive-origin-observer",
                 "request_interception": False,
@@ -812,6 +2011,139 @@ def metadata_static_abort(runtime, offset):
     return item
 
 
+@pytest.mark.parametrize("engine", ["chromium", "firefox", "webkit"])
+def test_selected_browser_report_requires_exact_actual_engine(helper, engine):
+    report, manifest, runtime = metadata_browser()
+    runtime["browser_engine"] = engine
+    selected = report["engines"][engine]
+    with pytest.raises(ValueError, match="identity"):
+        helper["browser_evidence"](report, manifest=manifest, runtime=runtime)
+    report["engines"] = {engine: selected}
+    helper["browser_evidence"](report, manifest=manifest, runtime=runtime)
+    for changed in (
+        {},
+        {"unknown": selected},
+        {"firefox" if engine != "firefox" else "webkit": selected},
+    ):
+        report["engines"] = changed
+        with pytest.raises(ValueError, match="identity"):
+            helper["browser_evidence"](report, manifest=manifest, runtime=runtime)
+    report["engines"] = {engine: selected}
+    runtime["browser_engine"] = None
+    with pytest.raises(ValueError, match="engine"):
+        helper["browser_evidence"](report, manifest=manifest, runtime=runtime)
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [
+        "missing",
+        "duplicate",
+        "unknown",
+        "status",
+        "size-status",
+        "busy-status",
+        "code",
+        "request",
+        "fields",
+        "boolean-fields",
+        "body-bound",
+        "body-hash",
+        "problem-hash",
+        "method",
+        "path",
+        "origin",
+        "transport",
+        "secret-field",
+    ],
+)
+def test_basic_read_refusals_require_exact_bounded_private_observations(helper, damage):
+    report, _, runtime = metadata_browser()
+    rows = report["engines"]["chromium"]["basic_read_refusals"]
+    helper["basic_read_refusals"](rows, prefix="", origin=runtime["origin"])
+    row = rows[1]
+    if damage == "missing":
+        rows.pop()
+    elif damage == "duplicate":
+        rows[-1] = copy.deepcopy(row)
+    elif damage == "unknown":
+        row["label"] = "fabricated"
+    elif damage in {"status", "size-status", "busy-status"}:
+        row["status"] = {"status": 200, "size-status": 413, "busy-status": 429}[damage]
+    elif damage == "code":
+        row["code"] = "HFAPI002"
+    elif damage == "request":
+        row["request_id"] = rows[0]["request_id"]
+    elif damage in {"fields", "boolean-fields"}:
+        row["authorization_fields"] = 2 if damage == "fields" else True
+    elif damage == "body-bound":
+        row["body_bytes"] = 4097
+    elif damage == "body-hash":
+        row["body_sha256"] = "missing"
+    elif damage == "problem-hash":
+        row["problem_sha256"] = "f" * 64
+    elif damage in {"method", "path", "origin", "transport"}:
+        row[damage] = {
+            "method": "POST",
+            "path": "/api/v1/syncs",
+            "origin": "https://outside.invalid",
+            "transport": "http",
+        }[damage]
+    else:
+        row["Authorization"] = "synthetic-sentinel-never-transmitted"
+    with pytest.raises(ValueError, match="Basic read refusal"):
+        helper["basic_read_refusals"](rows, prefix="", origin=runtime["origin"])
+
+
+def test_malformed_basic_read_probes_remain_partial_auth02(helper):
+    assert "denied-basic-read-auth" in helper["BROWSER_CASES"]
+    assert "AUTH-02" not in helper["CASE_ASSERTIONS"]
+    report, manifest, runtime = metadata_browser()
+    helper["browser_evidence"](report, manifest=manifest, runtime=runtime)
+    del report["engines"]["chromium"]["basic_read_refusals"]
+    with pytest.raises(ValueError, match="Basic read refusal"):
+        helper["browser_evidence"](report, manifest=manifest, runtime=runtime)
+
+
+def test_optional_rich_read_needs_one_selected_native_engine_without_replacing_baseline(helper):
+    report, manifest, runtime = metadata_browser()
+    for engine in report["engines"].values():
+        engine["cases"].append(
+            {"id": "rich-card-dom-and-pinned-files", "passed": True, "attempts": 1}
+        )
+    with pytest.raises(ValueError, match="selected native engine"):
+        helper["browser_evidence"](report, manifest=manifest, runtime=runtime)
+    runtime.update(profile="native", browser_engine="chromium")
+    report["profile"] = "native"
+    manifest["profiles"]["native"] = manifest["profiles"]["application"]
+    report["engines"] = {"chromium": report["engines"]["chromium"]}
+    helper["browser_evidence"](report, manifest=manifest, runtime=runtime)
+    record = report["engines"]["chromium"]["cases"][-1]
+    record["passed"] = False
+    with pytest.raises(ValueError, match="required case"):
+        helper["browser_evidence"](report, manifest=manifest, runtime=runtime)
+    record["passed"] = True
+    report["engines"]["chromium"]["cases"].pop(0)
+    with pytest.raises(ValueError, match="required case"):
+        helper["browser_evidence"](report, manifest=manifest, runtime=runtime)
+
+
+def test_optional_rich_card_assertion_does_not_promote_partial_acceptance(helper):
+    result = assertion_result("native")
+    result["browser_engine"] = "chromium"
+    result["browser"]["engines"] = {"chromium": result["browser"]["engines"]["chromium"]}
+    result["browser"]["engines"]["chromium"]["cases"].append(
+        {"id": "rich-card-dom-and-pinned-files", "passed": True, "attempts": 1}
+    )
+    executions = helper["acceptance_executions"]([result])
+    assert len(executions) == len(helper["CASE_ASSERTIONS"])
+    assert {
+        row["case_ids"][0]
+        for row in executions
+        if row["case_ids"][0].startswith(("CARD-", "CATALOG-"))
+    } == {"CATALOG-01", "CATALOG-02", "CATALOG-03", "CATALOG-04", "CATALOG-07", "CARD-11"}
+
+
 @pytest.mark.parametrize(
     "mutation",
     [
@@ -855,6 +2187,37 @@ def test_browser_report_refuses_missing_or_unsafe_actual_evidence(helper, mutati
     else:
         engine["process"]["command"]["disabling_flags_absent"] = False
     with pytest.raises(ValueError, match=r"actual|functional|role"):
+        helper["browser_evidence"](report, manifest=manifest, runtime=runtime)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "page-error",
+        "failed-response",
+        "error-overflow",
+        "duplicate-case",
+        "unknown-case",
+        "bool-attempt",
+    ],
+)
+def test_browser_report_refuses_navigation_errors_and_ambiguous_assertions(helper, mutation):
+    report, manifest, runtime = metadata_browser()
+    helper["browser_evidence"](report, manifest=manifest, runtime=runtime)
+    engine = report["engines"]["webkit"]
+    if mutation == "page-error":
+        engine["page_errors"] = [{"name": "Error", "message": "Unhandled app failure"}]
+    elif mutation == "failed-response":
+        engine["failed_responses"] = [{"path": "/api/v1/status", "status": 500}]
+    elif mutation == "error-overflow":
+        engine["browser_error_overflow"] = True
+    elif mutation == "duplicate-case":
+        engine["cases"].append(copy.deepcopy(engine["cases"][0]))
+    elif mutation == "unknown-case":
+        engine["cases"][0]["id"] = "AUTH-01"
+    else:
+        engine["cases"][0]["attempts"] = True
+    with pytest.raises(ValueError, match="functional"):
         helper["browser_evidence"](report, manifest=manifest, runtime=runtime)
 
 
@@ -1579,11 +2942,13 @@ def test_browser_launcher_receipt_requires_distinct_observed_phase_drains(
         )
 
 
+@pytest.mark.parametrize("browser_engine", [None, "firefox"])
 @pytest.mark.parametrize(
-    "mutation", ["untrusted-http", "missing-challenge", "missing-tools", "secret-field"]
+    "mutation",
+    ["untrusted-http", "missing-challenge", "missing-tools", "secret-field", "other-engine"],
 )
 def test_api_observations_require_native_challenge_and_no_untrusted_http(
-    helper, tmp_path, mutation
+    helper, tmp_path, mutation, browser_engine
 ):
     identity = {"fixture_id": "f", "generation_id": "a" * 32, "prefix": "/management"}
     ready = {"instance_id": "b" * 32, "identity": {"pid": 101, "start_ticks": "12345"}}
@@ -1613,7 +2978,10 @@ def test_api_observations_require_native_challenge_and_no_untrusted_http(
                 "worker_available": True,
             }
         )
-    for engine in ("chromium", "firefox", "webkit"):
+    runtime = {} if browser_engine is None else {"browser_engine": browser_engine}
+    for engine in (
+        ("chromium", "firefox", "webkit") if browser_engine is None else (browser_engine,)
+    ):
         for endpoint, status, authentication, actor, method in [
             ("/ui", 401, "none", "browser", "GET"),
             ("/ui", 307, "basic", "browser", "GET"),
@@ -1644,18 +3012,20 @@ def test_api_observations_require_native_challenge_and_no_untrusted_http(
         filename.write_text("".join(json.dumps(row) + "\n" for row in events))
 
     retain()
-    helper["api_events"](filename, identity, ready, stage="stopped")
+    helper["api_events"](filename, identity, ready, stage="stopped", runtime=runtime)
     if mutation == "untrusted-http":
         events[1]["phase"] = "untrusted"
     elif mutation == "missing-challenge":
         events[:] = [row for row in events if row.get("status") != 401]
     elif mutation == "missing-tools":
         events[:] = [row for row in events if row.get("path") != "/management/mcp/"]
-    else:
+    elif mutation == "secret-field":
         events[1]["authorization"] = "supplemental test sentinel, never a credential"
+    else:
+        events[1]["engine"] = "chromium" if browser_engine is not None else "unknown"
     retain()
     with pytest.raises(ValueError, match=r"actual|HTTP|native|bearer|unsafe|untrusted"):
-        helper["api_events"](filename, identity, ready, stage="stopped")
+        helper["api_events"](filename, identity, ready, stage="stopped", runtime=runtime)
 
 
 def metadata_protocol_snapshot(protocol, **changes):
@@ -1831,6 +3201,20 @@ def test_transfer_proof_preserves_asgi_noops_and_inner_process_identity(helper, 
     filename = tmp_path / "transfers.jsonl"
     filename.write_text("".join(json.dumps(row) + "\n" for row in rows))
     helper["transfer_evidence"](filename, ready, identity, browser)
+
+
+@pytest.mark.parametrize("engine", ["chromium", "firefox", "webkit"])
+def test_selected_transfer_probes_cannot_borrow_another_engine(helper, tmp_path, engine):
+    browser, ready, identity, rows = metadata_transfer_facts()
+    browser["engines"] = {engine: browser["engines"][engine]}
+    rows = [row for row in rows if row["engine"] == engine]
+    filename = tmp_path / "transfers.jsonl"
+    filename.write_text("".join(json.dumps(row) + "\n" for row in rows))
+    helper["transfer_evidence"](filename, ready, identity, browser)
+    rows[0]["engine"] = "firefox" if engine != "firefox" else "webkit"
+    filename.write_text("".join(json.dumps(row) + "\n" for row in rows))
+    with pytest.raises(ValueError, match="identity"):
+        helper["transfer_evidence"](filename, ready, identity, browser)
 
 
 def test_transfer_cancel_can_raise_original_paused_drain_cancellation(helper, tmp_path):

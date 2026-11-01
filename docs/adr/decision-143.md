@@ -5,6 +5,10 @@
 - Status: Amended; strict workspace, typed wire, Basic/indexed assets and functional-gate scaffolding are implemented in unreleased source. Complete replacement/release conformance remains separately required.
 - Date: 2026-10-20.
 
+The acceptance-method amendment below governs current conformance. Earlier
+requirements to use the instrumented runner for every scenario in every cell
+remain historical; its protocol stays strict when that optional tool is used.
+
 Typed browser contracts are refined by [decision 145](decision-145.md); release
 artifact and installed functional conformance remain independently required.
 
@@ -166,6 +170,21 @@ Cockpit retirement require their own evidence; no rollout follows. See the
 [functional development contract](../development.md#installed-shared-caddy-functional-fixture)
 and [recorded installed scope](../deployment-status.md).
 
+## Installed acceptance execution clarification (2026-10-31)
+
+Canonical profiles may run on separate owned, boot-bound guests. `all` denotes
+complete application/native/rootless × prefix × browser coverage, not mixed
+installation layouts on one boot. Application may use native confinement; all18
+cells still require fresh fixtures, actual installed roles and paired lifecycles.
+One fresh run identity joins only the existing runner's three normal profile
+outputs under explicit common artifact/test-source authority. Offline retained
+proof copies preserve original guest metadata; they do not re-probe remote state
+or establish copied-inode identity. No one-off receipt or pending case supplies
+acceptance. The [functional development contract](../development.md#installed-shared-caddy-functional-fixture)
+retains the required staged and final matrices, with unchanged runtime authority,
+artifact identity and isolation requirements. This corrects test orchestration;
+it introduces no runtime dependency or new architectural decision.
+
 ## Bounded Markdown asset dependency amendment (2026-10-26)
 
 [Decision155](decision-155.md) records the material correctness rationale for
@@ -212,3 +231,31 @@ Expanded foundation checks use actual image ancestry/size and reject Node,
 package managers, compilers and browsers. Source implementation and focused
 tests alone do not prove clean or installed release conformance; exact artifact
 and disposable installed acceptance remain required.
+
+## Product acceptance method amendment (2026-11-01)
+
+Retain every required product and safety scenario, with executable evidence at
+the appropriate unit, component, integration and installed-workflow boundary.
+Actual native and rootless installations still require trusted same-Caddy
+Chromium, Firefox and WebKit coverage at both public prefixes. Deeper domain,
+failure and privilege combinations run where the relevant boundary exists;
+every scenario need not repeat across the entire profile/browser/prefix product.
+
+Keep the complete source, build and applicable Cockpit gates. Separate direct
+installed product checks supply functional acceptance, with source/artifact and
+role identity, commands, exits, observations and explicit missing clauses.
+The existing `--with-web-functional` runner remains an optional strict diagnostic;
+its invocation is no longer a mandatory acceptance path. Do not report that
+command as passed when only direct checks ran.
+
+Reuse passing evidence only for its actual scope, with an unchanged-subsystem
+justification. Retain failed attempts and original operation identities; a later
+continuation can cover an unfinished clause without relabelling the earlier run.
+Missing required behavior still prevents completion. Add a focused regression
+for a real defect or an uncovered requirement, without creating a new framework,
+proof schema or lifecycle model. Runtime bounds, authorization, confinement,
+immutable publication identity and production/NAS limits are unchanged.
+
+This amendment supersedes only the mandatory instrumented-runner and exhaustive
+cross-product execution method above. See the current
+[development acceptance procedure](../development.md#installed-shared-caddy-functional-fixture).

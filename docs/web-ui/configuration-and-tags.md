@@ -127,8 +127,10 @@ while retaining your intended draft. Compare it with the original base and
 re-edit deliberately. **Reload installed configuration** explicitly discards the
 old draft and captures a new base. Never substitute a fresh token into unseen
 old edits, automatically merge tags, or reuse the old preview. If a conflict is
-reported after submission, keep its original receipt and separately observe host
-effects; a generic receipt cannot establish rollback.
+reported after submission, keep the original key and any known operation ID or
+receipt. A refusal before admission may have no receipt. Compare the installed
+configuration and separately observe any accepted application's host effects;
+a generic receipt cannot establish rollback.
 
 ## Recover the original application
 
@@ -348,9 +350,12 @@ rules. Do not mix them with `managed`. See the
 
 Any change to installed bytes invalidates the old `base_revision`, including a
 tag-only edit or a change to comments, whitespace or table order. On a stale-base
-conflict, read the installed configuration again, compare its editable values
-with your intended changes, and build a new edit request from the new revision.
-Do not replace the token on an old draft without reviewing that comparison.
+conflict, choose **Compare installed configuration** to retain and compare the
+original base and intended draft. Apply readiness is retired when that read
+finds a changed base. When ready to discard the old draft, choose **Reload
+installed configuration** and re-edit from the new revision. **Read installed
+configuration** is unavailable while the draft is dirty. Do not replace the
+token on an old draft without reviewing that comparison.
 Queue waiting also rechecks the base, permission and protected authority before
 Hub work.
 

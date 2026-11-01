@@ -121,6 +121,70 @@ def test_sync_and_async_status_use_real_single_exchange(tmp_path):
             client.status()
 
 
+def test_config_read_bound_and_legacy_each_use_one_real_exchange(tmp_path):
+    received = []
+    body: dict[str, object] = {
+        "expected_archive_id": "6ce912b6-141f-4bd2-a871-c19625c86aa9",
+        "expected_archive_root": "/srv/hfcache",
+    }
+    with unix_service(tmp_path, received=received) as (path, accepted, errors):
+        client = client_module.HostHelperClient(UnixTestBinding(path), deployment_sha256=DEPLOYMENT)
+        try:
+            assert client.config_read() == {"status": "observed"}
+            assert asyncio.run(client.async_config_read(body)) == {"status": "observed"}
+            assert [(row.operation, row.body) for row in received] == [
+                ("config-read", {}),
+                ("config-read", body),
+            ]
+            assert len(accepted) == 2
+            assert errors == []
+        finally:
+            assert client.close(timeout=2)
+
+
+def test_config_read_freezes_binding_before_worker_connect(tmp_path):
+    received = []
+    stall = threading.Event()
+    body: dict[str, object] = {
+        "expected_archive_id": "6ce912b6-141f-4bd2-a871-c19625c86aa9",
+        "expected_archive_root": "/srv/hfcache",
+    }
+    expected = body.copy()
+    with unix_service(tmp_path, received=received) as (path, _, errors):
+        binding = UnixTestBinding(path, stall=stall)
+        client = client_module.HostHelperClient(binding, deployment_sha256=DEPLOYMENT)
+
+        async def exercise():
+            task = asyncio.create_task(client.async_config_read(body))
+            assert await asyncio.to_thread(binding.entered.wait, 1)
+            body["expected_archive_root"] = "/caller-mutated-comparison"
+            stall.set()
+            assert await task == {"status": "observed"}
+
+        try:
+            asyncio.run(exercise())
+            assert len(received) == 1
+            assert received[0].body == expected
+            assert errors == []
+        finally:
+            stall.set()
+            assert client.close(timeout=2)
+
+
+def test_invalid_config_read_binding_refuses_before_job_reservation(tmp_path, monkeypatch):
+    client = client_module.HostHelperClient(
+        UnixTestBinding(tmp_path / "must-not-connect"), deployment_sha256=DEPLOYMENT
+    )
+    monkeypatch.setattr(client, "_reserve", lambda: pytest.fail("invalid read reserved a job"))
+    try:
+        with pytest.raises(protocol.HostProtocolError, match="invalid-request"):
+            client.config_read({"expected_archive_root": "/srv/hfcache"})
+        with pytest.raises(protocol.HostProtocolError, match="invalid-request"):
+            asyncio.run(client.async_config_read({"expected_archive_id": "not-a-uuid"}))
+    finally:
+        assert client.close(timeout=2)
+
+
 def test_eight_jobs_no_queue_and_cancellation_retains_slot_until_actual_exit(tmp_path):
     stall = threading.Event()
     binding = UnixTestBinding(tmp_path / "unused.sock", stall=stall)

@@ -153,7 +153,8 @@ def _offline(monkeypatch: pytest.MonkeyPatch) -> None:
     def resolves(_host):
         return ("192.0.2.1",)
 
-    def verifies(_host):
+    def verifies(_host, *, port):
+        assert port == 443
         return "TLSv1.3, certificate valid"
 
     def tree(self, identity, commit_sha):

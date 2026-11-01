@@ -32,3 +32,12 @@ Implementation or shipped-artifact evidence:
 
 Relevant verification:
 [tests/unit/test_preflight.py](../../tests/unit/test_preflight.py).
+
+## Configured HTTPS port qualification (2026-10-31)
+
+The diagnostic Hub TLS check must use the endpoint's explicit HTTPS port, or `443`
+when omitted. DNS still checks the configured hostname, and the TLS handshake
+still verifies that hostname with the deployment's trust store. Invalid explicit
+ports refuse configuration with `HFCFG014`. This preserves the existing check
+order, verified transport and injectable Hub boundary (`AD-08`, `INV-003`);
+it adds no transport, credential source or dependency.

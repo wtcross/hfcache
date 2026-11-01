@@ -1071,6 +1071,7 @@ def _finish_repository(  # noqa: PLR0913 - the downloaded transaction's collabor
     configured: Mapping[str, RepositoryConfig],
     run_id: RunId,
     defer_retention: bool = False,
+    published_sizes: list[int] | None = None,
 ) -> RepositoryOutcome:
     """Hash and publish a complete prefetched snapshot on the main thread."""
     try:
@@ -1082,6 +1083,7 @@ def _finish_repository(  # noqa: PLR0913 - the downloaded transaction's collabor
             configured=configured,
             run_id=run_id,
             defer_retention=defer_retention,
+            published_sizes=published_sizes,
         )
     except HfcacheError as error:
         _fail_publication(layout, downloaded.transaction, error)
@@ -1113,6 +1115,7 @@ def _finish_ingest(  # noqa: PLR0913 - the the ingestion contract sequence's inp
     configured: Mapping[str, RepositoryConfig],
     run_id: RunId,
     defer_retention: bool,
+    published_sizes: list[int] | None,
 ) -> RepositoryOutcome:
     """docs/cli.md sync contract after download, inside its open publication journal."""
     plan = downloaded.plan
@@ -1243,6 +1246,10 @@ def _finish_ingest(  # noqa: PLR0913 - the the ingestion contract sequence's inp
             cache_root=layout.hub_cache,
             configured=configured,
         )
+    # INV-005: count logical publication bytes, not transfers or unique-object
+    # hashes. A later cleanup/retention failure cannot undo this publication.
+    if published_sizes is not None:
+        published_sizes.append(manifest.total_bytes)
     # Checkpoint 10's act (decision 56). The staging area held the tree, which
     # checkpoint 5 renamed away, and the pending manifest, which checkpoint 6
     # published — so what is left is a redundant copy of an artifact the archive
@@ -1511,6 +1518,7 @@ def synchronize(  # noqa: PLR0913 - docs/cli.md sync contract's inputs, one argu
         for repository in config.repositories
         if RepositoryIdentity.from_config(repository).selector in selected_identities
     )
+    published_sizes: list[int] = []
     if config.sync.continue_on_repository_error:
         results = _synchronize_prefetched(
             client,
@@ -1519,6 +1527,7 @@ def synchronize(  # noqa: PLR0913 - docs/cli.md sync contract's inputs, one argu
             selected=ordered_selected,
             configured=configured,
             run_id=run_id,
+            published_sizes=published_sizes,
         )
     else:
         results = _synchronize_serial(
@@ -1528,12 +1537,14 @@ def synchronize(  # noqa: PLR0913 - docs/cli.md sync contract's inputs, one argu
             selected=ordered_selected,
             configured=configured,
             run_id=run_id,
+            published_sizes=published_sizes,
         )
     if metadata is not None:
         results = metadata.sync(results, transaction.journal)
     totals = {
         "downloaded_bytes": sum(result.downloaded_bytes for result in results),
         "hashed_bytes": sum(result.hashed_bytes for result in results),
+        "published_bytes": sum(published_sizes),
         "reused_bytes": sum(result.reused_bytes for result in results),
     }
 
@@ -1608,6 +1619,7 @@ def _synchronize_serial(  # noqa: PLR0913 - the run's immutable collaborators
     selected: Sequence[RepositoryConfig],
     configured: Mapping[str, RepositoryConfig],
     run_id: RunId,
+    published_sizes: list[int],
 ) -> list[RepositoryRunResult]:
     """Preserve stop-at-first-failure semantics without speculative Hub work."""
     results: list[RepositoryRunResult] = []
@@ -1651,6 +1663,7 @@ def _synchronize_serial(  # noqa: PLR0913 - the run's immutable collaborators
                 config,
                 configured=configured,
                 run_id=run_id,
+                published_sizes=published_sizes,
             ).result
         except HfcacheError as error:
             results.append(
@@ -1675,6 +1688,7 @@ def _synchronize_prefetched(  # noqa: PLR0912, PLR0913 - orchestration's collabo
     selected: Sequence[RepositoryConfig],
     configured: Mapping[str, RepositoryConfig],
     run_id: RunId,
+    published_sizes: list[int],
 ) -> list[RepositoryRunResult]:
     """Plan the queue, admit it as a whole, then overlap download and hashing.
 
@@ -1759,6 +1773,7 @@ def _synchronize_prefetched(  # noqa: PLR0912, PLR0913 - orchestration's collabo
                     config,
                     configured=configured,
                     run_id=run_id,
+                    published_sizes=published_sizes,
                     defer_retention=True,
                 ).result
             except HfcacheError as error:

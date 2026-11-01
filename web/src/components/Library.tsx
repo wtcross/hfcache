@@ -12,7 +12,6 @@ import {
     libraryFragment,
     normalizeLibraryFilters,
     parseLibraryFragment,
-    setLibraryType,
     updateLibraryFilters,
 } from "../library/filters";
 import type { LibraryFilterPatch, LibraryFilters } from "../library/filters";
@@ -503,9 +502,15 @@ export function Library({
         }
     }
     useEffect(() => {
+        store.setPageActive(true);
+        return () => {
+            store.setPageActive(false);
+        };
+    }, [store]);
+    useEffect(() => {
         let active = true;
         const readLocation = () => {
-            if (!active) return;
+            if (!active || !store.snapshot().pageActive) return;
             cancelSearch();
             try {
                 const next = parseLibraryFragment(window.location.hash);
@@ -529,17 +534,26 @@ export function Library({
         queueMicrotask(readLocation);
         window.addEventListener("hashchange", readLocation);
         window.addEventListener("popstate", readLocation);
+        window.addEventListener("pageshow", readLocation);
         return () => {
             active = false;
             cancelSearch();
             window.removeEventListener("hashchange", readLocation);
             window.removeEventListener("popstate", readLocation);
+            window.removeEventListener("pageshow", readLocation);
             store.pause();
         };
-    }, [store, state.authGeneration, state.connected, readFilters]);
+    }, [
+        store,
+        state.authGeneration,
+        state.connected,
+        state.pageActive,
+        readFilters,
+    ]);
     function search(value: string) {
         cancelSearch();
         searchTimer.current = setTimeout(() => {
+            if (!store.snapshot().pageActive) return;
             apply({ q: value === "" ? undefined : value });
         }, 350);
     }
@@ -577,8 +591,12 @@ export function Library({
     }
     function chooseType(type: "model" | "dataset" | undefined) {
         cancelSearch();
-        const changed = setLibraryType(store.snapshot().filters, type);
-        const next = replace(changed.filters, changed.announcement);
+        const field = form.current?.elements.namedItem("q");
+        const q =
+            field instanceof HTMLInputElement
+                ? field.value
+                : (store.snapshot().filters.q ?? "");
+        const next = apply({ type, q: q === "" ? undefined : q });
         if (next !== null) syncForm(next);
     }
     function clearFilters() {

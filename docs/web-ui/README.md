@@ -9,6 +9,9 @@ their recorded release and the [existing Cockpit interface](../cockpit-plugin/RE
 These guides do not install a release, enable a schedule or grant archive write
 permission.
 
+See the [candidate test-release acceptance summary](test-release-acceptance.md)
+for observed test-system behavior and the acceptance that remains incomplete.
+
 When enabled, open `/ui/` on the existing HTTPS endpoint, or
 `/management/ui/` for an installation whose public prefix is `/management`.
 The browser's native sign-in dialog uses the separately provisioned administrator

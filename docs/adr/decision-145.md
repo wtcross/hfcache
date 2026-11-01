@@ -158,6 +158,15 @@ and an old open page still requires the normal interface-version check. Boundary
 escape-parity, independent tree-oracle and real-query equivalence tests accompany
 the change. Installed performance acceptance remains a separate measured gate.
 
+Initialized-layout conformance review (2026-10-30): archive inspection
+recognizes the documented managed catalog, journal, report and namespace
+boundaries after initialization, while preserving unknown/type/symlink refusals,
+bounded reads and the separate typed consumers' content authority. Renew the
+reviewed archive source pin for this runtime correction. Public definitions,
+semantic ports, routes, result shapes and limits stay unchanged; only the
+conservative source digest changes. Installed UI validation follows a fresh
+matching backend/UI build.
+
 [Decision157](decision-157.md) subsequently permits bounded reuse of frozen
 parsed models by exact freshly read bytes. The earlier duplicate-binding
 optimization remains independent; no previous query result, membership or
@@ -242,6 +251,25 @@ after return. This makes the existing `hidden` pause reason effective at the
 mount-owned document boundary and avoids hidden polling without adding a retry
 loop, credential store, API, dependency or authority. Actual lifecycle and
 installed-browser evidence belong to task020; this amendment alone claims none.
+
+### Document navigation refinement (2026-10-29)
+
+A clean document departure retires the Library, repository and Administration
+read owners before cancelled reads can start the next request in a batch.
+Page departure also fences queued searches and location work. A dirty-form
+beforeunload veto runs first: choosing Stay preserves the document's draft,
+original handles and usable reads. Page restoration reactivates only the current
+route, whose existing location reader revalidates its state; it does not revive
+another route or replay an admitted operation. The initial pageshow is not a
+refresh trigger. These rules cover browser history restoration without requiring
+the browser to retain a document in its back-forward cache.
+
+An already-started read promise is observed even when its signal was aborted
+before the bounded await begins. Abort still returns immediately and cannot
+extend the read deadline; later rejection cannot become an unowned exception.
+This fulfills INV-021's existing ownership boundary without a network-error
+filter, new polling loop, authority change, API or dependency. Matching installed
+browser evidence remains independently required.
 
 ## Typed Library composition amendment (2026-10-26)
 

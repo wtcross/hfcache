@@ -45,6 +45,11 @@ your text. Search is bounded to 256 Unicode code points, and the server retains
 its authoritative case-folding rules. Invalid Unicode, control characters and
 directional override/isolate controls are visibly refused.
 
+Changing between **All repositories**, **Models** and **Datasets** keeps the text
+currently entered in **Find repositories**, including text still waiting for the
+search debounce. Clearing that text before changing type removes the search
+predicate.
+
 Exact tag filters use the shared configuration normalizer: trim outer ASCII
 spaces, lowercase ASCII letters, sort and deduplicate. At most 64 raw tag values
 are accepted, each at most 128 raw characters; canonical tags use

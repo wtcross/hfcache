@@ -761,8 +761,15 @@ original receipt/key and follow the [configuration recovery procedure](web-ui/co
 ### Managed configuration read and assessment responses
 
 GET `/config` has no query/body parameters and requires configuration-read
-administration plus independently provisioned configuration permission. It returns
-an ordinary authenticated read wrapper whose command is `config read`; `data` is
+administration plus independently provisioned configuration permission. The API
+passes its immutable lifespan archive ID and root as comparison-only values in
+the same freshly peer-authenticated private `config-read` exchange. Existing
+check order remains: valid supported/guarded status and binding, permission,
+then profile and exact archive tuple. Unproved status yields503; denied
+permission yields403 before tuple comparison; an otherwise valid mismatched
+tuple yields503. No preceding status exchange, reused authority or caller-selected
+filesystem read is needed. It returns an ordinary authenticated read wrapper
+whose command is `config read`; `data` is
 independent schema1 with `archive_id`, `base_revision`, `editable`,
 `editable_fields` and `protected_fields`. `editable` has complete repositories
 and only the eleven supported settings, with defaults materialized. Metadata lists

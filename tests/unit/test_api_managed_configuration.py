@@ -5,18 +5,21 @@ own peer, policy and host confinement; these tests claim no installed acceptance
 """
 
 import asyncio
+import copy
 import hashlib
 import hmac
 import secrets
 import threading
+from dataclasses import replace
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import httpx
 import pytest
 
 from hfcache import host_policy
 from hfcache.api.app import create_app
+from hfcache.host_models import HostStatus, unavailable_host_status
 from hfcache.host_protocol import HostProtocolError
 from hfcache.hub import DownloadEstimate, RepositoryFacts, TreeEntry
 from hfcache.identity import CommitSha
@@ -47,6 +50,7 @@ class ConfigurationAdapter(StatusClient):
         self.key = secrets.token_bytes(32)
         self.prepare_calls = 0
         self.read_calls = 0
+        self.read_requests = []
 
         def revalidate(snapshot):
             if self.path.read_bytes() != snapshot._inspection.config_body:
@@ -71,13 +75,17 @@ class ConfigurationAdapter(StatusClient):
                 archive_id=examples.ARCHIVE_ID,
                 base_revision=revision(b"host-config-base-v1", body),
                 _inspection=SimpleNamespace(config_body=body, revision=revision),
-                status=status,
+                status=lambda: copy.deepcopy(self.value),
             ),
         )
 
-    async def async_config_read(self):
+    async def async_config_read(self, body=None):
         self.read_calls += 1
-        return host_policy.read_config_base(self.snapshot())
+        self.read_requests.append(copy.deepcopy(body))
+        try:
+            return host_policy.read_config_base(self.snapshot(), body)
+        except host_policy.InspectionError as error:
+            raise HostProtocolError(error.reason) from None
 
     def config_prepare(self, body):
         self.prepare_calls += 1
@@ -113,6 +121,14 @@ def test_configuration_read_and_empty_scope_preview_never_install(configured, mo
             ) as client:
                 read = await client.get("/api/v1/config", headers=headers)
                 assert read.status_code == 200
+                assert helper.async_calls == 0
+                assert helper.read_calls == 1
+                assert helper.read_requests == [
+                    {
+                        "expected_archive_id": app.state.policy.archive_id,
+                        "expected_archive_root": str(app.state.policy.root),
+                    }
+                ]
                 data = read.json()["envelope"]["data"]
                 assert data["editable"]["sync"]["max_workers"] == 4
                 assert "hub" not in data["editable"]
@@ -424,7 +440,7 @@ def test_malformed_private_helper_results_refuse_without_echo(configured, monkey
                 base = read.json()["envelope"]["data"]["base_revision"]
                 if fault == "read-schema":
 
-                    async def malformed_read():
+                    async def malformed_read(_body=None):
                         return {"unexpected": marker}
 
                     monkeypatch.setattr(helper, "async_config_read", malformed_read)
@@ -440,10 +456,17 @@ def test_malformed_private_helper_results_refuse_without_echo(configured, monkey
     asyncio.run(exercise())
 
 
-def test_configuration_permission_refusal_precedes_private_reads(configured, monkeypatch):
+def test_configuration_permission_refusal_precedes_projection_in_bound_read(
+    configured, monkeypatch
+):
     server, lock, headers, _, _ = configured
     helper = ConfigurationAdapter(server.archive_config, monkeypatch)
     helper.value = status(denied={"configuration"})
+    monkeypatch.setattr(
+        host_policy,
+        "parse_configuration",
+        lambda _body: pytest.fail("Denied configuration must not be projected"),
+    )
 
     async def exercise():
         app = create_app(server, instance_lock_path=lock)
@@ -454,7 +477,64 @@ def test_configuration_permission_refusal_precedes_private_reads(configured, mon
             ) as client:
                 response = await client.get("/api/v1/config", headers=headers)
                 assert response.status_code == 403
-                assert helper.read_calls == helper.prepare_calls == 0
+                assert helper.read_calls == 1
+                assert helper.prepare_calls == helper.async_calls == 0
+
+    asyncio.run(exercise())
+
+
+@pytest.mark.parametrize(
+    ("fault", "denied", "expected"),
+    [
+        ("archive_id", False, 503),
+        ("archive_id", True, 403),
+        ("archive_root", False, 503),
+        ("archive_root", True, 403),
+        ("unavailable", True, 503),
+    ],
+)
+def test_bound_configuration_read_preserves_authority_refusal_order(
+    configured, monkeypatch, fault, denied, expected
+):
+    server, lock, headers, _, _ = configured
+    helper = ConfigurationAdapter(server.archive_config, monkeypatch)
+    helper.value = cast("dict[str, Any]", status(denied={"configuration"} if denied else ()))
+    if fault == "unavailable":
+        helper.value = unavailable_host_status().model_dump(mode="json")
+    HostStatus.model_validate(helper.value)
+    monkeypatch.setattr(
+        host_policy, "parse_configuration", lambda _body: pytest.fail("refused binding projected")
+    )
+
+    async def exercise():
+        app = create_app(server, instance_lock_path=lock)
+        async with app.router.lifespan_context(app):
+            app.state.host_helper = helper
+            # Keep helper status coherent; only the independent caller's expected tuple differs.
+            if fault == "archive_id":
+                app.state.policy = replace(
+                    app.state.policy, archive_id="00000000-0000-0000-0000-000000000000"
+                )
+            elif fault == "archive_root":
+                app.state.policy = replace(
+                    app.state.policy,
+                    root=app.state.policy.root.with_name("comparison-only-must-not-be-read"),
+                )
+            async with httpx.AsyncClient(
+                transport=httpx.ASGITransport(app), base_url=ORIGIN
+            ) as client:
+                response = await client.get("/api/v1/config", headers=headers)
+                assert response.status_code == expected
+                assert response.json()["code"] == ("HFAPI002" if expected == 403 else "HFAPI022")
+                assert helper.read_calls == 1
+                assert helper.async_calls == 0
+                assert helper.read_requests == [
+                    {
+                        "expected_archive_id": app.state.policy.archive_id,
+                        "expected_archive_root": str(app.state.policy.root),
+                    }
+                ]
+                assert app.state.operations.list() == ()
 
     asyncio.run(exercise())
 

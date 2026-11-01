@@ -461,7 +461,7 @@ class HostDaemon:
     def dispatch_operation(self, request, authority):
         plain = {
             "status": authority.status,
-            "config-read": lambda: self.policy.read_config_base(authority),
+            "config-read": lambda: self.policy.read_config_base(authority, request.body),
             "config-prepare": lambda: self.policy.prepare_configuration(authority, request.body),
             "observer-status": lambda: self.actions.read_sync_observer(
                 self.policy, authority, request.body

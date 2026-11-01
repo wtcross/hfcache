@@ -10,15 +10,24 @@ from pydantic import ValidationError
 
 from hfcache import redaction
 from hfcache.api import basic, credential_sources
-from hfcache.api.auth import AdminCapability, AuthenticationMethod, Capability, CredentialClass
+from hfcache.api.auth import (
+    AdminCapability,
+    AuthenticationMethod,
+    Capability,
+    CredentialClass,
+    load_credentials,
+)
 from hfcache.api.basic import (
     BasicProvider,
     ProtectedAdministratorRecord,
     create_administrator_record,
     load_basic_provider,
 )
+from hfcache.api.operations import OperationStore
+from hfcache.config import ApplicationConfig
 from hfcache.errors import AuthenticationError, ConfigurationError
-from hfcache.server_config import BasicConfig
+from hfcache.server_config import BasicConfig, PolicySnapshot, validate_server_config_mapping
+from tests.fixtures import examples
 
 
 @pytest.fixture(scope="module")
@@ -79,6 +88,122 @@ def test_actual_hash_and_both_source_profiles_authenticate_without_legacy_grant_
                 await provider.aclose()
 
     asyncio.run(exercise())
+
+
+def protected_source_identity(path):
+    status = path.stat()
+    return (
+        status.st_dev,
+        status.st_ino,
+        status.st_mode,
+        status.st_uid,
+        status.st_gid,
+        status.st_mtime_ns,
+        status.st_ctime_ns,
+        path.read_bytes(),
+    )
+
+
+@pytest.fixture
+def rotation_bearers(tmp_path):
+    sources = {}
+    tokens = {name: secrets.token_urlsafe(48) for name in ("writer", "reader", "mcp_reader")}
+    for name, token in tokens.items():
+        source = tmp_path / name
+        source.write_text(token + "\n", encoding="ascii")
+        source.chmod(0o600)
+        sources[name] = source
+    before = {name: protected_source_identity(source) for name, source in sources.items()}
+    server = validate_server_config_mapping(
+        {
+            "schema_version": 1,
+            "credentials": {name: {"file": str(source)} for name, source in sources.items()},
+            "mcp_enabled": True,
+        }
+    )
+    return sources, tokens, before, server
+
+
+def test_protected_password_rotation_keeps_original_handle_and_separate_bearer_sources(
+    tmp_path, administrator, rotation_bearers
+):
+    """INV-013/014: actual replacement is restart-only and preserves subject ownership."""
+    original_record, original_password = administrator
+    path = write_record(tmp_path / "ui-admin", original_record)
+    replacement_password = secrets.token_urlsafe(32).encode()
+    replacement_record = create_administrator_record(
+        original_record.subject, "rotated-operator", replacement_password
+    )
+    replacement = write_record(tmp_path / "ui-admin-next", replacement_record)
+    sources, tokens, before, server = rotation_bearers
+    legacy = load_credentials(server)
+    archive = ApplicationConfig.model_validate(
+        {
+            "schema_version": 1,
+            "storage": {
+                "archive_root": str(tmp_path / "absent-archive"),
+                "archive_id": examples.ARCHIVE_ID,
+            },
+        }
+    )
+    snapshot = PolicySnapshot(archive, archive.fingerprint())
+    key = "original-before-password-rotation"
+
+    async def exercise():
+        provider = load_basic_provider(config(path))
+        assert provider is not None
+        try:
+            original = await provider.authenticate(
+                authorization(original_record.username, original_password)
+            )
+            with OperationStore(tmp_path / "operations") as store:
+                receipt = store.admit(original, key, "/api/v1/plans", {}, lambda: snapshot).receipt
+            original_inode = path.stat().st_ino
+            path.replace(tmp_path / "ui-admin-retained")
+            replacement.replace(path)
+            assert path.stat().st_ino != original_inode
+            # A running verifier retains its original record until it is drained.
+            assert (
+                await provider.authenticate(
+                    authorization(original_record.username, original_password)
+                )
+                == original
+            )
+            with pytest.raises(AuthenticationError):
+                await provider.authenticate(authorization("rotated-operator", replacement_password))
+        finally:
+            await provider.aclose()
+        restarted = load_basic_provider(config(path))
+        assert restarted is not None
+        try:
+            rotated = await restarted.authenticate(
+                authorization("rotated-operator", replacement_password)
+            )
+            assert rotated == original
+            with pytest.raises(AuthenticationError):
+                await restarted.authenticate(
+                    authorization(original_record.username, original_password)
+                )
+            with OperationStore(tmp_path / "operations") as store:
+                assert store.lookup(rotated, key).operation_id == receipt.operation_id
+                retry = store.admit(
+                    rotated, key, "/api/v1/plans", {}, lambda: pytest.fail("must not replay")
+                )
+                assert not retry.created
+                assert retry.receipt.operation_id == receipt.operation_id
+        finally:
+            await restarted.aclose()
+
+    asyncio.run(exercise())
+    refreshed = load_credentials(server)
+    for name, source in sources.items():
+        assert protected_source_identity(source) == before[name]
+        interface = "mcp" if name == "mcp_reader" else "rest"
+        header = "Bearer " + tokens[name]
+        assert refreshed.authenticate(header, interface=interface) == legacy.authenticate(
+            header, interface=interface
+        )
+    assert not archive.storage.archive_root.exists()
 
 
 def test_wrong_user_and_wrong_password_use_one_hash_and_uniform_failure(administrator):

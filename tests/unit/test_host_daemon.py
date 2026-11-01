@@ -228,7 +228,7 @@ def inspector():
         ),
         inspect_authority=inspect_authority,
         revalidate=revalidate,
-        read_config_base=lambda _value: {"base_revision": "b" * 64},
+        read_config_base=lambda _value, _body=None: {"base_revision": "b" * 64},
     )
     peers = SimpleNamespace(authenticate=authenticate, revalidate=peer_again)
 
@@ -499,7 +499,7 @@ def test_daemon_deployment_drift_refuses_before_peer_and_dispatch(inspector):
 def test_config_base_policy_denial_is_typed_after_fresh_peer_proof(inspector, capsys):
     instance, calls, _ = inspector
 
-    def denied(_authority):
+    def denied(_authority, _body=None):
         calls.append("config-denied")
         reason = "operation-denied"
         raise InspectionError(reason)
@@ -525,6 +525,35 @@ def test_config_base_policy_denial_is_typed_after_fresh_peer_proof(inspector, ca
     with pytest.raises(protocol.HostProtocolError, match="operation-denied"):
         protocol.reply_body(response, request)
     assert capsys.readouterr().err == ""
+
+
+def test_bound_config_read_dispatch_keeps_both_peer_proofs(inspector):
+    instance, calls, authority = inspector
+    body: dict[str, object] = {
+        "expected_archive_id": "6ce912b6-141f-4bd2-a871-c19625c86aa9",
+        "expected_archive_root": "/comparison-only",
+    }
+
+    def read(snapshot, supplied):
+        assert snapshot is authority
+        assert supplied == body
+        calls.append("bound-config-read")
+        return {"base_revision": "b" * 64}
+
+    instance.policy.read_config_base = read
+    request = protocol.HostRequest("f" * 32, "config-read", body)
+    raw = run_exchange(instance, request.wire())
+    assert protocol.reply_body(protocol.decode_object(raw[4:]), request) == {
+        "base_revision": "b" * 64
+    }
+    assert calls == [
+        "inspect",
+        "peer-first",
+        "revalidate",
+        "peer-again",
+        "revalidate",
+        "bound-config-read",
+    ]
 
 
 def test_host_python_312_syntax_and_fixed_unit_boundary():

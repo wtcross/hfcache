@@ -15,6 +15,7 @@ import stat
 import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -778,6 +779,177 @@ def test_confirm_schedule_rebases_only_owned_leaf_and_observer_state(native, for
             policy.revalidate(snapshot)
 
 
+OBSERVER_MOUNT = (
+    "891 1 0:72 / /run/credentials/hfcache-sync.service "
+    "ro,nosuid,nodev,noexec,relatime,nosymfollow shared:678 - tmpfs tmpfs "
+    "rw,seclabel,size=1024k,nr_inodes=1024,mode=700,inode64,noswap\n"
+)
+OTHER_CREDENTIAL_MOUNT = OBSERVER_MOUNT.replace("891 1 0:72", "892 1 0:73").replace(
+    "hfcache-sync.service", "unrelated.service"
+)
+
+
+@pytest.mark.parametrize("state", ["unchanged", "removed", "absent"])
+def test_observer_confirmation_rebases_only_original_credential_mount(native, state):
+    """INV-022/ADR156: exit-gated caller may confirm one captured teardown."""
+    baseline = native.mountinfo.read_text() + OTHER_CREDENTIAL_MOUNT
+    native.mountinfo.write_text(baseline + ("" if state == "absent" else OBSERVER_MOUNT))
+    snapshot = policy.inspect_authority()
+    original_mounts = snapshot._inspection.capture.mounts.copy()
+    original_credential = snapshot._inspection.observer_credential_mount
+    if state == "removed":
+        native.mountinfo.write_text(baseline)
+    policy.confirm_schedule(snapshot, None, action="observer")
+    assert snapshot._inspection.capture.mounts == original_mounts
+    assert snapshot._inspection.observer_credential_mount == original_credential
+    if state == "removed":
+        with pytest.raises(policy.InspectionError):
+            policy.revalidate(snapshot)
+    else:
+        policy.revalidate(snapshot)
+
+
+def test_observer_credential_teardown_during_confirmation_uses_final_mount_read(
+    native, monkeypatch
+):
+    baseline = native.mountinfo.read_text()
+    native.mountinfo.write_text(baseline + OBSERVER_MOUNT)
+    snapshot = policy.inspect_authority()
+    original = policy._show
+    removed = False
+
+    def observe_exit(unit, budget, **options):
+        nonlocal removed
+        result = original(unit, budget, **options)
+        if unit == "hfcache-sync.service" and not removed:
+            native.mountinfo.write_text(baseline)
+            removed = True
+        return result
+
+    monkeypatch.setattr(policy, "_show", observe_exit)
+    policy.confirm_schedule(snapshot, None, action="observer")
+    assert removed
+    assert snapshot._inspection.observer_credential_mount is not None
+    with pytest.raises(policy.InspectionError):
+        policy.revalidate(snapshot)
+
+
+@pytest.mark.parametrize(
+    ("original", "replacement"),
+    [
+        ("891 1 0:72", "893 1 0:72"),
+        ("891 1 0:72", "891 2 0:72"),
+        ("891 1 0:72", "891 1 0:74"),
+        ("shared:678", "shared:679"),
+        ("rw,seclabel,", "seclabel,rw,"),
+    ],
+)
+def test_same_projected_credential_mount_cannot_replace_captured_identity(
+    native, original, replacement
+):
+    baseline = native.mountinfo.read_text()
+    native.mountinfo.write_text(baseline + OBSERVER_MOUNT)
+    snapshot = policy.inspect_authority()
+    native.mountinfo.write_text(baseline + OBSERVER_MOUNT.replace(original, replacement))
+    assert snapshot._inspection.capture.mount_rows() == snapshot._inspection.capture.mounts
+    with pytest.raises(policy.InspectionError):
+        policy.revalidate(snapshot)
+    with pytest.raises(policy.InspectionError):
+        policy.confirm_schedule(snapshot, None, action="observer")
+
+
+@pytest.mark.parametrize(
+    "credential",
+    [
+        OBSERVER_MOUNT * 2,
+        OBSERVER_MOUNT.replace(" - tmpfs tmpfs ", " - ext4 tmpfs "),
+        OBSERVER_MOUNT.replace(" - tmpfs tmpfs ", " - tmpfs other "),
+        OBSERVER_MOUNT.replace("ro,nosuid", "rw,nosuid"),
+        OBSERVER_MOUNT.replace("nosuid,", ""),
+        OBSERVER_MOUNT.replace("nodev,", ""),
+        OBSERVER_MOUNT.replace("noexec,", ""),
+        OBSERVER_MOUNT.replace("891 1 0:72", "bad 1 0:72"),
+        OBSERVER_MOUNT.replace("891 1 0:72", "891 bad 0:72"),
+        OBSERVER_MOUNT.replace("891 1 0:72", "891 1 bad"),
+        OBSERVER_MOUNT.replace(" / /run/", " /subtree /run/"),
+        OBSERVER_MOUNT.partition(" - ")[0] + " - tmpfs\n",
+    ],
+)
+def test_ambiguous_or_nonstock_observer_credential_mount_refuses_capture(native, credential):
+    native.mountinfo.write_text(native.mountinfo.read_text() + credential)
+    with pytest.raises(policy.InspectionError):
+        policy.inspect_authority()
+
+
+@pytest.mark.parametrize("drift", ["addition", "removal", "flags", "order", "duplicate"])
+def test_observer_credential_teardown_preserves_all_other_ordered_mount_rows(native, drift):
+    baseline = native.mountinfo.read_text()
+    native.mountinfo.write_text(baseline + OBSERVER_MOUNT + OTHER_CREDENTIAL_MOUNT)
+    snapshot = policy.inspect_authority()
+    after = baseline + OTHER_CREDENTIAL_MOUNT
+    if drift == "addition":
+        after += OTHER_CREDENTIAL_MOUNT.replace("892", "893").replace("unrelated", "added")
+    elif drift == "removal":
+        after = baseline
+    elif drift == "flags":
+        after = baseline + OTHER_CREDENTIAL_MOUNT.replace("ro,nosuid", "rw,nosuid")
+    elif drift == "order":
+        after = OTHER_CREDENTIAL_MOUNT + baseline
+    else:
+        after += OBSERVER_MOUNT * 2
+    native.mountinfo.write_text(after)
+    with pytest.raises(policy.InspectionError):
+        policy.confirm_schedule(snapshot, None, action="observer")
+
+
+def test_absent_original_credential_mount_does_not_authorize_new_mount(native):
+    snapshot = policy.inspect_authority()
+    native.mountinfo.write_text(native.mountinfo.read_text() + OBSERVER_MOUNT)
+    with pytest.raises(policy.InspectionError):
+        policy.confirm_schedule(snapshot, None, action="observer")
+
+
+@pytest.mark.parametrize("action", ["pause", "resume", "replace", "reset"])
+def test_timer_confirmation_cannot_rebase_observer_credential_teardown(native, action):
+    baseline = native.mountinfo.read_text()
+    native.mountinfo.write_text(baseline + OBSERVER_MOUNT)
+    snapshot = policy.inspect_authority()
+    native.mountinfo.write_text(baseline)
+    native.units["hfcache-sync.timer"]["ActiveState"] = (
+        "active" if action == "resume" else "inactive"
+    )
+    with pytest.raises(policy.InspectionError):
+        policy.confirm_schedule(snapshot, None, action=action, timer_was_active=False)
+
+
+def test_rootless_observer_confirmation_cannot_rebase_native_mount(native):
+    baseline = native.mountinfo.read_text()
+    native.mountinfo.write_text(baseline + OBSERVER_MOUNT)
+    snapshot = replace(policy.inspect_authority(), profile="rootless")
+    native.mountinfo.write_text(baseline)
+    with pytest.raises(policy.InspectionError):
+        policy.confirm_schedule(snapshot, None, action="observer")
+
+
+@pytest.mark.parametrize("drift", ["key", "configuration", "unit", "archive"])
+def test_observer_credential_teardown_keeps_other_authority_checks(native, drift):
+    baseline = native.mountinfo.read_text()
+    archive = "9 1 0:90 / /srv/hfcache rw,nosuid,nodev,noexec - nfs4 127.0.0.1:/ rw\n"
+    native.mountinfo.write_text(baseline + archive + OBSERVER_MOUNT)
+    snapshot = policy.inspect_authority()
+    native.mountinfo.write_text(baseline + archive)
+    if drift == "key":
+        native.key.write_bytes(b"z" * 32)
+    elif drift == "configuration":
+        native.config.write_bytes(native.config.read_bytes() + b"# changed\n")
+    elif drift == "unit":
+        native.units["hfcache-verify.service"]["MainPID"] = "123"
+    else:
+        native.mountinfo.write_text(baseline + archive.replace("rw,nosuid", "ro,nosuid"))
+    with pytest.raises(policy.InspectionError):
+        policy.confirm_schedule(snapshot, None, action="observer")
+
+
 @pytest.mark.parametrize("fixture", ["native", "rootless"])
 def test_shared_configuration_does_not_share_private_helper_authority_label(
     fixture, request, monkeypatch
@@ -821,6 +993,67 @@ def test_config_read_is_editable_and_opaque_revision_from_same_capture(native):
     native.config.write_bytes(native.config.read_bytes() + b"\n# concurrent change\n")
     with pytest.raises(policy.InspectionError):
         policy.read_config_base(snapshot)
+
+
+def test_bound_config_read_matches_legacy_projection_from_same_capture(native):
+    snapshot = policy.inspect_authority()
+    body = {"expected_archive_id": ARCHIVE_ID, "expected_archive_root": "/srv/hfcache"}
+    assert policy.read_config_base(snapshot, body) == policy.read_config_base(snapshot)
+    assert policy.read_config_base(snapshot, {}) == policy.read_config_base(snapshot)
+
+
+@pytest.mark.parametrize("field", ["expected_archive_id", "expected_archive_root"])
+def test_bound_config_read_mismatch_refuses_before_projection(native, monkeypatch, field):
+    snapshot = policy.inspect_authority()
+    body = {"expected_archive_id": ARCHIVE_ID, "expected_archive_root": "/srv/hfcache"}
+    body[field] = (
+        "00000000-0000-0000-0000-000000000000"
+        if field == "expected_archive_id"
+        else "/comparison-only-must-not-be-read"
+    )
+    monkeypatch.setattr(
+        policy, "parse_configuration", lambda _raw: pytest.fail("mismatched binding projected")
+    )
+    with pytest.raises(policy.InspectionError) as caught:
+        policy.read_config_base(snapshot, body)
+    assert caught.value.reason == "config-unavailable"
+
+
+@pytest.mark.parametrize(
+    ("state", "grant", "reason"),
+    [
+        ("unavailable", False, "config-unavailable"),
+        ("supported", False, "operation-denied"),
+        ("supported", True, "config-unavailable"),
+    ],
+)
+def test_bound_config_read_preserves_unavailable_denied_and_mismatch_order(
+    native, monkeypatch, state, grant, reason
+):
+    snapshot = policy.inspect_authority()
+    value = snapshot.status()
+    value["permissions"] = dict.fromkeys(policy.ACTIONS, False) | {"configuration": grant}
+    value["permission_reasons"] = dict.fromkeys(policy.ACTIONS, "policy-denied") | {
+        "configuration": "granted" if grant else "policy-denied"
+    }
+    if state == "unavailable":
+        # Exercise the snapshot's real transient-unit conversion, not an invalid HostStatus fake.
+        value["facts"]["units"]["hfcache-sync.service"]["active"] = "activating"
+    snapshot = replace(snapshot, _status_body=json.dumps(value).encode())
+    assert HostStatus.model_validate(snapshot.status()).state == state
+    monkeypatch.setattr(
+        policy, "parse_configuration", lambda _raw: pytest.fail("refused binding projected")
+    )
+    with pytest.raises(policy.InspectionError) as caught:
+        policy.read_config_base(
+            snapshot,
+            {"expected_archive_id": ARCHIVE_ID, "expected_archive_root": "/mismatched-root"},
+        )
+    assert caught.value.reason == reason
+    if state == "unavailable":
+        with pytest.raises(policy.InspectionError) as legacy:
+            policy.read_config_base(snapshot, {})
+        assert legacy.value.reason == "operation-denied"
 
 
 @pytest.mark.parametrize("fixture", ["native", "rootless"])
@@ -1806,6 +2039,34 @@ def test_config_read_cannot_use_a_grant_after_policy_revocation(native):
     publish(native)
     with pytest.raises(policy.InspectionError):
         policy.read_config_base(snapshot)
+
+
+@pytest.mark.parametrize("when", ["before", "during"])
+def test_public_configuration_preparation_rejects_revocation_around_reconstruction(
+    native, monkeypatch, when
+):
+    """Decision153: the public read-only opcode keeps both authority brackets."""
+    snapshot = policy.inspect_authority()
+    original = policy._managed_edits
+
+    def revoke():
+        native.permissions["configuration"] = False
+        publish(native)
+
+    if when == "before":
+        revoke()
+    else:
+
+        def changed(document, managed):
+            result = original(document, managed)
+            revoke()
+            return result
+
+        monkeypatch.setattr(policy, "_managed_edits", changed)
+    with pytest.raises(policy.InspectionError):
+        policy.prepare_configuration(
+            snapshot, {"base_revision": snapshot.base_revision, "edits": []}
+        )
 
 
 @pytest.mark.parametrize("drift", [None, "base", "mode", "sid"])

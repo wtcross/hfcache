@@ -38,6 +38,11 @@ Tab and Shift+Tab stay within the dialog. Escape or the keep-editing action
 returns to the form; the discard action leaves it. Read the review before the
 separate Apply/submit confirmation. Validation errors do not submit an effect.
 
+Your browser also asks before closing or reloading a dirty form. Choosing Stay
+keeps its draft and reads usable. Leaving ends that document's active reads;
+returning through browser history revalidates the current workspace. Submitted
+jobs keep running independently, and history navigation never resubmits them.
+
 For a large [manifest table](repository-details.md#inspect-files-within-the-read-budget), focus its
 scroll area and use Up/Down, Page Up/Down or Home/End. **File number** and **Go to
 file** reach an exact row. **Inspect metadata** focuses its complete path and

@@ -790,10 +790,16 @@ export function RepositoryDetail({
         }
     }
     useEffect(() => {
+        store.setPageActive(true);
+        return () => {
+            store.setPageActive(false);
+        };
+    }, [store]);
+    useEffect(() => {
         live.current = true;
         let active = true;
         function readLocation() {
-            if (!active) return;
+            if (!active || !store.snapshot().pageActive) return;
             if (
                 window.location.pathname !==
                 repositoryPath(stableTarget, basePath)
@@ -825,12 +831,14 @@ export function RepositoryDetail({
         queueMicrotask(readLocation);
         window.addEventListener("hashchange", readLocation);
         window.addEventListener("popstate", readLocation);
+        window.addEventListener("pageshow", readLocation);
         return () => {
             active = false;
             live.current = false;
             pendingTabFocus.current = null;
             window.removeEventListener("hashchange", readLocation);
             window.removeEventListener("popstate", readLocation);
+            window.removeEventListener("pageshow", readLocation);
             store.pause();
         };
     }, [
@@ -838,6 +846,7 @@ export function RepositoryDetail({
         open,
         state.authGeneration,
         state.connected,
+        state.pageActive,
         stableTarget,
         basePath,
         owner,

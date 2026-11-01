@@ -84,7 +84,9 @@ if (options.length > 0) {
                 ? "text/javascript"
                 : path?.endsWith(".css") === true
                   ? "text/css"
-                  : "text/html";
+                  : path?.endsWith(".png") === true
+                    ? "image/png"
+                    : "text/html";
         response.writeHead(200, {
             "Content-Type": contentType,
             "Cache-Control": "no-store",

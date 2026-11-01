@@ -718,3 +718,8 @@ original-process observer stop, independent durable outcomes and finite diagnost
 reads. It preserves archive serialization, original operation identity and this
 record's unrelated requirements. Implementation and actual installed conformance
 are separately required.
+
+The 2026-10-30 amendment to decision156 permits only the exact captured native SDK
+credential mount's disappearance after proven original-pidfd exit. All other
+mount observations and protected authority remain unchanged; it adds no payload,
+mount, cleanup or process-control right and cannot reconcile an unknown Stop.

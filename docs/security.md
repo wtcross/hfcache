@@ -1246,7 +1246,23 @@ has only SDK interpreter/configuration/delivered-credential/Unix-API/journal acc
 and writes to its own scheduled state, with no archive, Hub, helper-private state,
 IP or capability authority. Missing proof denies observer control independently
 of schedule control. No generic context selector, unconfined fallback, automatic
-relabel or helper domain transition is permitted. Systemd's
+relabel or helper domain transition is permitted.
+
+After the original-stop flow proves exit through its retained original pidfd,
+final validation may accept only disappearance of that invocation's previously
+captured fixed systemd credential mount. Capture its full raw identity before
+signaling: one mount rooted at `/`, filesystem/source `tmpfs`, with
+`ro,nosuid,nodev,noexec`. Malformed, duplicate, writable or non-tmpfs targets grant
+no exception; optional `noswap`/`nosymfollow` flags are not required.
+An unchanged projected table must not hide a replaced credential
+mount. All other ordered captured mount observations and protected authority
+remain identical. Missing/ambiguous proof, additions, replacements, duplicates,
+other changes or unrelated removals refuse. This observes systemd teardown; it
+grants no credential payload read, path-prefix exclusion, generic baseline
+refresh, mount/unmount, cleanup, capability or namespace permission. Original
+pending handles and separate backend/receipt/Stop certainty remain unchanged.
+
+Systemd's
 [status access check](https://github.com/systemd/systemd/blob/70bae7648f2c18010187c9cf20093155eaa26029/src/core/selinux-access.c#L224-L265)
 uses the unit-file context when known and its own context otherwise. A denied
 manager read must be diagnosed from `USER_AVC` as well as kernel `AVC` records;

@@ -31,6 +31,7 @@ same comparison in a form that holds under Mapall.
 """
 
 import os
+import re
 import socket
 import stat
 from dataclasses import dataclass
@@ -39,7 +40,7 @@ from typing import TYPE_CHECKING, Any, Final, Literal, final
 
 from hfcache import __version__
 from hfcache.errors import Problem, SafetyError
-from hfcache.identity import TYPE_DIRECTORIES
+from hfcache.identity import TYPE_DIRECTORIES, RepositoryIdentity, parse_commit_sha
 from hfcache.metadata import QueryLimitError
 from hfcache.models import ArchiveSentinel, Provenance, dump, load
 from hfcache.storage import (
@@ -113,6 +114,68 @@ def _bounded(values: list[str]) -> tuple[str, ...]:
     return tuple(sorted(values)[:REPORTED_ENTRY_LIMIT])
 
 
+def _audit_entry_kind(layout: ArchiveLayout, path: Path) -> Literal["directory", "file"] | None:
+    """Recognize only the FS-20/§5.1 audit hierarchy, not record validity."""
+    for root, record in ((layout.pruned_audit, "prune"), (layout.repair_audit, "retirement")):
+        if not path.is_relative_to(root):
+            continue
+        parts = path.relative_to(root).parts
+        if not parts:
+            return None  # Required directories are accounted for by the caller.
+        repository_type = next(
+            (kind for kind, directory in TYPE_DIRECTORIES.items() if directory == parts[0]), None
+        )
+        if repository_type is None:
+            return None
+        try:
+            if len(parts) >= 2:  # noqa: PLR2004 - type/namespace
+                RepositoryIdentity.of(repository_type, parts[1] + "/placeholder")
+            if len(parts) >= 3:  # noqa: PLR2004 - type/namespace/repository
+                RepositoryIdentity.of(repository_type, parts[1] + "/" + parts[2])
+            if len(parts) >= 4:  # noqa: PLR2004 - repository's immutable SHA directory
+                parse_commit_sha(parts[3])
+        except ValueError:
+            return None
+        if len(parts) <= 4:  # noqa: PLR2004 - repository's immutable SHA directory
+            return "directory"
+        if len(parts) == 5 and re.fullmatch(  # noqa: PLR2004 - one audit record leaf
+            rf"[0-9a-f]{{32}}\.(?:manifest|{record})\.json", parts[4]
+        ):
+            return "file"
+    return None
+
+
+def _initialized_entry_kind(
+    layout: ArchiveLayout, path: Path
+) -> Literal["directory", "opaque", "file"] | None:
+    """FS-16/17/18/20: named post-init boundaries confer no content/delete authority."""
+    if path == layout.hub_cache or (
+        path.parent in (layout.repos, layout.manifests) and path.name in TYPE_DIRECTORIES.values()
+    ):
+        # FS-13/14/21: the SDK owns its cache (including snapshot symlinks),
+        # and publication readers validate their trees. Neither is layout data.
+        return "opaque"
+    if path.parent in (layout.staging, layout.trash, layout.quarantine, layout.repair_caches):
+        # FS-18: recovery owns the different staging/purge/quarantined/repair
+        # payload shapes. A canonical directory name alone proves none of them.
+        return "opaque" if re.fullmatch(r"[0-9a-f]{32}", path.name) else None
+    if (
+        path in (layout.repositories_catalog, layout.verification_catalog)
+        or (path.parent == layout.transactions and re.fullmatch(r"[0-9a-f]{32}\.json", path.name))
+        or (
+            path.parent == layout.runs
+            and re.fullmatch(r"[0-9]{8}T[0-9]{6}Z-[0-9a-f]{32}\.json", path.name)
+        )
+    ):
+        return "file"
+    if path.is_relative_to(layout.metadata):
+        kind = layout.supplemental_entry_kind(path)
+        if kind == "directory":
+            return "directory"
+        return "file" if kind == "file" else None
+    return _audit_entry_kind(layout, path)
+
+
 def _walk(  # noqa: PLR0912 - explicit initial, publication and supplemental layout entries
     layout: ArchiveLayout, known: Iterable[Path], *, reader: MetadataReader | None = None
 ) -> _Contents:
@@ -123,11 +186,6 @@ def _walk(  # noqa: PLR0912 - explicit initial, publication and supplemental lay
     refusal rather than a traversal of it.
     """
     expected = set(known)
-    publication_roots = {
-        parent / name
-        for parent in (layout.repos, layout.manifests)
-        for name in TYPE_DIRECTORIES.values()
-    }
     existing: list[Path] = []
     unknown: list[str] = []
     symlinks: list[str] = []
@@ -158,21 +216,14 @@ def _walk(  # noqa: PLR0912 - explicit initial, publication and supplemental lay
                 symlinks.append(where)
             elif child == layout.sentinel:
                 sentinel_present = True
-            elif (
-                sentinel_present
-                and child in publication_roots
-                and (stat.S_ISDIR(mode) if mode is not None else child.is_dir())
-            ):
-                # FS-21: publication adds these optional namespaces after init.
-                # Layout inspection does not traverse or verify publication payloads.
-                continue
-            elif child.is_relative_to(layout.metadata):
-                # INV-018: only an initialized archive can gain this optional extension.
-                kind = layout.supplemental_entry_kind(child) if sentinel_present else None
+            elif sentinel_present and (kind := _initialized_entry_kind(layout, child)) is not None:
                 is_directory = stat.S_ISDIR(mode) if mode is not None else child.is_dir()
                 is_file = stat.S_ISREG(mode) if mode is not None else child.is_file()
-                if kind == "directory" and is_directory:
-                    queue.append(child)
+                if kind in {"directory", "opaque"} and is_directory:
+                    if child in expected:
+                        existing.append(child)
+                    if kind == "directory":
+                        queue.append(child)
                 elif kind == "file" and is_file:
                     continue
                 else:

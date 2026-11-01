@@ -309,6 +309,35 @@ def test_hfcfg014_endpoint_must_be_https_host_only(endpoint: str):
     assert "HFCFG014" in codes_for(mutate(hub={"endpoint": endpoint}))
 
 
+@pytest.mark.parametrize(
+    "endpoint",
+    [
+        "https://hub.example.test:443",
+        "https://hub.example.test:25444",
+        "https://[::1]:8443",
+    ],
+)
+def test_hub_endpoint_accepts_explicit_https_ports(endpoint: str):
+    config = validate_config_mapping(mutate(hub={"endpoint": endpoint}))
+
+    assert config.hub.endpoint == endpoint
+
+
+@pytest.mark.parametrize(
+    "endpoint",
+    [
+        "https://hub.example.test:0",
+        "https://hub.example.test:-1",
+        "https://hub.example.test:65536",
+        "https://hub.example.test:not-a-port",
+        "https://hub.example.test:",
+        "https://[::1]:",
+    ],
+)
+def test_hub_endpoint_rejects_invalid_https_ports(endpoint: str):
+    assert "HFCFG014" in codes_for(mutate(hub={"endpoint": endpoint}))
+
+
 def test_required_token_mode_is_accepted_for_restricted_repository_scope():
     config = validate_config_mapping(mutate(hub={"token_mode": "required"}))
 

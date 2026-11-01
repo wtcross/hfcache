@@ -358,6 +358,7 @@ export function App({
     const stayButton = useRef<HTMLButtonElement>(null);
     const leaveButton = useRef<HTMLButtonElement>(null);
     const previousFocus = useRef<HTMLElement | null>(null);
+    const documentReadsSuspended = useRef(false);
     const [updateRequired, setUpdateRequired] = useState(false);
     const [versionCheck, setVersionCheck] = useState<
         "idle" | "checking" | "unavailable"
@@ -387,6 +388,27 @@ export function App({
               : workspaceLabel(workspace);
 
     useEffect(() => {
+        const suspendDocumentReads = () => {
+            if (documentReadsSuspended.current) return;
+            documentReadsSuspended.current = true;
+            // INV-021: retire the parent batches before cancelled reads settle
+            // and try to start their next bounded read during document leave.
+            library?.setPageActive(false);
+            repository?.setPageActive(false);
+            administrationRead?.setPageActive(false);
+        };
+        const resumeDocumentReads = () => {
+            if (!documentReadsSuspended.current) return;
+            documentReadsSuspended.current = false;
+            const current = resolveRoute(window.location.pathname, base);
+            if (current.kind === "repository") repository?.setPageActive(true);
+            else if (current.kind === "workspace") {
+                if (current.workspace === "library")
+                    library?.setPageActive(true);
+                else if (current.workspace === "administration")
+                    administrationRead?.setPageActive(true);
+            }
+        };
         const observeLocation = () => {
             const target = window.location.pathname + window.location.hash;
             if (target !== acceptedLocation.current) maintenance?.pause();
@@ -416,16 +438,34 @@ export function App({
             if (
                 configuration?.snapshot().dirty === true ||
                 hostControls?.snapshot().dirty === true
-            )
+            ) {
                 event.preventDefault();
+                // Native Stay must leave this document's draft and reads usable.
+                return;
+            }
+            if (!event.defaultPrevented) suspendDocumentReads();
         };
         window.addEventListener("beforeunload", beforeUnload);
+        window.addEventListener("pagehide", suspendDocumentReads);
+        // React effects may remain frozen in BFCache. Reactivate before each
+        // mounted route's pageshow listener parses its current address.
+        window.addEventListener("pageshow", resumeDocumentReads, true);
         return () => {
             window.removeEventListener("popstate", observeLocation);
             window.removeEventListener("hashchange", observeLocation);
             window.removeEventListener("beforeunload", beforeUnload);
+            window.removeEventListener("pagehide", suspendDocumentReads);
+            window.removeEventListener("pageshow", resumeDocumentReads, true);
         };
-    }, [configuration, hostControls, maintenance]);
+    }, [
+        base,
+        configuration,
+        hostControls,
+        maintenance,
+        library,
+        repository,
+        administrationRead,
+    ]);
     useEffect(() => {
         if (pendingNavigation !== null) stayButton.current?.focus();
     }, [pendingNavigation]);

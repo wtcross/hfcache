@@ -323,7 +323,7 @@ prerequisite. Missing prerequisites never certify a capability.
 | 13 | `credential` | The credential resolved, and from which source | no | `HFARG005`, `HFARG006` |
 | 14 | `hub_endpoint` | The endpoint is a well-formed `https://` URL | no | `HFCFG014` |
 | 15 | `hub_dns` | The endpoint host resolves | no | `HFHUB001` |
-| 16 | `hub_tls` | The endpoint is reachable and its certificate verifies | no | `HFHUB002` |
+| 16 | `hub_tls` | The configured HTTPS host and port (default `443`) are reachable and the hostname's certificate verifies | no | `HFHUB002` |
 | 17 | `hub_identity` | The resolved identity matches `expected_account`, when set | no | `HFHUB003` |
 
 Checks 6–11 need an initialized archive. Against a target that has none they

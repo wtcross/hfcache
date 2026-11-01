@@ -1,3 +1,4 @@
+import { getEventListeners } from "node:events";
 import { expect, test } from "vitest";
 import {
     codePointLength,
@@ -276,4 +277,74 @@ test("aborted or stalled reads cancel their reader without creating another requ
     await expect(
         abortable(Promise.resolve(1), controller.signal),
     ).rejects.toThrow();
+});
+
+test.each(["already-rejected", "late-rejecting"])(
+    "a pre-aborted observation retains AbortError and observes its %s operation",
+    async (timing) => {
+        const controller = new AbortController();
+        controller.abort();
+        const failure = new Error("Owned reader rejection.");
+        let rejectOperation: (error: Error) => void = () => {
+            throw new Error("Missing owned rejection callback.");
+        };
+        const operation = new Promise<never>((_resolve, reject) => {
+            rejectOperation = reject;
+        });
+        if (timing === "already-rejected") rejectOperation(failure);
+        const unhandled: unknown[] = [];
+        const observe = (reason: unknown) => {
+            unhandled.push(reason);
+        };
+        process.on("unhandledRejection", observe);
+        try {
+            // The late case cannot settle until abortable has already returned.
+            await expect(
+                abortable(operation, controller.signal),
+            ).rejects.toMatchObject({ name: "AbortError" });
+            if (timing === "late-rejecting") rejectOperation(failure);
+            await new Promise<void>((resolve) => setImmediate(resolve));
+            expect(unhandled).toEqual([]);
+            // Observing cancellation does not change the original operation.
+            await expect(operation).rejects.toBe(failure);
+        } finally {
+            process.off("unhandledRejection", observe);
+        }
+    },
+);
+
+test("an active observation retains the original failure and removes its abort listener", async () => {
+    const controller = new AbortController();
+    const failure = new Error("Owned active reader rejection.");
+    const read = abortable(Promise.reject(failure), controller.signal);
+    expect(getEventListeners(controller.signal, "abort")).toHaveLength(1);
+    await expect(read).rejects.toBe(failure);
+    expect(getEventListeners(controller.signal, "abort")).toEqual([]);
+    controller.abort();
+    await expect(abortable(Promise.resolve(1))).resolves.toBe(1);
+});
+
+test("a pre-aborted errored response drains its reader without an unhandled rejection", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const stream = new ReadableStream<Uint8Array>({
+        start(source) {
+            source.error(new Error("Owned response reader rejection."));
+        },
+    });
+    const unhandled: unknown[] = [];
+    const observe = (reason: unknown) => {
+        unhandled.push(reason);
+    };
+    process.on("unhandledRejection", observe);
+    try {
+        await expect(
+            readBoundedJson(response(stream), { signal: controller.signal }),
+        ).rejects.toMatchObject({ name: "AbortError" });
+        await new Promise<void>((resolve) => setImmediate(resolve));
+        expect(unhandled).toEqual([]);
+        expect(stream.locked).toBe(false);
+    } finally {
+        process.off("unhandledRejection", observe);
+    }
 });

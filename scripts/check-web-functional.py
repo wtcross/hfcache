@@ -15,6 +15,7 @@ import importlib.metadata
 import itertools
 import json
 import os
+import pwd
 import re
 import secrets
 import ssl
@@ -22,14 +23,20 @@ import stat
 import struct
 import sys
 import tempfile
+import tomllib
 import uuid
 import zipfile
 from http import HTTPStatus
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import TYPE_CHECKING, Any, NoReturn
 from urllib.parse import urlsplit
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 ROOT = Path(__file__).absolute().parents[1]
+NATIVE_PREFIX = Path("/opt/hfcache")
+NATIVE_OWNER = 0
 MAXIMUM_JSON = 2 * 1024 * 1024
 MAXIMUM_SOURCE_FILES = 4096
 MAXIMUM_MEMBER_BYTES = 8 * 1024 * 1024
@@ -46,6 +53,9 @@ REQUIRED_CASE_COUNT = 95
 UID_FIELDS = 4
 SECCOMP_FILTER = 2
 MAXIMUM_ARGUMENTS = 256
+MINIMUM_MOUNT_FIELDS = 6
+MINIMUM_MOUNT_TRAILING_FIELDS = 3
+CADDY_AUTHORITY_PATHS = {"/srv/hfcache", "/etc/hfcache", "/run/hfcache-host-helper"}
 NATIVE_ACTIVATION_FD = 3
 MAXIMUM_THREADS = 64
 MAXIMUM_EVENTS = 4096
@@ -151,8 +161,102 @@ MCP_TOOLS = {
     "list_model_variants",
     "get_catalog_facets",
 }
-IMPLEMENTED_CASES = {"AUTH-09", "ROUTE-01", "ROUTE-04", "ROUTE-06", "ROUTE-07", "RELEASE-03"}
-BROWSER_CASES = {
+# Each acceptance row is derived from this engine's actual assertion records.
+# Role/trust/network/transfer/drain evidence remains mandatory before extraction.
+CASE_ASSERTIONS = {
+    "AUTH-01": {"native-ui-challenge", "validated-bootstrap", "same-origin-json-validation"},
+    "AUTH-04": {
+        "credential-class-isolation",
+        "bearer-rest-with-browser",
+        "all-mcp-tools-with-browser",
+    },
+    "AUTH-06": {"bearer-rest-with-browser"},
+    "AUTH-09": {"native-ui-challenge", "plaintext-refused", "untrusted-certificate-refused"},
+    "ROUTE-01": {"native-ui-challenge", "bearer-rest-with-browser", "all-mcp-tools-with-browser"},
+    "ROUTE-02": {
+        "native-ui-challenge",
+        "native-prefix-projection",
+        "same-origin-security-headers",
+        "api-pagination",
+        "all-mcp-tools-with-browser",
+    },
+    "ROUTE-03": {
+        "workspaces-deep-refresh",
+        "history-back-forward",
+        "exact-publication-refresh-history",
+        "publication-files-locators-and-history",
+    },
+    "ROUTE-04": {"missing-assets-isolated", "api-mcp-errors-not-html", "unsafe-method-no-fallback"},
+    "ROUTE-06": {"same-origin-security-headers", "missing-assets-isolated"},
+    "ROUTE-07": {"same-origin-network", "all-mcp-tools-with-browser"},
+    "CONFIG-03": {
+        "config-two-sessions-same-full-byte-base",
+        "config-session-a-tag-only-validate",
+        "config-session-a-reviewed-empty-preview",
+        "config-session-b-tag-only-validate",
+        "config-session-b-reviewed-empty-preview",
+        "config-session-a-one-reviewed-apply",
+        "config-session-a-confirm-original-host-outcome",
+        "config-session-b-stale-apply-refusal",
+        "config-session-b-compare-retains-original-intent",
+        "config-session-a-original-preview-after-reload",
+        "config-session-a-original-apply-after-reload",
+        "config-session-a-original-host-outcome-after-reload",
+        "config-session-b-original-preview-after-reload",
+    },
+    "CATALOG-01": {
+        "library-type-and-repository-scopes",
+        "library-literal-id-tag-not-readme",
+        "library-current-and-retained-publications",
+    },
+    "CATALOG-02": {
+        "library-tags-default-corpus",
+        "library-tags-canonical-all",
+        "library-tags-all-and-missing",
+        "library-tags-clear-after-all",
+        "library-tags-any",
+        "library-tags-groups-combine-with-and",
+        "library-tags-clear-before-observed",
+        "library-tags-last-observed",
+        "library-tags-current-only-withholds-old",
+        "library-tags-clear-before-unpublished",
+        "library-tags-disabled-unpublished",
+        "library-tags-clear-before-count-bound",
+        "library-tags-64-accepted",
+        "library-tags-65-refused",
+        "library-tags-restore-valid-count",
+        "library-tags-64-canonical-128-raw",
+        "library-tags-65-canonical-refused",
+        "library-tags-129-raw-refused",
+        "library-tags-restore-default",
+    },
+    "CATALOG-03": {
+        "publication-model-dataset-static-evidence",
+        "library-technical-primary-GGUF-all-predicates",
+        "library-technical-one-byte-below-excludes-GGUF",
+        "library-technical-primary-GPTQ-same-variant",
+        "library-technical-cross-variant-format-method-bits",
+        "library-technical-cross-variant-scheme-bits",
+        "library-technical-adapter-excluded",
+        "library-technical-projector-excluded",
+        "library-technical-unknown-role-excluded",
+        "library-technical-incomplete-members-excluded",
+    },
+    "CATALOG-04": {"library-total-page-coverage-and-zero"},
+    "CATALOG-07": {"publication-model-dataset-static-evidence"},
+    "CARD-11": {
+        "readme-active-corpus-fails-closed",
+        "readme-blocked-resources-and-pinned-links",
+        "same-origin-network",
+    },
+    "RELEASE-03": {
+        "same-origin-network",
+        "native-ui-challenge",
+        "bearer-rest-with-browser",
+        "all-mcp-tools-with-browser",
+    },
+}
+BASELINE_BROWSER_CASES = {
     "static-abort-drain",
     "native-ui-challenge",
     "validated-bootstrap",
@@ -170,7 +274,114 @@ BROWSER_CASES = {
     "private-browser-storage",
     "same-origin-network",
     "same-origin-json-validation",
+    "exact-publication-refresh-history",
+    "api-pagination",
+    "credential-class-isolation",
+    "denied-basic-read-auth",
+    "denied-basic-csrf",
+    "no-browser-errors",
+    "library-type-and-repository-scopes",
+    "library-literal-id-tag-not-readme",
+    "library-current-and-retained-publications",
+    "library-tags-default-corpus",
+    "library-tags-canonical-all",
+    "library-tags-all-and-missing",
+    "library-tags-clear-after-all",
+    "library-tags-any",
+    "library-tags-groups-combine-with-and",
+    "library-tags-clear-before-observed",
+    "library-tags-last-observed",
+    "library-tags-current-only-withholds-old",
+    "library-tags-clear-before-unpublished",
+    "library-tags-disabled-unpublished",
+    "library-tags-clear-before-count-bound",
+    "library-tags-64-accepted",
+    "library-tags-65-refused",
+    "library-tags-restore-valid-count",
+    "library-tags-64-canonical-128-raw",
+    "library-tags-65-canonical-refused",
+    "library-tags-129-raw-refused",
+    "library-tags-restore-default",
+    "library-technical-primary-GGUF-all-predicates",
+    "library-technical-one-byte-below-excludes-GGUF",
+    "library-technical-primary-GPTQ-same-variant",
+    "library-technical-cross-variant-format-method-bits",
+    "library-technical-cross-variant-scheme-bits",
+    "library-technical-adapter-excluded",
+    "library-technical-projector-excluded",
+    "library-technical-unknown-role-excluded",
+    "library-technical-incomplete-members-excluded",
+    "library-total-page-coverage-and-zero",
+    "publication-files-locators-and-history",
+    "publication-model-dataset-static-evidence",
+    "readme-active-corpus-fails-closed",
+    "readme-blocked-resources-and-pinned-links",
+    "readme-sanitized-source-secret-and-format-bounds",
+    "ordinary-config-read-projection",
+    "ordinary-tag-draft-first-validation",
+    "ordinary-explicit-second-validation",
+    "ordinary-discard-fresh-UI-read",
+    "config-numeric-lexical-leading-zero",
+    "config-numeric-lexical-exponent",
+    "config-numeric-lexical-fraction",
+    "config-numeric-lexical-unsafe-integer",
+    "config-numeric-range-free-gib-upper",
+    "config-numeric-range-free-percent-upper",
+    "config-numeric-range-workers-upper",
+    "config-numeric-range-sync-wait-upper",
+    "config-numeric-range-staging-lower",
+    "config-numeric-range-verification-wait-upper",
+    "config-numeric-range-repair-grace-lower",
+    "config-tag-refusal-raw-count-before-deduplication",
+    "config-tag-refusal-raw-length-before-trim",
+    "config-tag-refusal-nonascii",
+    "config-tag-refusal-empty-line",
+    "config-json-refusal-malformed",
+    "config-json-refusal-mixed-managed-and-candidate",
+    "config-json-refusal-json-pointer",
+    "config-json-refusal-protected-root",
+    "config-json-refusal-coercive-integer",
+    "config-json-refusal-coercive-boolean",
+    "config-json-refusal-noninteger-lexeme",
+    "config-json-refusal-duplicate-identity",
+    "config-json-refusal-reordered-existing",
+    "config-two-sessions-same-full-byte-base",
+    "config-session-a-tag-only-validate",
+    "config-session-a-reviewed-empty-preview",
+    "config-session-b-tag-only-validate",
+    "config-session-b-reviewed-empty-preview",
+    "config-session-a-one-reviewed-apply",
+    "config-session-a-confirm-original-host-outcome",
+    "config-session-b-stale-apply-refusal",
+    "config-session-b-compare-retains-original-intent",
+    "config-session-a-original-preview-after-reload",
+    "config-session-a-original-apply-after-reload",
+    "config-session-a-original-host-outcome-after-reload",
+    "config-session-b-original-preview-after-reload",
 }
+BROWSER_CASES = BASELINE_BROWSER_CASES | {"rich-card-dom-and-pinned-files"}
+COMMON_ASSERTIONS = {
+    "validated-bootstrap",
+    "private-browser-storage",
+    "same-origin-network",
+    "no-browser-errors",
+}
+BASIC_READ_REFUSALS = {
+    "missing": 0,
+    "wrong-user": 1,
+    "wrong-password": 1,
+    "malformed-base64": 1,
+    "missing-colon": 1,
+    "noncanonical-base64": 1,
+    "invalid-utf8-user": 1,
+    "invalid-utf8-password": 1,
+    "duplicate-headers": 2,
+    "duplicate-schemes": 1,
+    "oversized-user": 1,
+    "oversized-password": 1,
+    "oversized-authorization": 1,
+}
+MAXIMUM_BASIC_REFUSAL_BYTES = 4096
 ROLE_CHECKS = {
     "api_unprivileged",
     "api_unix_only",
@@ -197,6 +408,30 @@ ROLE_DRAINS = {
     "caddy",
     "browser_containers",
     "owned_descendants",
+}
+HELPER_BOOTSTRAP = {
+    "/usr/local/libexec/hfcache-host-helper": ("host-helper.py", "helper_daemon", 0o755),
+    "/etc/systemd/system/hfcache-host-helper.service": (
+        "hfcache-host-helper.service",
+        "helper_unit",
+        0o644,
+    ),
+    "/usr/local/lib/hfcache-host-helper/hfcache-host-helper.cil": (
+        "hfcache-host-helper.cil",
+        "helper_selinux_policy",
+        0o644,
+    ),
+    **{
+        "/usr/local/lib/hfcache-host-helper/" + name + ".py": (name + ".py", role, 0o644)
+        for name, role in (
+            ("host_policy", "helper_policy_module"),
+            ("host_protocol", "helper_protocol_module"),
+            ("host_configuration", "helper_configuration_module"),
+            ("host_actions", "helper_actions_module"),
+            ("host_selinux", "helper_selinux_module"),
+            ("host_peer", "helper_peer_module"),
+        )
+    },
 }
 MIME = {
     ".html": "text/html",
@@ -226,13 +461,23 @@ def canonical(value: object) -> bytes:
     return (json.dumps(value, sort_keys=True, indent=2, ensure_ascii=False) + "\n").encode()
 
 
-def persist_json(path: Path, value: object) -> None:
-    """Retain intent before effects without replacing earlier evidence."""
+def persist_bytes(path: Path, body: bytes) -> None:
+    """Retain an exclusive durable copy without replacing earlier evidence."""
     descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     with os.fdopen(descriptor, "wb") as stream:
-        stream.write(canonical(value))
+        stream.write(body)
         stream.flush()
         os.fsync(stream.fileno())
+    directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
+
+
+def persist_json(path: Path, value: object) -> None:
+    """Retain intent before effects without replacing earlier evidence."""
+    persist_bytes(path, canonical(value))
 
 
 def duplicate_refusal(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -383,14 +628,92 @@ def local_backing(path: Path, mountinfo: str | None = None) -> None:
     )
 
 
-def source_identity(value: object, *, root: Path = ROOT) -> dict[str, Any]:
+def current_release(manifest: dict[str, Any]) -> bool:
+    return isinstance(manifest.get("installed"), dict) and "release" in manifest["installed"]
+
+
+def native_principal(role: str, *, caddy_account: str | None = None) -> int:
+    name = caddy_account if role == "caddy" else "hfcache"
+    if not isinstance(name, str):
+        reject("fixed functional service account is malformed")
+    require(
+        re.fullmatch(r"[a-z_][a-z0-9_-]{0,31}", name),
+        "fixed functional service account is malformed",
+    )
+    account = pwd.getpwnam(name)
+    require(
+        account.pw_name == name
+        and type(account.pw_uid) is int
+        and account.pw_uid > 0
+        and account.pw_uid == account.pw_gid,
+        "fixed functional service principal is unsupported",
+    )
+    return account.pw_uid
+
+
+def application_index(manifest: dict[str, Any]) -> tuple[Path, dict[str, Any]]:
+    path = file_record(manifest["installed"]["release"], root=ROOT)
+    index = json_bytes(bounded(path))
+    require(
+        canonical(index) == bounded(path) and index.get("kind") == "hfcache_web_release",
+        "original application index changed",
+    )
+    return path.parent, index
+
+
+def container_principal(manifest: dict[str, Any], role: str) -> int:
+    release, index = application_index(manifest)
+    name = "packaging/containers/Containerfile" + (".caddy" if role == "caddy" else "")
+    path = path_input(str(release / "source" / name), root=ROOT)
+    digest_file(path, index["source_files"][name])
+    users = re.findall(r"^USER ([0-9]+):([0-9]+)$", bounded(path).decode(), flags=re.MULTILINE)
+    require(
+        len(users) == 1 and int(users[0][0]) > 0 and users[0][0] == users[0][1],
+        "indexed container role principal is unsupported",
+    )
+    return int(users[0][0])
+
+
+def fixture_unit(manifest: dict[str, Any], generation: object, suffix: str) -> str:
+    if not isinstance(generation, str):
+        reject("functional unit generation is malformed")
+    require(
+        IDENTIFIER.fullmatch(generation),
+        "functional unit generation is malformed",
+    )
+    fixture = str(uuid.UUID(manifest["fixture_id"]))
+    require(fixture == manifest["fixture_id"], "functional unit fixture is malformed")
+    return "web-functional-" + fixture.replace("-", "") + "-" + generation + "-" + suffix
+
+
+def captured_tool(name: str, expected: object) -> dict[str, Any]:
+    """Execute only captured, inventory-bound validation code, never candidate code."""
+    require(
+        name in {"web-release.py", "release-profile.py", "container-service.py"},
+        "unknown validation tool",
+    )
+    path = ROOT / "scripts" / name
+    body = bounded(path)
+    require(hashlib.sha256(body).hexdigest() == expected, "validation tool source differs")
+    namespace: dict[str, Any] = {"__name__": "functional_validation", "__file__": str(path)}
+    exec(compile(body, str(path), "exec"), namespace)  # noqa: S102 - captured fixed inventory-bound validator
+    return namespace
+
+
+def source_identity(value: object, *, root: Path = ROOT, legacy: bool = True) -> dict[str, Any]:
     item = exact(
         value,
         {"parent_commit", "snapshot_sha256", "label", "input_manifest"},
         "functional source identity is malformed",
     )
     require(
-        item["label"] == "WEB-005, this commit"
+        isinstance(item["label"], str)
+        and (
+            item["label"] == "WEB-005, this commit"
+            if legacy
+            else item["label"] != "WEB-005, this commit"
+            and re.fullmatch(r"WEB-[0-9]{3}, this commit", item["label"]) is not None
+        )
         and isinstance(item["parent_commit"], str)
         and COMMIT.fullmatch(item["parent_commit"]),
         "functional source provenance is unsupported",
@@ -416,18 +739,214 @@ def source_identity(value: object, *, root: Path = ROOT) -> dict[str, Any]:
                 stat.S_ISREG(facts.st_mode) if current == path else stat.S_ISDIR(facts.st_mode),
                 "functional source inventory contains an unsafe file",
             )
+            require(
+                facts.st_uid in {0, os.getuid()} and not facts.st_mode & 0o022,
+                "functional source inventory is not protected",
+            )
         digest_file(path, expected, MAXIMUM_MEMBER_BYTES)
     observed = hashlib.sha256(
         json.dumps(files, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
     require(observed == item["snapshot_sha256"], "functional source snapshot differs")
+    if not legacy:
+        require(
+            {
+                "scripts/check-web-functional.py",
+                "scripts/web-release.py",
+                "scripts/release-profile.py",
+                "web/test/functional-api/driver.mjs",
+                "web/test/auth-api/sandbox.mjs",
+                "docs/agents/plans/support/web-ui/acceptance-cases.json",
+                "docs/agents/plans/support/web-ui/task-index.json",
+            }
+            <= files.keys(),
+            "functional tooling inventory is incomplete",
+        )
     return files
 
 
-def installed_identity(value: object, files: dict[str, str], *, root: Path = ROOT) -> None:
-    item = exact(value, {"wheel", "package_root"}, "functional installed authority is malformed")
+def native_path(
+    value: object, *, directory: bool = False, anchor: Path = Path("/"), owner: int = 0
+) -> Path:
+    """Read-only fixed-prefix exception; writable fixture inputs never use this."""
+    if not isinstance(value, str):
+        reject("native installed path is unsafe")
+    require(
+        value.startswith("/") and not any(part in {".", ".."} for part in value.split("/")),
+        "native installed path is unsafe",
+    )
+    path = Path(value)
+    require(path.is_relative_to(NATIVE_PREFIX), "native installed path escaped its fixed prefix")
+    local_backing(path)
+    current = anchor
+    require(path.is_relative_to(anchor), "native installed path escaped its root")
+    for part in ("", *path.relative_to(anchor).parts):
+        if part:
+            current /= part
+        facts = current.lstat()
+        leaf = current == path
+        require(
+            facts.st_uid == owner and not facts.st_mode & 0o022,
+            "native installed ancestry is not protected root-owned storage",
+        )
+        require(
+            stat.S_ISREG(facts.st_mode) if leaf and not directory else stat.S_ISDIR(facts.st_mode),
+            "native installed path contains a link or unsupported file kind",
+        )
+        require(not leaf or directory or facts.st_nlink == 1, "native installed file is linked")
+    return path
+
+
+def native_package(
+    value: object, index: dict[str, Any], files: dict[str, str], verifier: dict[str, Any]
+) -> Path:
+    native_path(str(NATIVE_PREFIX), directory=True)
+    selector = NATIVE_PREFIX / "current"
+    before = selector.lstat()
+    require(
+        stat.S_ISLNK(before.st_mode) and before.st_uid == NATIVE_OWNER and before.st_nlink == 1,
+        "native current selector is not a protected link",
+    )
+    selected = os.readlink(selector)  # noqa: PTH115 - raw selector spelling is authority
+    require(selected == "releases/" + index["version"], "native current selects another release")
+    target = native_path(str(NATIVE_PREFIX / selected), directory=True)
+    expected_index = hashlib.sha256(canonical(index)).hexdigest()
+    digest_file(native_path(str(target / "web-release.json")), expected_index)
+    for name in index["source_files"]:
+        if name in verifier["SHIPPED_FILES"] or Path(name).parts[0] in verifier["SHIPPED_TREES"]:
+            native_path(str(target / name))
+    for name in index["files"]:
+        if name.startswith(("ui/", "host-helper/")):
+            native_path(str(target / name))
+    classifier = captured_tool("release-profile.py", files.get("scripts/release-profile.py"))
+    require(
+        classifier["native_selection"](NATIVE_PREFIX) == target,
+        "selected installed native layout differs",
+    )
+    verifier["verify_shipped_source"](target, index["source_files"])
+    pin = bounded(native_path(str(target / ".python-version"))).decode().strip()
+    require(re.fullmatch(r"3\.[0-9]+(?:\.[0-9]+)?", pin), "native Python pin is unsupported")
+    expected = (
+        target / ".venv/lib" / ("python" + ".".join(pin.split(".")[:2])) / "site-packages/hfcache"
+    )
+    require(value == str(expected), "installed package is not the selected native package")
+    package = native_path(value, directory=True)
+    after = selector.lstat()
+    require(
+        all(
+            getattr(before, field) == getattr(after, field)
+            for field in ("st_dev", "st_ino", "st_uid", "st_nlink", "st_mtime_ns", "st_ctime_ns")
+        )
+        and os.readlink(selector) == selected,  # noqa: PTH115 - retain raw spelling
+        "native current selector changed during validation",
+    )
+    return package
+
+
+def application_release(
+    item: dict[str, Any], files: dict[str, str], *, root: Path = ROOT
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    release_index = file_record(item["release"], root=root)
+    require(release_index.name == "web-release.json", "explicit application release index required")
+    release = release_index.parent
+    source = path_input(str(release / "source"), root=root, directory=True)
+    verifier = captured_tool("web-release.py", files.get("scripts/web-release.py"))
+    index = verifier["verify_native"](release, item["release"]["sha256"], source)
+
+    def application_input(name: str) -> bool:
+        return (
+            name.startswith(("src/", "packaging/"))
+            or (name.startswith("web/") and not name.startswith("web/test/"))
+            or name
+            in {".python-version", "pyproject.toml", "uv.lock", *verifier["HELPER"].values()}
+        )
+
+    runtime_inputs = {
+        name: expected
+        for name, expected in index["source_files"].items()
+        if application_input(name)
+    }
+    require(
+        runtime_inputs
+        and {name: expected for name, expected in files.items() if application_input(name)}
+        == runtime_inputs,
+        "tooling checkout differs from original application inputs",
+    )
+    wheel_name = "wheels/hfcache-" + index["version"] + "-py3-none-any.whl"
+    require(
+        item["wheel"]["sha256"] == index["files"][wheel_name],
+        "functional wheel is not the original application release",
+    )
+    return index, verifier
+
+
+def rootless_tooling_package(
+    item: dict[str, Any], index: dict[str, Any], *, root: Path = ROOT
+) -> Path:
+    """Verify only an immutable same-wheel SDK; live actor images are proved separately."""
+    tooling = exact(
+        item["tooling"], {"prefix", "python"}, "rootless SDK tooling identity is incomplete"
+    )
+    prefix = native_path(tooling["prefix"], directory=True)
+    require(
+        prefix.is_relative_to(NATIVE_PREFIX / "functional-sdk")
+        and prefix != NATIVE_PREFIX / "functional-sdk",
+        "rootless SDK must use its explicit immutable tooling prefix, never selected actor layout",
+    )
+    interpreter = exact(
+        tooling["python"], {"path", "sha256"}, "rootless SDK interpreter identity is incomplete"
+    )
+    binary = native_path(interpreter["path"])
+    digest_file(binary, interpreter["sha256"], MAXIMUM_TOOL_BYTES)
+    require(
+        Path(sys.executable).resolve() == binary and Path(sys.prefix) == prefix,
+        "functional SDK process is not its pinned immutable interpreter and prefix",
+    )
+    pin = index["source_files"].get(".python-version")
+    require(isinstance(pin, str), "indexed interpreter pin is missing")
+    # The canonical application source supplies the Python version; the running
+    # tooling interpreter remains a separately pinned artifact, never actor evidence.
+    release = file_record(item["release"], root=root).parent
+    version_file = path_input(str(release / "source/.python-version"), root=root)
+    digest_file(version_file, pin)
+    version = bounded(version_file).decode().strip()
+    require(
+        re.fullmatch(r"3\.[0-9]+(?:\.[0-9]+)?", version)
+        and tuple(map(int, version.split("."))) == sys.version_info[: len(version.split("."))],
+        "rootless SDK interpreter differs from the indexed Python version",
+    )
+    expected = (
+        prefix / "lib" / ("python" + ".".join(version.split(".")[:2])) / "site-packages/hfcache"
+    )
+    require(
+        item["package_root"] == str(expected), "rootless SDK package escaped its tooling prefix"
+    )
+    return native_path(item["package_root"], directory=True)
+
+
+def installed_identity(
+    value: object, files: dict[str, str], *, root: Path = ROOT, profile: str = "all"
+) -> dict[str, Any] | None:
+    if not isinstance(value, dict):
+        reject("functional installed authority is malformed")
+    modern = "release" in value
+    rootless_sdk = modern and profile == "rootless"
+    item = exact(
+        value,
+        {"wheel", "package_root"}
+        | ({"release"} if modern else set())
+        | ({"tooling"} if rootless_sdk else set()),
+        "functional installed authority is malformed",
+    )
+    index, verifier = application_release(item, files, root=root) if modern else (None, None)
     wheel = file_record(item["wheel"], root=root, maximum=MAXIMUM_ASSET_BYTES)
-    installed = path_input(item["package_root"], root=root, directory=True)
+    installed = (
+        rootless_tooling_package(item, index, root=root)
+        if rootless_sdk and index is not None
+        else native_package(item["package_root"], index, files, verifier)
+        if index is not None and verifier is not None
+        else path_input(item["package_root"], root=root, directory=True)
+    )
     require(
         installed.name == "hfcache", "installed package root must be the actual hfcache package"
     )
@@ -465,10 +984,15 @@ def installed_identity(value: object, files: dict[str, str], *, root: Path = ROO
             content = archive.read(member)
             expected = hashlib.sha256(content).hexdigest()
             require(
-                files.get("src/hfcache/" + name) == expected,
+                (index["source_files"] if index is not None else files).get("src/hfcache/" + name)
+                == expected,
                 "functional wheel differs from the frozen source package",
             )
-            target = path_input(str(installed / name), root=root)
+            target = (
+                native_path(str(installed / name))
+                if index is not None
+                else path_input(str(installed / name), root=root)
+            )
             digest_file(target, expected, MAXIMUM_MEMBER_BYTES)
             regular[name] = expected
     expected_directories = {"hfcache/"}
@@ -481,13 +1005,27 @@ def installed_identity(value: object, files: dict[str, str], *, root: Path = ROO
         "functional wheel has unexplained empty directories",
     )
     observed = set()
-    for path in installed.rglob("*"):
+    for number, path in enumerate(installed.rglob("*"), start=1):
+        require(number <= MAXIMUM_ASSET_ENTRIES, "installed package entry bound exceeded")
+        require(not path.is_symlink(), "installed package contains a symlink")
         if "__pycache__" in path.parts:
             continue
-        require(not path.is_symlink(), "installed package contains a symlink")
+        if index is not None:
+            native_path(str(path), directory=path.is_dir())
         if path.is_file():
             observed.add(path.relative_to(installed).as_posix())
     require(observed == set(regular), "installed package differs from its complete wheel inventory")
+    if index is not None and verifier is not None:
+        require(
+            (
+                rootless_tooling_package(item, index, root=root)
+                if rootless_sdk
+                else native_package(item["package_root"], index, files, verifier)
+            )
+            == installed,
+            "installed SDK tooling or native selection changed",
+        )
+    return index
 
 
 def asset_identity(value: object, *, root: Path = ROOT) -> dict[str, Any]:
@@ -581,7 +1119,9 @@ def origin(value: object) -> str:
     return value
 
 
-def validate_manifest(value: str, *, root: Path = ROOT) -> dict[str, Any]:
+def validate_manifest(
+    value: str, *, root: Path = ROOT, profile: str = "all", common_only: bool = False
+) -> dict[str, Any]:
     path = path_input(value, root=root)
     local_backing(root)
     manifest = json_bytes(bounded(path))
@@ -613,27 +1153,54 @@ def validate_manifest(value: str, *, root: Path = ROOT) -> dict[str, Any]:
         isinstance(fixture, str) and str(uuid.UUID(fixture)) == fixture,
         "functional fixture ID must be a canonical UUID",
     )
-    marker = json_bytes(bounded(file_record(manifest["marker"], root=root)))
-    guest = exact(
-        manifest["guest"], {"identity", "boot_id"}, "functional guest identity is malformed"
-    )
-    require(
-        guest["identity"] == "web-004-83a4380d0c82465fa225c00bba53359c",
-        "functional runtime is not the explicitly owned disposable guest",
-    )
-    require(
-        marker
-        == {
-            "schema_version": 1,
-            "fixture_id": fixture,
-            "repository_root": str(root),
-            "guest": guest,
-        },
-        "functional marker does not bind this repository and guest",
-    )
-    files = source_identity(manifest["source"], root=root)
-    installed_identity(manifest["installed"], files, root=root)
-    asset_identity(manifest["assets"], root=root)
+    modern = current_release(manifest)
+    if not common_only:
+        marker = json_bytes(bounded(file_record(manifest["marker"], root=root)))
+        guest = exact(
+            manifest["guest"], {"identity", "boot_id"}, "functional guest identity is malformed"
+        )
+        require(
+            isinstance(guest["identity"], str)
+            and (
+                re.fullmatch(r"[a-z][a-z0-9-]{0,127}", guest["identity"]) is not None
+                if modern
+                else guest["identity"] == "web-004-83a4380d0c82465fa225c00bba53359c"
+            )
+            and isinstance(guest["boot_id"], str)
+            and str(uuid.UUID(guest["boot_id"])) == guest["boot_id"],
+            "functional runtime is not the explicitly owned disposable guest",
+        )
+        require(
+            marker
+            == {
+                "schema_version": 1,
+                "fixture_id": fixture,
+                "repository_root": str(root),
+                "guest": guest,
+            },
+            "functional marker does not bind this repository and guest",
+        )
+        if modern:
+            require(
+                Path("/proc/sys/kernel/random/boot_id").read_text().strip() == guest["boot_id"],
+                "functional installed reads require the explicitly owned guest boot",
+            )
+    files = source_identity(manifest["source"], root=root, legacy=not modern)
+    if common_only:
+        require(modern, "offline joining requires original canonical release artifacts")
+        application, _ = application_release(manifest["installed"], files, root=root)
+        file_record(manifest["installed"]["wheel"], root=root, maximum=MAXIMUM_ASSET_BYTES)
+    else:
+        application = installed_identity(manifest["installed"], files, root=root, profile=profile)
+    assets = asset_identity(manifest["assets"], root=root)
+    if application is not None:
+        require(
+            manifest["assets"]["manifest_sha256"] == application["ui_manifest_sha256"]
+            and assets["build"]["source_commit"] == application["source_commit"]
+            and assets["build"]["application_version"] == application["version"]
+            and assets["build"]["source_dirty"] is False,
+            "functional UI is not the original clean application release",
+        )
     browser = exact(
         manifest["browser"],
         {
@@ -677,7 +1244,9 @@ def validate_manifest(value: str, *, root: Path = ROOT) -> dict[str, Any]:
         DEPLOYMENTS,
         "functional profiles must include application/native/rootless",
     )
-    for profile, binding in profiles.items():
+    for deployment in () if common_only else selected_profiles(profile):
+        binding = profiles[deployment]
+        current_rootless = modern and deployment == "rootless"
         exact(
             binding,
             {
@@ -688,7 +1257,14 @@ def validate_manifest(value: str, *, root: Path = ROOT) -> dict[str, Any]:
                 "api_image_sha256",
                 "caddy_image_sha256",
                 "worker_image_sha256",
-            },
+            }
+            | (
+                {"network", "storage_driver"}
+                if current_rootless
+                else {"caddy_account"}
+                if modern
+                else set()
+            ),
             "functional runtime binding is malformed",
         )
         file_record(binding["launcher"], root=root)
@@ -706,9 +1282,25 @@ def validate_manifest(value: str, *, root: Path = ROOT) -> dict[str, Any]:
                 "functional role image digest is invalid",
             )
             require(
-                profile != "rootless" or binding[key] is not None,
+                deployment != "rootless" or binding[key] is not None,
                 "rootless functional roles require exact installed image identities",
             )
+        if current_rootless:
+            network = exact(
+                binding["network"],
+                {"worker_policy", "stock_control"},
+                "rootless network authority is incomplete",
+            )
+            for record in network.values():
+                file_record(record, root=root)
+            require(
+                network["worker_policy"]["sha256"] == WORKER_POLICY_SHA256
+                and network["worker_policy"]["path"] != network["stock_control"]["path"]
+                and binding["storage_driver"] in {"overlay", "vfs"},
+                "rootless policy, control or storage authority differs",
+            )
+        elif modern and deployment != "rootless":
+            native_principal("caddy", caddy_account=binding["caddy_account"])
     require(
         type(manifest["mcp_arguments"]) is dict
         and set(manifest["mcp_arguments"]) == MCP_TOOLS
@@ -894,7 +1486,9 @@ async def python_mcp_compatibility(
     }
 
 
-def role_process(value: object, role: str, profile: str) -> dict[str, Any]:
+def role_process(
+    value: object, role: str, profile: str, *, expected_uid: int | None = None
+) -> dict[str, Any]:
     """Inspect retained kernel facts independently of the launcher's summary flags."""
     item = exact(
         value,
@@ -963,7 +1557,8 @@ def role_process(value: object, role: str, profile: str) -> dict[str, Any]:
     )
     if profile != "rootless":
         require(
-            status["Uid"] == [982 if role == "caddy" else 981] * 4,
+            status["Uid"]
+            == [expected_uid if expected_uid is not None else 982 if role == "caddy" else 981] * 4,
             "native functional role uses an unexpected identity",
         )
     namespaces = exact(
@@ -1002,6 +1597,427 @@ def role_process(value: object, role: str, profile: str) -> dict[str, Any]:
         "functional role executable identity is malformed",
     )
     return item
+
+
+def helper_process(value: object) -> dict[str, Any]:
+    """The fixed privileged helper is never an exception to online role checks."""
+    item = exact(
+        value,
+        {
+            "schema_version",
+            "role",
+            "identity",
+            "status",
+            "namespaces",
+            "cgroup",
+            "mountinfo",
+            "uid_map",
+            "gid_map",
+            "selinux_context",
+            "executable",
+            "argv_sha256",
+            "argv_count",
+            "fixed_argv_matched",
+            "expected_executable",
+        },
+        "actual helper process capture is incomplete",
+    )
+    identity = exact(
+        item["identity"],
+        {"pid", "parent_pid", "state", "start_ticks"},
+        "actual helper process tuple is incomplete",
+    )
+    process_identity({key: identity[key] for key in ("pid", "start_ticks")})
+    status = exact(
+        item["status"],
+        {
+            "Pid",
+            "PPid",
+            "Uid",
+            "Gid",
+            "NSpid",
+            "CapEff",
+            "CapBnd",
+            "NoNewPrivs",
+            "Seccomp",
+            "CapPrm",
+            "CapInh",
+            "CapAmb",
+            "Seccomp_filters",
+        },
+        "actual helper status is incomplete",
+    )
+    require(
+        item["schema_version"] == 1
+        and type(item["schema_version"]) is int
+        and item["role"] == "helper"
+        and status["Pid"] == identity["pid"]
+        and type(status["Pid"]) is int
+        and status["PPid"] == identity["parent_pid"]
+        and positive_integer(status["PPid"], zero=True)
+        and identity["state"] in set("RSDTWtIKP")
+        and type(status["NSpid"]) is list
+        and status["NSpid"]
+        and status["NSpid"][0] == identity["pid"]
+        and all(positive_integer(pid) for pid in status["NSpid"])
+        and status["Uid"] == status["Gid"] == [0] * UID_FIELDS
+        and all(type(uid) is int for uid in status["Uid"] + status["Gid"])
+        and status["CapEff"] == status["CapPrm"] == status["CapBnd"] == "00000000000000c0"
+        and status["CapInh"] == status["CapAmb"] == "0000000000000000"
+        and status["NoNewPrivs"] == 1
+        and type(status["NoNewPrivs"]) is int
+        and status["Seccomp"] == SECCOMP_FILTER
+        and type(status["Seccomp"]) is int
+        and positive_integer(status["Seccomp_filters"])
+        and item["selinux_context"] == "system_u:system_r:hfcache_host_helper_t:s0"
+        and item["cgroup"] == "0::/system.slice/hfcache-host-helper.service\n"
+        and item["fixed_argv_matched"] is True
+        and digest(item["argv_sha256"])
+        and positive_integer(item["argv_count"])
+        and item["argv_count"] < MAXIMUM_ARGUMENTS,
+        "actual helper privilege, invocation or confinement differs",
+    )
+    namespaces = exact(
+        item["namespaces"],
+        {"pid", "user", "mnt", "net", "ipc", "uts", "cgroup"},
+        "actual helper namespace inventory is incomplete",
+    )
+    require(
+        all(
+            type(value) is str and re.fullmatch(name + r":\[[0-9]+\]", value)
+            for name, value in namespaces.items()
+        )
+        and all(
+            type(item[key]) is str and 0 < len(item[key].encode()) <= MAXIMUM_JSON
+            for key in ("mountinfo", "uid_map", "gid_map")
+        ),
+        "actual helper namespace or mount identity is malformed",
+    )
+    executable = exact(
+        item["executable"],
+        {"bytes", "sha256", "device", "inode"},
+        "actual helper executable identity is incomplete",
+    )
+    require(
+        executable == item["expected_executable"]
+        and digest(executable["sha256"])
+        and all(positive_integer(executable[key]) for key in ("bytes", "device", "inode")),
+        "actual helper does not execute its protected fixed interpreter",
+    )
+    return item
+
+
+def effective_mask_evidence(value: object, process: dict[str, Any]) -> None:
+    """A hidden lower NFS row is valid only behind an identity-proven mask."""
+    require(
+        type(value) is list and len(CADDY_AUTHORITY_PATHS) <= len(value) <= MAXIMUM_THREADS,
+        "effective Caddy authority mounts are incomplete",
+    )
+    paths = set()
+    for row in value:
+        item = exact(row, {"effective", "mask"}, "effective authority mount is malformed")
+        effective, mask = item["effective"], item["mask"]
+        for capture in (effective,) if mask is None else (effective, mask):
+            exact(
+                capture,
+                {"pid", "path", "mount_id", "mountinfo", "stat"},
+                "effective path lacks its held descriptor observation",
+            )
+            facts = exact(
+                capture["stat"],
+                {"device", "inode", "mode", "uid", "gid"},
+                "effective path identity is incomplete",
+            )
+            require(
+                positive_integer(capture["pid"])
+                and positive_integer(capture["mount_id"])
+                and type(capture["path"]) is str
+                and capture["path"].startswith("/")
+                and ".." not in Path(capture["path"]).parts
+                and all(type(number) is int for number in facts.values())
+                and positive_integer(facts["device"])
+                and positive_integer(facts["inode"]),
+                "effective path identity is invalid",
+            )
+            fields, separator, trailing = capture["mountinfo"].partition(" - ")
+            columns, tail = fields.split(), trailing.split()
+            require(
+                separator
+                and len(columns) >= MINIMUM_MOUNT_FIELDS
+                and len(tail) >= MINIMUM_MOUNT_TRAILING_FIELDS
+                and columns[0] == str(capture["mount_id"]),
+                "effective mount ID and raw row differ",
+            )
+        require(
+            effective["pid"] == process["identity"]["pid"]
+            and effective["mountinfo"] in process["mountinfo"].splitlines()
+            and effective["path"] not in paths,
+            "effective authority path changed its actual process or raw mount row",
+        )
+        fields, _, trailing = effective["mountinfo"].partition(" - ")
+        columns, tail = fields.split(), trailing.split()
+        if mask is None:
+            # An inherited local root filesystem is not a dedicated authority
+            # bind. The separate origin-probe denial remains mandatory.
+            require(
+                columns[3] == "/"
+                and columns[4] != effective["path"]
+                and Path(columns[4]) in Path(effective["path"]).parents
+                and tail[0] in {"ext4", "xfs", "tmpfs"},
+                "Caddy has a real effective protected-source or network bind",
+            )
+            paths.add(effective["path"])
+            continue
+        require(
+            mask["path"] in {"/run/systemd/inaccessible/dir", "/run/systemd/inaccessible/reg"}
+            and effective["stat"] == mask["stat"]
+            and mask["stat"]["uid"] == mask["stat"]["gid"] == 0
+            and stat.S_IMODE(mask["stat"]["mode"]) == 0
+            and (
+                stat.S_ISDIR(mask["stat"]["mode"])
+                if mask["path"].endswith("/dir")
+                else stat.S_ISREG(mask["stat"]["mode"])
+            )
+            and "ro" in effective["mountinfo"].partition(" - ")[0].split()[5].split(",")
+            and tail[0] not in {"nfs", "nfs4"},
+            "Caddy authority is exposed or its inaccessible mask is unproved",
+        )
+        paths.add(effective["path"])
+    require(
+        paths >= CADDY_AUTHORITY_PATHS,
+        "effective Caddy authority scope omits fixed protected paths",
+    )
+
+
+def installed_role_evidence(proofs: dict[str, Any], manifest: dict[str, Any]) -> None:
+    """Join actual role captures to original selected artifacts, never acceptance labels."""
+    _, index = application_index(manifest)
+    require(
+        proofs["network"].get("selinux_enforce") == "1",
+        "raw installed SELinux enforcing observation is absent",
+    )
+    helper = proofs["helper"]
+    process = helper_process(helper.get("process"))
+    manager = helper.get("unit", {})
+    require(
+        manager.get("MainPID") == str(process["identity"]["pid"])
+        and type(manager.get("InvocationID")) is str
+        and IDENTIFIER.fullmatch(manager["InvocationID"])
+        and manager.get("ControlGroup") == "/system.slice/hfcache-host-helper.service"
+        and manager.get("NoNewPrivileges") == "yes",
+        "actual helper manager identity differs",
+    )
+    bootstrap = exact(
+        helper.get("bootstrap"),
+        set(HELPER_BOOTSTRAP),
+        "selected helper bootstrap capture is incomplete",
+    )
+    deployment = helper.get("deployment", {})
+    require(
+        deployment.get("release")
+        == {"version": index["version"], "selector_target": "releases/" + index["version"]}
+        and deployment.get("source", {}).get("parent_commit") == index["source_commit"]
+        and deployment.get("source", {}).get("dirty") is False,
+        "helper deployment selects another original release",
+    )
+    authority = exact(
+        helper.get("authority"),
+        {
+            "deployment_sha256",
+            "policy_deployment_sha256",
+            "receipt_sha256",
+            "kernel_policy_sha256",
+            "receipt_kernel_policy_sha256",
+            "cil_sha256",
+            "receipt_cil_sha256",
+            "key_parent",
+        },
+        "helper protected authority join is incomplete",
+    )
+    require(
+        all(digest(authority[name]) for name in authority if name != "key_parent")
+        and authority["deployment_sha256"] == authority["policy_deployment_sha256"]
+        and authority["kernel_policy_sha256"] == authority["receipt_kernel_policy_sha256"]
+        and authority["cil_sha256"]
+        == authority["receipt_cil_sha256"]
+        == index["files"]["host-helper/hfcache-host-helper.cil"]
+        and deployment.get("selinux_installation_sha256") == authority["receipt_sha256"],
+        "helper deployment, policy, loaded CIL or installation receipt changed",
+    )
+    parent = authority["key_parent"]
+    require(
+        type(parent) is dict
+        and parent.get("st_uid") == parent.get("st_gid") == 0
+        and stat.S_ISDIR(parent.get("st_mode", 0))
+        and not parent["st_mode"] & 0o022
+        and positive_integer(parent.get("st_dev"))
+        and positive_integer(parent.get("st_ino")),
+        "helper credential parent is not protected metadata",
+    )
+    for path, (name, binding, mode) in HELPER_BOOTSTRAP.items():
+        row = exact(
+            bootstrap[path],
+            {"metadata", "sha256", "selected_sha256"},
+            "helper bootstrap identity is incomplete",
+        )
+        facts = row["metadata"]
+        require(
+            row["sha256"]
+            == row["selected_sha256"]
+            == index["files"]["host-helper/" + name]
+            == deployment["bindings"][binding]
+            and facts.get("st_uid") == facts.get("st_gid") == 0
+            and stat.S_ISREG(facts.get("st_mode", 0))
+            and stat.S_IMODE(facts["st_mode"]) == mode
+            and facts.get("st_nlink") == 1,
+            "helper bootstrap changed selected bytes or protected metadata",
+        )
+    for role in ("api", "worker", "caddy"):
+        proof = proofs[role]
+        installation = exact(
+            proof.get("installation"),
+            {"release_index_sha256", "source_commit", "expected_executable", "package_root"},
+            "actual role installation join is incomplete",
+        )
+        require(
+            installation["release_index_sha256"] == manifest["installed"]["release"]["sha256"]
+            and installation["source_commit"] == index["source_commit"]
+            and installation["expected_executable"] == proof["process"]["executable"],
+            "actual role executable differs from its selected installed input",
+        )
+        if role == "caddy":
+            require(
+                proof["process"]["executable"]["sha256"]
+                == manifest["profiles"][proof["profile"]]["caddy_binary_sha256"]
+                and installation["package_root"] is None,
+                "live Caddy binary differs from its canonical binary pin",
+            )
+        else:
+            expected = (
+                "/opt/hfcache/.venv/lib/python3.14/site-packages/hfcache"
+                if proof["profile"] == "rootless"
+                else manifest["installed"]["package_root"]
+            )
+            require(
+                installation["package_root"] == expected,
+                "actual role imported another installed package",
+            )
+    if helper["profile"] != "rootless":
+        effective_mask_evidence(proofs["caddy"].get("authority_mounts"), proofs["caddy"]["process"])
+    else:
+        selected_image_evidence(proofs, manifest, index)
+
+
+def selected_image_evidence(
+    proofs: dict[str, Any], manifest: dict[str, Any], index: dict[str, Any]
+) -> None:
+    """Join live images to selected canonical indexes and original constructor records."""
+    artifacts = exact(
+        proofs["network"].get("selected_artifacts"),
+        {"release", "stage_index", "api_build", "caddy_build"},
+        "selected container artifact capture is incomplete",
+    )
+    selected = NATIVE_PREFIX / "releases" / index["version"]
+
+    def selected_record(name: str, record: object) -> dict[str, Any]:
+        item = exact(record, {"path", "sha256"}, "selected artifact record is malformed")
+        require(item["path"] == str(selected / name), "container artifact is not selected")
+        path = native_path(item["path"])
+        digest_file(path, item["sha256"])
+        return json_bytes(bounded(path))
+
+    release = selected_record("container-release.json", artifacts["release"])
+    stage = selected_record("artifact-index.json", artifacts["stage_index"])
+    require(
+        release.get("source_commit") == index["source_commit"]
+        and release.get("version") == index["version"]
+        and release.get("wheel_sha256")
+        == index["files"]["wheels/hfcache-" + index["version"] + "-py3-none-any.whl"]
+        and release.get("files", {}).get("web-release.json")
+        == manifest["installed"]["release"]["sha256"]
+        and release["files"].get("ui/manifest.json") == index["ui_manifest_sha256"]
+        and stage.get("schema_version") == 1
+        and type(stage.get("files")) is dict,
+        "selected container index differs from the original application release",
+    )
+    for name, expected in release["files"].items():
+        require(
+            type(name) is str
+            and not name.startswith("/")
+            and all(part not in {"", ".", ".."} for part in name.split("/"))
+            and stage["files"].get(name) == expected,
+            "selected container stage omitted or changed an indexed artifact",
+        )
+        digest_file(native_path(str(selected / name)), expected, MAXIMUM_MEMBER_BYTES)
+    api = json_bytes(bounded(file_record(artifacts["api_build"], root=ROOT)))
+    caddy = json_bytes(bounded(file_record(artifacts["caddy_build"], root=ROOT)))
+    require(
+        api.get("source_commit") == index["source_commit"]
+        and api.get("source_dirty") is False
+        and api.get("version") == index["version"]
+        and api.get("wheel_sha256") == release["wheel_sha256"]
+        and api.get("web_manifest_sha256") == index["ui_manifest_sha256"]
+        and api.get("containerfile_sha256")
+        == release["files"]["packaging/containers/Containerfile"]
+        and api.get("image_id") == release.get("app_image")
+        and caddy.get("image_id") == release.get("caddy_image")
+        and caddy.get("containerfile_sha256")
+        == release["files"]["packaging/containers/Containerfile.caddy"]
+        and caddy.get("caddy_binary_sha256")
+        == manifest["profiles"]["rootless"]["caddy_binary_sha256"],
+        "live image authority does not join canonical build and selected artifact bytes",
+    )
+    for role in ("api", "worker", "caddy"):
+        container = proofs[role]["container"]
+        image = release["caddy_image" if role == "caddy" else "app_image"]
+        require(
+            image == "sha256:" + container["image_sha256"],
+            "actual role image is not the selected canonical image",
+        )
+        projection = exact(
+            proofs[role].get("mount_projection"),
+            {"source_sha256", "binds"},
+            "canonical rootless bind projection is missing",
+        )
+        constructor = captured_tool(
+            "container-service.py", index["source_files"].get("scripts/container-service.py")
+        )
+        constructor["PROFILE_DIRECTORY"] = selected / "rendered"
+        runtime = json_bytes(bounded(native_path(str(selected / "rendered/runtime.json"))))
+        argv = constructor["command"](
+            runtime, role, invocation_id="", preserve_archive_lock=role in {"api", "worker"}
+        )
+        expected_binds = []
+        for position, argument in enumerate(argv):
+            if argument == "--volume":
+                source, destination, options = argv[position + 1].split(":")
+                expected_binds.append(
+                    {
+                        "source": source,
+                        "destination": destination,
+                        "read_only": options.split(",")[0] == "ro",
+                    }
+                )
+        server = tomllib.loads(
+            bounded(native_path(str(selected / "rendered/server.toml"))).decode()
+        )
+        if role == "api" and server.get("host_helper", {}).get("enabled") is True:
+            expected_binds.append(
+                {
+                    "source": "/run/hfcache-host-helper/api",
+                    "destination": "/run/hfcache-host-helper/api",
+                    "read_only": True,
+                }
+            )
+        require(
+            projection["source_sha256"] == release["files"]["scripts/container-service.py"]
+            and type(projection["binds"]) is list
+            and sorted(projection["binds"], key=lambda row: row["destination"])
+            == sorted(expected_binds, key=lambda row: row["destination"])
+            and sorted(projection["binds"], key=lambda row: row["destination"])
+            == sorted(container["mounts"], key=lambda row: row["destination"]),
+            "actual rootless binds differ from the selected finite create projection",
+        )
 
 
 def bpf_deny_program(value: object, identifier: int, name: str) -> dict[str, Any]:  # noqa: PLR0912, PLR0915 - finite instruction proof stays together
@@ -1196,9 +2212,9 @@ def copied_evidence(value: object) -> tuple[dict[str, Any], dict[str, Any]]:
     return copied["record"], body
 
 
-def uid_mapping(process: dict[str, Any]) -> None:
+def uid_mapping(process: dict[str, Any], *, host_uid: int = 1000, container_uid: int = 981) -> None:
     require(
-        process["status"]["Uid"] == process["status"].get("Gid") == [1000] * 4
+        process["status"]["Uid"] == process["status"].get("Gid") == [host_uid] * 4
         and process["status"]["NSpid"] == [process["identity"]["pid"], 1],
         "stock control must use the actual rootless mapped identity",
     )
@@ -1210,7 +2226,7 @@ def uid_mapping(process: dict[str, Any]) -> None:
                 and all(re.fullmatch(r"[0-9]+", part) for part in row)
                 for row in rows
             )
-            and [981, 1000, 1] in [[int(part) for part in row] for row in rows],
+            and [container_uid, host_uid, 1] in [[int(part) for part in row] for row in rows],
             "stock control lacks the exact container-to-host identity mapping",
         )
 
@@ -1305,6 +2321,8 @@ def stock_socket_receipt(value: object, manifest: dict[str, Any]) -> dict[str, A
         and re.fullmatch(r"[A-Za-z0-9._+-]{1,128}", item["kernel_release"]),
         "stock socket control is not the exact owned image, kernel and reviewed probe",
     )
+    inner_uid = container_principal(manifest, "worker") if current_release(manifest) else 981
+    host_uid = native_principal("api") if current_release(manifest) else 1000
     container = exact(
         item["container"],
         {"image_sha256", "user", "readonly_rootfs", "network_mode", "security_options"},
@@ -1314,7 +2332,7 @@ def stock_socket_receipt(value: object, manifest: dict[str, Any]) -> dict[str, A
         container
         == {
             "image_sha256": image,
-            "user": "981:981",
+            "user": f"{inner_uid}:{inner_uid}",
             "readonly_rootfs": True,
             "network_mode": "none",
             "security_options": ["no-new-privileges", "seccomp=" + STOCK_POLICY_PATH],
@@ -1323,7 +2341,7 @@ def stock_socket_receipt(value: object, manifest: dict[str, Any]) -> dict[str, A
         "stock socket control changed confinement",
     )
     process = role_process(item["host_process"], "worker", "rootless")
-    uid_mapping(process)
+    uid_mapping(process, host_uid=host_uid, container_uid=inner_uid)
     namespaces = exact(
         item["controller_namespaces"],
         set(process["namespaces"]),
@@ -1631,7 +2649,14 @@ def loopback_tuple(value: object, family: str) -> list[Any]:
     return value
 
 
-def native_control_snapshot(value: object, phase: str, worker: dict[str, Any]) -> dict[str, Any]:
+def native_control_snapshot(
+    value: object,
+    phase: str,
+    worker: dict[str, Any],
+    *,
+    expected_group: str | None = None,
+    expected_uid: int | None = None,
+) -> dict[str, Any]:
     item = exact(
         value,
         {
@@ -1646,7 +2671,7 @@ def native_control_snapshot(value: object, phase: str, worker: dict[str, Any]) -
         },
         "same-UID unfiltered control is incomplete",
     )
-    process = role_process(item["process"], "worker", "native")
+    process = role_process(item["process"], "worker", "native", expected_uid=expected_uid)
     identity = process_identity(item["identity"])
     require(
         item["phase"] == phase
@@ -1654,8 +2679,12 @@ def native_control_snapshot(value: object, phase: str, worker: dict[str, Any]) -
         and identity["pid"] != worker["identity"]["pid"]
         and item["netns"] == worker["netns"] == process["namespaces"]["net"]
         and isinstance(item["cgroup"], str)
-        and re.fullmatch(
-            r"/system.slice/web005-[a-f0-9]{32}-network-control\.service", item["cgroup"]
+        and (
+            item["cgroup"] == expected_group
+            if expected_group is not None
+            else re.fullmatch(
+                r"/system.slice/web005-[a-f0-9]{32}-network-control\.service", item["cgroup"]
+            )
         )
         and item["cgroup"] != worker["cgroup"]
         and process["cgroup"] == "0::" + item["cgroup"] + "\n",
@@ -1903,7 +2932,12 @@ def native_origin_network(  # noqa: PLR0913, PLR0917 - independent identity cont
         "native packet filter worker binding is incomplete",
     )
     identity = process_identity(worker["identity"])
-    group = "/system.slice/web005-" + invocation["generation_id"] + "-worker.service"
+    modern = current_release(manifest)
+    group = (
+        "/system.slice/hfcache-verification.service"
+        if modern
+        else "/system.slice/web005-" + invocation["generation_id"] + "-worker.service"
+    )
     require(
         identity == {key: process["identity"][key] for key in identity}
         and worker["cgroup"] == group
@@ -1912,7 +2946,12 @@ def native_origin_network(  # noqa: PLR0913, PLR0917 - independent identity cont
         "packet filter target is not the original actual worker",
     )
     for key in ("process_before", "process_after"):
-        observed = role_process(worker[key], "worker", invocation["profile"])
+        observed = role_process(
+            worker[key],
+            "worker",
+            invocation["profile"],
+            expected_uid=native_principal("worker") if modern else None,
+        )
         require(
             all(
                 observed[name] == process[name]
@@ -1989,8 +3028,23 @@ def native_origin_network(  # noqa: PLR0913, PLR0917 - independent identity cont
         and before["captured_ns"] < after["captured_ns"] <= verdict["completed_ns"],
         "actual packet filter IDs, revisions or bytecode changed across attempts",
     )
-    first = native_control_snapshot(verdict["control_before"], "before", worker)
-    last = native_control_snapshot(verdict["control_after"], "after", worker)
+    control_group = (
+        "/system.slice/"
+        + fixture_unit(manifest, invocation["generation_id"], "network-control.service")
+        if modern
+        else None
+    )
+    controls = {
+        phase: native_control_snapshot(
+            verdict["control_" + phase],
+            phase,
+            worker,
+            expected_group=control_group,
+            expected_uid=native_principal("worker") if modern else None,
+        )
+        for phase in ("before", "after")
+    }
+    first, last = controls["before"], controls["after"]
     require(
         all(first[key] == last[key] for key in ("identity", "cgroup", "cgroup_identity", "netns")),
         "positive packet filter control changed live identity",
@@ -2079,13 +3133,27 @@ def native_origin_network(  # noqa: PLR0913, PLR0917 - independent identity cont
 def rootless_origin_network(
     item: dict[str, Any], network: dict[str, Any], worker: dict[str, Any], manifest: dict[str, Any]
 ) -> None:
+    modern = current_release(manifest)
+    bindings = manifest["profiles"]["rootless"].get("network") if modern else None
+    if modern:
+        bindings = exact(
+            bindings,
+            {"worker_policy", "stock_control"},
+            "rootless network authority is incomplete",
+        )
+        for binding in bindings.values():
+            file_record(binding, root=ROOT)
+    policy_path = bindings["worker_policy"]["path"] if bindings is not None else WORKER_POLICY_PATH
+    receipt_path = (
+        bindings["stock_control"]["path"] if bindings is not None else SOCKET_RECEIPT_PATH
+    )
     context = exact(
         item["seccomp_context"],
         {"image_sha256", "policy", "availability"},
         "rootless origin policy context is incomplete",
     )
     expected_policy = {
-        "path": WORKER_POLICY_PATH,
+        "path": policy_path,
         "sha256": WORKER_POLICY_SHA256,
         "default_action": "SCMP_ACT_ERRNO",
         "default_errno": 38,
@@ -2106,7 +3174,7 @@ def rootless_origin_network(
     policy_record, policy = copied_evidence(network.get("worker_policy"))
     stock_record, stock = copied_evidence(network.get("stock_policy"))
     require(
-        availability == {"path": SOCKET_RECEIPT_PATH, "sha256": record["sha256"]}
+        availability == {"path": receipt_path, "sha256": record["sha256"]}
         and policy_record["sha256"] == WORKER_POLICY_SHA256
         and stock_record["sha256"] == STOCK_POLICY_SHA256
         and policy == derived_worker_policy(stock)
@@ -2115,18 +3183,27 @@ def rootless_origin_network(
         "rootless denial policy does not derive from the exact available stock authority",
     )
     stock_socket_receipt(receipt, manifest)
+    if bindings is not None:
+        require(
+            bindings["worker_policy"]["sha256"] == policy_record["sha256"]
+            and bindings["stock_control"]["sha256"] == record["sha256"],
+            "rootless applied network records differ from their explicit authority",
+        )
     container = worker["container"]
     generation = worker.get("generation_id")
     if not isinstance(generation, str) or not IDENTIFIER.fullmatch(generation):
         reject("rootless policy mount generation is unknown")
-    public = "/opt/hfcache-web005/rootless-generations-v8/" + generation + "/public/"
-    mounted = {
-        WORKER_POLICY_PATH: public + "worker-policy.json",
-        SOCKET_RECEIPT_PATH: public + "worker-availability.json",
-    }
+    if bindings is None:
+        public = "/opt/hfcache-web005/rootless-generations-v8/" + generation + "/public/"
+        mounted = {
+            policy_path: public + "worker-policy.json",
+            receipt_path: public + "worker-availability.json",
+        }
+    else:
+        mounted = {policy_path: policy_path, receipt_path: receipt_path}
     require(
         container["image_sha256"] == context["image_sha256"]
-        and "seccomp=" + WORKER_POLICY_PATH in container["security_opt"]
+        and "seccomp=" + policy_path in container["security_opt"]
         and sum(option.startswith("seccomp=") for option in container["security_opt"]) == 1
         and all(
             any(
@@ -2135,7 +3212,7 @@ def rootless_origin_network(
                 and mount["read_only"] is True
                 for mount in container["mounts"]
             )
-            for path in (WORKER_POLICY_PATH, SOCKET_RECEIPT_PATH)
+            for path in (policy_path, receipt_path)
         ),
         "rootless worker did not apply and readonly-bind the measured policy and stock control",
     )
@@ -2427,7 +3504,26 @@ def api_final(value: object, ready: dict[str, Any]) -> None:
         )
 
 
-def api_events(path: Path, identity: dict[str, Any], ready: dict[str, Any], *, stage: str) -> None:
+def selected_browser_engines(runtime: dict[str, Any]) -> tuple[str, ...]:
+    if "browser_engine" not in runtime:
+        return ("chromium", "firefox", "webkit")
+    selected = runtime["browser_engine"]
+    require(
+        type(selected) is str and selected in ENGINES,
+        "functional selected browser engine is invalid",
+    )
+    return (selected,)
+
+
+def api_events(
+    path: Path,
+    identity: dict[str, Any],
+    ready: dict[str, Any],
+    *,
+    stage: str,
+    runtime: dict[str, Any] | None = None,
+) -> None:
+    engines = selected_browser_engines({} if runtime is None else runtime)
     lines = bounded(path).splitlines()
     require(0 < len(lines) <= MAXIMUM_EVENTS, "actual API event inventory is empty or oversized")
     events = [json_bytes(line) for line in lines]
@@ -2467,7 +3563,7 @@ def api_events(path: Path, identity: dict[str, Any], ready: dict[str, Any], *, s
                 row["phase"] == "trusted"
                 and row["instance_id"] == ready["instance_id"]
                 and row["actor"] in {"browser", "node", "python-sdk", "unix-client", "readiness"}
-                and row["engine"] in ENGINES | {None}
+                and row["engine"] in {*engines, None}
                 and type(row["status"]) is int
                 and HTTPStatus.CONTINUE <= row["status"] <= MAXIMUM_HTTP_STATUS
                 and isinstance(row["path"], str)
@@ -2542,7 +3638,7 @@ def api_events(path: Path, identity: dict[str, Any], ready: dict[str, Any], *, s
         ),
         "actual API stopped event did not prove resource drain",
     )
-    for engine in ENGINES:
+    for engine in engines:
         rows = [
             {**row, "path": row["path"].removeprefix(identity["prefix"])}
             for row in http
@@ -2672,7 +3768,26 @@ def detailed_role_evidence(item: dict[str, Any], manifest: dict[str, Any], *, st
         )
         if name == "network":
             continue
-        processes[name] = role_process(proof.get("process"), name, item["profile"])
+        if name == "helper":
+            helper_process(proof.get("process"))
+            require(
+                proof.get("process_gone") is False and proof.get("cgroup_empty") is False,
+                "the original installed helper must remain a live prerequisite",
+            )
+            continue
+        processes[name] = role_process(
+            proof.get("process"),
+            name,
+            item["profile"],
+            expected_uid=(
+                native_principal(
+                    name,
+                    caddy_account=manifest["profiles"][item["profile"]]["caddy_account"],
+                )
+                if current_release(manifest) and item["profile"] != "rootless"
+                else None
+            ),
+        )
         if item["profile"] == "rootless":
             role_container(proof.get("container"), processes[name], manifest, name, stage=stage)
         else:
@@ -2686,6 +3801,17 @@ def detailed_role_evidence(item: dict[str, Any], manifest: dict[str, Any], *, st
                 and unit.get("ProtectSystem") == "strict",
                 "actual native role systemd identity or hardening differs",
             )
+            if current_release(manifest):
+                require(
+                    unit.get("User")
+                    == unit.get("Group")
+                    == (
+                        manifest["profiles"][item["profile"]]["caddy_account"]
+                        if name == "caddy"
+                        else "hfcache"
+                    ),
+                    "actual native role does not use its fixed service account",
+                )
         require(
             proof.get("process_gone") is (stage == "stopped")
             and proof.get("cgroup_empty") is (stage == "stopped"),
@@ -2695,6 +3821,8 @@ def detailed_role_evidence(item: dict[str, Any], manifest: dict[str, Any], *, st
         len({process["identity"]["pid"] for process in processes.values()}) == len(DEPLOYMENTS),
         "API, Caddy and verification worker must be distinct actual processes",
     )
+    if current_release(manifest):
+        installed_role_evidence(proofs, manifest)
     api, worker, caddy = (proofs[name] for name in ("api", "worker", "caddy"))
     unix_listener(api.get("listener"), processes["api"], worker=False, profile=item["profile"])
     unix_listener(worker.get("listener"), processes["worker"], worker=True, profile=item["profile"])
@@ -2828,7 +3956,7 @@ def detailed_role_evidence(item: dict[str, Any], manifest: dict[str, Any], *, st
         and worker.get("api_protocol_probe") == probes[0],
         "worker availability must come from the actual API-owned original protocol client",
     )
-    api_events(file_record(api.get("events")), item, ready, stage=stage)
+    api_events(file_record(api.get("events")), item, ready, stage=stage, runtime=runtime)
     require(
         proofs["network"].get("controlled_listeners_closed") is True,
         "owned IP probe endpoint listeners did not drain",
@@ -2893,18 +4021,26 @@ def role_container(
         },
         "actual rootless container inspection is incomplete",
     )
-    uid_mapping(process)
+    modern = current_release(manifest)
+    host_uid = native_principal("api") if modern else 1000
+    inner_uid = container_principal(manifest, role) if modern else 981
+    uid_mapping(process, host_uid=host_uid, container_uid=inner_uid)
+    engine = (
+        "podman-rootless-" + manifest["profiles"]["rootless"]["storage_driver"]
+        if modern
+        else "podman-rootless-vfs"
+    )
     require(
         type(item["schema_version"]) is int
         and item["schema_version"] == 1
-        and item["engine"] == "podman-rootless-vfs"
+        and item["engine"] == engine
         and isinstance(item["id"], str)
         and SHA256.fullmatch(item["id"])
         and item["image_sha256"] == manifest["profiles"]["rootless"][role + "_image_sha256"]
         and item["init_identity"]
         == {key: process["identity"][key] for key in ("pid", "start_ticks")}
-        and item["user"] == "981:981"
-        and item["userns"] == "keep-id:uid=981,gid=981"
+        and item["user"] == f"{inner_uid}:{inner_uid}"
+        and item["userns"] == f"keep-id:uid={inner_uid},gid={inner_uid}"
         and item["read_only_rootfs"] is True
         and item["privileged"] is False
         and cap_drop_all(item["cap_drop"])
@@ -2993,10 +4129,12 @@ def role_container(
             and (group["pids"] == [] if stage == "stopped" else bool(group["pids"])),
             "actual rootless owned cgroup drain is unknown",
         )
-    rootless_manager(item, role, stage=stage)
+    rootless_manager(item, role, stage=stage, current=modern, host_uid=host_uid)
 
 
-def rootless_manager(item: dict[str, Any], role: str, *, stage: str) -> None:
+def rootless_manager(
+    item: dict[str, Any], role: str, *, stage: str, current: bool = False, host_uid: int = 1000
+) -> None:
     """Normal shutdown policy and its exact manager survive unit garbage collection."""
     manager = item["manager_unit"]
     if stage == "stopped":
@@ -3028,7 +4166,14 @@ def rootless_manager(item: dict[str, Any], role: str, *, stage: str) -> None:
     )
     require(
         isinstance(item["name"], str)
-        and re.fullmatch(r"web005-[a-f0-9]{32}-rootless-" + role, item["name"])
+        and (
+            item["name"]
+            == {"api": "hfcache-api", "worker": "hfcache-verification", "caddy": "hfcache-caddy"}[
+                role
+            ]
+            if current
+            else re.fullmatch(r"web005-[a-f0-9]{32}-rootless-" + role, item["name"])
+        )
         and all(isinstance(value, str) for value in manager.values())
         and manager["Id"] == item["name"] + ".service"
         and re.fullmatch(r"[0-9]+", manager["MainPID"])
@@ -3043,7 +4188,7 @@ def rootless_manager(item: dict[str, Any], role: str, *, stage: str) -> None:
         and manager["StandardOutput"] == manager["StandardError"] == "journal"
         and manager["ExecMainCode"] in {"0", "1"}
         and manager["ExecMainStatus"] == "0"
-        and manager["ControlGroup"].startswith("/user.slice/user-1000.slice/")
+        and manager["ControlGroup"].startswith(f"/user.slice/user-{host_uid}.slice/")
         and manager["ControlGroup"].rsplit("/", 1)[-1] == manager["Id"]
         and any(row["pid"] == int(manager["MainPID"]) for row in item["owned_processes"])
         and any(
@@ -3074,14 +4219,24 @@ def rootless_manager(item: dict[str, Any], role: str, *, stage: str) -> None:
         )
 
 
-def bind_role_generation(ready: dict[str, Any], stopped: dict[str, Any]) -> None:
+def bind_role_generation(
+    ready: dict[str, Any],
+    stopped: dict[str, Any],
+    *,
+    read_record: Callable[[object], dict[str, Any]] | None = None,
+) -> None:
+    def read(value: object) -> dict[str, Any]:
+        return (
+            json_bytes(bounded(file_record(value))) if read_record is None else read_record(value)
+        )
+
     require(
         ready["generation_id"] == stopped["generation_id"],
         "functional role cleanup changed generation identity",
     )
     for role in ("api", "worker", "caddy"):
-        before = json_bytes(bounded(file_record(ready["proofs"][role])))
-        after = json_bytes(bounded(file_record(stopped["proofs"][role])))
+        before = read(ready["proofs"][role])
+        after = read(stopped["proofs"][role])
         require(
             before["process"] == after["process"],
             "functional drain dropped or changed the originally observed role process",
@@ -3097,9 +4252,43 @@ def bind_role_generation(ready: dict[str, Any], stopped: dict[str, Any]) -> None
                 == {row["path"] for row in new["owned_cgroups"]},
                 "rootless drain dropped an originally owned process, cgroup or container",
             )
+    if "helper" in ready["proofs"] or "helper" in stopped["proofs"]:
+        require(
+            "helper" in ready["proofs"] and "helper" in stopped["proofs"],
+            "original installed helper observation disappeared",
+        )
+        before = read(ready["proofs"]["helper"])
+        after = read(stopped["proofs"]["helper"])
+        old_process, new_process = before["process"], after["process"]
+        old_authority, new_authority = before["authority"], after["authority"]
+        require(
+            all(old_process[key] == new_process[key] for key in old_process if key != "identity")
+            and all(
+                old_process["identity"][key] == new_process["identity"][key]
+                for key in ("pid", "parent_pid", "start_ticks")
+            )
+            and all(
+                before["unit"][key] == after["unit"][key]
+                for key in ("MainPID", "InvocationID", "ControlGroup", "NoNewPrivileges")
+            )
+            and before["bootstrap"] == after["bootstrap"]
+            and before["deployment"] == after["deployment"]
+            and all(
+                old_authority[key] == new_authority[key]
+                for key in old_authority
+                if key != "key_parent"
+            )
+            and all(
+                old_authority["key_parent"][key] == new_authority["key_parent"][key]
+                for key in ("st_dev", "st_ino", "st_mode", "st_uid", "st_gid")
+            )
+            and before["process_gone"] is after["process_gone"] is False
+            and before["cgroup_empty"] is after["cgroup_empty"] is False,
+            "original live helper identity, selected bytes or authority changed",
+        )
 
 
-def role_evidence(  # noqa: PLR0913 - all invocation identity fields are independent obligations
+def role_context(  # noqa: PLR0913 - all invocation identity fields are independent obligations
     value: object,
     *,
     manifest: dict[str, Any],
@@ -3145,10 +4334,11 @@ def role_evidence(  # noqa: PLR0913 - all invocation identity fields are indepen
     )
     require(
         type(item["proofs"]) is dict
-        and set(item["proofs"]) == {"api", "caddy", "worker", "network"},
+        and set(item["proofs"])
+        == {"api", "caddy", "worker", "network"}
+        | ({"helper"} if current_release(manifest) else set()),
         "actual role inspection artifacts are incomplete",
     )
-    detailed_role_evidence(item, manifest, stage=stage)
     if stage == "stopped":
         drains = exact(item["drains"], ROLE_DRAINS, "actual functional role drains are incomplete")
         require(
@@ -3160,23 +4350,120 @@ def role_evidence(  # noqa: PLR0913 - all invocation identity fields are indepen
     return item
 
 
+def successful_browser_assertions(value: object) -> set[str]:
+    require(type(value) is list, "functional browser assertion records are missing")
+    assert isinstance(value, list)
+    seen: set[str] = set()
+    passed: set[str] = set()
+    for row in value:
+        require(
+            type(row) is dict
+            and isinstance(row.get("id"), str)
+            and row["id"] in BROWSER_CASES
+            and row["id"] not in seen
+            and type(row.get("passed")) is bool
+            and type(row.get("attempts")) is int
+            and row["attempts"] == 1,
+            "functional browser assertion is unknown, duplicated, malformed or retried",
+        )
+        seen.add(row["id"])
+        if row["passed"]:
+            passed.add(row["id"])
+    return passed
+
+
+def role_evidence(  # noqa: PLR0913 - independent original invocation fields
+    value: object,
+    *,
+    manifest: dict[str, Any],
+    profile: str,
+    workspace: Path,
+    prefix: str,
+    stage: str,
+) -> dict[str, Any]:
+    item = role_context(
+        value, manifest=manifest, profile=profile, workspace=workspace, prefix=prefix, stage=stage
+    )
+    detailed_role_evidence(item, manifest, stage=stage)
+    return item
+
+
+def basic_read_refusals(value: object, *, prefix: str, origin: str) -> None:
+    require(
+        type(value) is list and len(value) == len(BASIC_READ_REFUSALS),
+        "functional Basic read refusal observations are incomplete",
+    )
+    assert isinstance(value, list)
+    expected_problem = hashlib.sha256(
+        b'{"code":"HFAPI001","message":"Not authenticated","exit_code":10}'
+    ).hexdigest()
+    labels, requests = set(), set()
+    for item in value:
+        row = exact(
+            item,
+            {
+                "label",
+                "status",
+                "code",
+                "request_id",
+                "authorization_fields",
+                "body_bytes",
+                "body_sha256",
+                "problem_sha256",
+                "method",
+                "path",
+                "origin",
+                "transport",
+            },
+            "functional Basic read refusal contains unsafe or unknown fields",
+        )
+        label = row["label"]
+        require(
+            type(label) is str
+            and label in BASIC_READ_REFUSALS
+            and label not in labels
+            and type(row["status"]) is int
+            and row["status"] == HTTPStatus.UNAUTHORIZED
+            and row["code"] == "HFAPI001"
+            and isinstance(row["request_id"], str)
+            and IDENTIFIER.fullmatch(row["request_id"])
+            and row["request_id"] not in requests
+            and type(row["authorization_fields"]) is int
+            and row["authorization_fields"] == BASIC_READ_REFUSALS[label]
+            and type(row["body_bytes"]) is int
+            and 0 < row["body_bytes"] <= MAXIMUM_BASIC_REFUSAL_BYTES
+            and isinstance(row["body_sha256"], str)
+            and SHA256.fullmatch(row["body_sha256"])
+            and row["problem_sha256"] == expected_problem
+            and row["method"] == "GET"
+            and row["path"] == prefix + "/api/v1/version"
+            and row["origin"] == origin
+            and row["transport"] == "trusted-node-https",
+            "functional Basic read refusal identity, bounds or classification differs",
+        )
+        labels.add(label)
+        requests.add(row["request_id"])
+
+
 def browser_evidence(
     value: object, *, manifest: dict[str, Any], runtime: dict[str, Any]
 ) -> dict[str, Any]:
     item = exact(
         value,
-        {"schema_version", "fixture_id", "profile", "prefix", "asset_manifest_sha256", "engines"},
+        {"schema_version", "fixture_id", "profile", "prefix", "asset_manifest_sha256", "engines"}
+        | ({"run_id"} if "run_id" in runtime else set()),
         "functional browser report is malformed",
     )
     require(
         type(item["schema_version"]) is int
         and item["schema_version"] == 1
+        and ("run_id" not in runtime or item["run_id"] == runtime["run_id"])
         and item["fixture_id"] == manifest["fixture_id"]
         and item["profile"] == runtime["profile"]
         and item["prefix"] == runtime["prefix"]
         and item["asset_manifest_sha256"] == manifest["assets"]["manifest_sha256"]
         and type(item["engines"]) is dict
-        and set(item["engines"]) == ENGINES,
+        and set(item["engines"]) == set(selected_browser_engines(runtime)),
         "functional browser identity is incomplete",
     )
     for name, engine in item["engines"].items():
@@ -3188,17 +4475,26 @@ def browser_evidence(
             engine.get("instance_id") == runtime["instance_id"],
             "actual browser bootstrap and installed API instance differ",
         )
-        cases = engine["cases"]
+        passed = successful_browser_assertions(engine["cases"])
         require(
-            len(cases) == len(BROWSER_CASES)
-            and {case.get("id") for case in cases} == BROWSER_CASES
-            and all(
-                case.get("passed") is True
-                and type(case.get("attempts")) is int
-                and case["attempts"] == 1
-                for case in cases
-            ),
+            passed >= BASELINE_BROWSER_CASES and len(passed) == len(engine["cases"]),
             "functional browser required case failed, retried or was omitted",
+        )
+        require(
+            not passed - BASELINE_BROWSER_CASES
+            or (runtime["profile"] == "native" and runtime.get("browser_engine") == name),
+            "optional rich read requires its explicitly selected native engine",
+        )
+        require(
+            engine.get("page_errors") == []
+            and engine.get("failed_responses") == []
+            and not engine.get("browser_error_overflow"),
+            "functional browser observed application errors or failed responses",
+        )
+        basic_read_refusals(
+            engine.get("basic_read_refusals"),
+            prefix=runtime["prefix"],
+            origin=manifest["profiles"][runtime["profile"]]["origin"],
         )
         require(
             engine.get("browser_closed") is True
@@ -3617,7 +4913,7 @@ def transfer_evidence(
             and row["schema_version"] == TRANSFER_EVIDENCE_VERSION
             and all(row[key] == identity[key] for key in ("fixture_id", "generation_id"))
             and row["phase"] == "trusted"
-            and row["engine"] in ENGINES
+            and row["engine"] in browser["engines"]
             and row["actor"] == "node"
             and row["instance_id"] == ready["instance_id"]
             and row["object_ids"] == ready["object_ids"]
@@ -3853,16 +5149,23 @@ def browser_process_evidence(item: dict[str, Any], name: str) -> None:
 
 
 def browser_launcher_receipt(
-    value: object, *, manifest: dict[str, Any], runtime: dict[str, Any], workspace: Path
+    value: object,
+    *,
+    manifest: dict[str, Any],
+    runtime: dict[str, Any],
+    workspace: Path,
+    report_copy: Path | None = None,
 ) -> dict[str, Any]:
     item = exact(
         value,
-        {"schema_version", "fixture_id", "profile", "prefix", "workspace", "phases", "report"},
+        {"schema_version", "fixture_id", "profile", "prefix", "workspace", "phases", "report"}
+        | ({"run_id"} if "run_id" in runtime else set()),
         "functional browser launcher receipt is malformed",
     )
     require(
         type(item["schema_version"]) is int
         and item["schema_version"] == 1
+        and ("run_id" not in runtime or item["run_id"] == runtime["run_id"])
         and item["fixture_id"] == manifest["fixture_id"]
         and item["profile"] == runtime["profile"]
         and item["prefix"] == runtime["prefix"]
@@ -3920,14 +5223,22 @@ def browser_launcher_receipt(
         report["path"] == str(workspace / "browser-report.json"),
         "functional browser report escaped its owned generation",
     )
-    digest_file(workspace / "browser-report.json", report["sha256"], MAXIMUM_REPORT_BYTES)
+    digest_file(
+        workspace / "browser-report.json" if report_copy is None else report_copy,
+        report["sha256"],
+        MAXIMUM_REPORT_BYTES,
+    )
     return item
 
 
 def selected_profiles(profile: str) -> tuple[str, ...]:
+    require(
+        profile in {"application", "native", "rootless", "platform", "all"},
+        "functional profile selector is unsupported",
+    )
     return (
-        ("application",)
-        if profile == "application"
+        (profile,)
+        if profile in DEPLOYMENTS
         else ("native", "rootless")
         if profile == "platform"
         else ("application", "native", "rootless")
@@ -3949,7 +5260,112 @@ def case_summary(case_ids: list[str], executions: list[dict[str, Any]]) -> list[
     return rows
 
 
-def require_final(rows: list[dict[str, Any]], profile: str) -> None:
+def acceptance_executions(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Project only passed assertions from the same actual engine and role lifecycle."""
+    executions = []
+    for result in results:
+        require(
+            result.get("profile") in DEPLOYMENTS and result.get("prefix") in PREFIXES,
+            "functional execution cell identity is invalid",
+        )
+        browser = result["browser"]
+        require(
+            browser["profile"] == result["profile"]
+            and browser["prefix"] == result["prefix"]
+            and set(browser["engines"]) == set(selected_browser_engines(result)),
+            "functional browser execution cell does not match its role lifecycle",
+        )
+        for name, engine in sorted(browser["engines"].items()):
+            passed = successful_browser_assertions(engine["cases"])
+            for identifier, specific in sorted(CASE_ASSERTIONS.items()):
+                assertions = specific | COMMON_ASSERTIONS
+                if assertions <= passed:
+                    executions.append(
+                        {
+                            "case_ids": [identifier],
+                            "profile": result["profile"],
+                            "browser": name,
+                            "prefix": result["prefix"],
+                            "exit_code": 0,
+                            "attempts": 1,
+                            "assertion_ids": sorted(assertions),
+                            "evidence": result["browser_report"],
+                            "role_evidence": result["role_report"],
+                        }
+                    )
+    return executions
+
+
+def requirement_ids(
+    through: str | None = None, *, root: Path = ROOT
+) -> tuple[list[str], list[str]]:
+    requirements = json_bytes(
+        bounded(root / "docs/agents/plans/support/web-ui/acceptance-cases.json")
+    )
+    task_index = json_bytes(bounded(root / "docs/agents/plans/support/web-ui/task-index.json"))
+    return select_requirement_ids(requirements, task_index, through)
+
+
+def select_requirement_ids(
+    requirements: dict[str, Any], task_index: dict[str, Any], through: str | None
+) -> tuple[list[str], list[str]]:
+    require(
+        type(requirements.get("schema_version")) is int
+        and requirements["schema_version"] == 1
+        and type(task_index.get("schema_version")) is int
+        and task_index["schema_version"] == 1
+        and isinstance(requirements.get("cases"), list)
+        and isinstance(task_index.get("tasks"), list),
+        "functional requirements or task index is malformed",
+    )
+    tasks = task_index["tasks"]
+    task_ids: list[str] = []
+    for task in tasks:
+        if not isinstance(task, dict) or not isinstance(task.get("id"), str):
+            reject("functional task order is invalid")
+        task_ids.append(task["id"])
+    require(
+        len(task_ids) == len(tasks)
+        and all(isinstance(task, str) and re.fullmatch(r"WEB-[0-9]{3}", task) for task in task_ids)
+        and task_ids == sorted(set(task_ids)),
+        "functional task order is invalid",
+    )
+    for position, task in enumerate(tasks):
+        dependencies = task.get("depends_on")
+        require(
+            isinstance(dependencies, list)
+            and all(dependency in task_ids[:position] for dependency in dependencies),
+            "functional task dependency order is invalid",
+        )
+    cases = requirements["cases"]
+    require(
+        len(cases) == REQUIRED_CASE_COUNT
+        and all(
+            isinstance(case, dict)
+            and isinstance(case.get("id"), str)
+            and re.fullmatch(r"[A-Z]+-[0-9]{2}", case["id"])
+            and case.get("owner") in task_ids
+            for case in cases
+        ),
+        "functional case ownership inventory is invalid",
+    )
+    all_ids = [case["id"] for case in cases]
+    require(len(set(all_ids)) == len(all_ids), "functional case inventory has duplicate IDs")
+    if through is None:
+        return all_ids, all_ids
+    require(
+        through in {"WEB-022", "WEB-023", "WEB-024", "WEB-025"} and through in task_ids,
+        "functional through-task selection is unsupported",
+    )
+    owners = set(task_ids[: task_ids.index(through) + 1])
+    required = [case["id"] for case in cases if case["owner"] in owners]
+    require(required, "functional through-task selection has no required cases")
+    return all_ids, required
+
+
+def require_cells(
+    rows: list[dict[str, Any]], profile: str, case_ids: list[str], required: list[str], label: str
+) -> None:
     expected = {
         (deployment, prefix, browser)
         for deployment in DEPLOYMENTS
@@ -3958,29 +5374,735 @@ def require_final(rows: list[dict[str, Any]], profile: str) -> None:
     }
     require(
         profile == "all"
-        and len(rows) == REQUIRED_CASE_COUNT
-        and all(row["status"] == "passed" for row in rows),
-        "final functional acceptance requires all95 actual cases and both completed profiles",
+        and len(rows) == len(case_ids)
+        and all(isinstance(row, dict) and isinstance(row.get("case_id"), str) for row in rows)
+        and {row["case_id"] for row in rows} == set(case_ids),
+        label + " requires actual evidence for the complete, unique case inventory",
+    )
+    selected = [row for row in rows if row["case_id"] in required]
+    require(
+        len(selected) == len(required) and all(row.get("status") == "passed" for row in selected),
+        label + " requires every owned case to pass; pending cases refuse acceptance",
     )
     require(
         all(
-            {
+            isinstance(row.get("executions"), list)
+            and len(row["executions"]) == len(expected)
+            and all(
+                isinstance(execution, dict)
+                and type(execution.get("exit_code")) is int
+                and execution["exit_code"] == 0
+                and type(execution.get("attempts")) is int
+                and execution["attempts"] == 1
+                for execution in row["executions"]
+            )
+            and {
                 (execution.get("profile"), execution.get("prefix"), execution.get("browser"))
-                for execution in row.get("executions", [])
-                if execution.get("exit_code") == 0
+                for execution in row["executions"]
             }
             == expected
-            for row in rows
+            for row in selected
         ),
-        "final functional acceptance requires actual evidence for every profile/prefix/browser",
+        label + " requires actual evidence for every profile/prefix/browser exactly once",
     )
 
 
-async def run_profile(  # noqa: PLR0915 - one owned generation retains one ordered finally boundary
-    manifest_path: Path, manifest: dict[str, Any], workspace: Path, profile: str, prefix: str
+def require_final(rows: list[dict[str, Any]], profile: str) -> None:
+    require(
+        profile == "all"
+        and len(rows) == REQUIRED_CASE_COUNT
+        and all(row.get("status") == "passed" for row in rows),
+        "final functional acceptance requires all95 actual cases and both completed profiles",
+    )
+    case_ids, required = requirement_ids()
+    require_cells(rows, profile, case_ids, required, "final functional acceptance")
+
+
+def require_through(rows: list[dict[str, Any]], profile: str, through: str) -> None:
+    case_ids, required = requirement_ids(through)
+    require_cells(rows, profile, case_ids, required, "functional acceptance through " + through)
+
+
+def retained_record(path: Path) -> dict[str, str]:
+    return {
+        "path": str(path),
+        "sha256": hashlib.sha256(bounded(path, MAXIMUM_REPORT_BYTES)).hexdigest(),
+    }
+
+
+def retain_run_inputs(
+    manifest_path: Path, manifest: dict[str, Any], workspace: Path, profile: str, run_id: str
+) -> dict[str, Any]:
+    require(type(run_id) is str and IDENTIFIER.fullmatch(run_id), "fresh run identity is invalid")
+    raw = bounded(manifest_path)
+    require(json_bytes(raw) == manifest, "functional manifest changed before intent")
+    inputs = {
+        "SOURCE-INPUTS.json": manifest["source"]["input_manifest"],
+        "MARKER.json": manifest["marker"],
+        "TOOLCHAIN.json": manifest["browser"]["toolchain_inventory"],
+        "UI-MANIFEST.json": {
+            "path": str(Path(manifest["assets"]["root"]) / "manifest.json"),
+            "sha256": manifest["assets"]["manifest_sha256"],
+        },
+    }
+    if current_release(manifest):
+        inputs["RELEASE.json"] = manifest["installed"]["release"]
+    for deployment in selected_profiles(profile):
+        inputs["CADDY-" + deployment + ".conf"] = manifest["profiles"][deployment]["caddy_config"]
+    persist_bytes(workspace / "MANIFEST.json", raw)
+    for name, record in inputs.items():
+        persist_bytes(
+            workspace / name,
+            bounded(file_record(record, maximum=MAXIMUM_TOOL_BYTES), MAXIMUM_TOOL_BYTES),
+        )
+    intent = {
+        "schema_version": 1,
+        "run_id": run_id,
+        "profile": profile,
+        "fixture_id": manifest["fixture_id"],
+        "guest": manifest["guest"],
+        "manifest": {"path": str(manifest_path), "sha256": hashlib.sha256(raw).hexdigest()},
+        "workspace": str(workspace),
+    }
+    persist_json(workspace / "RUN-INTENT.json", intent)
+    return intent
+
+
+def workspace_record(
+    value: object, original_workspace: Path, copied_workspace: Path, maximum: int = MAXIMUM_JSON
+) -> Path:
+    """Resolve only one original workspace prefix; original records remain untouched."""
+    item = exact(value, {"path", "sha256"}, "retained workspace file identity is incomplete")
+    name = item["path"]
+    require(
+        type(name) is str
+        and name.startswith("/")
+        and str(Path(name)) == name
+        and not any(part in {".", ".."} for part in name.split("/")),
+        "retained original path is not canonical",
+    )
+    original = Path(name)
+    require(
+        original != original_workspace and original.is_relative_to(original_workspace),
+        "required public proof escaped its original workspace",
+    )
+    copied = path_input(str(copied_workspace / original.relative_to(original_workspace)))
+    digest_file(copied, item["sha256"], maximum)
+    return copied
+
+
+def retained_records(value: object, original: Path, copied: Path) -> None:
+    """Check embedded public copies; protected original records stay opaque provenance."""
+    pending = [value]
+    count = 0
+    while pending:
+        item = pending.pop()
+        count += 1
+        require(count <= MAXIMUM_SOURCE_FILES * 16, "retained proof member bound exceeded")
+        if type(item) is list:
+            pending.extend(item)
+        elif type(item) is dict:
+            if set(item) == {"record", "body"}:
+                path = workspace_record(item["record"], original, copied)
+                require(json_bytes(bounded(path)) == item["body"], "retained public body differs")
+            elif set(item) == {"path", "sha256"}:
+                name = item["path"]
+                if type(name) is str and Path(name).is_relative_to(original):
+                    workspace_record(item, original, copied, MAXIMUM_REPORT_BYTES)
+            pending.extend(item.values())
+
+
+def retained_selected_artifacts(
+    network: dict[str, Any], manifest: dict[str, Any], original: Path, copied: Path
+) -> None:
+    names = {"release", "stage_index", "api_build", "caddy_build"}
+    originals = exact(
+        network.get("selected_artifacts"), names, "selected artifact originals missing"
+    )
+    copies = exact(
+        network.get("selected_artifact_copies"), names, "selected public artifact copies missing"
+    )
+    bodies = {}
+    for name in sorted(names):
+        source = exact(originals[name], {"path", "sha256"}, "selected original record malformed")
+        public = exact(copies[name], {"record", "body"}, "selected artifact copy malformed")
+        record = exact(public["record"], {"path", "sha256"}, "selected public record malformed")
+        require(record["sha256"] == source["sha256"], "selected artifact copy changed bytes")
+        body = json_bytes(bounded(workspace_record(record, original, copied)))
+        require(body == public["body"], "selected artifact body changed")
+        bodies[name] = body
+    release, stage = bodies["release"], bodies["stage_index"]
+    require(
+        release.get("files", {}).get("web-release.json")
+        == manifest["installed"]["release"]["sha256"]
+        and release["files"].get("ui/manifest.json") == manifest["assets"]["manifest_sha256"]
+        and stage.get("schema_version") == 1
+        and all(
+            stage.get("files", {}).get(name) == digest for name, digest in release["files"].items()
+        )
+        and bodies["api_build"].get("image_id") == release.get("app_image")
+        and bodies["caddy_build"].get("image_id") == release.get("caddy_image"),
+        "retained selected artifact closure changed",
+    )
+
+
+def retained_role_proofs(
+    item: dict[str, Any],
+    manifest: dict[str, Any],
+    original: Path,
+    copied: Path,
+    runtime: dict[str, Any],
+) -> dict[str, Any]:
+    """Inspect captured data only; do not resolve accounts, selectors or remote files."""
+    proofs = {
+        name: json_bytes(bounded(workspace_record(record, original, copied)))
+        for name, record in item["proofs"].items()
+    }
+    require(proofs["network"].get("selinux_enforce") == "1", "recorded enforcing proof missing")
+    for name in ("api", "worker", "caddy", "helper"):
+        proof = proofs[name]
+        require(
+            all(
+                proof.get(key) == item[key]
+                for key in (
+                    "schema_version",
+                    "fixture_id",
+                    "generation_id",
+                    "profile",
+                    "prefix",
+                    "origin",
+                    "stage",
+                )
+            )
+            and proof.get("role") == name,
+            "retained role proof changed original invocation",
+        )
+        if name == "helper":
+            helper_process(proof.get("process"))
+        else:
+            process = proof.get("process", {})
+            uids = process.get("status", {}).get("Uid", [])
+            require(type(uids) is list and len(uids) == UID_FIELDS, "recorded principal missing")
+            # Fixed account lookup was performed locally by role_evidence. The
+            # copied original UID is metadata here, never a local pwd lookup.
+            role_process(process, name, item["profile"], expected_uid=uids[0])
+            installation = proof.get("installation", {})
+            require(
+                installation.get("release_index_sha256")
+                == manifest["installed"]["release"]["sha256"]
+                and installation.get("expected_executable") == process["executable"],
+                "retained installed role identity changed",
+            )
+        stopped = item["stage"] == "stopped" and name != "helper"
+        require(
+            proof.get("process_gone") is stopped and proof.get("cgroup_empty") is stopped,
+            "retained actual role drain is unknown",
+        )
+    if item["profile"] == "rootless":
+        retained_selected_artifacts(proofs["network"], manifest, original, copied)
+    config = bounded(workspace_record(proofs["caddy"]["config"], original, copied))
+    template = bounded(path_input(str(copied / ("CADDY-" + item["profile"] + ".conf"))))
+    require(
+        proofs["caddy"]["template"] == manifest["profiles"][item["profile"]]["caddy_config"]
+        and hashlib.sha256(template).hexdigest() == proofs["caddy"]["template"]["sha256"],
+        "retained Caddy template changed",
+    )
+    pattern = re.escape(template)
+    markers = (b"__API_SOCKET__", b"__TLS_CERTIFICATE__", b"__TLS_PRIVATE_KEY__")
+    for number, marker in enumerate(markers):
+        pattern = pattern.replace(
+            re.escape(marker), f"(?P<path{number}>/[A-Za-z0-9/._-]+)".encode()
+        )
+    applied = re.fullmatch(pattern, config)
+    upstream = (
+        proofs["api"]["listener"]["acceptor"]["process_path"]
+        if item["profile"] == "rootless"
+        else proofs["api"]["listener"]["path"]
+    )
+    require(
+        all(template.count(marker) == 1 for marker in markers)
+        and applied is not None
+        and applied["path0"] == upstream.encode()
+        and b"basic_auth" not in config
+        and b"handle_path" not in config,
+        "retained Caddy configuration does not join its original upstream/template",
+    )
+    api_events(
+        workspace_record(proofs["api"]["events"], original, copied),
+        item,
+        proofs["api"]["ready"]["body"],
+        stage=item["stage"],
+        runtime=runtime,
+    )
+    retained_records(proofs, original, copied)
+    return proofs
+
+
+def retained_profile_inputs(
+    summary: dict[str, Any], copied: Path, common: dict[str, Any], run_id: str
+) -> tuple[dict[str, Any], Path]:
+    original = Path(summary["workspace"])
+    require(
+        str(original) == summary["workspace"]
+        and original.is_absolute()
+        and original.parent.name == ".scratch"
+        and original.name.startswith("web-functional-")
+        and not any(part in {".", ".."} for part in summary["workspace"].split("/")),
+        "original normal workspace is malformed",
+    )
+    record = summary["run_intent"]
+    require(record.get("path") == str(original / "RUN-INTENT.json"), "normal intent path changed")
+    intent = json_bytes(bounded(workspace_record(record, original, copied)))
+    exact(
+        intent,
+        {"schema_version", "run_id", "profile", "fixture_id", "guest", "manifest", "workspace"},
+        "normal run intent malformed",
+    )
+    require(
+        intent["schema_version"] == 1
+        and type(intent["schema_version"]) is int
+        and all(
+            intent[key] == summary[key]
+            for key in ("run_id", "profile", "fixture_id", "guest", "manifest", "workspace")
+        )
+        and intent["run_id"] == run_id,
+        "normal run context changed",
+    )
+    source = exact(intent["manifest"], {"path", "sha256"}, "original manifest identity missing")
+    require(
+        type(source["path"]) is str
+        and str(Path(source["path"])) == source["path"]
+        and not any(part in {".", ".."} for part in source["path"].split("/"))
+        and Path(source["path"]).is_relative_to(original.parent.parent)
+        and not Path(source["path"]).is_relative_to(original),
+        "original manifest escaped its provisioned repository",
+    )
+    manifest_copy = path_input(str(copied / "MANIFEST.json"))
+    digest_file(manifest_copy, source["sha256"])
+    manifest = json_bytes(bounded(manifest_copy))
+    exact(
+        manifest,
+        {
+            "schema_version",
+            "kind",
+            "fixture_id",
+            "marker",
+            "guest",
+            "source",
+            "installed",
+            "assets",
+            "browser",
+            "profiles",
+            "mcp_arguments",
+        },
+        "retained original manifest shape changed",
+    )
+    exact(
+        manifest["installed"],
+        {"wheel", "package_root", "release"}
+        | ({"tooling"} if summary["profile"] == "rootless" else set()),
+        "retained original SDK/native descriptor changed",
+    )
+    guest = exact(summary["guest"], {"identity", "boot_id"}, "retained guest identity malformed")
+    require(
+        type(guest["identity"]) is str
+        and re.fullmatch(r"[a-z][a-z0-9-]{0,127}", guest["identity"])
+        and type(guest["boot_id"]) is str
+        and str(uuid.UUID(guest["boot_id"])) == guest["boot_id"]
+        and type(summary["fixture_id"]) is str
+        and str(uuid.UUID(summary["fixture_id"])) == summary["fixture_id"],
+        "retained original fixture or boot is malformed",
+    )
+    require(
+        manifest.get("schema_version") == 1
+        and manifest.get("kind") == "hfcache_web_functional_fixture"
+        and manifest.get("fixture_id") == summary["fixture_id"]
+        and manifest.get("guest") == summary["guest"]
+        and current_release(manifest)
+        and summary["source"] == manifest["source"]
+        and summary["artifacts"]
+        == {"installed": manifest["installed"], "assets": manifest["assets"]},
+        "retained original manifest or artifacts changed",
+    )
+    for key in ("parent_commit", "snapshot_sha256", "label"):
+        require(manifest["source"][key] == common["source"][key], "profile test source differs")
+    inputs = {
+        "SOURCE-INPUTS.json": manifest["source"]["input_manifest"]["sha256"],
+        "MARKER.json": manifest["marker"]["sha256"],
+        "TOOLCHAIN.json": manifest["browser"]["toolchain_inventory"]["sha256"],
+        "UI-MANIFEST.json": manifest["assets"]["manifest_sha256"],
+        "RELEASE.json": manifest["installed"]["release"]["sha256"],
+        "CADDY-" + summary["profile"] + ".conf": manifest["profiles"][summary["profile"]][
+            "caddy_config"
+        ]["sha256"],
+    }
+    for name, expected in inputs.items():
+        digest_file(path_input(str(copied / name)), expected, MAXIMUM_TOOL_BYTES)
+    marker = json_bytes(bounded(path_input(str(copied / "MARKER.json"))))
+    require(
+        marker
+        == {
+            "schema_version": 1,
+            "fixture_id": summary["fixture_id"],
+            "repository_root": str(original.parent.parent),
+            "guest": summary["guest"],
+        },
+        "retained original guest marker changed",
+    )
+    inventory = json_bytes(bounded(path_input(str(copied / "SOURCE-INPUTS.json"))))
+    require(
+        hashlib.sha256(
+            json.dumps(inventory.get("files"), sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        == common["source"]["snapshot_sha256"],
+        "retained complete tooling source differs",
+    )
+    for key in ("wheel", "release"):
+        require(
+            manifest["installed"][key]["sha256"] == common["installed"][key]["sha256"],
+            "profile application artifact differs",
+        )
+    require(
+        manifest["assets"]["manifest_sha256"] == common["assets"]["manifest_sha256"],
+        "profile UI differs",
+    )
+    for key in (
+        "playwright_version",
+        "node_version",
+        "trusted_image_sha256",
+        "untrusted_image_sha256",
+    ):
+        require(
+            manifest["browser"][key] == common["browser"][key], "profile browser authority differs"
+        )
+    for key in ("toolchain_inventory", "playwright_module", "node_binary", "seccomp"):
+        require(
+            manifest["browser"][key]["sha256"] == common["browser"][key]["sha256"],
+            "profile browser tooling differs",
+        )
+    return manifest, original
+
+
+def retained_profile_result(
+    result: dict[str, Any], manifest: dict[str, Any], original: Path, copied: Path, run_id: str
+) -> tuple[str, str, list[tuple[str, str, int, str]]]:
+    profile, prefix, engine = result["profile"], result["prefix"], result["browser_engine"]
+    require(
+        profile in DEPLOYMENTS and prefix in PREFIXES and engine in ENGINES,
+        "retained cell malformed",
+    )
+    cell = original / (profile + ("-prefixed" if prefix else "-root") + "-" + engine)
+    require(
+        result["workspace"] == str(cell) and result["run_id"] == run_id,
+        "retained cell context changed",
+    )
+
+    def read(record: object) -> dict[str, Any]:
+        return json_bytes(bounded(workspace_record(record, original, copied)))
+
+    body = json_bytes(
+        bounded(workspace_record(result["role_report"], original, copied, MAXIMUM_REPORT_BYTES))
+    )
+    require(
+        body == {k: v for k, v in result.items() if k != "role_report"},
+        "normal RESULT differs from summary",
+    )
+    require(
+        result["role_report"]["path"] == str(cell / "RESULT.json"), "normal RESULT path changed"
+    )
+    runtime = read(result["runtime_record"])
+    exact(
+        runtime,
+        {
+            "schema_version",
+            "fixture_id",
+            "profile",
+            "prefix",
+            "origin",
+            "asset_manifest_sha256",
+            "asset_manifest",
+            "phase_path",
+            "phase_identity",
+            "mcp_arguments",
+            "browser_engine",
+            "run_id",
+        },
+        "retained runtime malformed",
+    )
+    require(
+        result["runtime_record"]["path"] == str(cell / "runtime.json")
+        and runtime.get("run_id") == run_id
+        and runtime.get("browser_engine") == engine
+        and all(runtime.get(k) == result[k] for k in ("profile", "prefix"))
+        and runtime["schema_version"] == 1
+        and type(runtime["schema_version"]) is int
+        and runtime["fixture_id"] == manifest["fixture_id"]
+        and runtime["origin"] == manifest["profiles"][profile]["origin"]
+        and runtime["asset_manifest_sha256"] == manifest["assets"]["manifest_sha256"]
+        and runtime["asset_manifest"]
+        == json_bytes(bounded(path_input(str(copied / "UI-MANIFEST.json"))))
+        and runtime["phase_path"] == str(cell / "browser-phase.txt")
+        and runtime["mcp_arguments"] == manifest["mcp_arguments"],
+        "retained runtime changed",
+    )
+    ready_api: dict[str, Any] = {}
+    actors = []
+    for stage in ("ready", "stopped"):
+        item = role_context(
+            result[stage],
+            manifest=manifest,
+            profile=profile,
+            workspace=cell,
+            prefix=prefix,
+            stage=stage,
+        )
+        proofs = retained_role_proofs(item, manifest, original, copied, runtime)
+        if stage == "ready":
+            ready_api = proofs["api"]
+            actors = [
+                (
+                    manifest["guest"]["boot_id"],
+                    role,
+                    proofs[role]["process"]["identity"]["pid"],
+                    proofs[role]["process"]["identity"]["start_ticks"],
+                )
+                for role in ("api", "worker", "caddy")
+            ]
+    bind_role_generation(result["ready"], result["stopped"], read_record=read)
+    intent = read(result["browser_intent"])
+    require(
+        result["browser_intent"]["path"] == str(cell / "browser-intent.json")
+        and intent
+        == {
+            "schema_version": 1,
+            "fixture_id": manifest["fixture_id"],
+            "generation_id": result["ready"]["generation_id"],
+            "profile": profile,
+            "prefix": prefix,
+            "workspace": str(cell),
+            "state": "requested",
+            "run_id": run_id,
+        },
+        "retained browser admission intent differs",
+    )
+    runtime["instance_id"] = ready_api["ready"]["body"]["instance_id"]
+    require(
+        read(ready_api["ready"]["record"]) == ready_api["ready"]["body"],
+        "retained API READY differs",
+    )
+    ready = ready_api["ready"]["body"]
+    require(
+        ready.get("fixture_id") == manifest["fixture_id"]
+        and ready.get("generation_id") == result["ready"]["generation_id"]
+        and ready.get("lifespan_count") == 1
+        and ready.get("capture_fingerprint") == manifest["assets"]["manifest_sha256"]
+        and ready.get("phase_identity")
+        == [runtime["phase_identity"]["device"], runtime["phase_identity"]["inode"]]
+        and ready.get("identity")
+        == {
+            "pid": ready_api["process"]["status"]["NSpid"][-1],
+            "start_ticks": ready_api["process"]["identity"]["start_ticks"],
+        },
+        "retained API instance was not the original role generation",
+    )
+    browser_path = workspace_record(
+        result["browser_report"], original, copied, MAXIMUM_REPORT_BYTES
+    )
+    require(
+        result["browser_report"]["path"] == str(cell / "browser-report.json"),
+        "browser report path changed",
+    )
+    browser = browser_evidence(
+        json_bytes(bounded(browser_path, MAXIMUM_REPORT_BYTES)), manifest=manifest, runtime=runtime
+    )
+    require(browser == result["browser"], "retained browser differs from summary")
+    receipt = read(result["browser_launcher_record"])
+    require(
+        result["browser_launcher_record"]["path"] == str(cell / "browser-launcher-receipt.json")
+        and receipt == result["browser_launcher"],
+        "retained browser launcher receipt differs",
+    )
+    browser_launcher_receipt(
+        receipt, manifest=manifest, runtime=runtime, workspace=cell, report_copy=browser_path
+    )
+    require(
+        result["python_mcp_record"]["path"] == str(cell / "python-mcp.json")
+        and read(result["python_mcp_record"]) == result["installed_python_mcp"],
+        "retained original SDK client report differs",
+    )
+    sdk = result["installed_python_mcp"]
+    require(
+        sdk.get("schema_version") == 1
+        and sdk.get("origin") == runtime["origin"]
+        and sdk.get("prefix") == prefix
+        and sdk.get("transport") == "real_caddy_tls"
+        and set(sdk.get("tools", {})) == MCP_TOOLS
+        and all(row.get("passed") is True for row in sdk["tools"].values()),
+        "retained original SDK client scope is incomplete",
+    )
+    require(
+        result["transfer_evidence"] == proofs["api"]["transfers"],
+        "original transfer closure changed",
+    )
+    workspace_record(result["transfer_evidence"], original, copied)
+    require(not result.get("cleanup_unknown"), "original cleanup is unknown")
+    retained_records(result, original, copied)
+    return result["ready"]["generation_id"], runtime["instance_id"], actors
+
+
+def join_profiles(  # noqa: PLR0913 - authority, fresh context, inputs and strict mode are independent
+    manifest: dict[str, Any],
+    workspace: Path,
+    run_id: str,
+    records: list[list[str]],
+    *,
+    final: bool,
+    through: str | None,
+) -> dict[str, Any]:
+    require(type(run_id) is str and IDENTIFIER.fullmatch(run_id), "fresh join run identity missing")
+    require(
+        len(records) == len(DEPLOYMENTS) and (final or through is not None),
+        "join requires three complete normal profiles and strict acceptance mode",
+    )
+    results, retained = [], []
+    profiles, generations, instances, actors = set(), set(), set(), set()
+    expected = {(prefix, engine) for prefix in PREFIXES for engine in ENGINES}
+    for name, digest in records:
+        summary_path = file_record({"path": name, "sha256": digest}, maximum=MAXIMUM_ASSET_BYTES)
+        require(summary_path.name == "SUMMARY.json", "join requires normal SUMMARY files")
+        summary = json_bytes(bounded(summary_path, MAXIMUM_ASSET_BYTES))
+        exact(
+            summary,
+            {
+                "schema_version",
+                "scope",
+                "fixture_id",
+                "profile",
+                "final",
+                "require_through",
+                "required_case_ids",
+                "source",
+                "artifacts",
+                "results",
+                "cases",
+                "pending_case_ids",
+                "run_id",
+                "guest",
+                "manifest",
+                "workspace",
+                "run_intent",
+            },
+            "normal profile summary malformed",
+        )
+        profile = summary["profile"]
+        require(
+            summary["schema_version"] == 1
+            and type(summary["schema_version"]) is int
+            and summary["scope"]
+            == "owned installed shared-Caddy functional fixture; no production/NAS claim"
+            and profile in DEPLOYMENTS
+            and profile not in profiles
+            and summary["run_id"] == run_id
+            and summary["final"] is False
+            and summary["require_through"] is None
+            and summary["required_case_ids"] == []
+            and len(summary["results"]) == len(expected),
+            "join requires unique fresh normal singleton profiles",
+        )
+        profiles.add(profile)
+        original_manifest, original = retained_profile_inputs(
+            summary, summary_path.parent, manifest, run_id
+        )
+        cells = set()
+        for result in summary["results"]:
+            require(result["profile"] == profile, "normal result borrowed another profile")
+            cell = (result["prefix"], result["browser_engine"])
+            require(
+                cell in expected and cell not in cells,
+                "normal profile omitted or duplicated a cell",
+            )
+            cells.add(cell)
+            generation, instance, identities = retained_profile_result(
+                result, original_manifest, original, summary_path.parent, run_id
+            )
+            require(
+                generation not in generations and instance not in instances,
+                "fresh lifecycle reused a generation or API instance",
+            )
+            require(
+                not actors.intersection(identities),
+                "fresh lifecycle reused an original role process",
+            )
+            generations.add(generation)
+            instances.add(instance)
+            actors.update(identities)
+            results.append(result)
+        rows = case_summary(requirement_ids()[0], acceptance_executions(summary["results"]))
+        require(
+            summary["cases"] == rows
+            and summary["pending_case_ids"]
+            == [row["case_id"] for row in rows if row["status"] != "passed"],
+            "normal summary status differs from actual assertions",
+        )
+        retained.append({"path": str(summary_path), "sha256": digest})
+    require(
+        profiles == set(DEPLOYMENTS) and len(generations) == len(DEPLOYMENTS) * len(expected),
+        "complete fresh execution set missing",
+    )
+    case_ids, required = requirement_ids(through)
+    rows = case_summary(case_ids, acceptance_executions(results))
+    summary = {
+        "schema_version": 1,
+        "scope": (
+            "fresh normal profile summaries; common manifest fixture is artifact authority, "
+            "original per-profile fixtures remain in results"
+        ),
+        "fixture_id": manifest["fixture_id"],
+        "profile": "all",
+        "run_id": run_id,
+        "final": final,
+        "require_through": through,
+        "required_case_ids": required,
+        "source": manifest["source"],
+        "artifacts": {"installed": manifest["installed"], "assets": manifest["assets"]},
+        "joined_profile_summaries": retained,
+        "results": results,
+        "cases": rows,
+        "pending_case_ids": [row["case_id"] for row in rows if row["status"] != "passed"],
+    }
+    persist_json(workspace / "SUMMARY.json", summary)
+    if final:
+        require_final(rows, "all")
+    else:
+        require(through is not None, "strict through-task mode missing")
+        if through is not None:
+            require_through(rows, "all", through)
+    return summary
+
+
+async def run_profile(  # noqa: PLR0913, PLR0915 - one owned generation binds its optional engine and drain
+    manifest_path: Path,
+    manifest: dict[str, Any],
+    workspace: Path,
+    profile: str,
+    prefix: str,
+    *,
+    browser_engine: str | None = None,
+    run_id: str | None = None,
 ) -> dict[str, Any]:
     """Own one durable role generation and drain it before moving to the next."""
-    target = workspace / (profile + ("-prefixed" if prefix else "-root"))
+    selection = {} if browser_engine is None else {"browser_engine": browser_engine}
+    context = {} if run_id is None else {"run_id": run_id}
+    selected_browser_engines(selection)
+    require(
+        run_id is None or (type(run_id) is str and IDENTIFIER.fullmatch(run_id)),
+        "fresh run identity is invalid",
+    )
+    target = workspace / (
+        profile
+        + ("-prefixed" if prefix else "-root")
+        + ("-" + browser_engine if browser_engine else "")
+    )
     target.mkdir(mode=0o700)
     phase = target / "browser-phase.txt"
     phase.write_text("trusted\n", encoding="ascii")
@@ -3997,6 +6119,8 @@ async def run_profile(  # noqa: PLR0915 - one owned generation retains one order
         "phase_path": str(phase),
         "phase_identity": {"device": phase_facts.st_dev, "inode": phase_facts.st_ino},
         "mcp_arguments": manifest["mcp_arguments"],
+        **selection,
+        **context,
     }
     (target / "runtime.json").write_bytes(canonical(runtime))
     import hfcache
@@ -4031,7 +6155,15 @@ async def run_profile(  # noqa: PLR0915 - one owned generation retains one order
         "--action",
     ]
     admitted = False
-    result: dict[str, Any] = {"profile": profile, "prefix": prefix, "workspace": str(target)}
+    result: dict[str, Any] = {
+        "profile": profile,
+        "prefix": prefix,
+        "workspace": str(target),
+        **selection,
+        **context,
+    }
+    if run_id is not None:
+        result["runtime_record"] = retained_record(target / "runtime.json")
     try:
         ready = await command([*argv, "start"], body=canonical(authority), timeout=180)
         result["ready"] = role_evidence(
@@ -4047,6 +6179,8 @@ async def run_profile(  # noqa: PLR0915 - one owned generation retains one order
         admitted = True
         result["installed_python_mcp"] = await python_mcp_compatibility(manifest, runtime, tokens)
         (target / "python-mcp.json").write_bytes(canonical(result["installed_python_mcp"]))
+        if run_id is not None:
+            result["python_mcp_record"] = retained_record(target / "python-mcp.json")
         browser = manifest["browser"]["launcher"]["path"]
         persist_json(
             target / "browser-intent.json",
@@ -4058,8 +6192,11 @@ async def run_profile(  # noqa: PLR0915 - one owned generation retains one order
                 "prefix": prefix,
                 "workspace": str(target),
                 "state": "requested",
+                **context,
             },
         )
+        if run_id is not None:
+            result["browser_intent"] = retained_record(target / "browser-intent.json")
         receipt = await command(
             [browser, "--manifest", str(manifest_path), "--workspace", str(target)],
             body=canonical(
@@ -4075,6 +6212,8 @@ async def run_profile(  # noqa: PLR0915 - one owned generation retains one order
             json_bytes(bounded(receipt_path)) == receipt,
             "functional browser launcher retained receipt differs from stdout authority",
         )
+        if run_id is not None:
+            result["browser_launcher_record"] = retained_record(receipt_path)
         report_path = target / "browser-report.json"
         result["browser"] = browser_evidence(
             json_bytes(bounded(report_path, MAXIMUM_REPORT_BYTES)),
@@ -4118,43 +6257,65 @@ async def run_profile(  # noqa: PLR0915 - one owned generation retains one order
             (target / "RESULT.json").write_bytes(canonical(result))
         if cancelled:
             raise asyncio.CancelledError
+    result["role_report"] = {
+        "path": str(target / "RESULT.json"),
+        "sha256": hashlib.sha256(bounded(target / "RESULT.json")).hexdigest(),
+    }
     return result
 
 
-async def run(
-    manifest_path: Path, manifest: dict[str, Any], workspace: Path, profile: str, *, final: bool
+async def run(  # noqa: PLR0913 - artifact, profile and acceptance mode are independent inputs
+    manifest_path: Path,
+    manifest: dict[str, Any],
+    workspace: Path,
+    profile: str,
+    *,
+    final: bool,
+    through: str | None = None,
+    browser_engine: str | None = None,
+    run_id: str | None = None,
 ) -> dict[str, Any]:
+    require(not (final and through is not None), "final and through-task selection are exclusive")
+    selection = {} if browser_engine is None else {"browser_engine": browser_engine}
+    selected_browser_engines(selection)
+    require(
+        browser_engine is None or not (final or through is not None),
+        "selected browser evidence cannot claim complete functional acceptance",
+    )
+    case_ids, required_ids = requirement_ids(through)
+    require(through is None or profile == "all", "through-task acceptance requires all profiles")
     require(
         Path("/proc/sys/kernel/random/boot_id").read_text().strip() == manifest["guest"]["boot_id"],
         "functional runtime does not match its provisioned disposable guest boot",
     )
+    intent = (
+        None
+        if run_id is None
+        else retain_run_inputs(manifest_path, manifest, workspace, profile, run_id)
+    )
     results = []
     for deployment in selected_profiles(profile):
         for prefix in PREFIXES:
-            results.append(  # noqa: PERF401 - each complete role lifecycle must drain before the next
-                await run_profile(manifest_path, manifest, workspace, deployment, prefix)
+            engines = (
+                selected_browser_engines(selection) if run_id is not None else (browser_engine,)
             )
-    validate_manifest(str(manifest_path))
-    requirements = json_bytes(
-        bounded(ROOT / "docs/agents/plans/support/web-ui/acceptance-cases.json")
-    )
-    case_ids = [row["id"] for row in requirements["cases"]]
+            for engine in engines:
+                results.append(  # noqa: PERF401 - each actual generation drains before the next
+                    await run_profile(
+                        manifest_path,
+                        manifest,
+                        workspace,
+                        deployment,
+                        prefix,
+                        browser_engine=engine,
+                        run_id=run_id,
+                    )
+                )
     require(
-        len(case_ids) == len(set(case_ids)) == REQUIRED_CASE_COUNT,
-        "functional requirements inventory is invalid",
+        validate_manifest(str(manifest_path), profile=profile) == manifest,
+        "functional manifest changed during its actual profile lifecycles",
     )
-    executions = [
-        {
-            "case_ids": sorted(IMPLEMENTED_CASES),
-            "profile": result["profile"],
-            "browser": engine,
-            "prefix": result["prefix"],
-            "exit_code": 0,
-            "evidence": result["browser_report"],
-        }
-        for result in results
-        for engine in sorted(ENGINES)
-    ]
+    executions = acceptance_executions(results)
     rows = case_summary(case_ids, executions)
     summary = {
         "schema_version": 1,
@@ -4162,43 +6323,116 @@ async def run(
         "fixture_id": manifest["fixture_id"],
         "profile": profile,
         "final": final,
+        "require_through": through,
+        "required_case_ids": required_ids if final or through is not None else [],
         "source": manifest["source"],
         "artifacts": {"installed": manifest["installed"], "assets": manifest["assets"]},
         "results": results,
         "cases": rows,
         "pending_case_ids": [row["case_id"] for row in rows if row["status"] != "passed"],
+        **selection,
     }
-    (workspace / "SUMMARY.json").write_bytes(canonical(summary))
+    if intent is not None:
+        require(
+            retained_record(manifest_path) == intent["manifest"],
+            "original run manifest bytes changed",
+        )
+        summary.update(
+            run_id=run_id,
+            guest=manifest["guest"],
+            workspace=str(workspace),
+            manifest=intent["manifest"],
+            run_intent=retained_record(workspace / "RUN-INTENT.json"),
+        )
+    persist_json(workspace / "SUMMARY.json", summary)
     if final:
         require_final(rows, profile)
+    elif through is not None:
+        require_through(rows, profile, through)
     return summary
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
-    parser.add_argument("--profile", choices=("application", "platform", "all"), required=True)
+    parser.add_argument(
+        "--profile", choices=("application", "native", "rootless", "platform", "all"), required=True
+    )
     parser.add_argument(
         "--manifest", required=True, help="protected, digest-bound disposable fixture manifest"
     )
     parser.add_argument("--workspace", help="fresh direct repository .scratch descendant")
     parser.add_argument(
+        "--run-id", help="fresh32-hex identity shared by the three normal profile runs"
+    )
+    parser.add_argument(
+        "--join-summary",
+        action="append",
+        nargs=2,
+        metavar=("PATH", "SHA256"),
+        help="exactly three fresh normal profile SUMMARY copies; offline strict join only",
+    )
+    requirement = parser.add_mutually_exclusive_group()
+    requirement.add_argument(
         "--final",
         action="store_true",
         help="require all95 actual cases; pending cases refuse acceptance",
     )
+    requirement.add_argument(
+        "--require-through",
+        metavar="TASK",
+        help="require every case owned through the selected task in all profiles",
+    )
     args = parser.parse_args()
+    if args.final and args.profile != "all":
+        parser.error("--final requires --profile all")
+    if args.require_through is not None and args.profile != "all":
+        parser.error("--require-through requires --profile all")
+    joining = args.join_summary is not None
+    if args.run_id is not None and not IDENTIFIER.fullmatch(args.run_id):
+        parser.error("--run-id must be32 lower-case hexadecimal characters")
+    if joining and (
+        args.profile != "all" or args.run_id is None or not (args.final or args.require_through)
+    ):
+        parser.error(
+            "--join-summary requires --profile all, explicit --run-id and --final/--require-through"
+        )
+    if args.run_id is None:
+        args.run_id = secrets.token_hex(16)
     workspace = None
     try:
-        manifest = validate_manifest(args.manifest)
+        if args.require_through is not None:
+            requirement_ids(args.require_through)
+        manifest = validate_manifest(args.manifest, profile=args.profile, common_only=joining)
         # This guard precedes workspace creation and any process or credential work.
-        require(
-            Path("/proc/sys/kernel/random/boot_id").read_text().strip()
-            == manifest["guest"]["boot_id"],
-            "functional runtime must be its explicitly provisioned disposable guest",
-        )
+        if not joining:
+            require(
+                Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+                == manifest["guest"]["boot_id"],
+                "functional runtime must be its explicitly provisioned disposable guest",
+            )
         workspace = prepare_workspace(args.workspace)
         print(f"Retaining owned functional evidence in {workspace}", flush=True)
-        asyncio.run(run(Path(args.manifest), manifest, workspace, args.profile, final=args.final))
+        if joining:
+            join_profiles(
+                manifest,
+                workspace,
+                args.run_id,
+                args.join_summary,
+                final=args.final,
+                through=args.require_through,
+            )
+        else:
+            asyncio.run(
+                run(
+                    Path(args.manifest),
+                    manifest,
+                    workspace,
+                    args.profile,
+                    final=args.final,
+                    through=args.require_through,
+                    run_id=args.run_id,
+                )
+            )
     except Exception:  # noqa: BLE001 - never expose credential-bearing third-party exception text
         if workspace is not None:
             (workspace / "BLOCKED.json").write_bytes(

@@ -1438,6 +1438,10 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
   fabricated empty/healthy data or action readiness. Named same-origin requests
   retain configured prefixes, validated links, auth/archive/publication scope and
   original operation identity. No redirects or automatic mutation retries.
+  Document departure retires owned and queued reads before follow-up requests;
+  a dirty-form Stay preserves usable owners. History restoration revalidates
+  only its current route and never replays admitted work. Aborted started reads
+  retain rejection ownership without extending their deadline.
   [Decision 145](adr/decision-145.md) defines this independent browser boundary;
   it changes no server wire format, archive authority or CLI/MCP authentication.
   Independent UI schema1 and context binding under decision147 use generated
@@ -1544,6 +1548,18 @@ No enforcement or acceptance is claimed from these new register entries alone.
   only that control; it cannot disable a separately proved schedule grant or
   misreport a running original observer as inactive. No init_t signal grant,
   unconfined fallback or automatic context/label installation is permitted.
+  Only after retained original-pidfd exit proof may native observer-stop final
+  validation accept disappearance of its one previously captured fixed systemd
+  credential mount, with full original raw identity. An unchanged projected table
+  cannot hide a replacement. The target must be one mount rooted at `/`, with
+  filesystem/source `tmpfs` and `ro,nosuid,nodev,noexec`; malformed, duplicate,
+  writable or non-tmpfs targets grant no exception. Optional `noswap`/`nosymfollow`
+  flags are not required. All other ordered captured mount observations and
+  protected authority stay identical; missing/ambiguous proof, additions,
+  changed/replaced/duplicate mounts or unrelated removals refuse. Original capture
+  remains strict. No generic baseline refresh, path-prefix exclusion, payload
+  read, mount/unmount, cleanup or new permission follows, and no pending handle or
+  unknown Stop is reconciled by that observation.
   Journal sources, cursor,
   time, bytes and concurrency
   are finite; logs never establish job completion. Preserve HostStatus schema1

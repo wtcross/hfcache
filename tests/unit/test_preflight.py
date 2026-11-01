@@ -22,6 +22,8 @@ import fcntl
 import inspect
 import os
 import re
+import socket
+import ssl
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -757,7 +759,8 @@ def reachable(monkeypatch: pytest.MonkeyPatch) -> None:
     def resolves(_host):
         return ("192.0.2.1",)
 
-    def verifies(_host):
+    def verifies(_host, *, port):
+        assert port == 443
         return "TLSv1.3, certificate valid"
 
     monkeypatch.setattr("hfcache.preflight.resolve_host", resolves)
@@ -801,3 +804,54 @@ def test_the_hub_checks_are_ordered_as_the_table_orders_them(reachable):
     checks = hub_checks(hub_config(), stub_client(StubApi()))
 
     assert [check.name for check in checks] == ["hub_dns", "hub_tls", "hub_identity"]
+
+
+@pytest.mark.parametrize("trusted", [True, False])
+def test_hub_tls_uses_the_configured_https_port(
+    tls_server, monkeypatch: pytest.MonkeyPatch, *, trusted: bool
+):
+    """ADR 033 / INV-003: check the selected authority with real verified TLS."""
+    _, port, trust = tls_server
+    connect = socket.create_connection
+    connections = []
+
+    def connects(address, *, timeout):
+        # Refuse an unintended port before connecting; even the regression must
+        # not contact an unrelated listener on the host's default HTTPS port.
+        assert address == ("localhost", port)
+        connections.append(address)
+        return connect(address, timeout=timeout)
+
+    monkeypatch.setattr("hfcache.hub.socket.create_connection", connects)
+    if trusted:
+        assert trust.check_hostname
+        assert trust.verify_mode == ssl.CERT_REQUIRED
+        monkeypatch.setattr("hfcache.hub.ssl.create_default_context", lambda: trust)
+
+    config = hub_config(endpoint=f"https://localhost:{port}")
+    checks = named(hub_checks(config, stub_client(StubApi())))
+
+    assert connections == [("localhost", port)]
+    assert checks["hub_dns"].outcome == "pass"
+    if trusted:
+        assert checks["hub_tls"].outcome == "pass"
+        assert "certificate valid until" in checks["hub_tls"].detail
+    else:
+        assert checks["hub_tls"].outcome == "fail"
+        assert codes(checks["hub_tls"].problems) == ["HFHUB002"]
+    assert checks["hub_identity"].outcome == "skipped"
+
+
+def test_hub_checks_use_the_default_https_port(reachable, monkeypatch: pytest.MonkeyPatch):
+    ports = []
+
+    def verifies(_host, *, port=443):
+        ports.append(port)
+        return "TLSv1.3, certificate valid"
+
+    monkeypatch.setattr("hfcache.preflight.verify_tls", verifies)
+
+    checks = named(hub_checks(hub_config(), stub_client(StubApi())))
+
+    assert ports == [443]
+    assert checks["hub_tls"].outcome == "pass"

@@ -368,6 +368,35 @@ test("search debounces to the last raw literal and unmount cancels a pending dra
     await act(() => new Promise((resolve) => setTimeout(resolve, 400)));
     expect(fixture.searches()).toHaveLength(before + 1);
 });
+test.each(["STRAẞE e\u0301", ""])(
+    "Models preserves the pending literal search %j without a delayed extra read",
+    async (value) => {
+        const fixture = mount("#q=previous&tag_all=gpu");
+        await fixture.loaded();
+        const before = fixture.searches().length;
+        const search = screen.getByRole("searchbox", {
+            name: "Find repositories",
+        });
+        fireEvent.change(search, { target: { value } });
+        fireEvent.click(screen.getByRole("button", { name: "Models" }));
+        await fixture.loaded();
+        expect(search).toHaveValue(value);
+        expect(fixture.store.snapshot().filters).toMatchObject({
+            type: "model",
+            tag_all: ["gpu"],
+        });
+        expect(fixture.store.snapshot().filters.q).toBe(value || undefined);
+        const query = fixture.searches().at(-1)?.searchParams;
+        expect(query?.get("type")).toBe("model");
+        expect(query?.get("q")).toBe(value || null);
+        const fragment = new URLSearchParams(window.location.hash.slice(1));
+        expect(fragment.get("type")).toBe("model");
+        expect(fragment.get("q")).toBe(value || null);
+        expect(fixture.searches()).toHaveLength(before + 1);
+        await act(() => new Promise((resolve) => setTimeout(resolve, 400)));
+        expect(fixture.searches()).toHaveLength(before + 1);
+    },
+);
 test("dataset switch clears only model predicates, keeps format and announces the transition", async () => {
     const fixture = mount(
         "#type=model&format=gguf&quantization=Q4_0&quantization_method=ggml&bits=4&max_variant_bytes=100",

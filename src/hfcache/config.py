@@ -28,6 +28,7 @@ import tomllib
 import uuid
 from pathlib import Path, PurePosixPath
 from typing import Annotated, Any, Literal, Self
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationError, model_validator
 
@@ -114,6 +115,15 @@ def _parse_endpoint(value: object) -> str:
             f"hub.endpoint {value!r} must be scheme and host only, "
             f"with no path, query, or trailing '/'"
         )
+        raise CodedError(message, code="HFCFG014")
+    try:
+        parsed = urlsplit(value)
+        port = parsed.port
+    except ValueError as exc:
+        message = "hub.endpoint must have a valid HTTPS port from 1 through 65535"
+        raise CodedError(message, code="HFCFG014") from exc
+    if parsed.netloc.endswith(":") or (port is not None and port < 1):
+        message = "hub.endpoint must have a valid HTTPS port from 1 through 65535"
         raise CodedError(message, code="HFCFG014")
     return value
 
