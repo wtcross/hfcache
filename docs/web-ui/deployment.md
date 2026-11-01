@@ -710,3 +710,48 @@ are required separately; file labels and source tests do not establish them.
 Confirm actual dedicated process SID, original pidfd stop and surviving accepted
 backend work in that acceptance. Missing observer proof must deny stop before
 admission while an independently proved schedule grant remains usable.
+
+## Operate the unreleased web interface
+
+Use the [clean immutable build and staging procedure](deployment.md#build-and-select-a-clean-release)
+with the reviewed source, release index and UI manifest. Stage without selecting
+a running release until the selected profile and its drain/rollback prerequisites
+are approved. [Provision the protected administrator record](deployment.md#create-a-protected-record)
+and [deliver it to the selected profile](deployment.md#deliver-the-record-to-the-selected-profile);
+preserve its stable subject through password or provider changes. Keep UI, backend
+and helper artifacts matched. Serve them through the [existing Caddy/TLS/Unix
+boundary](deployment.md#keep-the-existing-caddy-boundary), at the existing public
+authority and prefix, with no additional frontend server or public listener.
+
+Validate trusted TLS, sign-in, Library and exact-publication reads, explicit
+reload/reconnect, separate REST/MCP access and expected permission denials on
+that endpoint. A Basic sign-in grants neither archive writability nor host
+readiness. [Permissions remain independent](administration.md#read-the-permission-evidence);
+guarded rootless schedule/observer denials must not fall back to user-manager
+units. Basic credentials may remain cached after a tab closes and have no
+reliable application logout: use a trusted dedicated browser profile and close
+that profile/session when finished. Never bypass a certificate warning.
+
+Before a restart or switch, preserve [original operation keys/IDs](operations.md#keep-the-original-handle),
+draft intent, candidates/backups, private outcomes, both operation stores and
+original lock identities. Importing a safe handle stores local recovery metadata;
+only explicit observation reads the original. Missing history and uncertain
+outcomes do not authorize replay or cleanup. Stopping observation does not cancel
+accepted work. Follow [compatible rollback](migration-from-cockpit.md#select-a-rollback-scope)
+only after actual executor drain and target-specific format/configuration review;
+retain a compatible observer for unresolved outcomes and preserve previous
+immutable artifacts/indexes. A selector change alone does not restore helper
+bootstrap or protected bindings.
+
+Source and disposable fixture acceptance grant no production migration authority.
+The [production checklist](migration-from-cockpit.md#production-migration-checklist)
+remains operator work; all boxes below are unchecked:
+
+- [ ] Authorize the production profile, target identities and migration scope.
+- [ ] Verify a coordinated protected backup and preserve original handles,
+  candidates, outcomes, locks, credentials and rollback artifacts.
+- [ ] Review target-compatible configuration and unresolved-state observation.
+- [ ] Authorize and perform actual drain, guarded selection and binding review.
+- [ ] Validate the production endpoint, confinement and original recovery paths.
+- [ ] Approve writer/calendar changes, production/NAS workloads and any remote
+  publication separately; retain current holds until then.

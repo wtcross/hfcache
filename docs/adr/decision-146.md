@@ -129,5 +129,7 @@ INV-001/002/003/013/014/019 and FW-03/04. See
 read-only effective-UID access ACL as an alternative to the ordinary
 readable-group membership check. It preserves explicit sources and every
 other credential/identity/lifetime rule, with descriptor ACL and metadata
-rechecks. Unreleased source implements this policy; installed application acceptance
-remains pending.
+rechecks. This policy is implemented with the scoped owned native/rootless
+application acceptance recorded under [decision152](decision-152.md) and in
+[human acceptance](../web-ui/test-release-acceptance.md), as of 2026-11-01.
+Production rollout remains separate.

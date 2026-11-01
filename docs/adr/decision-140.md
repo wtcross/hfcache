@@ -2,7 +2,7 @@
 
 - Decision identity: 140.
 - Asset/bootstrap refinement: [decision147](decision-147.md).
-- Status: Amended accepted design; complete replacement conformance pending.
+- Status: Accepted, amended; source and scoped owned-fixture replacement acceptance recorded. Production migration remains separate.
 - Provider refinement: [decision146](decision-146.md) fixes the optional-server
   verifier, protected record, admission and legacy key-ownership contract.
 - Date: 2026-10-20.
@@ -103,3 +103,15 @@ See [server](../server.md#web-ui-design-and-current-availability),
 ## Authenticated asset and bootstrap amendment (2026-10-20)
 
 [Decision147](decision-147.md) amends this record. This refinement fixes the indexed manifest, protected captured bytes, strict bootstrap, complete Basic-only UI namespace, exact route fallback, headers/cache and finite streaming behavior. The same existing Caddy/TLS/Unix upstream remains the only public path; no global proxy authentication, public asset exception or frontend runtime is added. Accepted design is separate from executable conformance.
+
+## Recorded replacement acceptance (2026-11-01)
+
+[Human acceptance](../web-ui/test-release-acceptance.md) records the completed
+source checks and scoped native/rootless product evidence under the adopted
+acceptance method. Final read-only Chromium/root observations verify the
+retained coherent test candidate in both profiles; unchanged deeper browser and
+prefix evidence retains its original scope. Earlier pending text describes the
+introducing design. Original failures, uncertainty and browser qualifications
+remain. The [migration guide](../web-ui/migration-from-cockpit.md) records actual
+old-client/format/rollback limits. This is unreleased source and disposable
+acceptance, not a newly installed production release or a global platform claim.

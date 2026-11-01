@@ -4,6 +4,33 @@ Annotated release tags identify reviewed deployed states; application source and
 deployment commits may differ. This file summarizes user-visible changes and
 rollback constraints. Installation targets 0.1.0 and 0.1.1 were not releases.
 
+## Unreleased — web interface source
+
+Source-ready web interface changes, with separately recorded disposable native
+and rootless acceptance. The existing recorded production release and workload
+holds remain unchanged; see [deployment scope](docs/deployment-status.md).
+
+- Add an authenticated Library, exact model/dataset publication details,
+  Operations, Maintenance and Administration through the existing shared Caddy
+  endpoint. Static assets ship with the API; no separate frontend server or
+  runtime Node installation is required.
+- Display bounded archived README presentation and sanitized source with exact
+  publication provenance, inert code, blocked media and explicit unknown/refused
+  states. Browsing never captures content or fetches payloads from the Hub.
+- Provide structured configuration/tag drafts, exact validation and sizing
+  review, guarded application and separate original private-outcome observation.
+  Preserve stale-draft conflicts, historical tags and archived publications.
+- Preserve original job handles and bounded reports through reload/reconnect,
+  with no automatic replay or job cancellation. Native host controls require
+  independently proven authority; guarded rootless denials remain explicit.
+- Pair immutable UI/backend/helper artifacts and document actual old-client,
+  durable-state and rollback limits. Keep unsupported/newer records, previous
+  artifacts and compatible observation of unresolved outcomes; rollback never
+  grants permission to delete evidence or weaken confinement.
+- Complete human build/provision/validation and migration guidance. Source and
+  fixture acceptance do not perform production migration, NAS workload
+  acceptance, credential/service changes or remote publication.
+
 ## 0.2.2 — 2026-10-20, local release with workload holds
 
 This release combines the changes below since previously deployed source `4088994`.

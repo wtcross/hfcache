@@ -20253,21 +20253,129 @@
       "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B -; retained .scratch/web-023-native-browser-restored78-run1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-native-browser-restored78-run1-result.json",
+          "exit_status": 0,
+          "source_sha256": "db695ff2ebddfb9f209f368b0d8017061dd4dd5c53b3161580a91472ff933ee7",
+          "artifact_sha256": "47226e81bb93dc8326f23e6a967441957eff6a25505df28b63fda274a9532f82",
+          "node_ids": [
+            "unchanged",
+            "Library .library-results before/after reload",
+            "bootstrap exact build/manifest/subject",
+            "browser/context/cgroup closure"
+          ],
+          "profile": "Actual native Chromium/root restored78; same retained browser rootfs and persistent profile; reused exact owned-source/namespace/closure scope for final source-versus-production boundary",
+          "observed_assertion": "Trusted renewed TLS and actual unprivileged sandbox verified. Both Library loads/reload settle, exact UI/backend source+manifest and stable Basic subject match. No domain writes/external requests/5xx/page errors; only precisely observed same-origin read ERR_ABORTED cancellations are retained separately. Context/browser/container/cgroups close normally; app state, original locks/stores/handles/credentials unchanged. Representative boundary, not new3-engine×2-prefix matrix. This is owned fixture acceptance only, not production/NAS/remote publication or plugin uninstall. Final newly observed read-only installed checks remain pending."
+        },
+        {
+          "layer": "functional",
+          "command": "Root-owned SSH stdin: guest sudo -n python3 -I -B -; retained .scratch/web-023-rootless-browser-restored78-run1.sealed.py; original inline host argv not reconstructed",
+          "evidence_locator": ".scratch/web-023-rootless-browser-restored78-run1-result.json",
+          "exit_status": 0,
+          "source_sha256": "eccbeba639f17450690833a89f4e9dc1528cf40b1d02772ee685b05cc8be9ef6",
+          "artifact_sha256": "55b7f0deee262bc9828d97b6a77ac62b87573fd309f7b44f48d655049cb91a1b",
+          "node_ids": [
+            "unchanged",
+            "Library .library-results before/after reload",
+            "bootstrap exact build/manifest/subject",
+            "browser/context/cgroup closure"
+          ],
+          "profile": "Actual rootless Chromium/root restored78; same retained browser rootfs and persistent profile; reused exact owned-source/namespace/closure scope for final source-versus-production boundary",
+          "observed_assertion": "Trusted renewed TLS and actual unprivileged sandbox verified. Both Library loads/reload settle, exact UI/backend source+manifest and stable Basic subject match. No domain writes/external requests/5xx/page errors; only precisely observed same-origin read ERR_ABORTED cancellations are retained separately. Context/browser/container/cgroups close normally; app state, original locks/stores/handles/credentials unchanged. Representative boundary, not new3-engine×2-prefix matrix. This is owned fixture acceptance only, not production/NAS/remote publication or plugin uninstall. Final newly observed read-only installed checks remain pending."
+        },
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --with-build",
+          "exit_status": 0,
+          "source_sha256": "f26faa360c08882c88721a8a027488a379aaa2dffcab5132bdc60c1618ce712d",
+          "artifact_sha256": "8d255165b8226d21cb99562f5814c7d11b659c13d1bd227a6726d9651911b101",
+          "profile": "Final WEB026 locked whole-source gate as loginUID1000 in actual private empty read-only NAS shadow; source/fixture bounds, separate installed proof",
+          "evidence_locator": ".scratch/web-026-validation/gate1.log; gate1-result.json; gate1-shadow1.log; source-before-required-gate1.json",
+          "layer": "unit",
+          "node_ids": [
+            "tests/unit/test_web_functional.py::test_unsafe_manifest_refuses_before_mount_or_runtime_access",
+            "tests/unit/test_web_functional.py::test_mount_metadata_rejects_network_unknown_without_archive_traversal",
+            "tests/unit/test_web_auth_fixture.py::test_unsafe_paths_refuse_before_any_lstat",
+            "tests/unit/test_web_auth_fixture.py::test_unowned_listener_origin_refuses_before_socket_creation"
+          ],
+          "observed_assertion": "All9650 default backend tests pass, including named before-effect/path/mount/listener refusals. These bounded mechanics do not assert a global session negative or production acceptance."
+        },
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --with-build",
+          "exit_status": 0,
+          "source_sha256": "f26faa360c08882c88721a8a027488a379aaa2dffcab5132bdc60c1618ce712d",
+          "artifact_sha256": "8d255165b8226d21cb99562f5814c7d11b659c13d1bd227a6726d9651911b101",
+          "profile": "Final WEB026 locked whole-source gate as loginUID1000 in actual private empty read-only NAS shadow; source/fixture bounds, separate installed proof",
+          "evidence_locator": ".scratch/web-026-validation/gate1.log; gate1-result.json; gate1-shadow1.log; source-before-required-gate1.json",
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_container_release_installer.py::test_no_nas_path_or_symlink_alias_is_opened",
+            "tests/unit/test_release_installer.py::test_native_installer_refuses_cross_profile_before_any_tool"
+          ],
+          "observed_assertion": "Existing actual installer/fixture seams pass with their synthetic-system limits. The final controller namespace separately proves an empty read-only private NAS shadow; no production archive path, rollout or external publication is exercised."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "unchanged",
+            "current78 bootstrap/Library/reload",
+            "actual context/container/cgroup closure"
+          ],
+          "command": "rtk proxy python3 .scratch/web-026-final-capture-seal1.prepared.py native; rtk proxy python3 .scratch/web-026-execute-final-browser1.prepared.py native",
+          "exit_status": 0,
+          "source_sha256": "f6b8cf1f85ebf3bf7f406df04b9857f87b1e04477bc417ed2f6bccfefca244be",
+          "artifact_sha256": "d4a1940d3f5c6517b184989e025c2e39d88d495fa1938ee55f3f4560ef9fa117",
+          "profile": "Fresh final owned native Chromium/root on coherent0.2.78/f829/UI57828; exact original stopped CID/profile and renewed trusted CA reused; same stable subject",
+          "evidence_locator": ".scratch/web-026-final-fresh1/native/result.json",
+          "observed_assertion": "Actual trusted-TLS bootstrap/build, Library before/after reload, sandbox and stable subject pass. Zero nonGET/external/page errors/request failures/5xx; exact read cancellations retain original rules. Context/browser/container and cgroups close normally; original app roles/public hashes/approved pending hash and private-store metadata continuity hold. No new rootfs/build/PKI/service/job/Plan/replay. Metadata continuity is not private-body byte proof. Deep earlier3-engine/two-prefix evidence retains its actual source/profile; no newly refreshed Firefox/WebKit trust or new full matrix claim. Production/NAS/remote/live-plugin operations are unperformed."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "unchanged",
+            "current78 bootstrap/Library/reload",
+            "actual context/container/cgroup closure"
+          ],
+          "command": "rtk proxy python3 .scratch/web-026-final-capture-seal1.prepared.py rootless; rtk proxy python3 .scratch/web-026-execute-final-browser1.prepared.py rootless",
+          "exit_status": 0,
+          "source_sha256": "1e4066235da42152c710780d75ec94725aa3382d302ae3e9e021fce6a6544396",
+          "artifact_sha256": "083e5c5f8967366d2b26b465cd2c4fbeb693155f9b2f029c5ad4c6d27f445c99",
+          "profile": "Fresh final owned rootless Chromium/root on coherent0.2.78/f829/UI57828; exact original stopped CID/profile and renewed trusted CA reused; same stable subject",
+          "evidence_locator": ".scratch/web-026-final-fresh1/rootless/result.json",
+          "observed_assertion": "Actual trusted-TLS bootstrap/build, Library before/after reload, sandbox and stable subject pass. Zero nonGET/external/page errors/request failures/5xx; exact read cancellations retain original rules. Context/browser/container and cgroups close normally; original app roles/public hashes/approved pending hash and private-store metadata continuity hold. No new rootfs/build/PKI/service/job/Plan/replay. Metadata continuity is not private-body byte proof. Deep earlier3-engine/two-prefix evidence retains its actual source/profile; no newly refreshed Firefox/WebKit trust or new full matrix claim. Production/NAS/remote/live-plugin operations are unperformed."
+        },
+        {
+          "layer": "functional",
+          "node_ids": [
+            "owner_proof",
+            "original operations lookup",
+            "exact prior semantic operation objects"
+          ],
+          "command": "rtk proxy python3 .scratch/web-026-old-original-lookups78-1.prepared.py",
+          "exit_status": 0,
+          "source_sha256": "80679ce9863c38eea49ec8afcf5a6c663cb40143d90a3710d3691dae790f7123",
+          "artifact_sha256": "025b0b4f29246f7a04d55b5436937ce21e31d8f47ffa5d4a9ad65f792bee3405",
+          "profile": "Actual retained old1c68501/0.2.2 CLI through trusted same-Caddy current78 native/rootless; original terminal Plan handles only",
+          "evidence_locator": ".scratch/web-026-old-original-lookups78-1/result.json",
+          "observed_assertion": "Native original0dcbe97e remains succeeded and rootlessf302dad7 remains failed; both exact whole original operation records match, with existing credential namespace. Both owner-proven SSH forwards close normally/-15. No candidate, Plan, new key, credential fetch, job or mutation replay. Original unknown SDK handle is not looked up or reclassified."
+        }
+      ],
       "id": "RELEASE-09",
       "owner": "WEB-026",
       "planned_tests": [
         {
           "layer": "unit",
-          "node_id": "tests/unit/test_web_release.py::test_release_09"
+          "node_id": "tests/unit/test_web_functional.py::test_unsafe_manifest_refuses_before_mount_or_runtime_access"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_release.py::test_release_09"
+          "node_id": "tests/unit/test_container_release_installer.py::test_no_nas_path_or_symlink_alias_is_opened"
         },
         {
           "layer": "functional",
-          "node_id": "web/test/functional/release.spec.ts::RELEASE-09"
+          "node_id": "unchanged"
         }
       ],
       "required_layers": [
@@ -20275,7 +20383,7 @@
         "integration",
         "functional"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "executions": [
@@ -21219,21 +21327,96 @@
       "status": "completed"
     },
     {
-      "executions": [],
+      "executions": [
+        {
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers"
+          ],
+          "command": "rtk proxy scripts/check.sh --require-web --with-build",
+          "exit_status": 0,
+          "source_sha256": "7ee51ea4aebcdec97730b0e5ab7774708a49577cbed4f442c5e9814d7592848b",
+          "artifact_sha256": "73e2934a1e3f9445513de4333f192553f14cc746060bd12463d1829f23291c4c",
+          "profile": "Final WEB024 whole-source locked gate; loginUID1000/private empty read-only NAS shadow; existing strict web/backend/docs/build checks; reused for continuous human documentation/handoff, matching unchanged controls",
+          "evidence_locator": ".scratch/web-024-validation/gate1.log; gate1-result.json; source-before-required-gate1.json",
+          "observed_assertion": "Actual current-source route/model/helper interaction checks run in the required offline gate, retaining their synthetic service/storage limits. Existing exact installed workflow records supply the separate human-functional layer; a source integration is not production or MAC/NAS acceptance. Same-commit human documentation is independently checked for all25 completed predecessor packages; final source/handoff validation remains pending."
+        },
+        {
+          "layer": "human-functional-walkthrough",
+          "node_ids": [
+            "40 retained guide-step observations",
+            "13 actual published screenshot visual reviews",
+            "final navigation and Import/Observe wording review"
+          ],
+          "command": "Root finite final guide/screenshot/recovery-effect review, joined to37 retained actual installed/integration executions; no new browser/job/manual-reader listening",
+          "exit_status": 0,
+          "source_sha256": "91947a68cb7d2bcdce733cff1dd58965daf0a1ebbd364895e85a5897ac930df7",
+          "artifact_sha256": "91947a68cb7d2bcdce733cff1dd58965daf0a1ebbd364895e85a5897ac930df7",
+          "profile": "Final guide wording and historical20/22/24/30/50 synthetic screenshots; accepted current78/qualified older unchanged controls; original failure and Orca/keyboard limits retained; reused for continuous human documentation/handoff, matching unchanged controls",
+          "evidence_locator": ".scratch/web-024-validation/human-guide-review3.json; .scratch/web-024-visual-review-root1.json; original retained execution locators in this case",
+          "observed_assertion": "Final web-first navigation reaches every guide without agent context. Visible labels, effects, exact publication/configuration/original-handle stops and profile denials match the retained actual flows. Import is local save; Observe is separate authenticated GET. Historical image versions/alt text/synthetic facts/Files Loading caveat are accurate.19 inert/strict-model examples pass separately. This manual reconciliation supplements the original actual flows and claims no new human listening, matrix or production acceptance. Same-commit human documentation is independently checked for all25 completed predecessor packages; final source/handoff validation remains pending."
+        },
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --with-build",
+          "exit_status": 0,
+          "source_sha256": "f26faa360c08882c88721a8a027488a379aaa2dffcab5132bdc60c1618ce712d",
+          "artifact_sha256": "8d255165b8226d21cb99562f5814c7d11b659c13d1bd227a6726d9651911b101",
+          "profile": "Final WEB026 locked whole-source gate as loginUID1000 in actual private empty read-only NAS shadow; source/fixture bounds, separate installed proof",
+          "evidence_locator": ".scratch/web-026-validation/gate1.log; gate1-result.json; gate1-shadow1.log; source-before-required-gate1.json",
+          "layer": "documentation-validation",
+          "node_ids": [
+            "scripts/check-docs.py",
+            "tests/unit/test_docs_alignment.py::test_complete_repository_audience_links_anchors_and_catalog_pass_without_baseline",
+            "tests/unit/test_docs_alignment.py::test_discovery_includes_new_guides_and_adrs_but_excludes_only_owned_record_roots",
+            "tests/unit/test_web_plan.py::test_all_95_cases_have_strict_schema_owners_and_exact_matrix_rows"
+          ],
+          "observed_assertion": "Final224 human documents/29 helpers and all actual docs/plan/link/anchor/image/audience checks pass. Twenty-five completed predecessor commits contain human docs in the same commit; final handoff/changelog/status corrections are in this package. No public guide requires agent context or claims production readiness."
+        },
+        {
+          "command": "rtk proxy scripts/check.sh --require-web --with-build",
+          "exit_status": 0,
+          "source_sha256": "f26faa360c08882c88721a8a027488a379aaa2dffcab5132bdc60c1618ce712d",
+          "artifact_sha256": "8d255165b8226d21cb99562f5814c7d11b659c13d1bd227a6726d9651911b101",
+          "profile": "Final WEB026 locked whole-source gate as loginUID1000 in actual private empty read-only NAS shadow; source/fixture bounds, separate installed proof",
+          "evidence_locator": ".scratch/web-026-validation/gate1.log; gate1-result.json; gate1-shadow1.log; source-before-required-gate1.json",
+          "layer": "integration",
+          "node_ids": [
+            "tests/unit/test_rest_examples_gate.py::test_all_five_current_configuration_examples_use_their_strict_independent_loader",
+            "tests/unit/test_rest_security_gate.py::test_every_registered_rest_method_has_an_independent_security_case"
+          ],
+          "observed_assertion": "Final default gate executes independent strict example/config/default/security/route checks and three locked installation profiles. Existing19-guide-example check remains its inert/strict-model scope; effectful install/credential/service/NAS snippets are never executed for documentation."
+        },
+        {
+          "layer": "human-functional-walkthrough",
+          "node_ids": [
+            "25 predecessor same-commit human-document joins",
+            "completed40-step/13-image/19-example guide review",
+            "six unchecked production handoff boxes",
+            "final actual native/rootless read-only observations"
+          ],
+          "command": "Root final human handoff/source-versus-fixture review after actual final source and installed checks; retained guide workflows preserve their exact commands/scopes",
+          "exit_status": 0,
+          "source_sha256": "b9799d1b3d7a47604e30bc86bab6504aefc4bf462ccc7d6d883341c71e3ac07d",
+          "artifact_sha256": "b9799d1b3d7a47604e30bc86bab6504aefc4bf462ccc7d6d883341c71e3ac07d",
+          "profile": "Final human build/provision/validate/recovery/rollback handoff; matching retained guide/keyboard/Orca evidence plus fresh Chromium/root each profile and original old-client GETs",
+          "evidence_locator": ".scratch/web-026-validation/final-human-handoff-review1.json",
+          "observed_assertion": "Build/stage/provision/TLS/Basic lifetime, whole-archive trust, independent permissions/readiness, original handles/candidates/stores/locks, rootless denials and compatible rollback are actionable and linked. All six production checks stay unchecked. Existing40 guide steps/13 historical synthetic screenshots/19 inert examples retain exact source/failure/accessibility limits; no fresh human listening/universal browser claim. Every implementation package includes its human docs; final status distinguishes current source, coherent test78 and unchanged production2.2."
+        }
+      ],
       "id": "DOC-05",
       "owner": "WEB-026",
       "planned_tests": [
         {
           "layer": "documentation-validation",
-          "node_id": "tests/unit/test_web_documentation.py::test_doc_05"
+          "node_id": "tests/unit/test_docs_alignment.py::test_complete_repository_audience_links_anchors_and_catalog_pass_without_baseline"
         },
         {
           "layer": "integration",
-          "node_id": "tests/integration/test_web_doc.py::test_doc_05"
+          "node_id": "tests/unit/test_rest_examples_gate.py::test_all_five_current_configuration_examples_use_their_strict_independent_loader"
         },
         {
           "layer": "human-functional-walkthrough",
-          "node_id": "web/test/walkthrough/docs.spec.ts::DOC-05"
+          "node_id": "40 retained guide-step observations"
         }
       ],
       "required_layers": [
@@ -21241,7 +21424,7 @@
         "integration",
         "human-functional-walkthrough"
       ],
-      "status": "pending"
+      "status": "completed"
     },
     {
       "executions": [

@@ -1,10 +1,10 @@
 # Candidate test-release acceptance
 
-As of November 1, 2026, **93 of 95 acceptance scenarios are complete**, with
-executed evidence at every required layer. Installed functionality,
-compatibility/rollback, human guides and independent-web deprecation acceptance
-are complete. Two scenarios remain for final validation and operator handoff;
-overall plan acceptance remains incomplete.
+As of November 1, 2026, **all 95 acceptance scenarios are complete**, with
+executed evidence at every required layer under the adopted product-focused
+criteria. Source implementation, installed functionality, compatibility/rollback,
+human guides, legacy deprecation and final handoff acceptance are complete.
+Production migration remains separate.
 
 The installed test candidate is **0.2.78**, from application source
 `f829857ec045ce4616055e357e7d6aa7047287ca`. It uses matching immutable interface,
@@ -74,15 +74,33 @@ Basic authority the browser sent. Authenticated CSRF refusal is supported by
 separately executed TLS/protocol and application tests. These limits remain in the
 case records rather than being silently credited as broader browser proof.
 
-## What remains
+## Final observations and handoff
+
+Final read-only Chromium checks on the native and rootless test installations
+pass trusted TLS, exact build/bootstrap identity, Library before and after reload,
+unchanged administrator subject and normal context/container/cgroup closure.
+They perform no domain write or external request. Original old-client GETs
+return the same succeeded native and failed rootless operations; both remain
+unchanged, and both temporary tunnels close normally. No accepted job is replayed.
+
+These final checks reuse the coherent clean 0.2.78/f829 artifacts. Runtime
+code, packaging and web source bytes and the normalized locked dependency
+closure remain unchanged; repository self-version 0.2.2 is kept distinct. Deeper
+Chromium/Firefox/WebKit and prefix evidence retains its recorded scope. This is
+not a newly installed final 0.2.2 artifact, a new full browser matrix or refreshed
+Firefox/WebKit trust proof. Private store preservation in final captures means
+metadata continuity, not a new byte-for-byte private-payload audit.
 
 The hfcache Cockpit plugin is deprecated. The new web UI operates independently
 through its indexed API/static artifacts and existing Caddy endpoint. Legacy
-source, history, licences, shared helpers and installed state remain; no plugin
-validation or uninstall was performed.
+source, history, licences, shared helpers and installed state remain; no further
+plugin maintenance/validation or live uninstall was performed.
 
-The remaining work is final validation and operator handoff. Two acceptance
-scenarios remain pending.
+The [operator handoff](deployment.md#operate-the-unreleased-web-interface) links
+build/provision/validation, original-handle recovery and compatible rollback.
+Its production checklist remains unchecked. Original failed runs, unknown SDK
+handles, Library/Firefox/form-Basic qualifications and accessibility limits stay
+preserved; final acceptance does not invent their causes or broaden their scope.
 
 This summary supplies **no production rollout or real NAS acceptance proof**.
 Production archive permissions, original guards, unresolved handles, disabled

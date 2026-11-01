@@ -1,8 +1,19 @@
 # Separate privileged host administration from the unprivileged API
 
 - Decision identity: 141.
-- Status: Accepted design; implementation and installed conformance pending.
+- Status: Accepted; implemented with scoped owned native/rootless fixture acceptance.
 - Date: 2026-10-20.
+
+## Recorded implementation scope (2026-11-01)
+
+The fixed protected reader, managed configuration path and native host controls
+are implemented. [Human acceptance](../web-ui/test-release-acceptance.md) records
+actual native effects and guarded rootless refusals; the
+[migration guide](../web-ui/migration-from-cockpit.md#compatibility-and-backups)
+records old-client, refusal and installed rollback limits. Earlier pending
+statements retain the introducing design's historical scope. Original failures,
+unknown durable outcomes and separate production/other-platform holds remain.
+These observations do not claim an optional instrumented-runner pass.
 
 ## Read-only managed reconstruction amendment
 

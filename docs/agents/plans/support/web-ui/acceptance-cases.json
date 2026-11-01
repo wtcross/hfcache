@@ -1032,7 +1032,7 @@
         "integration",
         "functional"
       ],
-      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+      "test_binding": "tests/unit/test_web_functional.py unsafe-manifest/mount metadata and test_web_auth_fixture.py unsafe-path/listener refusal nodes; native/container installer before-effect guards; actual private NAS-shadow gate and owned final read-only current78 source/boot/closure observations. No production/global-negative inference from a unit test."
     },
     {
       "id": "DOC-01",
@@ -1092,7 +1092,7 @@
         "integration",
         "human-functional-walkthrough"
       ],
-      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+      "test_binding": "tests/unit/test_docs_alignment.py::test_complete_repository_audience_links_anchors_and_catalog_pass_without_baseline; strict rest-example/parity/security/config defaults; actual25-commit human-doc continuity and completed DOC01\u201304 retained guide/image/keyboard workflow reconciliation; final human handoff and source gate."
     },
     {
       "id": "UX-01",

@@ -2,7 +2,7 @@
 
 - Decision identity: 143.
 - Asset/bootstrap refinement: [decision147](decision-147.md).
-- Status: Amended; strict workspace, typed wire, Basic/indexed assets and functional-gate scaffolding are implemented in unreleased source. Complete replacement/release conformance remains separately required.
+- Status: Amended; strict source/build and scoped direct installed replacement acceptance recorded. Production releases and other-platform acceptance remain separate.
 - Date: 2026-10-20.
 
 The acceptance-method amendment below governs current conformance. Earlier
@@ -268,3 +268,17 @@ acceptance requires strict web/backend/docs/build checks; Cockpit is legacy
 opt-in and is not validated for this goal. Preserve its history/source/licenses,
 shared runtime helpers and live installation. All95 new-web behaviors and their
 minimum layers remain required; deprecation and handoff follow guide acceptance.
+
+## Recorded final source and product acceptance (2026-11-01)
+
+The current strict web/backend/docs/build gate and direct owned native/rootless
+product acceptance are recorded in [human acceptance](../web-ui/test-release-acceptance.md).
+Every required behavior retains its minimum layers and actual source/profile
+scope. Unchanged runtime/dependency bytes support explicit reuse of the coherent
+clean test artifacts; final read-only identity/reload/original-operation checks
+add current observations. This does not relabel those fixtures as a newly built
+or installed production release. The optional instrumented runner was not this
+acceptance path and is not claimed passed. Earlier design-time pending text,
+original failed aggregates and production/NAS holds remain historical evidence;
+[deprecation](decision-160.md) preserves legacy material without further plugin
+validation or removal work.

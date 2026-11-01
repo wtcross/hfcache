@@ -1,11 +1,22 @@
 # Install exact managed configuration once and observe durable host outcomes
 
 - Decision identity: 154.
-- Status: Accepted design; implementation acceptance pending.
+- Status: Accepted; implemented with scoped guarded Apply and original-outcome acceptance.
 - Date: 2026-10-25.
 - Introducing change: this commit.
 - Amends [decision122](decision-122.md), [decision141](decision-141.md),
   [decision150](decision-150.md) and [decision153](decision-153.md).
+
+## Recorded implementation scope (2026-11-01)
+
+[Human acceptance](../web-ui/test-release-acceptance.md) records owned native and
+guarded-rootless forms, validation, preview, Apply, exact installed bytes and
+observation of original outcomes after reload. The
+[migration guide](../web-ui/migration-from-cockpit.md#compatibility-and-backups)
+records the separate compatible rollback limits. Earlier pending statements
+retain their historical scope. Original failed aggregates and uncertain outcomes
+remain preserved; unresolved helper outcomes acquire no rollback guarantee.
+Production and other-platform acceptance remain separate.
 
 ## Context and decision
 

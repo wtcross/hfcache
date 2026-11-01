@@ -3,9 +3,22 @@
 - Decision identity: 156.
 - Status: Amended; the original implementation in `84221bf` has scoped installed
   native and guarded-rootless API-contract acceptance. The credential-mount
-  teardown amendment dated 2026-10-30 requires fresh implementation and installed validation.
+  teardown amendment dated 2026-10-30 is implemented with the scoped native
+  observer qualification recorded below.
   Full platform and production acceptance remain separate.
 - Date: 2026-10-27.
+
+## Recorded implementation scope (2026-11-01)
+
+[Human acceptance](../web-ui/test-release-acceptance.md) records one matching
+native observer Stop and independently observed completion of its accepted
+backend work. Guarded rootless controls retain their denials. The original
+failed outer aggregates remain failed; qualification did not replay Stop or
+clear unknown original handles. The
+[migration guide](../web-ui/migration-from-cockpit.md#compatibility-and-backups)
+retains the separate installed rollback and unresolved-outcome limits. Earlier
+implementation-status text remains historical; other-platform and production
+acceptance remain separate.
 
 ## Context and decision
 

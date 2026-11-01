@@ -803,10 +803,11 @@ Evidence: [plugin tests](../cockpit/test) and the
   standard library for TOML, JSON, hashing, filesystem work, locking, and
   logging. An addition needs a recorded material correctness argument, not
   convenience or fewer lines.
-  [Decision 140](adr/decision-140.md) records the correctness case for a future
-  maintained Argon2id verifier in the optional server group; no dependency is
-  added by accepting that design. [Decision 143](adr/decision-143.md) preserves
-  Node as build-only and base Python wheel/reader independence.
+  [Decision 140](adr/decision-140.md) records the correctness case for a
+  maintained Argon2id verifier; [decision146](adr/decision-146.md) implements it
+  using the direct optional-server `cryptography` dependency. The base reader
+  remains independent. [Decision 143](adr/decision-143.md) preserves Node as
+  build-only and base Python wheel/reader independence.
 - **`INV-010` — Safety checks and evidence survive routine execution.** Source
   safety checks raise exceptions and never depend on removable assertions.
   Default tests stay offline/hermetic and strip ambient credentials; Hub tests
@@ -1277,6 +1278,13 @@ See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
 [144](adr/decision-144.md). [Decision160](adr/decision-160.md) selects legacy
 deprecation after new-web acceptance and excludes further plugin validation or
 removal work; production migration remains separately authorized.
+
+Recorded source and owned native/rootless acceptance is summarized in
+[human acceptance](web-ui/test-release-acceptance.md), with exact source/profile,
+retained failure and current read-only observation limits. Earlier design-time
+pending notes do not claim unperformed production migration or broader platform
+acceptance. [Compatibility](web-ui/migration-from-cockpit.md) retains actual
+old-reader/rollback refusals and unknown original state.
 
 - **`INV-019` — Authenticate browser presentation inside the application.** The
   existing Caddy/TLS/Unix upstream serves one API-owned SPA; no global edge Basic

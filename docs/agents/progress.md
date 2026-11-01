@@ -29,6 +29,30 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-026 Complete final validation and operator handoff
+  (2026-11-01, this commit — [task](plans/tasks/web-026-final-gate-and-handoff.md)).
+  All 95 cases retain actual minimum-layer evidence under the adopted method.
+  Every predecessor package includes human docs in its commit; final human
+  handoff/unreleased notes/current ADR/invariant status align with exact scope.
+  Final required gate exits 0 in 1,640.827 seconds: 9,650 backend/4,051 unique combined web/16 wheel,
+  three locked profiles, two built browsers and real API fixture; 95.02% lines/
+  90.13% branches, 1,547 frozen inputs unchanged. Result SHA 8d255165b8226d21cb99562f5814c7d11b659c13d1bd227a6726d9651911b101,
+  log SHA 8a3e3ebfeeb6511aa032482c23b8d9f63deba79fd73a91ad060f0974b34e9305.
+  Fresh owner/boot-bound native/rootless 0.2.78 Chromium/root Library/reload/identity,
+  trusted TLS/stable subject/sandbox and actual context/container/cgroup closure
+  pass (d4a1940d/083e5c5f). Private stores retain metadata-only continuity, approved
+  public/pending hashes stand. Old 0.2.2 same-original GETs pass (025b0b4f): native
+  succeeded/rootless failed remain unchanged; both forwards close/-15, no replay.
+  Main 0.2.2 and coherent clean fixture 0.2.78/f829 metadata remain distinct; current
+  runtime/packaging/web and normalized dependency bytes match. Existing deep
+  browser/prefix evidence, raw failures and unknown handles keep actual scope;
+  no optional-runner/new matrix/fresh manual-reader or production claim.
+  Final 95-case ledger, human acceptance and operator handoff align; six production
+  boxes remain unchecked. Plan completes/current clears. Post-adoption checks
+  pass 224 docs/29 helpers, 9 plan tests and git diff --check. No new runtime/dependency/format/privilege
+  or architecture. No production/NAS, merge/push/tag/deploy or live-plugin action.
+
+
 - [x] WEB-025 Deprecate legacy UI and record web independence
   (2026-11-01, this commit — [task](plans/tasks/web-025-retire-cockpit-plugin.md)).
   Root/web/migration/legacy-entrypoint notices implement the explicit user scope;
@@ -3100,6 +3124,27 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-01 WEB-026 completes the Web UI replacement plan and clears the selector.
+All 95 scenarios retain actual required-layer evidence; final source gate and
+fresh owned native/rootless Chromium/root identity/reload/closure plus original
+old-client GETs pass. See [human acceptance](../web-ui/test-release-acceptance.md)
+and [operator handoff](../web-ui/deployment.md#operate-the-unreleased-web-interface)
+for usable build/provision/validation/recovery/rollback guidance and source/fixture
+limits. Existing three-engine/two-prefix deep evidence is reused under explicit
+unchanged-runtime scope, not a new full run. Original failures, unknown SDK
+pending inode 95048553, predecessor 0.2.77 limitations and Library/Firefox/formBasic/
+Orca qualifications remain. Private store observations are metadata continuity;
+public operation bodies match separately by original GETs. Both fixtures stay
+coherent 0.2.78, app roles/guards/RO policy/masks/calendars/credentials retained; browser
+containers and tunnels close normally. Legacy code/tests/history/licences/shared
+helpers/live install remain deprecated and preserved without further validation.
+No actual production/NAS workload, Caddy/service/credential change, merge, push,
+tag/publication or uninstall follows. All production handoff boxes stay unchecked.
+No old backlog is activated. The local branch is the reviewable implementation;
+a later production transition requires its own explicit authorization and actual
+target acceptance under existing holds.
+
 
 2026-11-01 WEB-025 deprecation/independence completes under the user's explicit
 no-further-plugin-work instruction.93 of95 cases retain all minimum layers.

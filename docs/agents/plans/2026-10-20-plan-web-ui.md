@@ -2,15 +2,33 @@
 
 | Field | Value |
 | --- | --- |
-| Status | active |
+| Status | completed |
 | Created | 2026-10-20 |
 | Authorization | Tyler's 2026-10-20 implementation instruction and bundled kickoff authorize activation, scoped source changes and owned local/isolated disposable tests on `feat/web-ui`, one work package per commit. No production deployment, remote publication, merge or tag. |
 | Tracker | `docs/agents/plans/current.md` — sole active selector; intentionally not overwritten by extraction |
 | Baseline | `6b8fae2e0997403ae5c716a2e92148af0a972af9` — main reviewed October 20, 2026 |
 | Branch | `feat/web-ui` |
-| Latest completed package | WEB-025, this commit; WEB-026 is next |
+| Latest completed package | WEB-026, this commit; all scoped work complete |
 | Work-package family | WEB, deliberately introduced for this feature after collision check; one task = one work package = one implementation commit |
 | References | [Bundle entrypoint](support/web-ui/README.md), [kickoff](support/web-ui/KICKOFF.md), [source review](support/web-ui/source-review.md) |
+
+## Final acceptance and closure (2026-11-01)
+
+WEB-026 completes all 95 required cases at every minimum layer under the adopted
+product-focused method. The final strict web/backend/docs/build gate passes 9,650
+backend/4,051 unique web/16 wheel checks, 1,547 frozen inputs unchanged. Fresh owned
+native/rootless Chromium/root current 0.2.78 Library/reload/identity/closure and exact
+old-client original-operation GETs pass; unchanged deeper engine/prefix evidence
+retains its actual scope. Human guides/handoff, unreleased notes, compatibility,
+legacy deprecation, current ADR/invariant status and same-commit documentation
+are reconciled. See [final task](tasks/web-026-final-gate-and-handoff.md#completion-evidence)
+and [human acceptance](../../web-ui/test-release-acceptance.md).
+
+All 26 work packages retain their local package boundaries. Current selector is
+cleared. Production/NAS/remote/live-plugin operations remain unperformed; original
+failures, unknown handles, guards/locks/stores/credentials/calendars/caches and
+historical material remain. Completion authorizes no backlog activation, release,
+merge, push, tag or deployment. The source-ready UI is distinct from production.
 
 ## Legacy deprecation and independent web handoff (2026-11-01)
 

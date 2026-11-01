@@ -25,6 +25,9 @@ the page never asks for a REST or Hub token. All interface documents and assets
 require administrator authentication. REST bearer and read-only MCP access remain
 separate on the same Caddy endpoint.
 
+For a reviewed build and operator transition, use the
+[operator handoff](deployment.md#operate-the-unreleased-web-interface).
+
 For an interface transition or release rollback, follow the
 [migration and compatibility guide](migration-from-cockpit.md). Preserve original
 operation handles, protected configuration and compatible observers before switching.
