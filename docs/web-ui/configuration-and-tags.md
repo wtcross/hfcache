@@ -461,7 +461,7 @@ and [deployment profiles](../deployment-centos-stream-10.md).
 ## Screenshots
 
 These actual UI captures use synthetic model and dataset repositories in an
-isolated fixture. Names, identities and sizing figures are examples.
+isolated native test build 0.2.30. Names, identities and sizing figures are examples.
 
 ![Reviewed model and dataset additions with normalized tags and complete original sizing preview](images/configuration-draft-desktop.png)
 

@@ -23,7 +23,7 @@ NFS export; neither API serves model downloads.
 | Administer a writer | [Operations](docs/operations.md), [deployment](docs/deployment-centos-stream-10.md) |
 | Connect an MCP client | [MCP connection and tools](docs/mcp.md) |
 | Copy and verify a model or dataset | [Independent consumers](docs/consumers.md) |
-| Use the browser interface | [Cockpit installation and usage](docs/cockpit-plugin/README.md), [replacement web interface status](docs/web-ui/README.md), [administrator provisioning](docs/web-ui/deployment.md), [reviewed archive maintenance](docs/web-ui/maintenance.md) |
+| Use the browser interface | [Web interface, availability and sign-in](docs/web-ui/README.md), [administrator provisioning](docs/web-ui/deployment.md), [migration and rollback](docs/web-ui/migration-from-cockpit.md), [legacy Cockpit guides](docs/cockpit-plugin/README.md) |
 | Contribute or run tests | [Development](docs/development.md) |
 | Find a contract or helper | [Documentation index](docs/README.md), [script reference](docs/scripts.md) |
 
@@ -115,9 +115,9 @@ scripts/check.sh
 ```
 
 The gate includes format, lint, types, offline tests, build and three isolated
-installation profiles. Cockpit checks require pnpm and make; their explicit skip
-does not validate plugin changes. Use `scripts/check.sh --require-cockpit` to
-require the frontend gate. [Development instructions](docs/development.md)
+installation profiles. Use `scripts/check.sh --require-web --with-build` for
+strict web UI and wheel validation. Legacy Cockpit checks are explicit opt-in and
+are outside replacement acceptance. [Development instructions](docs/development.md)
 describe safe examples, build smoke tests and separately authorized live/NFS work.
 
 ## License

@@ -33,8 +33,10 @@ micro API image behind the same existing Caddy and Unix upstream; no frontend
 image/server or runtime Node is introduced. Caddy must not acquire a global
 Basic gate or administrator record. These source requirements do not alter the
 installed release or authorize credential/service changes. Basic and web remain
-disabled when unconfigured; current release installers do not yet stage the new
-asset tree automatically.
+disabled when unconfigured. The unreleased indexed native/rootless installers
+stage paired UI/backend/helper artifacts only when explicitly selected; the
+recorded production 0.2.2 installation remains unchanged. See
+[indexed construction and staging](web-ui/deployment.md#build-and-select-a-clean-release).
 
 For a reviewed candidate, use a local immutable artifact disjoint from archive,
 configuration, credentials, state, sockets, locks and configured application TLS

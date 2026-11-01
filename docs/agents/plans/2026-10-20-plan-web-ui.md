@@ -8,9 +8,20 @@
 | Tracker | `docs/agents/plans/current.md` — sole active selector; intentionally not overwritten by extraction |
 | Baseline | `6b8fae2e0997403ae5c716a2e92148af0a972af9` — main reviewed October 20, 2026 |
 | Branch | `feat/web-ui` |
-| Latest completed package | WEB-023, this commit; WEB-024 is next |
+| Latest completed package | WEB-024, this commit; WEB-025 is next |
 | Work-package family | WEB, deliberately introduced for this feature after collision check; one task = one work package = one implementation commit |
 | References | [Bundle entrypoint](support/web-ui/README.md), [kickoff](support/web-ui/KICKOFF.md), [source review](support/web-ui/source-review.md) |
+
+## Human guide acceptance (2026-11-01)
+
+WEB-024 completes concrete navigation/control/status/caption corrections and
+finite review of40 retained actual workflow steps,13 published synthetic images
+and19 inert/strict-model examples. Five outer reference claims now describe the
+already implemented rendering, guarded writes, ACL acceptance and indexed staging.
+Required Gate1 passes9650 backend/4051 combined web/16 wheel checks with1547
+inputs unchanged. All92 cases are complete at their minimum layers; three remain.
+See [WEB-024](tasks/web-024-human-documentation-acceptance.md#completion-evidence).
+WEB-025 proportional legacy deprecation is next; no production migration follows.
 
 ## Compatibility and rollback completed (2026-11-01)
 

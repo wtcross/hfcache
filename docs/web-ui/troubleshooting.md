@@ -279,9 +279,11 @@ clears pending configuration or authorizes a new submission.
 ## Original-operation recovery
 
 Use [Observe and recover original operations](operations.md) for the complete
-procedure and finite browser-session limits. **Import original handle** and
-**Observe original operation** perform reads; **Copy recovery handles** preserves
-safe metadata. **Stop observing in this browser** does not cancel backend work.
+procedure and finite browser-session limits. **Import original handle** saves
+validated recovery metadata locally without an API request. **Observe original
+operation** performs the separate authenticated read; **Copy recovery handles**
+preserves safe metadata. **Stop observing in this browser** does not cancel
+backend work.
 
 | Problem | Safe next step |
 | --- | --- |

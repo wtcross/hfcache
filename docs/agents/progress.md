@@ -29,6 +29,26 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Web UI replacement (2026-10-20)
 
+- [x] WEB-024 Complete human guides and workflow acceptance
+  (2026-11-01, this commit — [task](plans/tasks/web-024-human-documentation-acceptance.md)).
+  Web-first root/docs navigation, implemented job/tag links, accurate historical
+  screenshot versions20/22/24/30/50, Files Loading caveat and local Import versus
+  authenticated Observe wording match actual behavior. Five stale API/security/
+  deployment implementation claims are corrected without changing authority.
+  Root reviews40 guide steps/13 actual images against37 retained original
+  integration/installed executions, preserving failures/profile/Orca limits;
+  19 inert/strict-model examples pass0, with no effectful snippet or accepted
+  operation replay. Required Gate1 exits0/1625.790s:9650 backend/4051 combined
+  web/16 wheel, three locked installs, two built browsers and real API fixture;
+  95.02% lines/90.13% branches,1547 frozen inputs unchanged, log
+  SHA9c5c6efa452a80c6105a0e2c1c369529ea6b4b7a79efd0a26b071f81bf52d878.
+  All92 cases retain required layers; three later cases remain. No new invariant,
+  dependency, runtime behavior or architectural choice; current contract/ADR review
+  is recorded. Post-adoption docs/plan checks pass224 docs/29 helpers,9 tests
+  and git diff --check. WEB-025 is next under
+  the explicit no-further-Cockpit-work direction; no production/NAS/remote action.
+
+
 - [x] WEB-023 Verify old clients and evidence-preserving rollback
   (2026-11-01, this commit — [task](plans/tasks/web-023-compatibility-and-rollback-drill.md)).
   Exact old1c68501/0.2.2 clients exercise trusted Caddy and copied durable state;
@@ -3062,6 +3082,18 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-01 WEB-024 guides and required source gate complete;92 of95 cases retain
+all minimum layers. Continue proportional WEB-025 deprecation then final WEB-026
+validation/handoff. Original37 reused workflow executions retain actual source,
+profile and failed-status qualifications; no new human-reader listening or accepted
+effect replay. Both owned fixtures stay restored78. Production/NAS/credentials,
+original guards/locks/stores/unknown handles, calendars, caches and live installed
+plugin remain; no merge/push/tag/deploy/uninstall. Deprecated legacy validation
+remains excluded. WEB-023 disposable generated TMP alone was inventoried/retired
+after success, with logs/manifests/13 outputs retained; its exact frontend evidence
+trees remain byte-verified behind canonical paths. No unknown cache/data cleanup.
+
 
 2026-11-01 WEB-023 completes source/owned-fixture compatibility and rollback;
 both native/rootless fixtures are restored78. Continue WEB-024 guide acceptance,

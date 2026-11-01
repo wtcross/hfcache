@@ -294,8 +294,8 @@ make rollback or recapture succeed.
 
 ## Example screens
 
-These images show synthetic captured cards in an isolated installation of the
-built interface. They contain test metadata and inert hostile code examples,
+These images show synthetic captured cards in an isolated installation of
+test build 0.2.24. They contain test metadata and inert hostile code examples,
 not live archive facts. Documentation images come from Chromium; the same
 rendering, source and keyboard checks also run in Firefox and WebKit.
 

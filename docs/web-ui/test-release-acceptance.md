@@ -1,9 +1,9 @@
 # Candidate test-release acceptance
 
-As of November 1, 2026, **88 of 95 acceptance scenarios are complete**, with
-executed evidence at every required layer. Installed functional acceptance and
-the compatibility/rollback drill are complete. The remaining seven scenarios
-cover human guide acceptance, legacy deprecation and final handoff; overall
+As of November 1, 2026, **92 of 95 acceptance scenarios are complete**, with
+executed evidence at every required layer. Installed functional acceptance,
+compatibility/rollback and human guide acceptance are complete. The remaining
+three scenarios cover legacy deprecation and final validation/handoff; overall
 plan acceptance remains incomplete.
 
 The installed test candidate is **0.2.78**, from application source
@@ -29,6 +29,14 @@ test layers; every scenario was not repeated in every browser/profile combinatio
 | Maintenance and Repair | Owned fixture workflows prove reviewed retention/Prune and explicit unmanaged Purge with corresponding audits. Configuration-only removal preserves archived publications as described above. A real integrity finding leads to explicit same-SHA Repair with a distinct publication, followed by a clean exact verification. Original manifests, generations, unknown files and prior operation evidence remain preserved. These are owned local-storage effects, not production NAS tests. |
 | Administration | Supported native schedule controls and matching original-observer Stop have real protected effects. Stopping the observer does not cancel accepted backend work; its later genuine completion is observed separately. Guarded rootless controls show actual denial reasons and refuse unsupported schedule/observer actions. Verification scheduling remains read-only. Installed process, socket, mount, credential and confinement observations verify the role boundaries. |
 | CLI, MCP and worker | All14 read-only MCP tools and existing CLI credential classes traverse shared Caddy at both entrypoints. Native0.2.78 has actual browser/client overlap:32 CLI/MCP calls occur during nine visible Library workflows. Rootless client reads are sequential and use labelled synthetic reports. One genuine native0.2.78 revision-verification job reads eight objects/6,286bytes for one exact revision; its original result/report survive reload. Two subsequent MCP reads match that new report. Concurrency with the new worker job is not claimed. |
+
+The guide review matches 40 documented workflow steps to retained actual installed
+observations and current controls. Thirteen genuine synthetic screenshots keep
+their historical build labels; 19 examples pass strict-model or inert syntax
+checks. Protected provisioning, installation and refresh examples are not executed
+for documentation review. Existing keyboard and screen-reader observations retain
+their recorded limits; no new human-listening or universal accessibility claim is
+made.
 
 The current required source/build check **passes**:
 `scripts/check.sh --require-web --with-build` exits 0 with 9,650 backend tests,
@@ -68,10 +76,9 @@ case records rather than being silently credited as broader browser proof.
 
 ## What remains
 
-The remaining work is the complete guide walkthrough and screenshot review,
-proportional legacy deprecation, final validation and operator handoff. Seven
-acceptance scenarios remain pending. No further Cockpit plugin maintenance or
-validation is required for the replacement.
+The remaining work is proportional legacy deprecation, final validation and
+operator handoff. Three acceptance scenarios remain pending. No further Cockpit
+plugin maintenance or validation is required for the replacement.
 
 This summary supplies **no production rollout or real NAS acceptance proof**.
 Production archive permissions, original guards, unresolved handles, disabled

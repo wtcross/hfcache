@@ -6,12 +6,14 @@ download content, refresh observations or change configuration. Check
 [interface availability](README.md) before using an installed release.
 [Repository details](repository-details.md) provide exact-publication evidence
 and bounded README display. [Configuration and tag editing](configuration-and-tags.md)
-is a separate explicit workflow; filtering never stages an edit. Full job forms
-remain separate work.
+is a separate explicit workflow; filtering never stages an edit. Use
+[Operations](operations.md#choose-a-job-and-its-effects) to review and submit a
+job deliberately.
 
 The [desktop Library screenshot](images/library-desktop.png) and
 [mobile Library screenshot](images/library-mobile.png) show the actual built
-interface with synthetic repositories in an isolated test deployment. Their
+interface from test build 0.2.20 with synthetic repositories in an isolated
+test deployment. Their
 counts, labels and identities illustrate the interface; they are not records
 from a production archive. The deployment used real Caddy and the installed API
 with explicitly simulated local storage metadata.

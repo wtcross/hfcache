@@ -371,7 +371,8 @@ after content reading, with final metadata verification. All other ACL shapes
 refuse this alternative; ordinary group-authorized source policy remains.
 Authentication changes no ACL or permission. See
 [decision152](adr/decision-152.md). The unreleased source implements this
-policy; installed application acceptance remains pending. The API token grammar rejects Hub-style `hf_` values. Exact opaque
+policy with recorded owned native/rootless application acceptance; production
+provisioning remains separate. The API token grammar rejects Hub-style `hf_` values. Exact opaque
 values are registered for redaction; the registry keeps only fixed-size digests
 and constant-time comparisons over three slots. Distinct class values prevent
 cross-interface ambiguity. Bearer principals retain a nonsecret class label,
@@ -1415,8 +1416,9 @@ provisioning. No legacy grant is migrated automatically. Basic action admission
 and queue dispatch recheck fresh proof outside application/domain locks; bearer
 and MCP behavior and original recovery handles remain unchanged. A failed
 observation neither cancels accepted work nor permits another submission. The
-helper write grammar remains denied until its guarded outcome contract is
-implemented. Source tests do not establish SELinux/namespace/container acceptance.
+implemented fixed helper writes require their guarded original-outcome protocols
+and fresh independent grants. Unsupported grammar remains denied. Source tests
+do not establish SELinux/namespace/container acceptance.
 
 Cards are untrusted derived presentation, separately bound to exact retained
 publication and immutable manifest/source identity. Writer-only bounded source

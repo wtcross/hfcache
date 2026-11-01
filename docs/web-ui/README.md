@@ -92,8 +92,10 @@ the existing writer workflow. Its exact read API is available in that source;
 the interface adds a bounded Rendered README and Sanitized source
 view in Overview. Check the release before using it. Neither view loads external media.
 
-Until the replacement passes its installed compatibility and functional checks,
-Cockpit remains shipped. Production migration and rollback require separate
-operator authorization. See [deployment profiles](../deployment-centos-stream-10.md),
+Installed functional and compatibility checks pass on the disposable native and
+rootless candidates described in the [acceptance summary](test-release-acceptance.md).
+The new interface remains unreleased source; these checks do not change an
+installed production release or its legacy plugin. Production migration and
+rollback require separate operator authorization. See [deployment profiles](../deployment-centos-stream-10.md),
 [current installed scope](../deployment-status.md), and the
 [documentation index](../README.md) for supported procedures today.

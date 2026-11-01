@@ -362,9 +362,9 @@ publication or update integrity confidence. No Hub request or payload download
 is added. Card failure uses existing `HFWRN011` warnings and the existing partial
 result rules. Publication observation fields and counts retain their original
 meaning; there is no card count, refresh flag or additional refresh route.
-The exact card read API is implemented in unreleased source; browser rendering
-remains subsequent work. See the
-[capture guide](web-ui/readme-cards.md).
+The exact card read API and bounded inert browser display are implemented in
+unreleased source. Rendering follows its separate closed presentation policy;
+see the [capture and display guide](web-ui/readme-cards.md).
 
 The canonical route identifies this operation kind; its Envelope command is
 `catalog refresh`. Existing receipt/result-reference/Envelope versions and fields
@@ -849,8 +849,10 @@ retain `Cache-Control: no-store` and `X-Content-Type-Options: nosniff`.
 Card GET reads adjunct and authoritative metadata only. It never opens README or
 other file payloads, acquires the archive writer lock, resolves Hub credentials,
 contacts Hub, writes, refreshes or verifies publication content. There is no raw
-README, HTML or general file endpoint. Browser rendering remains later work;
-this API does not enable a card view. See the [read procedure](web-ui/readme-cards.md#read-one-exact-publication).
+README, HTML or general file endpoint. The browser displays this validated
+presentation through its separate bounded inert rendering policy. See the
+[read procedure](web-ui/readme-cards.md#read-one-exact-publication) and
+[repository README view](web-ui/readme-cards.md#read-a-card-in-repository-details).
 
 Calendar expressions are one nonempty printable ASCII line, at most 4096 bytes,
 without backslash; delay is a printable ASCII line at most 256 bytes without

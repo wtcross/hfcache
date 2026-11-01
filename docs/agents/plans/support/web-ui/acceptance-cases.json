@@ -1044,7 +1044,7 @@
         "integration",
         "human-functional-walkthrough"
       ],
-      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+      "test_binding": "tests/unit/test_docs_alignment.py::test_complete_repository_audience_links_anchors_and_catalog_pass_without_baseline; tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers; actual retained installed guide-step observations in acceptance-evidence.json, with unchanged-subsystem/profile qualifications and original raw failures retained."
     },
     {
       "id": "DOC-02",
@@ -1056,7 +1056,7 @@
         "integration",
         "human-functional-walkthrough"
       ],
-      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+      "test_binding": "tests/unit/test_docs_alignment.py::test_complete_repository_audience_links_anchors_and_catalog_pass_without_baseline; tests/unit/test_rest_examples_gate.py::test_all_five_current_configuration_examples_use_their_strict_independent_loader; actual retained installed guide-step observations in acceptance-evidence.json, with unchanged-subsystem/profile qualifications and original raw failures retained."
     },
     {
       "id": "DOC-03",
@@ -1068,7 +1068,7 @@
         "integration",
         "human-functional-walkthrough"
       ],
-      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+      "test_binding": "tests/unit/test_runbook_examples.py::test_runbooks_preserve_uncertainty_and_do_not_offer_direct_writer_aliases; tests/unit/test_host_fixed_routes.py::test_lost_helper_reply_keeps_original_interrupted_and_gets_confirmed_without_replay; actual retained installed guide-step observations in acceptance-evidence.json, with unchanged-subsystem/profile qualifications and original raw failures retained."
     },
     {
       "id": "DOC-04",
@@ -1080,7 +1080,7 @@
         "integration",
         "human-functional-walkthrough"
       ],
-      "test_binding": "Assign real executable test node IDs during implementation; none executed at draft creation."
+      "test_binding": "tests/unit/test_docs_alignment.py::test_complete_repository_audience_links_anchors_and_catalog_pass_without_baseline; tests/unit/test_web_ui_routes.py::test_actual_bootstrap_navigation_alias_assets_and_exact_headers; actual retained installed guide-step observations in acceptance-evidence.json, with unchanged-subsystem/profile qualifications and original raw failures retained."
     },
     {
       "id": "DOC-05",

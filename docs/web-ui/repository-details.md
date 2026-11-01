@@ -4,7 +4,9 @@ Repository details combine the existing local metadata APIs through the
 authenticated HTTPS interface. Check [interface availability](README.md) before
 using an installed release. These reads do not contact the Hub, refresh metadata,
 transfer payload files or submit a job. The bounded [README view](readme-cards.md)
-is implemented in unreleased source; tag editing and full job forms remain separate work.
+is implemented in unreleased source. Use [Configuration and tags](configuration-and-tags.md)
+for deliberate managed edits and [Operations](operations.md#choose-a-job-and-its-effects)
+for job forms; opening repository details submits neither.
 
 ## Open a repository and pin its publication
 
@@ -197,8 +199,8 @@ repository/reference evidence rather than a finding about the selected tree.
 Activity loads bounded archive history and reports explicitly. Report absence,
 unreadable history or a partially loaded page is not proof of nonexecution.
 Observing history submits no job and cannot cancel accepted work. Use
-[original-operation recovery](operations.md) for an existing key or operation ID;
-full job forms remain separate work.
+[original-operation recovery](operations.md) for an existing key or operation ID,
+or [Jobs](operations.md#choose-a-job-and-its-effects) for a deliberately new operation.
 Within a selected report, qualified repository entries match the selected type,
 ID, SHA, publication ID and generation. Their local pages and report diagnostics
 remain bounded; a newer publication cannot inherit a predecessor's report entry.
@@ -209,7 +211,7 @@ changed session, see [detail troubleshooting](troubleshooting.md#repository-deta
 ## Example screens
 
 These screens show synthetic model and dataset metadata from an isolated test
-installation of the built interface. Their identifiers, tags, sizes and
+installation of native test build 0.2.22. Their identifiers, tags, sizes and
 observations are examples, not live archive facts.
 
 ![Model overview with exact publication identity, attributed declarations and labelled consumer locators](images/repository-model-desktop.png)
@@ -221,5 +223,7 @@ distinct from current configuration and payload integrity.
 
 On a narrow screen, file metadata uses a bounded local page and a horizontally
 scrollable table. Copy the locator whose labelled base matches your mount.
+This capture shows loaded Files, while the separate coverage panel still shows
+Loading; it does not establish supplemental metadata coverage.
 
 ![Narrow-screen files tab with keyboard-accessible local paging and consumer locator bases](images/repository-files-mobile.png)
