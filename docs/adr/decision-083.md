@@ -31,8 +31,6 @@ The source entry first appears in
 decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 
-
-
 Implementation or shipped-artifact evidence: [CHANGELOG.md](../../CHANGELOG.md),
 [README.md](../../README.md).
 

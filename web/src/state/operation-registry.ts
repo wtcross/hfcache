@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later
- * Derived from cockpit/src/lib/operation-registry.ts, preserving its recovery
- * algorithm and license. Browser adaptation uses typed REST evidence, never
- * Cockpit transport, request bodies, credentials or execution authority.
+ * Derived from hfcache recovery registry Git blob
+ * 4f45ac71d44a96cb2b43b8ef8c3b4e0673e2223f, preserving its algorithm and license.
+ * Browser adaptation uses typed REST evidence without process-bridge authority.
  */
 
 import type { SubmissionResult } from "../api/client";
@@ -72,6 +72,7 @@ export const MAX_OPERATION_RECORDS = 32;
 export const MAX_OPERATION_STORAGE_BYTES = 64 * 1024;
 export const OPERATION_GROWTH_RESERVE_BYTES = 1024;
 
+// Existing recovery records retain their original serialized discriminators.
 export type OriginalAuthority =
     | { readonly kind: "web"; readonly scope: ApiScope }
     | {

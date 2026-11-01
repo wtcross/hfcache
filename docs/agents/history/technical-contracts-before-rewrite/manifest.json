@@ -4,35 +4,35 @@
     "git": "b38d376",
     "sha256": "b5e2bf4083922e6fcb67ee9625c5e57159a994c15ec1f9f476af5972bb7b9af3",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/architecture.md",
-    "snapshot_sha256": "79754d6bbe0f3af1049edfb2f90897c7adfc9928e99cb31bf268b7c405f7acfe"
+    "snapshot_sha256": "84c04f008748757b420e82e8f92f97eaa49279abfab7efbaf53f64f2f97a7c5c"
   },
   {
     "source": "docs/invariants.md",
     "git": "b38d376",
     "sha256": "3925b76ed96372c374b7c43c82d3127b867d619a84039d8ec4b5ae496d25ed57",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/invariants.md",
-    "snapshot_sha256": "6b4b8abbb06cee58d5085a5377e986d6751bc8a712d7335cf788fde23527d283"
+    "snapshot_sha256": "fb838055df90b1436adffc334b1f13c9db63187802ef187e1ae3b3678afe5068"
   },
   {
     "source": "docs/configuration.md",
     "git": "b38d376",
     "sha256": "7792aaf33087ca11071ed6125aab904ae26ff41951b106413e0680e8ce5bdea5",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/configuration.md",
-    "snapshot_sha256": "c6663faebc5cba70bc5dbb29c4e7f2129bb01328a8d6e97af7af6aeb1279c9da"
+    "snapshot_sha256": "b9cde984054e20d91f71b4f0aaeb4d551bf8b3823acc20840b93a1e1ad6e5366"
   },
   {
     "source": "docs/schemas.md",
     "git": "b38d376",
     "sha256": "5b4769c47d7fbb353b3e6008683be85f732291d994fd6a539d44cba840c189e1",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/schemas.md",
-    "snapshot_sha256": "8ed95b86174466fba87290ea239b33dbd0f5ff32488da9db1d6724c3ac7ac73f"
+    "snapshot_sha256": "06c74c32e876321d9aef32e12c1d4c42457d52cdd9d52f5c24b1deab63ffc734"
   },
   {
     "source": "docs/security.md",
     "git": "b38d376",
     "sha256": "34f1c48af3c3d554629076f0f7f4e9acbb2c806ecaa14d4a6e6f36d898b0dadd",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/security.md",
-    "snapshot_sha256": "9543b4814513ed54ab9f4e8acbe6a658aa744347a9c5624a30ee32b5e094de93"
+    "snapshot_sha256": "3c42a2976cafccb33bef95b3cff977ec2b992f72908762a2eb81bc3f8df256f5"
   },
   {
     "source": "docs/adr/ad-01.md",
@@ -109,7 +109,7 @@
     "git": "b38d376",
     "sha256": "b56c9103473563f1727c257a844f3cd96627b6efa3e3e7adcea39b7365f014f9",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/README.md",
-    "snapshot_sha256": "da03c059702500975104ca3189aca9834eb9deb4768b49b6f59eb59febfb12de"
+    "snapshot_sha256": "76c1b1d93186727d7d0f9d2b60293786e1ceeb3b02a365255c5f8bad965ad1ad"
   },
   {
     "source": "docs/adr/decision-001.md",
@@ -165,7 +165,7 @@
     "git": "b38d376",
     "sha256": "50f44874f043f50bb9997be8ce56368ea4d6e04578c8dee66bc37aa8040afc05",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-008.md",
-    "snapshot_sha256": "19c7f733a526671ebc3ee0e8e8861ef33cf2c334d95bdff524e1b55488987fac"
+    "snapshot_sha256": "7459ca7ab11965f62e2d1e27bb37808c89f61c09208b8fbbb67d87d4c545449c"
   },
   {
     "source": "docs/adr/decision-009.md",
@@ -564,7 +564,7 @@
     "git": "b38d376",
     "sha256": "1d1890e3039e87909885152dc0291e6ee1169a61dee4794b9432402ad253e6b8",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-065.md",
-    "snapshot_sha256": "4bc70a0b16623855ebfdb86f3b3147eef42b710d9b54e38b2453a5fb3cf06e54"
+    "snapshot_sha256": "b1b142ec9cc02f99531005e3e547714482130159b44ece56c60acf0b45fe0226"
   },
   {
     "source": "docs/adr/decision-066.md",
@@ -634,7 +634,7 @@
     "git": "b38d376",
     "sha256": "af2d0bae31e1db0fc04c0308141d52084e288d1239f51e107e36c44af0843ded",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-075.md",
-    "snapshot_sha256": "73d7ce21f1d34263e0c8bad8ccbd9c9ae4f1ac32245b83d2dc3295c1b09a47e4"
+    "snapshot_sha256": "eb5bc9881786c4c70aa14e02c7d8462f0bc79aff7be5c705d78707f4c4d8bf98"
   },
   {
     "source": "docs/adr/decision-076.md",
@@ -662,7 +662,7 @@
     "git": "b38d376",
     "sha256": "eb65a09f63fdda9c32e0b706c7a1addb1f4f94a6d21eaa6ce88b8fa16fa91ce2",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-079.md",
-    "snapshot_sha256": "608ffabca9e29598caecb5c4b1eaa51e089e9717f133c46b94310b123d64920c"
+    "snapshot_sha256": "755c04399cd3eae9139ab10dbd1bab87808ece3b01bb6e6d4da4e11f2878e548"
   },
   {
     "source": "docs/adr/decision-131.md",
@@ -704,49 +704,21 @@
     "git": "b38d376",
     "sha256": "d3d5ff9a6aaaf000a52f4e99a78fc730b4f8b506d7c190ed5c099ec0d1e21465",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-086.md",
-    "snapshot_sha256": "930bbe7320b808ee5f35eceb66d66197bc4879af92504d49cea4f9d78cf1f67e"
-  },
-  {
-    "source": "docs/adr/decision-087.md",
-    "git": "b38d376",
-    "sha256": "45a99011b6b1123e45f7fe08eb48235eecb1645343819180dbce2a28a7532967",
-    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-087.md",
-    "snapshot_sha256": "79709143df06751bf76be2807581cd9330a5cd429a19a91801934b2b5c3891d5"
-  },
-  {
-    "source": "docs/adr/decision-088.md",
-    "git": "b38d376",
-    "sha256": "a2bee718fddb0d9c62188beddd9c48508d82b3151f2ff5149788039a700d9b6c",
-    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-088.md",
-    "snapshot_sha256": "5e0b22660ca7896a1abd4506894c8aec62f70a810b1f8dc722340005ce62332d"
+    "snapshot_sha256": "4338c6ad6045db971244f3da0202e2a81192dd4320e7e96169c6d1890d6c800b"
   },
   {
     "source": "docs/adr/decision-089.md",
     "git": "b38d376",
     "sha256": "c901a23bf370ea8f176b0a1c2d45e15c886b57b647ca318c8e9737a9ab48c347",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-089.md",
-    "snapshot_sha256": "f14a6ed7c1c720ebbde7d4c584635d8027b4c0070b9b06253b00da98f1934994"
-  },
-  {
-    "source": "docs/adr/decision-090.md",
-    "git": "b38d376",
-    "sha256": "6e38b9d97b72acc61e04b0abf566e2a94372a5c70cc12f5b88f1574170031864",
-    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-090.md",
-    "snapshot_sha256": "4e73c5c4bae72d3b2d9d26d39b464c6b9c08a38e8471c6958be5606e7baca992"
-  },
-  {
-    "source": "docs/adr/decision-091.md",
-    "git": "b38d376",
-    "sha256": "ffcf2a015581ee4b3887df3aa2d83d0ea308b229bb9e81949ba94cc3467edadb",
-    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-091.md",
-    "snapshot_sha256": "a65e490787e9ca2d18f9d71097e18c1171ba82d06763fac07613202e628caaab"
+    "snapshot_sha256": "299cccb77e3a25dbd5fba8af4603351c5f0b7974ba3c08780dfb0747fc722a60"
   },
   {
     "source": "docs/adr/decision-092.md",
     "git": "b38d376",
     "sha256": "efe3c666f6ee920c5e98c7c462b14055abf6fff200095e431c2314fcc802208e",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-092.md",
-    "snapshot_sha256": "8986d5772d5a5d1e5fcd1938510594da586cfe417ac420e1144dba547ca17eac"
+    "snapshot_sha256": "beee01e07dee5737aee3f3089f2e33309955fa70403d72fea8bef1039e8b4ccd"
   },
   {
     "source": "docs/adr/decision-093.md",
@@ -803,13 +775,6 @@
     "sha256": "a9b459e1fc23bf329c82a73bb67d479cb07df9a49475a0c20205ee384953559b",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-100.md",
     "snapshot_sha256": "115bb60b619ae32bbdaac0949f811c4401b11ca37c9ce2966dd833636fafacdb"
-  },
-  {
-    "source": "docs/adr/decision-101.md",
-    "git": "b38d376",
-    "sha256": "c703eadf6b3a58002cdd8e303bb96c39cdc4fa7da01c81e515d779c6890250da",
-    "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-101.md",
-    "snapshot_sha256": "31192003896028f79dbf60cc8705c0e875c951093ca06c944bc59b16ccff97d9"
   },
   {
     "source": "docs/adr/decision-102.md",
@@ -921,7 +886,7 @@
     "git": "b38d376",
     "sha256": "e3ad68a14e2f0e91eb26dd12bc79ba1b9619bc98af2737afb2c5d70e3a2d938d",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/fw-01.md",
-    "snapshot_sha256": "a225cb43339a8368a85c1e95f92a289ee13652dd2ba0885a673ee284f77d715e"
+    "snapshot_sha256": "6f7757b8eb1de8f604f94f2e3fc8eb60fd6673a158c9d3cf037241a6f0e83223"
   },
   {
     "source": "docs/adr/offline-verification.md",
@@ -970,7 +935,7 @@
     "git": "b38d376",
     "sha256": "e35014a4bcdc32e199f4c263de29ac7fcf170ce9447737eb703bae6278301961",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-113.md",
-    "snapshot_sha256": "1dcadeed71726d6b853594bf86e4f167a2033cd3666d316fe19122d8ddee6fa1"
+    "snapshot_sha256": "a2729832d390ff6cd7613b383c135b582271980fab06b7786871ce46f161386f"
   },
   {
     "source": "docs/adr/decision-114.md",
@@ -991,7 +956,7 @@
     "git": "b38d376",
     "sha256": "1bfbe070b47a8d41f364bf1d6b3fe5546e6190061c154f26f90afb227d90a989",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-116.md",
-    "snapshot_sha256": "7be27435b10a5cd23d1e5e1e5810efc100d7f1602004c68109a0f80686456ccf"
+    "snapshot_sha256": "ee7029041484fb061516be9e0ff3cbb95db4223b7dac7cee3bde40e94f61502f"
   },
   {
     "source": "docs/adr/decision-117.md",
@@ -1005,84 +970,84 @@
     "git": "b38d376",
     "sha256": "2793b4eabe0c6f5a41a1bda0f24ad9bf05983ffb7a6b20ecfeba90d104b481e1",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-118.md",
-    "snapshot_sha256": "f5a25cf0ebfe5953ed76f8f50a647852ef0384c760fa767f16360d294166e6eb"
+    "snapshot_sha256": "de6097f403169b6be72d4b340e02e2d33d45084641639715e257e1f65512e0e9"
   },
   {
     "source": "docs/adr/decision-119.md",
     "git": "b38d376",
     "sha256": "1a6d5c0c7ee23452976e172201833df6d7dd2dc1c1f8e6ead388ef5cd6722d86",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-119.md",
-    "snapshot_sha256": "e0f52332721b9ad5e8c826482fa290450f62cf83b79e921f574c326143f582ae"
+    "snapshot_sha256": "588ae8a1498dd214daec85d515e441b0f69cc6e15a764319393ba2f94f1fc3a8"
   },
   {
     "source": "docs/adr/decision-120.md",
     "git": "b38d376",
     "sha256": "d9d6cb550049806c4b688fecf9ce7d54fcb973b588307084645fc845445b4fcd",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-120.md",
-    "snapshot_sha256": "55e404955c18c8f5ac34a6cc34d860b8bfef1f056c6e7f30ceed3b88012c5cda"
+    "snapshot_sha256": "64561a39b186543f95da74d282fbf7fbecf1b358a4591c1b980812e9a0bece2d"
   },
   {
     "source": "docs/adr/decision-121.md",
     "git": "b38d376",
     "sha256": "fbdf622a233403a3f7b64431df681503292efc42c6e712786acbe02367968180",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-121.md",
-    "snapshot_sha256": "b337d06377ecef1230767e1ec5f21969f9937e8d9d4c06bb2ae2035a13769349"
+    "snapshot_sha256": "5a93ac50c86feacc441efc9e1392e587daa744053a0d46f7b65328e85252dddd"
   },
   {
     "source": "docs/adr/decision-122.md",
     "git": "b38d376",
     "sha256": "b99e3366cd6ebc55af85247e1cd697019e17ef020f352e21af5fe6d2858a926d",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-122.md",
-    "snapshot_sha256": "bb8b37287e58949a16cce647cbc66e04b500e1e638a7b5725307f807ce8499b3"
+    "snapshot_sha256": "324736d6c57b1c7737b5e82fd226e9078a85ed655a5e7bfdd44e94a8778a64b4"
   },
   {
     "source": "docs/adr/decision-123.md",
     "git": "b38d376",
     "sha256": "0d61152c037a45715bc47706156095e748ac95dc6dfcef07a6107b2d9d63abde",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-123.md",
-    "snapshot_sha256": "997893df5ae725ddd90910f6a735b13bf441cd448679d4bb6369c8044527addf"
+    "snapshot_sha256": "d33778d5c0fc032b9dd66855eb99c6b50e84fdd6015c9fbb5a11977573f9c3a1"
   },
   {
     "source": "docs/adr/decision-124.md",
     "git": "b38d376",
     "sha256": "2cc9843ff807772efbd0400b194ec9321df13f547dad294314880d12b40de587",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-124.md",
-    "snapshot_sha256": "1ee320336305242d14778c22605ddc2bd746c5e5029f06e4d4a5629c77e05224"
+    "snapshot_sha256": "745d90cf0d4e9bc6fbfb32c08853fabd16d51d0757125fb4f2d2bc473d8bd5e0"
   },
   {
     "source": "docs/adr/decision-125.md",
     "git": "b38d376",
     "sha256": "2ae02d879ebc028592ca89f01cf9fff8bafcfd32f05efba841fa67a9bf122438",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-125.md",
-    "snapshot_sha256": "c860b8b25b580483ced87077d2ff4fe9861ffffc9695ce7b25b07a171913995b"
+    "snapshot_sha256": "4dffd4e2c0f7517aa6d3ecd47aedd2b177a32dabba67fe2a3f5d450fc0b114e4"
   },
   {
     "source": "docs/adr/systemd-scheduling.md",
     "git": "b38d376",
     "sha256": "cc51ec1460cf113e623f9d0f1f3a9ded2a4c2957076b1b2bcf80ed33eee7df04",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/systemd-scheduling.md",
-    "snapshot_sha256": "7a46554512eb7db42d947d07a3603cbf2924fd43e9c3061b352aac1f7bb5f700"
+    "snapshot_sha256": "fd9629882e9cab7a61d4a70d1ec45af1d6df7972efb4c62245857feb6fa860a1"
   },
   {
     "source": "docs/adr/decision-126.md",
     "git": "b38d376",
     "sha256": "1b8009ba2c18ced9e051da4628552503049e0d84fecc7dd4a4fd11c634a79e90",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-126.md",
-    "snapshot_sha256": "bf7b1e8bc5bba2f1db195e48ab1b57dcacc7dcb93c865e2145f67959d4aaa3a6"
+    "snapshot_sha256": "ccbc9be131276d9ca5a866e2e9db1c8b5f8eb188fb1b28fc556810e36b854b8a"
   },
   {
     "source": "docs/adr/decision-127.md",
     "git": "b38d376",
     "sha256": "78c0df81428068f450f7a335e720841767fc0baace3b06ba8efb1e51c322fc2e",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-127.md",
-    "snapshot_sha256": "c602d70aa4f9514b4074f9916c89dfdfee70615d31c7f3d27a9ed08e5552821c"
+    "snapshot_sha256": "2032fbcb20eb475fdc377225404e079eaab4d1d8cbb59896f40517eecc460919"
   },
   {
     "source": "docs/adr/decision-128.md",
     "git": "b38d376",
     "sha256": "934fd22cd46d8b32a1b1341a9b47a43aa8d85aae46f89bca770ae7e11f297a44",
     "snapshot": "docs/agents/history/technical-contracts-before-rewrite/docs/adr/decision-128.md",
-    "snapshot_sha256": "9d1c1938ee1c3894f0467f0f78a0162ff5ae47f6650b6dc5b930bf6ec7ec40c4"
+    "snapshot_sha256": "08c802507d7052f3457fecdbe4a794dde990701226b4b5b20aafee51eefbaa2d"
   },
   {
     "source": "docs/adr/decision-129.md",

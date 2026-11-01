@@ -1,5 +1,11 @@
 > Historical technical reference preserved before consolidation. Current authority is the living contract.
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `882460768ac4ded888cc5d7adba111715ccf8058da7c8d9b739c89bba24bf783`,
+original content SHA-256 `7be27435b10a5cd23d1e5e1e5810efc100d7f1602004c68109a0f80686456ccf`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 # Decision 116 — Admit typed command routes without widening server authority
 
 - Status: Accepted; implemented by API-009; maintenance extended by
@@ -37,16 +43,6 @@ The `read_only` field is required and strict: missing/invalid mode never silentl
 becomes an archive probe. Read-only diagnostics may contact the installed Hub and
 use heavy resources, so they are not metadata or MCP reads. Installed validation
 is a bounded immediate query with no arbitrary-path loading or key requirement.
-
-Hub credentials come only from a trusted startup `serve --hub-token-file` or the
-installed systemd source, using existing token-mode rules. The caller's API bearer
-never becomes a Hub token. Candidate primitives validate bounded TOML content
-without resolving credentials, touching archive paths, contacting the Hub or
-installing policy. Authority compatibility compares installed root/UUID, endpoint,
-token mode, credential name and expected account before any future candidate
-planning. Changing those fields can be syntax-valid but cannot redirect the
-installed credential. Current HTTP candidate fields remain rejected; API-012
-owns the full CLI/Cockpit candidate pipeline.
 
 ## Rationale and alternatives
 

@@ -1,11 +1,17 @@
 # CAT-015: Prove read-only, bounded and cross-transport discovery behavior
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `608d706aaefb6aef6bf9fd109e340730114cce468837ed3eb0d787346b952319`,
+original content SHA-256 `2b0d691cfbf8457dd9d483b5cab314abf41e5725fae61451a919c39111f77d93`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | complete |
 | Plan | [Tags and discovery](../2026-10-19-plan-tags-and-discovery.md) |
 | Phase | 6 — Acceptance |
-| Depends on | [CAT-003](cat-003-cockpit-tag-authoring.md), [CAT-008](cat-008-sync-metadata-lifecycle.md), [CAT-014](cat-014-read-only-mcp-catalog-tools.md) |
+| Depends on | [CAT-003](../support/tags-and-discovery/retirements.json), [CAT-008](cat-008-sync-metadata-lifecycle.md), [CAT-014](cat-014-read-only-mcp-catalog-tools.md) |
 | Implementation branch | `feat/tags-and-discovery` |
 | Commit boundary | One package / one commit: `CAT-015: <completed outcome>` |
 
@@ -18,8 +24,6 @@ Follow `AGENTS.md` and `docs/agents/workflow.md`. Read relevant sections of the
 Tasks own execution status; this file is pending, not a claim of implementation.
 
 ## Likely implementation touchpoints
-
-Catalog integration/adversarial suites; shared metadata offload/security/cursor tests; Cockpit display tests; relevant contracts as fixes require.
 
 Inspect actual callers and tests before editing. Suggested new module names are
 not requirements to create redundant layers when an existing small abstraction fits.
@@ -50,8 +54,6 @@ a filesystem, security, format, candidate, read-budget or MCP boundary.
 ## Validation
 
 Matrix coverage: V47, V48, V49, V50
-
-Focused adversarial/integration suites with spies/fault injection, frontend safety/round-trip tests where changed, then full gate with Cockpit stage actually run.
 
 Every package requires `scripts/check.sh` exit 0, including docs-only work. Required
 frontend checks must actually execute for frontend changes. Offline fixture success
@@ -86,7 +88,7 @@ saturation, responsive non-pool metadata and retained MCP leases after observer
 cancellation, with eventual zero leases and unchanged archive/control state.
 
 Focused adversarial/extraction/storage/query/MCP/CLI/logging selection: 396 passed
-in 25.81s; actual `make -C cockpit check` exited 0. Early test-only context-manager,
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 HTTP parameter typing and frontend whitespace defects were fixed before this
 passing selection. All-source lint/types and documentation alignment pass.
 Full gate passed as recorded below. No new dependencies or production/live/credential/host/push work.
@@ -95,7 +97,7 @@ Full gate passed as recorded below. No new dependencies or production/live/crede
 
 Completed 2026-10-19 (CAT-015, this commit). Full `scripts/check.sh` exited 0:
 4999 passed/40 deselected in 583.75s; wheel/sdist, all three locked profiles,
-actual Cockpit lint/types/170 tests/build passed. Focused expanded selection:
+actual historical frontend lint/types/170 tests/build passed. Focused expanded selection:
 396 passed in 25.81s; standalone frontend gate also exited 0. V47-V50 have
 actual effect/import/file-open guards, inert display/input, complete transport
 walks, blocked/canceled worker leases, oversized-row refusals and hidden-secret

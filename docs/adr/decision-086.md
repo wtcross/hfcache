@@ -41,9 +41,8 @@ units after the change.
 
 ## Later history and current interpretation
 
-[Decision 92](decision-092.md) extends the same memory bound to Cockpit-spawned
-transient commands. [Decision 94](decision-094.md) preserves that working-set
-model with one bounded download producer.
+[Decision 94](decision-094.md) preserves the bounded working-set model with one
+bounded download producer.
 
 ## Provenance and governing evidence
 

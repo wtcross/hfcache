@@ -1,5 +1,10 @@
 # Reviewed baseline and source map
 
+WEB-027 archival projection: superseded interface references are summarized
+neutrally; exact original text, paths and invocations remain in Git
+`c692d7ae4b866fefd8a743a21afdb729da0f39c4`. Recorded proof hashes still identify
+the original artifacts. See [historical provenance](../../../history/removed-interface-records.md).
+
 Reviewed on 2026-10-19; repository `wtcross/hfcache`, default branch `main`, commit
 `45f91c3534244d8f2b360a68e79be3e58c97b239` (`DOC-019: complete documentation and script alignment audit`).
 The connector's branch response identified this commit as current during review.
@@ -27,31 +32,11 @@ baseline or replace newer contracts with this snapshot.
 | Shared queries | `services/queries.py` has a narrow read-only protocol and authoritative configured/published inventory semantics | Extend via a catalog query service, not CLI subprocesses or a writable tool capability |
 | REST | API docs define strict authenticated reads, bounded pagination and keyed writer operations | Add routes using existing wrappers, guards and admission rather than a new daemon |
 | MCP | MCP guide and async metadata adapter expose nine named tools, separate bearer and read-only capability | Add five explicit tools only after REST; amend exact-set tests/contracts |
-| Cockpit | `cockpit/src/lib/config.ts` has typed repository entries, parse/serialize and preview-selection helpers | Preserve tags across every editing path and retain candidate/base comparison |
-| Gate | `scripts/check.sh` checks locked extras, formatting/lint/types, docs, offline tests, build and install profiles; frontend gate can loudly skip if tools missing | A skipped frontend gate cannot complete the Cockpit task |
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Pinned repository reading list
 
 The following are source references, not files bundled or overwritten here.
-
-- `AGENTS.md` — `https://github.com/wtcross/hfcache/blob/45f91c3534244d8f2b360a68e79be3e58c97b239/AGENTS.md`
-- `docs/agents/planning.md` — `https://github.com/wtcross/hfcache/blob/45f91c3534244d8f2b360a68e79be3e58c97b239/docs/agents/planning.md`
-- `docs/agents/workflow.md` — `https://github.com/wtcross/hfcache/blob/45f91c3534244d8f2b360a68e79be3e58c97b239/docs/agents/workflow.md`
-- `docs/agents/plans/current.md` — `https://github.com/wtcross/hfcache/blob/45f91c3534244d8f2b360a68e79be3e58c97b239/docs/agents/plans/current.md`
-- `docs/agents/plans/2026-10-18-plan-rest-mcp-docs-scripts-alignment.md` — `https://github.com/wtcross/hfcache/blob/45f91c3534244d8f2b360a68e79be3e58c97b239/docs/agents/plans/2026-10-18-plan-rest-mcp-docs-scripts-alignment.md`
-- `docs/configuration.md` — `https://github.com/wtcross/hfcache/blob/45f91c3534244d8f2b360a68e79be3e58c97b239/docs/configuration.md`
-- `src/hfcache/config.py` — `https://github.com/wtcross/hfcache/blob/45f91c3534244d8f2b360a68e79be3e58c97b239/src/hfcache/config.py`
-- `src/hfcache/services/candidates.py` — `https://github.com/wtcross/hfcache/blob/45f91c3534244d8f2b360a68e79be3e58c97b239/src/hfcache/services/candidates.py`
-- `src/hfcache/manifests.py` — `https://github.com/wtcross/hfcache/blob/45f91c3534244d8f2b360a68e79be3e58c97b239/src/hfcache/manifests.py`
-- `src/hfcache/dependencies.py` — `https://github.com/wtcross/hfcache/blob/45f91c3534244d8f2b360a68e79be3e58c97b239/src/hfcache/dependencies.py`
-- `src/hfcache/services/queries.py` — `https://github.com/wtcross/hfcache/blob/45f91c3534244d8f2b360a68e79be3e58c97b239/src/hfcache/services/queries.py`
-- `src/hfcache/api/mcp_reads.py` — `https://github.com/wtcross/hfcache/blob/45f91c3534244d8f2b360a68e79be3e58c97b239/src/hfcache/api/mcp_reads.py`
-- `docs/api.md` — `https://github.com/wtcross/hfcache/blob/45f91c3534244d8f2b360a68e79be3e58c97b239/docs/api.md`
-- `docs/mcp.md` — `https://github.com/wtcross/hfcache/blob/45f91c3534244d8f2b360a68e79be3e58c97b239/docs/mcp.md`
-- `docs/invariants.md` — `https://github.com/wtcross/hfcache/blob/45f91c3534244d8f2b360a68e79be3e58c97b239/docs/invariants.md`
-- `docs/adr/ad-12.md` — `https://github.com/wtcross/hfcache/blob/45f91c3534244d8f2b360a68e79be3e58c97b239/docs/adr/ad-12.md`
-- `cockpit/src/lib/config.ts` — `https://github.com/wtcross/hfcache/blob/45f91c3534244d8f2b360a68e79be3e58c97b239/cockpit/src/lib/config.ts`
-- `scripts/check.sh` — `https://github.com/wtcross/hfcache/blob/45f91c3534244d8f2b360a68e79be3e58c97b239/scripts/check.sh`
 
 ## Implementation touchpoints to inspect, not fully reviewed claims
 
@@ -63,12 +48,6 @@ Read relevant sections and callers rather than assuming a filename settles behav
 `client.py`, `client_models.py`, `cli.py`, `cli_client.py`, server configuration
 and installation checks. Discover actual names/callers if newer source reorganized them.
 Proposed new modules in tasks are suggestions, not assertions that they already exist.
-
-Review `cockpit/src/configuration.tsx`, `cockpit/src/lib/config-pipeline.ts` and
-`candidate-guard.ts`, and their tests before changing edit/validation/install flows.
-Read relevant `docs/agents/progress.md` decisions/handoff, environment, conventions,
-release and technical-record policy at activation; this bundle does not reproduce
-or renew any historical operational authorization.
 
 Relevant architectural decisions include AD-01/06/07/12/13/15/17/18/20 and the
 shared service, REST, operation, candidate, CLI and read-only MCP decisions

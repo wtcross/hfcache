@@ -28,7 +28,6 @@
     "cli-migration-api-012": "cli-dispatch",
     "submit-detach-and-resume-api-013": "submit-detach-and-resume",
     "native-unix-and-public-prefixes-api-016": "native-unix-and-public-prefixes",
-    "cockpit-client-integration-api-015": "cockpit-client-integration",
     "scheduled-service-observation-api-014": "scheduled-service-observation"
   },
   "docs/server.md": {

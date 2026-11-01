@@ -1,5 +1,11 @@
 # Preserved reference before human rewrite
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `071920baec183e543aca77f2be3a44b7570b69104a45e96c4411858a0e279d69`,
+original content SHA-256 `d7d85ad6b306e73c3a6f848bc9c3d5b4ad74192e1f8ba0f5177f60b6c59efeac`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 Source: `5503e3b:docs/server.md`. Historical text and requirements are retained;
 relative links repaired. Current technical authority remains `docs/server.md`.
 
@@ -30,17 +36,6 @@ transport's peer information.
 Missing peer alone can also mean a socket error; it never grants native prefix
 or proxy-TLS exemption. TCP has an IP/numeric-port local address, and absent or
 malformed local evidence cannot bypass either boundary.
-
-Operation links and docs/schema URLs use a trusted effective prefix for that
-request, without shared mutable prefix state. Public OpenAPI remains deterministic
-with the configured public prefix. The local scheduled/Cockpit client needs no
-new prefix setting or schema; TCP must still use its public path and established
-TLS/proxy policy. Locked-source and real disposable Unix/TCP tests are required;
-installed-host acceptance remains separately held.
-Unix also accepts the configured-prefixed spelling, with response links matching
-the trusted spelling used. Unprefixed Unix OpenAPI uses a response copy with
-`servers=[{"url":"/"}]`; prefixed/TCP responses keep the configured public prefix.
-The cached public schema is never mutated by a native request.
 
 ## Activated services and scheduled observation (API-014)
 
@@ -764,11 +759,6 @@ an executor; host hardening remains an operator acceptance prerequisite.
 `offline.initialize_offline_process()` sets only the library flag at dedicated
 process startup, before Hub imports/use; it does not enforce no-IP isolation.
 
-Drain stops admission and joins work; disconnecting a scheduled CLI or Cockpit
-client leaves accepted work running. Recovery evidence must identify the real
-executor and operation, not a vanished CLI process. Preserve FS-18's narrow
-supervised-cancellation rule. Never unlink a potentially held lock file.
-
 Packaging will preserve sync/verify service names as authenticated Unix HTTP
 clients. The actual verifier and its client both retain deny-all IP policy.
 Deployment requires locked server extras, protected API credentials, socket
@@ -832,7 +822,6 @@ success wrappers. [MCP tool contract](../../../mcp.md#available-tools) owns
 exact inputs, output fields, costs, ordering and refusal behavior. Existing
 transport/auth/lifecycle, configured resource limits and operator holds remain.
 
-
 ## MCP client and packaging acceptance (MCP-004)
 
 The [example client](../../../../examples/mcp-client.py) selects a provisioned protected
@@ -852,7 +841,6 @@ remain API-only. [Acceptance tests](../../../../tests/unit/test_mcp_acceptance.p
 repository claims, without proving installed socket/firewall/cgroup/credential/
 SELinux/NFS/drain behavior or enabling the verify timer.
 
-
 ## Final rollout boundary (API-017)
 
 The [consolidated operator checklist](../../../deployment-centos-stream-10.md#acceptance-checklist)
@@ -863,7 +851,6 @@ API and verifier stores plus scheduled pending handles; missing old readers or
 history never proves nonexecution. The verification timer remains disabled until
 its separate calendar approval. Version 0.1.10 is unchanged source metadata,
 not an artifact identity or new deployed release.
-
 
 ## Rootless container profile (OPS-015)
 

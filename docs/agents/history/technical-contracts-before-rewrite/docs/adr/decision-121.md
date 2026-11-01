@@ -1,16 +1,12 @@
 > Historical technical reference preserved before consolidation. Current authority is the living contract.
 
-# Decision 121 — Activate one server and retain scheduled observation without replay
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `b28b23913d90253aeedd0f1e59433e5ec5a91a4c558e47062a4f8e8f9a5d5219`,
+original content SHA-256 `b337d06377ecef1230767e1ec5f21969f9937e8d9d4c06bb2ae2035a13769349`.
+Historical proof hashes identify the original artifacts, not this edited record.
 
-- Status: Accepted; implemented by API-014 on 2026-10-18; installed host
-  acceptance remains an operator deployment hold.
-- Date: 2026-10-18.
-- Work package: API-014, this commit.
-- Source: [progress decision 121](../../../../progress.md#decisions),
-  [active plan](../../../../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../../../../plans/tasks/api-014-systemd-and-deployment-integration.md).
-API-backed Cockpit mechanisms are amended by [decision 122](../../../../../adr/decision-122.md).
-Native Unix/public-prefix routing is amended by [decision 123](../../../../../adr/decision-123.md).
+# Decision 121 — Activate one server and retain scheduled observation without replay
 
 ## Context and decision
 
@@ -104,25 +100,7 @@ Evidence: [inherited-descriptor tests](../../../../../../tests/unit/test_server_
 [probe contracts](../../../../../../tests/unit/test_hardening_probe.py). Installed enforcement
 remains separate operator acceptance.
 
-
-## 2026-10-18 Cockpit API integration amendment (API-015)
-
-Cockpit full sync/verification keep the installed scheduled observer units,
-API-only credential name and explicit client socket/configuration. Stopping the
-sync observer preserves its pending handle and accepted work, so the plugin offers
-observation/reconnection rather than automatic recovery. The actual executor drain
-and installed-host holds remain unchanged. See [decision 122](../../../../../adr/decision-122.md).
-
-
 ## 2026-10-18 native Unix prefix and REST acceptance amendment (API-016)
-
-The one application keeps both listeners while local scheduled/Cockpit clients
-use native unprefixed Unix REST even with a public TCP prefix. Per-request links/
-docs and a copied native OpenAPI view cannot mutate shared public routing/schema
-state; no unit, client config or private handle schema changes. Actual source/
-socket acceptance does not replace installed cgroup/hardening proof. See
-[decision 123](../../../../../adr/decision-123.md).
-
 
 ## 2026-10-18 data-preserving local rollout amendment (OPS-014)
 
@@ -133,17 +111,7 @@ sync/full verification/archive-write acceptance is forbidden and remains NOT RUN
 Any local deployed tag records this partial acceptance explicitly. No remote push
 or ACME issuance is authorized. Rootless runtime design/proof belongs to OPS-015.
 
-
 ## 2026-10-18 explicit rootless runtime amendment (OPS-015)
-
-[Decision 127](../../../../../adr/decision-127.md) selects explicit rootless USER services and a
-system-to-user target bridge, fixed immutable runtime/container-client commands,
-non-killing drain and actual container peer/FD/secret/isolation proof. It replaces
-the initial Quadlet proposal to avoid generated replacement/forced cleanup/timeouts.
-Selected-profile Cockpit retains outer privilege/candidate guards but API secret
-delivery moves to the fixed Podman client launcher, without host ImportCredential.
-NAS/other-host restrictions, exact operation truth and previous evidence remain;
-OPS-015 fixtures bind no NAS and perform no production switch or release.
 
 ## Rootless worker-created listener amendment (OPS-017, 2026-10-18)
 

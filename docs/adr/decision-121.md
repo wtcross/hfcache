@@ -2,17 +2,6 @@
 
 - Decision identity: 121.
 
-- Status: Accepted; activation policy retained, with client identity configuration amended by [decision 148](decision-148.md).
-- Date: 2026-10-18.
-API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
-Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
-Native socket-file ownership and listener-creator credentials are configured
-separately by [decision 148](decision-148.md); named FD3 and the original
-unprivileged worker remain unchanged.
-[Decision 149](decision-149.md) refines only owned foreground API socket cleanup
-before default-SIGTERM replay; activated manager-owned node lifetime is unchanged.
-
-
 ## Context, decision and rationale
 
 Native services adopt the exact configured Unix/optional TCP API listener set
@@ -91,7 +80,6 @@ This adds no executor, thread framework, lock, runtime dependency, wire format o
 host permission. The [client contract](../api-client.md) states the observable
 behavior; [real signal and ownership regressions](../../tests/unit/test_scheduled_client.py)
 cover the interruption and original-handle boundaries.
-
 
 ## Fixed host-effect amendment (2026-10-27)
 

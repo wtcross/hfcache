@@ -1,5 +1,11 @@
 # API-009: Expose sync, verification, planning, diagnostics, and validation
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `cc44dcf188dafb03e2e733e6810a9cf99a2964959059ceab1be9ed81a68a5ee9`,
+original content SHA-256 `4fbda038b714f6807053e16592dd551705c9608a29dfcfc813fe89c0148d746b`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `API-009` |
@@ -110,7 +116,7 @@ Completed 2026-10-17, this commit.
   `--hub-token-file` or the installed systemd source is the only Hub authority.
   Candidate hooks perform pure bounded TOML/schema validation and six authority
   comparisons; current candidate HTTP remains reader 403 / writer 422. Candidate
-  CLI/Cockpit integration remains API-012.
+  CLI/historical frontend integration remains API-012.
 - Focused command:
   `rtk uv run --locked --extra server pytest tests/unit/test_command_models.py tests/unit/test_runner.py -q`
   passed 55 tests in 2.04 seconds. The released adversarial HTTP suite passed
@@ -122,7 +128,7 @@ Completed 2026-10-17, this commit.
   321 files were formatted, Ruff passed, Pyrefly reported 0 errors (11 suppressed,
   54 hidden warnings); Python passed 2,473 tests, 40 deselected, in 137.10 seconds.
   Version 0.1.10 sdist/wheel built; locked isolated base/server wheel installation,
-  imports, help and version passed. Cockpit eslint/stylelint/types, 45 tests
+  imports, help and version passed. historical frontend eslint/stylelint/types, 45 tests
   (0 failures/skips) and the production build passed. No gate-cycle fix or rerun.
 - Reviewed AD-01–03/17–19, TX-07 and INV-001/002/004/006/007/012–015: immutable
   complete observations, pre-Hub reconciliation, aggregate capacity, retention,

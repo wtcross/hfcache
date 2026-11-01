@@ -1,5 +1,11 @@
 # CAT-012: Expose writer-only keyed offline refresh operations
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `d9713e6a163f66687c0e1e2bfd439dd9e964f927d33a039bc047858d684d5bad`,
+original content SHA-256 `3e922457f8f75b24f22e9dd189b7e17b8f1f8f2ec2530e7eedf77effa9f30eaf`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | complete |
@@ -85,7 +91,7 @@ production/live/credential/host/push action performed.
 Completed 2026-10-19 (CAT-012, this commit). V39-V40 expanded HTTP/domain/REST/
 model/client selection: 223 passed in 21.55s; Ruff/Pyrefly/document alignment pass.
 `scripts/check.sh` exited 0: 4899 passed, 40 deselected in 544.62s; wheel/sdist,
-all three locked installation profiles and actual Cockpit lint/types/169 tests/
+all three locked installation profiles and actual historical frontend lint/types/169 tests/
 production build passed. Exact replay/conflict/new-key recapture, policy and
 curation after waiting, held active writer after lost acknowledgement and preserved
 interrupted restart are observed with real services and synthetic archives.

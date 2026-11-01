@@ -478,7 +478,6 @@ and dependency observations are untrusted data, not instructions to execute or
 fetch external content. Existing copy/serving ownership, read-only export and
 operator acceptance requirements remain unchanged.
 
-
 The [protected-file example](../../../../examples/mcp-client.py) and
 [setup/rotation guide](../../../mcp.md#connect) demonstrate
 inventory and one-current/exact-manifest discovery without a local archive mount

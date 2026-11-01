@@ -10,6 +10,9 @@ Source-ready web interface changes, with separately recorded disposable native
 and rootless acceptance. The existing recorded production release and workload
 holds remain unchanged; see [deployment scope](docs/deployment-status.md).
 
+- Remove the superseded interface source and documentation from the repository;
+  keep shared runtime safety and retained-code attribution. Installed services
+  and production state remain unchanged.
 - Add an authenticated Library, exact model/dataset publication details,
   Operations, Maintenance and Administration through the existing shared Caddy
   endpoint. Static assets ship with the API; no separate frontend server or
@@ -29,7 +32,7 @@ holds remain unchanged; see [deployment scope](docs/deployment-status.md).
   grants permission to delete evidence or weaken confinement.
 - Complete human build/provision/validation and migration guidance. Source and
   fixture acceptance do not perform production migration, NAS workload
-  acceptance, credential/service changes or remote publication.
+  acceptance, production credential/service changes or remote publication.
 
 ## 0.2.2 — 2026-10-20, local release with workload holds
 
@@ -40,13 +43,13 @@ TLS/authentication, private worker and fixed host client. Configuration, candida
 predecessor, locks, receipts, handles and secret identities remain intact. Existing
 NAS/workload holds remain; the tag has not been published to either remote.
 
-- Cockpit preserves classified bridge, launcher, API and domain failures, plus
-  original operation keys and IDs across tab changes and interrupted observation.
+- Client error handling retains classified launcher, API and domain failures
+  alongside original operation keys and IDs across interrupted observation.
   Uncertain execution blocks another submission; recovery authenticates and
   observes the original operation without replay.
 - Candidate preparation retains each validation/preview/confirmation result and
   reconciles captured exact bytes before further action. Bounded ASCII framing
-  avoids NUL-triggered Cockpit text-channel disconnects. Installed confirmation
+  avoids NUL-triggered text-channel disconnects. Installed confirmation
   gives PID1 a pipe and uses a bounded local collector, preserving SELinux
   confinement, original process statuses, the configuration lock and backup.
 - Manual full jobs use the fixed REST client and fresh protected host permissions.
@@ -56,12 +59,12 @@ NAS/workload holds remain; the tag has not been published to either remote.
   API identities.
 - The Unix HTTP adapter treats empty writes as a no-op, preventing a late empty
   end-of-message write from closing a valid response's socket prematurely.
-- Installed-wheel/private-socket and actual isolated Cockpit/PAM/rootless checks
+- Installed-wheel/private-socket and actual isolated rootless checks
   passed, including exact configuration installation/confirmation and read-only
   reconciliation after bridge interruption. These disposable checks remain
   separate from actual installed acceptance and do not prove the original
   installed browser symptom fixed. Its existing candidate is preserved.
-- Optional normalized configuration tags, Cockpit authoring and current versus
+- Optional normalized configuration tags and current versus
   last-observed provenance are separate from operational policy and immutable
   publication/integrity identity.
 - Local search, facets, exact catalog detail and variant pages share bounded
@@ -121,9 +124,9 @@ archive policy, Hub credential or optional server framework.
   whole-archive MCP-reader credential. No jobs, Hub fetch, integrity verification,
   resources/prompts, OAuth provisioning or artifact transfer is exposed.
 - Native activation and rootless Caddy/API/worker/client deployment profiles are
-  separate. Cockpit uses the installed CLI, protected local API settings and
-  approved host interfaces; browsers hold no bearer. Exact candidate/base guards
-  preserve privileged atomic installation and backup.
+  separate. Fixed host clients use protected local API settings and approved
+  host interfaces. Exact candidate/base guards preserve privileged atomic
+  installation and backup.
 - Structured execution correlation and nested secret redaction support concurrent
   metadata requests. Small server event-page limits drain within existing finite
   budgets without losing terminal results or reconnect handles. Consumer export
@@ -168,7 +171,6 @@ and unknown content, and removes only empty directories or files freshly
 verified against a retained current publication. Anchored filesystem operations
 protect the deletion boundary; interrupted cleanup can be safely retried.
 Original journals, published models, and durable JSON formats remain unchanged.
-Cockpit recognizes the cleanup event in its activity feed.
 
 Rollback to 0.1.7 preserves the three-revision policy and existing archive
 formats; it simply lacks the new cleanup command.
@@ -176,8 +178,7 @@ formats; it simply lacks the new cleanup command.
 ## v0.1.7 — 2026-09-14
 
 `storage.maximum_revisions` now defaults to three. Explicit five-revision
-policies remain valid; the Cockpit form offers both supported values. Adopting
-three on an existing archive requires validated configuration and repeated
+policies remain valid. Adopting three on an existing archive requires validated configuration and repeated
 reviewed prune rounds, preserving the current revision and manifest audit
 evidence. Retention ordering and durable JSON formats are unchanged.
 
@@ -190,8 +191,8 @@ Private and gated Hub repositories can now be archived through the explicit
 `hub.token_mode = "required"` policy. Required mode fails before Hub access
 when its credential is unavailable, verifies the configured account identity,
 and distinguishes an unaccepted gate from the public-only scope refusal that
-remains in `disabled` and `optional` modes. The Cockpit configuration form and
-operator runbooks cover the same restricted-repository workflow.
+remains in `disabled` and `optional` modes. Operator runbooks cover the same
+restricted-repository workflow.
 
 ## v0.1.5 — 2026-08-15
 
@@ -228,11 +229,7 @@ carries proven same-inode digest evidence instead of rereading every byte.
   mutation, deferred retention, and ordinary publication journals preserve the
   single-writer and recovery contracts while downloads overlap hashing.
 - New `repository.queued`, `hash.started`, and `hash.completed` events make the
-  WAN-idle hashing phase and its progress explicit in journald and Cockpit.
-- The new Cockpit package supplies archive and run-report views, sync and
-  verification controls, dry-run-first maintenance, configuration and schedule
-  editors, and authenticated transient-unit invocations that import the same
-  encrypted Hub credential as the scheduled service.
+  WAN-idle hashing phase and its progress explicit in journald.
 - Sync and verification units bound page-cache pressure with `MemoryHigh=4G`;
   absolute dirty-page limits keep the writeback share reclaimable. Operations,
   storage requirements, loopback quickstart, public-repository, and developer

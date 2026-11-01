@@ -1,5 +1,11 @@
 # OPS-018: Deploy and accept the corrected listener locally
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `0b1abe0145bdb21aba1b2ac98566e26b7e0bc0ee580873b00697c496a3f7469b`,
+original content SHA-256 `01898f54d7d1b05bc4e61923ab8907db468845228f2179d1ed630f20b47b45ea`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `OPS-018` |
@@ -155,7 +161,7 @@ container-ID attribution.
 
 The actual NAS-masked full gate exits 0, invocation 80ca5b2798834c369fbc5c57cfb4ef2a,
 elapsed 8m46.928s: all format/lint/whole types pass; 4,057 Python/40 deselected in
-473.93s; three locked installation profiles; 135 Cockpit tests in 2,255.602718ms/
+473.93s; three locked installation profiles; 135 historical frontend tests in 2,255.602718ms/
 build 1,272ms and four wheel smokes in 7.02s. Log .scratch/ops-018-ubi-gate.log SHA256
 9048611814592367e643e90ebc2cac4fb390649ad26e92bc206a8489032e4075.
 
@@ -224,7 +230,7 @@ remains disabled and legacy writers masked.
 
 The full NAS-masked --with-build gate actually exits 0:423 formatted/Ruff/whole
 types 0;4,057 Python/40 deselected in 473.93s; three locked wheel profiles;
-135 Cockpit tests/build and four wheel smokes. Exact command, invocation/log hash
+135 historical frontend tests/build and four wheel smokes. Exact command, invocation/log hash
 and timings are above. Reviewed INV-002/003/005–007/010–016, AD-16/17/21, FS/TX
 and decisions 65/115/121/126–129; no source/image implementation, dependency,
 credential authority or schema change. Living contracts/README/CHANGELOG,

@@ -1,5 +1,9 @@
 # Serve an authenticated SPA through the existing application and Caddy
 
+The superseded browser interface has been removed under
+[decision 161](decision-161.md). Shared backend, host-helper and web rules below
+remain governed by their current contracts.
+
 - Decision identity: 140.
 - Asset/bootstrap refinement: [decision147](decision-147.md).
 - Status: Accepted, amended; source and scoped owned-fixture replacement acceptance recorded. Production migration remains separate.
@@ -8,14 +12,6 @@
 - Date: 2026-10-20.
 
 ## Context and decision
-
-Browser administration is replacing the Cockpit transport while REST bearer
-clients and fourteen read-only MCP tools retain their interfaces. Serve the
-strict-TypeScript React SPA from the existing ASGI application at the configured
-public prefix plus `/ui/`, through the same Caddy instance, TLS endpoint and Unix
-upstream. Caddy continues to proxy; it receives neither archive access nor a
-management password hash. There is no second frontend server, Node runtime,
-public listener, global Caddy Basic gate or caller-selected API address.
 
 Provision one protected Basic administrator with an explicit stable subject and
 Argon2id password hash. A maintained verifier belongs only to the optional server
@@ -112,6 +108,6 @@ acceptance method. Final read-only Chromium/root observations verify the
 retained coherent test candidate in both profiles; unchanged deeper browser and
 prefix evidence retains its original scope. Earlier pending text describes the
 introducing design. Original failures, uncertainty and browser qualifications
-remain. The [migration guide](../web-ui/migration-from-cockpit.md) records actual
+remain. The [migration guide](../web-ui/migration-and-rollback.md) records actual
 old-client/format/rollback limits. This is unreleased source and disposable
 acceptance, not a newly installed production release or a global platform claim.

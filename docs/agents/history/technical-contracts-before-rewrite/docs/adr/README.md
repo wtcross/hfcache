@@ -1,5 +1,11 @@
 > Historical technical reference preserved before consolidation. Current authority is the living contract.
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `b37560439a4cd1c95d2193683300d77911478bac85c1aa75a2e09c134b275dc7`,
+original content SHA-256 `da03c059702500975104ca3189aca9834eb9deb4768b49b6f59eb59febfb12de`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 # Architectural decision records
 
 Start with the topic map below, then read only the records relevant to the
@@ -43,8 +49,8 @@ does not activate itself.
 | Verification and durable reporting | [Offline verification](../../../../../adr/offline-verification.md) | [Verification state](../../../../../adr/decision-051.md), [publication identity](../../../../../adr/decision-062.md), [retained set](../../../../../adr/decision-073.md), [nullable corrupt identity](../../../../../adr/decision-078.md), [complete verification lock](../../../../../adr/decision-110.md), [execution/process isolation](../../../../../adr/decision-111.md), [private verifier/reconciliation](../../../../../adr/decision-115.md), [confined worker listener](../../../../../adr/decision-128.md) |
 | Deployment, scheduling, and hardening | [Scheduling authority](../../../../../adr/systemd-scheduling.md) | [Mount units](../../../../../adr/decision-058.md), [hardening probe](../../../../../adr/decision-059.md), [offline egress](../../../../../adr/decision-060.md), [setgid exception](../../../../../adr/decision-061.md), [safe deploy](../../../../../adr/decision-065.md), [activated services/scheduled observation](../../../../../adr/decision-121.md), [Data-preserving local rollout](../../../../../adr/decision-126.md), [Rootless lifecycle](../../../../../adr/decision-127.md), [worker-owned listener/readiness](../../../../../adr/decision-128.md) |
 | Consumers and serving | [AD-10](../../../../../adr/ad-10.md) | [Independent copy helper](../../../../../adr/decision-067.md), [promotion ownership](../../../../../adr/decision-099.md), [serving mounts](../../../../../adr/decision-100.md), [public/native Unix API prefixes](../../../../../adr/decision-123.md), [optional authenticated MCP transport](../../../../../adr/decision-124.md), [nine narrow metadata tools](../../../../../adr/decision-125.md) |
-| Cockpit administration | [Plugin boundary](../../../../../adr/decision-087.md) | [Operation surface](../../../../../adr/decision-089.md), [bundled TOML](../../../../../adr/decision-091.md), [credential import](../../../../../adr/decision-092.md), [repository links](../../../../../adr/decision-101.md), [candidate validity/authority](../../../../../adr/decision-119.md), [API client and guarded candidate flow](../../../../../adr/decision-122.md) |
-| Framework, dependencies, and development | [FW-01–FW-04](../../../../../adr/fw-01.md) | [Transport boundary](../../../../../adr/decision-108.md), [submission receipts](../../../../../adr/decision-109.md), [scoped correlation/redaction](../../../../../adr/decision-111.md), [optional MCP protocol/diagnostics](../../../../../adr/decision-124.md), [server dependency/configuration boundary](../../../../../adr/decision-112.md), [authenticated metadata lifespan](../../../../../adr/decision-113.md), [durable admission without replay](../../../../../adr/decision-114.md), [bounded execution/private verifier](../../../../../adr/decision-115.md), [typed command admission](../../../../../adr/decision-116.md), [explicit maintenance authority](../../../../../adr/decision-117.md), [independent typed client](../../../../../adr/decision-118.md), [reader/candidate integration](../../../../../adr/decision-119.md), [operational CLI observation](../../../../../adr/decision-120.md), [scheduled observation continuity](../../../../../adr/decision-121.md), [Runtime baseline](../../../../../adr/decision-007.md), [provider-neutral gate](../../../../../adr/decision-008.md), [plugin toolchain](../../../../../adr/decision-088.md) |
+| historical frontend administration | [Plugin boundary](../../../removed-interface-records.md) | [Operation surface](../../../../../adr/decision-089.md), [bundled TOML](../../../removed-interface-records.md), [credential import](../../../../../adr/decision-092.md), [repository links](../../../removed-interface-records.md), [candidate validity/authority](../../../../../adr/decision-119.md), [API client and guarded candidate flow](../../../../../adr/decision-122.md) |
+| Framework, dependencies, and development | [FW-01–FW-04](../../../../../adr/fw-01.md) | [Transport boundary](../../../../../adr/decision-108.md), [submission receipts](../../../../../adr/decision-109.md), [scoped correlation/redaction](../../../../../adr/decision-111.md), [optional MCP protocol/diagnostics](../../../../../adr/decision-124.md), [server dependency/configuration boundary](../../../../../adr/decision-112.md), [authenticated metadata lifespan](../../../../../adr/decision-113.md), [durable admission without replay](../../../../../adr/decision-114.md), [bounded execution/private verifier](../../../../../adr/decision-115.md), [typed command admission](../../../../../adr/decision-116.md), [explicit maintenance authority](../../../../../adr/decision-117.md), [independent typed client](../../../../../adr/decision-118.md), [reader/candidate integration](../../../../../adr/decision-119.md), [operational CLI observation](../../../../../adr/decision-120.md), [scheduled observation continuity](../../../../../adr/decision-121.md), [Runtime baseline](../../../../../adr/decision-007.md), [provider-neutral gate](../../../../../adr/decision-008.md), [plugin toolchain](../../../removed-interface-records.md) |
 
 MCP mounted security proof under the existing 124/125 decisions is traced in the
 [MCP threat/control/test map](../../../../../mcp.md#read-only-boundary)
@@ -216,11 +222,9 @@ status and current-contract links before applying a historical choice.
 | 84 | [Placeholders replace environment specifics, records included](../../../../../adr/decision-084.md) |
 | 85 | [The storage contract becomes server-agnostic, and evaluation gets a first run](../../../../../adr/decision-085.md) |
 | 86 | [Guest memory is bounded in the units, not trusted to the host](../../../../../adr/decision-086.md) |
-| 87 | [A Cockpit plugin in `cockpit/`, contracted by `docs/cockpit.md`, tracked as the `CPT` family](../../../../../adr/decision-087.md) |
-| 88 | [The starter kit runs under pnpm; node is a build-time toolchain, not a dependency](../../../../../adr/decision-088.md) |
+| 88 | [The starter kit runs under pnpm; node is a build-time toolchain, not a dependency](../../../removed-interface-records.md) |
 | 89 | [The operation surface bends to the CLI, not the reverse](../../../../../adr/decision-089.md) |
-| 90 | [`cockpit/` carries LGPL-2.1-or-later beside the repository's MIT](../../../../../adr/decision-090.md) |
-| 91 | [`smol-toml` is bundled for configuration round-tripping](../../../../../adr/decision-091.md) |
+| 91 | [`smol-toml` is bundled for configuration round-tripping](../../../removed-interface-records.md) |
 | 92 | [Plugin CLI invocations run in transient units that import the deployment's encrypted Hub credential](../../../../../adr/decision-092.md) |
 | 93 | [A hardlink carries same-operation content evidence only with exact object identity](../../../../../adr/decision-093.md) |
 | 94 | [Queue-ahead uses one repository producer inside the existing run lock](../../../../../adr/decision-094.md) |
@@ -230,7 +234,7 @@ status and current-contract links before applying a historical choice.
 | 98 | [Restricted Hub scope requires explicit `required` token policy and one shared consumer authorization boundary](../../../../../adr/decision-098.md) |
 | 99 | [Consumer revision creation and serving promotion have separate ownership boundaries](../../../../../adr/decision-099.md) |
 | 100 | [Serving consumes the verified ordinary-file tree through read-only container mounts](../../../../../adr/decision-100.md) |
-| 101 | [Repository names are canonical, type-aware external links](../../../../../adr/decision-101.md) |
+| 101 | [Repository names are canonical, type-aware external links](../../../removed-interface-records.md) |
 | 102 | [Retention defaults to three while explicit five remains compatible](../../../../../adr/decision-102.md) |
 | 103 | [Only resolved, proven redundant staging quarantine may be released](../../../../../adr/decision-103.md) |
 | 104 | [Confirmed operator cancellation may replace the empty-staging age heuristic](../../../../../adr/decision-104.md) |
@@ -249,7 +253,7 @@ status and current-contract links before applying a historical choice.
 | 119 | [Preserve server read identity and separate candidate validity from authority](../../../../../adr/decision-119.md) |
 | 120 | [Separate command execution from resumable CLI observation](../../../../../adr/decision-120.md) |
 | 121 | [Activate one server and retain scheduled observation without replay](../../../../../adr/decision-121.md) |
-| 122 | [Preserve Cockpit authority through the API client and guarded candidates](../../../../../adr/decision-122.md) |
+| 122 | [Preserve historical frontend authority through the API client and guarded candidates](../../../../../adr/decision-122.md) |
 | 123 | [Keep public prefixes separate from native Unix REST paths](../../../../../adr/decision-123.md) |
 | 124 | [Add an optional authenticated MCP transport after REST acceptance](../../../../../adr/decision-124.md) |
 | 125 | [Expose nine typed metadata tools through a narrow read capability](../../../../../adr/decision-125.md) |

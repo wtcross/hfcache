@@ -1,5 +1,11 @@
 # WEB-003: Make the browser wire boundary precisely typed and validated
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `f357faa949fa5d98a848ef2e0bcd8b88c359892fd9d38bef2c7c69ff75526c69`,
+original content SHA-256 `7fb71903f7d1b97fb3b4232d38a4f3904e005e05ad3ffefd7b58cbb563efb3a9`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -41,7 +47,7 @@ Update API/schema and development references for generated contracts, error taxo
 
 No UI route relies on a free-form any Envelope or blind cast; actual backend payloads validate; error and integer handling are tested; old wire schemas and base client behavior remain compatible.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution notes and blockers
 
@@ -148,7 +154,7 @@ routing acceptance. Its current fixture profiles remain empty and `/management`.
 ## Completion evidence
 
 Completed 2026-10-20, WEB-003, this commit, parent `107eca3` on `feat/web-ui`.
-The required command `rtk proxy scripts/check.sh --require-web --require-cockpit`
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 exits **0** on the final frozen source. Log `.scratch/web-003-final-gate.log`
 SHA256 `0beabaea07f3be5ad95389c40275cd67598d076776cf263d70b269f11396e0a5`.
 The independent collection/verification record
@@ -166,8 +172,8 @@ after that freeze, followed by the documentation/plan checks before committing.
 - **5,452 Python tests pass**, 52 explicitly opt-in tests deselected, 706.13 s.
   Wheel/sdist build and all three locked base/server/server+MCP installation,
   import/help/version checks pass. No required check is skipped.
-- Cockpit lint/style/types/build, **572 unit tests**, zero skip/cancel/todo, and
-  **110 mounted Firefox tests** pass. This is the retained controlled Cockpit
+- historical frontend lint/style/types/build, **572 unit tests**, zero skip/cancel/todo, and
+  **110 mounted Firefox tests** pass. This is the retained controlled historical frontend
   boundary fixture, not a new production PAM/API claim.
 - Frozen web install, generation drift, lint/types and actual negative strictness
   fixtures pass; **2,718 unit / 2,744 combined component tests** pass with zero
@@ -244,7 +250,7 @@ No frozen source changes. The completed
 parent plan lifecycle and [current selector](../current.md) advance to WEB-004.
 All 95 feature cases remain pending in their owning packages. This permitted
 temporary read fixture is source-only: **no Caddy, Basic, installed native/rootless,
-NFS/NAS, production or Cockpit-retirement acceptance** follows from it. Known
+NFS/NAS, production or historical frontend-retirement acceptance** follows from it. Known
 baseline prefix fixes belong to WEB-005. Original production state, guards,
 stores, handles, candidates, backups and five unrelated guests remain untouched;
 no remote publication, rollout, replay or cleanup is authorized.

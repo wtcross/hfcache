@@ -1,5 +1,11 @@
 > Historical technical reference preserved before consolidation. Current authority is the living contract.
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `0b8c5e370ef64b834dc840a037626a919cd5c1b85a7a2fe946e1079424670c2c`,
+original content SHA-256 `9543b4814513ed54ab9f4e8acbe6a658aa744347a9c5624a30ee32b5e094de93`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 # hfcache Security Model
 
 | Field | Value |
@@ -289,28 +295,6 @@ reason records under `audit/pruned/` (`AD-20`).
 
 ### T-13 — The management plugin widens the operator surface
 
-**Capability.** The Cockpit plugin (`docs/cockpit.md`) exposes operator
-actions — sync control, configuration editing, schedule changes, repair — in
-a browser behind cockpit-ws.
-
-**Controls.** Authentication is the host's own (PAM through cockpit-ws), and
-every mutating path requires the superuser bridge, which only an
-administrative session obtains — the same boundary as a shell, and §6 already
-places root and the operator out of scope as adversaries. The plugin is
-static files under `/usr/share/cockpit/hfcache` with no listener or daemon;
-fixed privileged config/candidate/backup/lock paths are documented separately.
-CLI work drops to the service identity in a
-transient systemd unit and never runs as root (`CP-03`); it never reads
-`$CREDENTIALS_DIRECTORY`, offers token entry, or renders a credential — the
-deployment's encrypted API-only `hfcache.api` credential reaches transient clients
-only through systemd, decrypted by PID 1 (`CP-08`, upholding T-07). Hub authority
-stays on the daemon; no browser/environment/argument bearer is introduced;
-the archive is
-reached only through CLI envelopes plus one read-only run-report read as the
-service identity (`CP-01`, `CP-09`); and `archive init`, `hfcache.target`,
-and `hfcache-verify.timer` are refused structurally in its API layer
-(`CP-05`–`CP-07`).
-
 Strict bounded terminal Envelopes govern outcomes. Separately validated bounded
 progress/handles support reconnection, never outcome/checkpoint authority. Client
 stop/page closure and uncertain HFAPI013/015/019/020 retain handles without
@@ -319,10 +303,6 @@ base under the retained root configuration flock; compatible assessment, require
 preview and exact installed fingerprint confirmation precede reported success.
 Incompatible/unknown authority blocks plugin installation and requires manual
 operator review/install/restart. See [decision 122](../../../../adr/decision-122.md).
-
-**Residual risk.** cockpit-ws itself, patched with the distribution like
-`sshd`. An administrative browser session is as powerful as an administrative
-shell, which is this deployment's existing posture, not a new one.
 
 ### T-14 — A management caller gains unintended authority
 
@@ -527,7 +507,7 @@ No-confirm init is inspection/refusal only, not a privileged submission. See
 | 15 | Explicit configuration required for any dependency archiving | `AD-07` |
 | 16 | Unknown state reported, never deleted or guessed | `AD-16`, `TX-06` |
 | 17 | Fail-closed preflight before any download | Exit `20` |
-| 18 | Management UI confined to operator surfaces, with the limits structural | `docs/cockpit.md` `CP-01`–`CP-14` |
+| 18 | Management UI confined to operator surfaces, with the limits structural | `docs/agents/history/removed-interface-records.md` `CP-01`–`CP-14` |
 | 19 | Fixed capabilities, restart-only auth and bounded typed command/metadata routes | `T-14`, `docs/server.md`, API-005/006/009 |
 
 ## 5. systemd hardening posture
@@ -706,7 +686,6 @@ credential delivery and rotation, worker egress/source masking, cgroup/SELinux/
 NFS/drain/rollback and browser acceptance remain operator holds 16–18. No local
 integration result silently closes those holds or authorizes production changes.
 
-
 ## Protected MCP client acceptance (MCP-004)
 
 The [example/setup](../../../../mcp.md#connect) uses a protected
@@ -724,7 +703,6 @@ cover application behavior and unchanged credential-free/no-IP worker/timer
 policy, not actual installed enforcement. Client/socket tests use owned disposable
 fixtures; operator holds 16–18 still gate TLS/firewall/socket/source delivery,
 worker egress/custom masks, cgroup/SELinux/NFS and real drain/rollback acceptance.
-
 
 ## Rootless runtime scope (OPS-015)
 
@@ -745,13 +723,6 @@ are mounted with UID 981/mode 0400, never literals in images/env/argv/browser/lo
 or hash inputs. Root alone prepares necessary local service account/rootless
 fixture infrastructure; Caddy never obtains ACME certificates or installs trust
 on another host in this scope.
-
-[Decision 126](../../../../adr/decision-126.md) continues to forbid NAS content/metadata writes
-and other-host changes. Every NAS bind is read-only without chown/relabel/copyup;
-OPS-015 fixtures bind no NAS at all. Source masks, read-only roots and local state
-are actual proof obligations, not claims that containers alone establish isolation.
-The fixed Cockpit client launcher retains admin/candidate/observation boundaries
-without a browser bearer, generic executable input or bare-host fallback.
 
 OPS-016 adds fixed root-protected host boot policy independently of current.
 Its standard-library notify guard runs UID/GID 981, proves original local-lock

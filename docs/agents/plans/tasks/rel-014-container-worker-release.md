@@ -1,5 +1,11 @@
 # REL-014: Record the corrected local release and handoff
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `f1e09afc04bf380a7b174694fdf968c44f89a45e7e42c396ab00bea67972b16c`,
+original content SHA-256 `eaf081cf2d62430b8036913bd2496d08db4bf43cc7cee0d4c91b4d758e3ca59c`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `REL-014` |
@@ -128,7 +134,7 @@ Completed 2026-10-18, REL-014, this commit. Actual NAS-masked
 `scripts/check.sh --with-build` exits 0, invocation 0aa59f9451a34681bba8e37102ddcbf8,
 elapsed 8m45.506s: 423 formatted/Ruff/whole types pass; 4,057 Python/40 deselected
 in 472.40s; three actual locked base/server/server+MCP installation profiles;
-135 Cockpit tests in 2,224.289125ms/build 1,190ms; four wheel smokes in 7.26s.
+135 historical frontend tests in 2,224.289125ms/build 1,190ms; four wheel smokes in 7.26s.
 Log .scratch/rel-014-gate.log SHA256
 4eeb49e580489f6e5be97feca64a077c16585551c7aa8c1f40dc2bc6495672dc.
 

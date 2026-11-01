@@ -1,4 +1,4 @@
-"""Install an exact offline wheel for private-socket CLI acceptance (CP-02/08)."""
+"""Install an exact offline wheel for private-socket CLI acceptance."""
 
 import hashlib
 import json

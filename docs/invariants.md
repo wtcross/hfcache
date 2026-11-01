@@ -31,7 +31,7 @@ Read only the affected areas:
 | Configuration, credentials, authorization | [Configuration and security](#configuration-and-security) |
 | JSON, CLI, verification confidence | [Durable formats and reporting](#durable-formats-and-reporting) |
 | Downstream copies and serving | [Consumer boundary](#consumer-boundary) |
-| Browser management | [Cockpit boundary](#cockpit-boundary), [replacement browser UI](#replacement-browser-ui-design) |
+| Browser management | [Browser UI](#replacement-browser-ui-design) |
 | Dependencies, tests, implementation model | [Framework and engineering](#framework-and-engineering) |
 
 ## Identity and location
@@ -365,7 +365,7 @@ History: `synchronization` (`54e4671`), decision 94.
   startup; failed passwords never become global redaction literals. Basic has
   no MCP authority or implicit host capability; ordinary bearers gain no admin
   grants. Authentication source evidence is separate from installed acceptance.
-  The shipped Cockpit rootless launcher mounts API-only Podman `hfcache.api`
+  The rootless client mounts API-only Podman `hfcache.api`
   inside its finite client; no host ImportCredential applies. Native named
   systemd credentials remain a separate supported source.
   [Decision152](adr/decision-152.md) accepts one root:root0440 alternative with
@@ -644,141 +644,13 @@ Enforcement and evidence: [copy helper](../examples/copy-revision.py),
 The [consumer runbook](consumers.md) records the helper's copy/corruption/retry
 acceptance evidence; it is an example consumer, not an application dependency.
 
-## Cockpit boundary
+## Retired browser requirements
 
-[Decision 134](adr/decision-134.md) requires stage-aware error preservation,
-close-aware read recovery and authority-scoped operation handles outside tab
-lifetimes. These boundaries are implemented in source.
-[Decision 136](adr/decision-136.md) retires the CP-01/09 direct-report exception.
-[Decision 135](adr/decision-135.md) replaces manual service starts with keyed
-REST jobs and requires fresh protected host-profile permission before effects.
-No new workload or deployment authority follows.
-
-[Decision 137](adr/decision-137.md) requires validated read presentation with
-explicit failure, partial, unavailable and empty states. Stale/malformed/partial
-evidence never grants action readiness. Passive invalidation cannot erase newer
-acknowledged evidence in the current connection generation. Browser build provenance, selected
-physical release and authenticated API identity remain separate advisory facts;
-neither a matching version nor daemon readiness proves writability or active
-payload parity. No server capability or execution authority is added.
-
-- **`CP-01`, `CP-02`, `CP-09`** — The plugin uses installed CLI JSON envelopes
-  and systemd, never reimplements archive logic or writes archive files. The
-  plugin has no direct archive-read exception. Reports use authenticated fixed
-  CLI reads with one bounded inventory page and exact run/archive identity.
-  A separate bounded read-metadata notice carries cursor/response identity while
-  terminal Envelopes remain unchanged. Optional journal events are bounded
-  host-local diagnostics and cannot define outcome. Refuse unknown Envelope
-  versions and unbounded/malformed terminal
-  output. Separately validated bounded progress/safety notices may render and
-  reconnect, never grant domain authority or invent outcome/checkpoints/percentages
-  (decision [122](adr/decision-122.md)).
-  Boundary errors retain validated stage/problem/process facts, withholding raw
-  exception/stderr contents. Close/privilege transitions invalidate connections
-  and stale UI evidence; bounded read retries never replay mutations. See
-  [presentation and connection rules](cockpit.md#4-envelope-and-error-handling).
-  Validated original key/ID collection is independent of display truncation or
-  abort. Terminal result identities and classified failures remain distinct from
-  bridge/process failure and missing or expired observation history.
-- **`CP-03`, `CP-04`, `CP-10`** — Mutation needs administrative Cockpit access,
-  while CLI work runs as the service identity in a transient unit, never root.
-  Manual full sync/verification use the same keyed REST-backed transient client
-  as selected jobs. Scheduled observers remain separate; their unit/journal state
-  cannot establish a manual result. Respect the single writer lock; report busy
-  without bypassing it. Fresh root-only read-only inspection must prove the
-  selected indexed deployment and protected explicit permission before archive,
-  Hub/control job, configuration, schedule or observer effects. Unknown or drifted
-  evidence denies effects; absence of a guard/mask cannot grant permission.
-  A held or unconfirmed guard denies archive execution. No native fallback or
-  alternate manager is permitted. Metadata and synchronous validation remain
-  separate from keyed sizing/diagnostics and archive jobs.
-  Page-keyed jobs persist an original key before their submit process starts and
-  preserve it across tab/reload. An unresolved record blocks additional keyed
-  submissions on that host. Uncertain maintenance Apply cannot reuse an old
-  successful dry run; Apply consumes its preview before asynchronous work.
-  Capture invocation intent before asynchronous checks/callbacks and use a closed
-  plugin command grammar; null job classification cannot forward arbitrary CLI
-  text. An acknowledged host mutation followed by a failure remains uncertain
-  across tab lifetimes until explicit read-only reconciliation/acknowledgement.
-- **`CP-05`–`CP-08`** — Schedule controls affect only the sync timer; never
-  manipulate `hfcache.target`, enable the verify timer, or expose archive init.
-  The page never reads credentials or accepts tokens; the fixed launcher mounts its
-  API-only `hfcache.api` credential inside the fixed rootless client, never Hub
-  authority or browser/environment/argument bearers (decision 122).
-  Recovery storage contains only validated nonsecret scoped metadata, bounded to
-  32 records/64 KiB; corrupt, unavailable or full storage blocks submissions.
-  Unresolved records are never evicted. Authenticated metadata binds the trusted
-  host, selected profile/endpoint, credential class and confirmed archive UUID;
-  unknown/changed authority blocks saved observation. The same CLI process
-  compares its expected authority before submission or original-key lookup/wait.
-  Restored terminal summaries remain unverified until authenticated observation;
-  valid-looking stored metadata cannot unblock another submission on its own.
-  Browser storage cannot select an endpoint, replay a POST, cancel work or replace
-  an original key merely because history is missing.
-- **`CP-11`, `CP-12`** — Config installs follow candidate → successful CLI
-  validation → required successful preview → atomic install → exact installed
-  content and operational fingerprint confirmation. Required preview success
-  covers exact captured selectors/revisions and complete sizing; malformed success
-  never grants readiness. Confirmation compares installed
-  bytes before/after API validation under the root config flock, including tags
-  excluded from policy identity. A retained root config flock and exact candidate/base
-  bytes guard the pipeline; incompatible/unknown authority blocks plugin install.
-  Guarded stdin uses two bounded canonical ASCII base64 lines on the Cockpit
-  text channel. Decode and validate exact UTF-8 documents before filesystem/lock
-  effects; malformed frames never create a lock or comparison artifact
-  ([decision 138](adr/decision-138.md)).
-  Preserve original failed Envelopes and stage causes. Capture draft/base before
-  transmission in application memory; uncertain write/install blocks another
-  write/install/discard. Read-only inspection creates no files and requires the
-  original lock; explicit matching revalidation skips writes. Uncertain install
-  needs exact installed/backup proof, explicit confirmation and acknowledgement;
-  confirmation gives PID1 a pipe and uses a bounded local collector, withholding
-  all output on collection/postcheck failure and preserving original launcher
-  status ([decision 139](adr/decision-139.md));
-  remount/reload cannot silently reset it. Preview, install, confirmation and
-  acknowledgement require the captured authority and administrative session to
-  remain current. Retain the predecessor and `0640 root:hfcache` ownership/mode.
-  Timer changes use validated calendar drop-ins,
-  never edit shipped units.
-- **`CP-13`, `CP-14`** — Never weaken host hardening. The plugin ships static
-  files; Node tooling is build-time only, adds no Python runtime dependency,
-  and generated bundles/node_modules are never committed.
-  Frontend-required gates refuse unavailable sources/tools; a skipped frontend
-  stage never supplies plugin acceptance. Executed browser and real disposable
-  Cockpit/PAM evidence remain separate test layers.
-
-The accepted [replacement browser design](#replacement-browser-ui-design)
-preserves applicable CP safety rules while changing the future transport.
-The [2026-11-01 user amendment](adr/decision-144.md#user-directed-deprecation-scope-2026-11-01)
-selects legacy deprecation after new-web completion and excludes further plugin
-maintenance/validation now. Preserve legacy implementation/history and shared
-safety behavior; current acceptance requires the strict web/backend/docs/build
-gates. An explicitly requested legacy gate is not new-web acceptance. No live
-uninstall or production change follows.
-
-Contract: [Cockpit rules and pipelines](cockpit.md#1-rules).
-Enforcement: [CLI/unit API](../cockpit/src/api/hfcache.ts),
-[config API](../cockpit/src/api/config.ts),
-[schedule API](../cockpit/src/api/schedule.ts), and
-[command boundary](../cockpit/src/lib/command.ts).
-Cockpit API integration enforcement: [bounded observation runner](../cockpit/src/lib/runner.ts),
-[UTF-8 framing](../cockpit/src/lib/stream.ts),
-[validated notices](../cockpit/src/lib/events.ts),
-[terminal classification](../cockpit/src/lib/envelope.ts),
-[scoped registry](../cockpit/src/lib/operation-registry.ts),
-[authenticated recovery](../cockpit/src/api/operations.ts),
-[client authority metadata](../src/hfcache/client_metadata.py) and
-[unit/action allowlist](../cockpit/src/lib/systemd.ts), decision
-[122](adr/decision-122.md). The browser can stop only sync observation, start
-installed sync/verify clients and control the sync timer; actual API/worker/socket/
-mount/arbitrary unit actions are refused.
-Candidate enforcement/evidence: [exact-content guard](../cockpit/src/lib/candidate-guard.ts),
-[readiness/confirmation pipeline](../cockpit/src/lib/config-pipeline.ts),
-[guarded filesystem fixtures](../cockpit/test/candidate-guard.test.ts) and
-[pipeline cases](../cockpit/test/config-pipeline.test.ts). These preserve the
-privileged host-install boundary and do not prove deployed browser/SELinux behavior.
-Evidence: [plugin tests](../cockpit/test) and the
-[operator install/acceptance runbooks](cockpit-plugin/README.md).
+The obsolete interface-only `CP-01`–`CP-14` requirements are retired under
+[decision 161](adr/decision-161.md). Current browser authentication, permission,
+configuration and recovery guarantees are defined by `INV-019`–`INV-022` below
+and their detailed application/host contracts. Requirement identifiers are not
+reused. Removing obsolete source does not relax shared host safeguards.
 
 ## Framework and engineering
 
@@ -829,7 +701,7 @@ Enforcement and evidence: [dependency/tool configuration](../pyproject.toml),
 ## Remote management
 
 Authenticated REST uses typed query/command services, bounded receipt-backed
-execution and a separate private verifier. Public CLI and Cockpit clients retain
+execution and a separate private verifier. Public CLI and browser clients retain
 server authority and finite observation. Optional MCP exposes exactly fourteen read
 tools with no execution capability. [API](api.md), [server](server.md), [MCP](mcp.md)
 and [deployment status](deployment-status.md) define current behavior and the
@@ -1272,18 +1144,17 @@ their separate guarded contracts.
 The API pins helper-address directories with no-follow `O_PATH` handles, requiring
 search access without directory reads or listings; binding-leaf and peer guards
 remain mandatory.
-Source availability alone
-does not establish installed behavior or retire the existing Cockpit boundary.
-See [UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
-[144](adr/decision-144.md). [Decision160](adr/decision-160.md) selects legacy
-deprecation after new-web acceptance and excludes further plugin validation or
-removal work; production migration remains separately authorized.
+Source availability alone does not establish installed behavior. See
+[UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
+[143](adr/decision-143.md). [Decision 161](adr/decision-161.md) removes the
+superseded interface source and documentation after replacement acceptance;
+production migration remains separately authorized.
 
 Recorded source and owned native/rootless acceptance is summarized in
 [human acceptance](web-ui/test-release-acceptance.md), with exact source/profile,
 retained failure and current read-only observation limits. Earlier design-time
 pending notes do not claim unperformed production migration or broader platform
-acceptance. [Compatibility](web-ui/migration-from-cockpit.md) retains actual
+acceptance. [Compatibility](web-ui/migration-and-rollback.md) retains actual
 old-reader/rollback refusals and unknown original state.
 
 - **`INV-019` — Authenticate browser presentation inside the application.** The

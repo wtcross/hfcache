@@ -5,7 +5,6 @@
 - Status: Accepted; rootless listener policy retained, with native client identity configuration amended by [decision 148](decision-148.md) and installed scope qualified below.
 - Date: 2026-10-18.
 
-
 ## Context, decision and rationale
 
 A user-manager-created socket could carry an SELinux label the confined API

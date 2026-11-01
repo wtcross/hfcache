@@ -5,7 +5,6 @@
 - Status: Accepted; current scope includes the amendments referenced below.
 - Date: 2026-10-17.
 
-
 ## Context, decision and rationale
 
 Downloads and verification outlast an HTTP connection. Retain one bounded FIFO
@@ -35,7 +34,6 @@ configured retention. There is no crash-proof exactly-once claim.
 
 Recorded installed scope and remaining acceptance are described in
 [deployment status](../deployment-status.md).
-
 
 ## Fixed host-effect amendment (2026-10-27)
 

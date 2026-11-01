@@ -160,7 +160,7 @@ Remote installed/candidate validation stays synchronous, with no idempotency key
 or job receipt; `config validate --local` refuses the pin before policy or
 credential access.
 This metadata describes the selected client authority, not the container image
-or Cockpit host; callers must scope those separately.
+or browser host; callers must scope those separately.
 
 Job flags and legacy policy/Hub-token options are refused before opening settings
 or credentials. Nonzero API Envelopes retain their original command, problems,

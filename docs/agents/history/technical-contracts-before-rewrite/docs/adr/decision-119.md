@@ -1,15 +1,12 @@
 > Historical technical reference preserved before consolidation. Current authority is the living contract.
 
-# Decision 119 — Preserve server read identity and separate candidate validity from authority
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `8e686715541b1d4ec7f4b13b8776aa8ee883f8f06bed7b91d2bc2194859f4123`,
+original content SHA-256 `e0f52332721b9ad5e8c826482fa290450f62cf83b79e921f574c326143f582ae`.
+Historical proof hashes identify the original artifacts, not this edited record.
 
-- Status: Accepted; implemented by API-012 on 2026-10-18, with operational
-  observation advanced by [decision 120](../../../../../adr/decision-120.md).
-- Date: 2026-10-18.
-- Work package: API-012, this commit.
-- Source: [progress decision 119](../../../../progress.md#decisions),
-  [active plan](../../../../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../../../../plans/tasks/api-012-migrate-read-cli-and-candidates.md).
-API-backed Cockpit mechanisms are amended by [decision 122](../../../../../adr/decision-122.md).
+# Decision 119 — Preserve server read identity and separate candidate validity from authority
 
 ## Context and decision
 
@@ -62,13 +59,6 @@ metadata; partial page reconstruction would silently change existing results.
 A local-filesystem fallback would create another execution authority when the
 API is unavailable. Refuse those alternatives.
 
-Treating compatibility as syntax failure would prevent reviewing legitimate
-operator authority changes. Resolving candidate credentials or using its endpoint
-would redirect installed privilege. Pure validation plus installed-authority planning
-retains the existing Cockpit candidate → validate → preview → privileged atomic
-install pipeline (CP-11), without adding a configuration-install REST endpoint.
-An optional DTO extension must not change historical idempotency comparison input.
-
 ### UDS descriptor ownership and FW-04
 
 The required missing-local-API test exposed a descriptor leak in locked
@@ -96,7 +86,7 @@ Official references: [HTTPX custom transports](https://www.python-httpx.org/adva
 
 Implements [118](../../../../../adr/decision-118.md)'s reader integration and
 [116](../../../../../adr/decision-116.md)'s bounded candidate hooks; amends
-[AD-21](../../../../../adr/ad-21.md) and [087](../../../../../adr/decision-087.md) for the reader/candidate boundary,
+[AD-21](../../../../../adr/ad-21.md) and [087](../../../removed-interface-records.md) for the reader/candidate boundary,
 and [FW-01–FW-04](../../../../../adr/fw-01.md)/[108](../../../../../adr/decision-108.md)/[112](../../../../../adr/decision-112.md) for explicit HTTPCore use.
 Preserves INV-001/002/006/008/
 012–014, AD-21, CP-11, FS-12 and all shared domain/credential rules. Candidate
@@ -131,13 +121,3 @@ unchanged; explicit detach is identified admission, while mandatory key/operatio
 handles survive quiet and interrupted observation. Candidate authority and
 historical canonical key mappings are unchanged. Pure request extraction grants
 no local mutation authority or configuration-install path.
-
-
-## 2026-10-18 Cockpit API integration amendment (API-015)
-
-Cockpit now applies the syntax/installed-authority distinction through its
-API-only CLI boundary. Exact candidate/base checks under a retained root config
-flock prevent stale assessment/preview reuse. Incompatible/unknown authority blocks
-plugin installation with manual guidance; successful installed confirmation must
-match the exact expected fingerprint. Planning remains installed-credential-only;
-REST gains no install authority. See [decision 122](../../../../../adr/decision-122.md).

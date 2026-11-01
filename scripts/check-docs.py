@@ -25,7 +25,6 @@ EXCLUDED = {".git", ".venv", "node_modules", "__pycache__", ".pytest_cache", ".r
 GENERATED = {
     ".scratch",
     "dist",
-    "cockpit/dist",
     "web/dist",
     "web/coverage",
     "web/.cache",

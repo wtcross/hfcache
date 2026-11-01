@@ -1,5 +1,11 @@
 # WEB-008: Implement guarded atomic configuration application and recovery
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `183496e5baa8b20348725211ef7320da21d037b90b8cdd4f9013cf42a57727ef`,
+original content SHA-256 `2d7e19bdc7b57bdcdad49fadc4dde11028b1e9e273bbe16f43615ee53a4b2d5b`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -18,8 +24,6 @@ Also read the relevant sections of [architecture](../support/web-ui/architecture
 ## Scope and implementation requirements
 
 Implement keyed POST /config/applications and the helper's fixed apply operation. Revalidate internal capability, independent host policy, exact base/candidate, compatible authority and required successful matching preview at execution. Persist safe admission before transmission to the helper and preserve unresolved outcome evidence. No TOML/credentials/raw logs in generic receipts, events, browser registry or public results.
-
-Use the original common config flock inode and defined lock order. Durably retain predecessor, atomically install exact candidate with existing ownership/modes, fsync parent, then confirm exact installed bytes and expected operational fingerprint. Preserve current candidate/backup state and refuse conflicts rather than overwrite unknown evidence. Concurrent CLI/Cockpit/config UI writes must share guards. A tag-only edit still compares exact bytes. New policy affects future admissions; queued stale domain mutations retain existing refusals.
 
 Implement read-only original-operation reconciliation after API/helper crash or lost response. Capture staged/installed/confirmed/unknown evidence in independently versioned private state. No auto-replay, automatic rollback or cleanup after ambiguity; another Apply is blocked until authenticated reconciliation resolves it. Bounded private candidate retention cannot delete unresolved work when full. The helper cannot redirect target/source/path or acquire broader archive rights.
 
@@ -43,7 +47,7 @@ Document full apply workflow, expected confirmations, backup retention, conflict
 
 A successful UI apply means exact installed confirmation, not only a 202 or valid syntax. Every interruption class preserves evidence and blocks unsafe replay; legacy/shared lock and file permissions are retained.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Completion evidence (2026-10-25)
 
@@ -73,11 +77,11 @@ Evidence root `E=/var/tmp/web-008-validation-4d8__00f`; relative locators below
 are inside that retained directory. Source is `WEB-008, this commit`, parent
 `7a86fc2d20eccf18dc1615a764f88283e91f1aab`.
 
-`scripts/check.sh --require-web --require-cockpit` passes1647.627s, exit0:
+`historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` passes1647.627s, exit0:
 1378 inputs unchanged at
 `93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9`.
 `gate5/strict-gate-result.json`/`gate5/strict-gate.log` record8363 backend passes,
-581 Cockpit unit passes, all strict frontend/mounted-component/wheel/read-API
+581 historical frontend unit passes, all strict frontend/mounted-component/wheel/read-API
 checks and documentation210 human/27 helpers. The52 unrelated opt-in
 deselections are not required skips. Accepted installed cases have one attempt and no required skips; earlier failed
 cohorts remain recorded below. Final bookkeeping is within the gate's recorded exclusions; runtime
@@ -241,13 +245,13 @@ and closed-origin checks. Early artifact/bootstrap/staging/pin failures, old
 
 ADR154 and amended ADR122/141/150/153, related ADR119/138/139, and affected
 INV001/002/018/020/021 are reviewed together. API/configuration/security,
-schema/server/host-administration, containers/deployment, Cockpit and web
+schema/server/host-administration, containers/deployment, historical frontend and web
 configuration guides describe exact guards, first-lock provisioning, retained
 0640 predecessors inside0700 state, stale conflicts and original-key recovery.
 Gate5 validates210 human docs/27 helpers; final plan/evidence checks accompany
 bookkeeping. [Progress and operator handoff](../../progress.md#operator-handoff)
 and [current selector](../current.md) record completion and next WEB-009.
 
-No production writer/NAS/archive initialization/live Cockpit, rollout, release,
+No production writer/NAS/archive initialization/installed predecessor interface, rollout, release,
 merge, push or tag action is claimed. The owned guest, source/artifacts, original
 failures and private evidence remain retained.

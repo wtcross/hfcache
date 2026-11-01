@@ -361,7 +361,6 @@ Response headers and external links remain `no-referrer`. Accepting null Origin
 would weaken the existing CSRF boundary; changing the request policy preserves
 that boundary without a new endpoint, permission, dependency or automatic retry.
 
-
 ## Existing jobs and paged history composition (2026-10-26)
 
 Named typed job DTOs retain explicit full/selected and verification/diagnostic/
@@ -379,7 +378,6 @@ bookkeeping; the displayed active-page count therefore comes from that ready
 payload rather than a stale stored count. Previous positions and their finite
 retention remain unchanged. This prevents a transient zero loaded extent beside
 visible rows without scanning, inventing totals or altering read authority.
-
 
 ## Fixed host-effect amendment (2026-10-27)
 

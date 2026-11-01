@@ -1,5 +1,11 @@
 # WEB-024: Complete the human operator and user documentation walkthrough
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `cbebc4d24d55f413cb1991fbc93213c4e5db5bb93334ce9e0be7965ad9e7680f`,
+original content SHA-256 `eced4c8c4126094a4f067ffecc234d10863a397de5121adbc2143225ccd0f146`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -53,14 +59,6 @@ A human can operate and troubleshoot the UI from the guides without agent contex
 The task also requires the existing `scripts/check.sh` gate plus strict applicable web and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
 
 ## Execution notes and blockers
-
-2026-11-01: Activated after WEB-023/490694e. Review all human workflows against
-retained actual installed observations and matching current implementation. The
-finite review covers40 steps across ten guides,13 actual screenshots and19
-inert code fences. Reuse existing accepted effects; no new job/Plan/Apply,
-maintenance, schedule or observer action is needed. Root applies only concrete
-prose/navigation/caption corrections and runs required current checks. Cockpit
-maintenance/validation remains excluded by the user's latest instruction.
 
 ## Completion evidence
 

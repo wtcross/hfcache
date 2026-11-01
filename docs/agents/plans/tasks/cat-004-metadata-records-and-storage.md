@@ -1,5 +1,11 @@
 # CAT-004: Implement bounded versioned tag snapshots and publication observations
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `a5e533298bf37cfffe2e809e61e3315811359c9a6d07a7b7ed7a380227e1683d`,
+original content SHA-256 `d48dd7e5db9df469bff13c7b7980573fa288d85bbcdd5e8a65b10ff23d560e6d`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -101,7 +107,7 @@ remain unchanged. The optional namespace never becomes an initial requirement.
 
 Focused expanded suites: 518 passed in 23.80s. Full `rtk proxy scripts/check.sh`
 exited 0: 4415 passed, 40 opt-in deselected in 483.69s; format/lint/types/docs,
-build, three locked installation profiles and actual Cockpit lint/types/169 tests/
+build, three locked installation profiles and actual historical frontend lint/types/169 tests/
 build passed. Complete local output is `.git/cat-004-check.log` (ignored gate log).
 Final docs and whitespace checks passed. Independent review findings are fixed and
 reviewed again with no remaining material concern. Reviewed INV-001/005/018,

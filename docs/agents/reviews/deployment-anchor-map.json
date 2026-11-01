@@ -16,7 +16,6 @@
     "13-upgrade-plan-30": "upgrade-and-drain",
     "14-rollback-plan-30": "rollback-compatibility",
     "15-acceptance-checklist": "acceptance-checklist",
-    "16-the-cockpit-plugin": "acceptance-checklist",
     "17-rest-and-mcp-rollout-checklist-api-017": "acceptance-checklist",
     "18-authorized-local-data-preserving-rollout-ops-014": "rootless-preparation-and-staging",
     "19-rootless-runtime-architecture-ops-015": "rootless-preparation-and-staging",
@@ -32,8 +31,7 @@
     "ubi-10-foundation-amendment-ops-019": "ubi-10-image-inputs",
     "installed021-acceptance-ops-018-2026-10-18": "recorded-installed-scope"
   },
-  "docs/cockpit.md": {
-    "hfcache-cockpit-plugin-contract": "cockpit-administration-contract",
+  "docs/agents/history/removed-interface-records.md": {
     "rootless-client-profile-amendment-ops-015": "deployment-boundary"
   }
 }

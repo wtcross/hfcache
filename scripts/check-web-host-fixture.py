@@ -544,15 +544,20 @@ def validate_manifest(filename: str, *, tools: Any | None = None) -> dict[str, A
 
 async def command(path: str, body: dict[str, Any], *, timeout: float) -> dict[str, Any]:
     """No signals: late owned launchers stay owned until their actual reap."""
-    child = await asyncio.create_subprocess_exec(
-        path,
-        stdin=asyncio.subprocess.PIPE,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.DEVNULL,
-        env={"PATH": os.defpath, "LANG": "C.UTF-8", "LC_ALL": "C.UTF-8", "PYTHONNOUSERSITE": "1"},
-    )
 
     async def exchange() -> bytes:
+        child = await asyncio.create_subprocess_exec(
+            path,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
+            env={
+                "PATH": os.defpath,
+                "LANG": "C.UTF-8",
+                "LC_ALL": "C.UTF-8",
+                "PYTHONNOUSERSITE": "1",
+            },
+        )
         sink, source = child.stdin, child.stdout
         if sink is None or source is None:
             await child.wait()
@@ -582,10 +587,12 @@ async def command(path: str, body: dict[str, Any], *, timeout: float) -> dict[st
                 await child.wait()
                 need(child.returncode == 0)
 
-    task = asyncio.create_task(exchange())
     interrupted = False
     late = False
     deadline = time.monotonic() + timeout
+    # Own creation before the first await. asyncio.wait never propagates caller
+    # cancellation into this spawn/exchange/reap task, including a delayed spawn.
+    task = asyncio.create_task(exchange())
     while not task.done():
         try:
             left = max(0.001, deadline - time.monotonic())

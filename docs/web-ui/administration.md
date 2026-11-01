@@ -5,7 +5,7 @@ and protected host permissions; edit configuration; run explicit diagnostics; an
 use the fixed schedule, observer and journal controls supported by the installed
 profile. Opening or refreshing a read panel never submits a job or changes a
 timer. The interface remains unreleased source until installed through the
-[deployment procedure](deployment.md). Keep the installed Cockpit interface until
+[deployment procedure](deployment.md). Keep the recorded installed release until
 replacement acceptance and migration are complete.
 
 The human administrator signs in with the configured browser Basic account.
@@ -154,6 +154,9 @@ stored-file state separately from manager acknowledgement. A terminal API receip
 alone is not proof that both are confirmed. Use the original host outcome below
 when any part remains pending or unconfirmed.
 
+On a narrow screen, leaving an edited schedule requires **Stay** or explicit
+discard. Discard retires its local review and preserves original operations.
+
 ### Stop only the original scheduled observer
 
 After a fresh read, **Review original observer** identifies the exact original
@@ -221,7 +224,7 @@ and [troubleshooting](troubleshooting.md#schedule-observer-and-journal-diagnosti
 
 A host administrator installs the selected immutable application/helper and
 verifies their exact index before provisioning the independent policy. Keep the
-legacy Cockpit policy separate. Do not copy true permissions into a new policy
+historical interface policy separate. Do not copy true permissions into a new policy
 without reviewing their intended scope. Begin with all categories denied, or a
 reviewed configuration-only policy on a restricted host.
 
@@ -275,27 +278,3 @@ available when host proof is down. A failed observation does not cancel accepted
 work. Retain its original handle and reconcile read-only; do not submit another
 operation to test whether the first one ran. See
 [troubleshooting](troubleshooting.md) and [API recovery](../api.md#reconnect-after-lost-acknowledgement).
-
-## Screenshots
-
-This full-page capture shows disposable native test build0.2.50 through the
-shared Caddy endpoint, using synthetic local storage. Its capacities, identifiers
-and policy grants are example observations, not production or NAS evidence.
-
-<details>
-<summary>View the full native Administration screen</summary>
-
-![Native Administration with independent archive, readiness, software and host permissions, explicit diagnostics, fixed schedule controls and original-operation recovery](images/administration-native-desktop.png)
-
-</details>
-
-On a narrow screen, leaving an edited schedule requires **Stay** or explicit
-discard. Discard retires its local review and preserves original operations.
-This capture uses the same disposable build and synthetic archive.
-
-<details>
-<summary>View the mobile dirty-schedule dialog</summary>
-
-![Mobile Administration navigation dialog preserves a dirty schedule until Stay or explicit discard](images/administration-mobile-dirty-navigation.png)
-
-</details>

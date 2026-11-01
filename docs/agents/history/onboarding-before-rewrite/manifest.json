@@ -4,14 +4,14 @@
     "git": "ba6a6e1",
     "sha256": "b89938bb4b29e1abb936fb108a14c3ea8f6d6b93b051ace06cac30664630b350",
     "snapshot": "docs/agents/history/onboarding-before-rewrite/README.md",
-    "snapshot_sha256": "5cdb3d402ad4775e49152efd5f6f4898553e2119bf38ab4066c5447334562fc2"
+    "snapshot_sha256": "888a94734ba3f4af9812391beb2d76955d734446e81ab433a714d0ce67578274"
   },
   {
     "source": "CHANGELOG.md",
     "git": "ba6a6e1",
     "sha256": "e0c81c16eec712d71a1cbe7dd95f57cfd24896d5e7403e09c3363af0c74aa079",
     "snapshot": "docs/agents/history/onboarding-before-rewrite/CHANGELOG.md",
-    "snapshot_sha256": "b4f68031b27c0e17d3ae95469c644c7cd892f67faf41bfa7a9c8d889c49ddb03"
+    "snapshot_sha256": "fe9e63778a5d9510f859c4de155ba1f54f19cf42f1eda922fcadeb4db7cc75cb"
   },
   {
     "source": "docs/quickstart.md",
@@ -25,7 +25,7 @@
     "git": "ba6a6e1",
     "sha256": "e2376822ea012ae23c92271c25a00af443c314e8ebef25e82e427ba3e0c052ce",
     "snapshot": "docs/agents/history/onboarding-before-rewrite/docs/consumers.md",
-    "snapshot_sha256": "639cc60c48156c78d9d283ed30d0c43d1b702338e4337b26d0c4b64e3e6d5cae"
+    "snapshot_sha256": "b760ebe3ca0cdd68993502e4a4d0e81d66f58c1d1914ad873e5e136546d465f2"
   },
   {
     "source": "examples/copy-revision.py",

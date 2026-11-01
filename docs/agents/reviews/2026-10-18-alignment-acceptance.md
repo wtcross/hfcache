@@ -1,5 +1,11 @@
 # Final REST/MCP documentation and script disposition
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `a455c5841f601b4139fb055672a677cccca059d91ed404b698162a37495eb1d4`,
+original content SHA-256 `1a7b806eece628161da8e55b98472e9705016023624bcad9855e76bc7a9a8050`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 Plan: [alignment](../plans/2026-10-18-plan-rest-mcp-docs-scripts-alignment.md).
 Baseline: `65b65714b29e835498138ec3122b5669571850cf`.
 Branch: `feat/rest-api-and-mcp`. This is source/offline acceptance, not a new
@@ -22,17 +28,11 @@ deploy and production archive operations remain outside scope.
 | F09 | Quiet warnings/errors and retained handles remain; no-color controls real per-invocation rendering, and sanitized progress respects verbosity/TTY. `test_cli_diagnostics.py` and adversarial result/uncertainty tests pass. |
 | F10 | REST, MCP and Hub sources are separate, with native named credentials versus fixed rootless files. Reader quickstart needs no Hub/archive settings. Legacy native reset example renamed/described as migration-only; no installed drop-in is changed. |
 | F11 | Complete bounded collection or explicit failure replaces the false unbounded-local claim. CLI/API errors never fall back to local execution or replay. Existing pagination, budget, timeout and command-option rejection tests remain. |
-| F12 | Cockpit fixed client/rendered settings, blocked legacy controls, exact candidate installation guards and host-local report-read exception are documented/tested. Independent NFS copying retains exact identity, full verification, retry and fresh destinations. |
+| F12 | historical frontend fixed client/rendered settings, blocked legacy controls, exact candidate installation guards and host-local report-read exception are documented/tested. Independent NFS copying retains exact identity, full verification, retry and fresh destinations. |
 | F13 | Every original script retained with supported purpose and test ownership; two new helpers included. Catalog and explicit inspection classifications require every helper once, including non-executable Python files. No unexplained candidate remains. |
 | F14 | Gate executes parser-backed human links/anchors/audience/catalog checks; actual REST/MCP/role and model/default/bounds comparisons remain independent. Original migration and reference hashes are tested; old normative requirements have living homes. |
 
 ## Code and inactive artifact disposition
-
-[Code ledger](../code-removals.md) retains the complete API-018 caller/replacement
-evidence. Fresh source/tests/scripts/packaging/Cockpit searches confirm no `_emit`
-or `run_job` definition/caller, no CLI preflight allowlist re-export, and no inert
-color field. Those names survive only in historical evidence. Actual domain and
-bootstrap uses remain and are covered by their public behavior.
 
 The former `packaging/systemd/hfcache-sync.service.d/credential.conf.example` is
 retained as `legacy-hub-credential-reset.conf.example`. It only resets obsolete
@@ -58,7 +58,6 @@ second operational reference.
 | check-container-worker.py | Retain; explicit owned worker/peer/isolation fixture proof. |
 | check-hardening.sh | Retain; static inspection and explicit profile/identity-guarded workload. |
 | check-installations.py | Retain; three independently locked wheel profiles in the gate. |
-| check.sh | Retain; provider-neutral quality/build/Cockpit/optional smoke gate. |
 | consumer-serve-hfcache-model.sh | Retain; independent verified-model serving with explicit engine effects. |
 | container-service.py | Retain; fixed rootless roles and non-killing drain. |
 | fetch-container-python.py | Retain; explicit authenticated build-input fetch. |
@@ -71,11 +70,6 @@ second operational reference.
 | setup-hfcache-consumer-model-store.sh | Retain; independent store ownership/capacity provisioning. |
 | release-profile.py | Added in OPS-021; positive native layout classifier. |
 | check-docs.py | Added in DOC-018; offline documentation/interface alignment. |
-
-No helper was deleted. Keep native named-FD3 activation, scheduled client handles,
-receipt stores, actual domain services, MCP auth/lifespan helpers, independent
-consumer copy/store/serving tools and Cockpit's direct report browser. The dormant
-rootless socket remains indexed and protected; a disabled artifact is not dead.
 
 ## Authority and preservation
 

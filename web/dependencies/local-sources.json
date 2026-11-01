@@ -3,12 +3,12 @@
   "sources": [
     {
       "license": "LGPL-2.1-or-later",
-      "original_path": "cockpit/src/lib/operation-registry.ts",
       "original_commit": "beebb7a4bec01aa538a938c4b39641e6b3d4d8c7",
       "original_sha256": "3d4d2cb4c648e46bdf08026bbd878ee22a59bcaf80b5ce2de3423e04f91a8d52",
       "license_file": "dependencies/LGPL-2.1.txt",
       "license_sha256": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551",
-      "paths": ["src/state/authority.ts", "src/state/operation-registry.ts"]
+      "paths": ["src/state/authority.ts", "src/state/operation-registry.ts"],
+      "original_blob": "4f45ac71d44a96cb2b43b8ef8c3b4e0673e2223f"
     }
   ]
 }

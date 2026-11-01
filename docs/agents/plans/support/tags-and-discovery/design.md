@@ -1,5 +1,11 @@
 # Tags and discovery: proposed implementation contract
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `bff27f5932052283279140452c0f6a1a740f077ce37e9943b78c93cb959208cd`,
+original content SHA-256 `cbd731cb1b6d60e42c16692a5a564fcda73c31a87a0666f0331b90a90b795f57`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 Status: draft design, created 2026-10-19. The [parent plan](../../2026-10-19-plan-tags-and-discovery.md)
 authorizes no implementation until activated. Existing human contracts retain
 technical authority; CAT-001 must explicitly amend conflicts before affected code
@@ -45,11 +51,6 @@ Use one pure shared Python normalizer for config, queries and writer records:
   have no hierarchy, wildcard, inheritance or filesystem meaning. Never build a
   pathname from a tag. Matching is exact after normalization.
 
-The Cockpit UI offers existing-tag suggestions and direct entry, explains that
-normalization occurs, and preserves tags through add/edit/toggle/delete, form/text
-switching, validation, sizing preview, backup and installation. Its normalization
-must agree with backend fixtures; the backend remains authoritative.
-
 No separate API for assigning or removing tags is added. Editing still uses the
 existing host configuration workflow. Candidate validation may validate tags but
 cannot install a configuration or provide authority to contact a new Hub endpoint.
@@ -69,16 +70,6 @@ Do not promote the daemon to root or make the root-owned config writable.
    relevant current curation, selected authoritative publication identities,
    observation contents/coverage and result ordering. Search cursors bind this
    digest in addition to existing route/tool, archive and policy identity.
-
-Retain the existing full candidate/base-content comparison in Cockpit and inspect
-all callers: a tag-only change must not be mistaken for an unchanged document just
-because the policy fingerprint is unchanged. Admission/result policy fingerprints
-keep their current role. New catalog identity fields belong in the new catalog
-payload, not as undeclared additions to strict existing REST/MCP wrappers.
-Sanitize registered secrets before matching, facets and visible-content digesting;
-never make secret substitutions discoverable through counts or cursor changes.
-This does not make curation a secrets store: tags must never contain credentials,
-and any registered secret label is suppressed from searchable/faceted values.
 
 ## 4. Current tags and historical tags
 
@@ -490,13 +481,6 @@ Retain stateless transport, finite responses, fixed sanitized failures and share
 resource limits. No resources/prompts/OAuth/task system is introduced by this plan.
 
 ## 11. Documentation and versioning
-
-Create a human `docs/discovery.md` for tagging, model/dataset examples, searches,
-coverage/provenance, exact variants, refresh and failure interpretation. Update
-existing config/API/client/CLI/MCP/server/Cockpit/operations/schema/security/consumer
-contracts in the same package that changes behavior. Update architecture,
-invariants and affected technical ADRs explicitly, including the auxiliary-file
-transaction exception, durable schema/rollback and MCP allowlist amendment.
 
 Human docs describe the supported product, not CAT task progress. Do not put work
 package IDs, active plan pointers or links into `docs/agents/` in human guides.

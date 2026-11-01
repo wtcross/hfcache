@@ -1,5 +1,11 @@
 # WEB-020: Harden end-user workflows, accessibility and bounded performance
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `608c8eadac6ce4c9ee483b8cc8fce5eb6900f491c7f5d7e271ab5a39fb8d8d7b`,
+original content SHA-256 `9fbcab07827be2359f058df2fdbef7e6f259cc36d204f20acc2e427927217449`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -43,7 +49,7 @@ Document browser support, keyboard/use patterns and practical large-library limi
 
 Cross-browser functional, accessibility and bounded-performance acceptance has actual evidence; the UI remains safe/usable under races, large data and interruption rather than only happy-path screenshots.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution notes and blockers
 
@@ -163,7 +169,7 @@ archive/init/publication regressions pass in 18.13s, with Ruff passing. The
 first full gate remains failed because the audited archive module pin was stale;
 its required source-pin update and regenerated browser contracts preserve wire
 shape. The subsequent complete `scripts/check.sh` gate2 exits0:9039 tests pass,
-52 are deselected in 1196.62s; frontend, Cockpit, installation/build and all other
+52 are deselected in 1196.62s; frontend, historical frontend, installation/build and all other
 required checks also pass. Original stdout/stderr are
 `/var/tmp/web-020-validation-nvj5zeg7/direct-application-fix-gate2.*`.
 
@@ -864,7 +870,7 @@ followed by frozen public helpers and the actual confined diagnostic-module
 import preflight. These start no application role and change no selector.
 Strict matching gate5 now passes0 in1522.413s with unchanged1528 inputs:9030
 backend tests (52 opt-in deselections),4029 combined web tests, wheel profiles,
-Cockpit, production build, startup browser and real-API read fixture. Installed59
+historical frontend, production build, startup browser and real-API read fixture. Installed59
 cohort11 is running against these exact artifacts to recheck the accessibility
 correction and remaining browser matrix. No new p95 or installed pass is inferred
 until actual evidence exists; cohort10's false result remains unchanged.
@@ -956,18 +962,6 @@ no-runtime-Node/package-manager probes, retaining stopped containers, and each
 complete JavaScript inventory is254,330 gzip bytes. Matching gate6 is running;
 source8 installed/browser acceptance remains required.
 
-Source8's matching gate6 now passes0 in1508.707s on unchanged1528 inputs:9030
-backend tests (52 opt-in deselections),3702 web unit/4029 combined frontend,
-95% line/90.01% branch coverage, required Cockpit/build/wheel/startup and actual
-HTTP read-fixture checks. The matching read-fixture join (`12e835a7…`) verifies
-root/prefix8 cases and100 cycles each, maximum2 active/1 waiting reads and
-25,178,112 reserved encoded bytes below33,554,432, completed service headers,
-cancellation/stale fencing and final drains. It remains separate from installed
-Caddy/Basic acceptance. The canonical whole-repository source digest32e7f0b7
-and actual compiled frontend source digest79ce33c8 have different scopes;
-`source8-artifact-bindings-v1.json` (`91c5da88…`) joins both actual stock artifacts
-and their UI manifests. Bootstrap comparisons use the compiled frontend digest.
-
 The new native61 prefix's original stage exits1 after root-owned offline/no-cache
 installation and checks of119 package leaves/7 UI files. Its final permission
 predicate refuses only the newly created empty UV environment lock at0666.
@@ -1027,15 +1021,6 @@ zero exit and original logs without a rerun. Gzip JavaScript totals are
 the exact stock manifest at 204,904 gzip bytes, below the 358,400-byte ceiling;
 the README chunk is absent from that initial closure. This narrow byte-budget
 pass does not establish load or browser-matrix acceptance.
-
-Strict matching source4 gate3 passes0 in1511.642s with no changed source files:
-8978 backend tests (52 opt-in deselections),3702 unit/4029 combined web tests
-with no required skips,95% line/90.01% branch coverage, wheel profiles, Cockpit,
-production build, startup browser and real-API React read fixture. Its actual
-root/prefix integration reports join in `gate3/read-integration-source4.json`
-(`e3e0974c…`):8 cases each, zero skips/retries,100 cycles each, maximum2 active/
-1 waiting reads,25,178,112 peak reserved encoded bytes below33,554,432, delayed
-completed service responses, cancellation/stale retirement and final drains.
 
 Installed native53 cohort7 remains false: ten initial usable samples were
 collected (first3.216s; subsequent2.476–2.779s), then a45s read-settlement deadline
@@ -1153,7 +1138,7 @@ Its fixed mixed-Unicode fixture, actual default-cache proof and100-cycle SPA
 collector are staged. Matching strict gate4 passes0 in1541.606s with all1528
 source inputs unchanged:9030 backend cases (52 opt-in deselections),3702 unit/
 4029 combined web cases,95% line/90.01% branch coverage, all wheel profiles,
-Cockpit, strict web checks, builds, startup browser and real-API read fixture.
+historical frontend, strict web checks, builds, startup browser and real-API read fixture.
 The matching read-fixture join `gate4/read-integration-source6.json` (`0b59c241…`)
 proves8 cases at root and prefix with zero skips/retries,100 cycles each, maximum
 2 active/1 waiting reads,25,178,112 reserved encoded bytes below33,554,432,
@@ -1191,10 +1176,10 @@ The source3 snapshot is
 (1525 inputs), with disposable `.52` wheel `da4f9491…`, UI manifest
 `c8fe9289…` and shared image `966df268…`. Its stock build, pinned UBI10micro
 foundation, no-runtime-Node proof and exact installed wheel/assets checks pass.
-The matching strict web/Cockpit gate2 passes0 in1610.169s with no changed source
+The matching strict web/historical frontend gate2 passes0 in1610.169s with no changed source
 files:8952 backend tests (52 opt-in deselections),3702 unit/4029 combined web
 tests with no required skips,95% line/90.01% branch coverage, wheel profiles,
-Cockpit, production build, startup browser and real-API React read fixture.
+historical frontend, production build, startup browser and real-API React read fixture.
 Its result is `gate2/strict-gate-result.json` under the evidence root. The
 earlier startup pass and changed-source gate1 failure remain separate originals.
 The matching gate's real-HTTP integration evidence is joined separately in
@@ -1253,7 +1238,7 @@ guidance. No implementation or acceptance is inferred from preparation notes.
 ### Resumed checkout and reboot recovery (2026-10-27)
 
 Reconciled `abaef80` on `feat/web-ui` with the preserved dirty checkout before
-work. Startup strict gate (`scripts/check.sh --require-web --require-cockpit`)
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 is running with retained output at
 `/var/tmp/web-020-validation-nvj5zeg7/startup-gate.log`; it is a recovery run,
 not yet final matching-source acceptance. Known manifest lint regressions were
@@ -1413,7 +1398,6 @@ promoted or reconstructed. Original observer handles survive stage, cohort and
 artifact-fetch timeouts. Heavy parallel work is held for the entire target;
 neither engine nor the combined three-engine matrix is claimed complete early.
 
-
 The corrected Firefox/WebKit target now passes after2917.808s, with the original
 runner reaped0, raw report `673e4705…`, root result `2f4762a8…` and
 `cleanup_unknown=false`. Each engine passes all13 cases and100 actual
@@ -1519,12 +1503,12 @@ Completed 2026-10-29 — **WEB-020, this commit**
 owned rows AUTH-10, CATALOG-09 and UX-01–04 are completed with actual unit,
 integration and functional mappings in the [evidence ledger](../support/web-ui/acceptance-evidence.json).
 
-The final `scripts/check.sh --require-web --require-cockpit` original Root89443
+The final `historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` original Root89443
 exits0 on canonical source
 `3f97731ee10f9050bef0388886b4d67d1334c5b1713f150b2c78dc33517a8034` (1528 files):
 9039 backend tests pass/52 opt-in deselected in1067.78s **backend** duration;
 3702 web unit/4029 combined frontend tests,95% line/90.02% branch coverage,
-Cockpit, wheel installs/build, browser smoke and the final real HTTP/API React
+historical frontend, wheel installs/build, browser smoke and the final real HTTP/API React
 fixture all pass. There are no skipped required checks. Final originals:
 
 - `/var/tmp/web-020-validation-nvj5zeg7/direct-application-status-fix-gate3.stdout`:
@@ -1570,7 +1554,7 @@ executions. The interrupted configuration Apply with lost original key remains
 uncertain and unreplayed; catalog warning results do not claim complete technical
 or integrity coverage. Rootless local mount-metadata simulation is labelled and
 readonly writer-health is not called initialized. No production/NAS deployment,
-merge/push/tag or Cockpit retirement occurred.
+merge/push/tag or historical frontend retirement occurred.
 
 [Progress](../../progress.md#web-ui-replacement-2026-10-20) and the
 [current selector](../current.md) hand off to pending WEB-021 immutable release
@@ -1580,15 +1564,6 @@ packaging only. WEB-021 has not started; the active multi-task plan remains acti
 
 The following checkpoints preserve their original partial/pending and failed
 claims; the completed evidence above supersedes their execution status.
-
-Source9 matching gate7 now passes0 in1507.445s with unchanged1528 inputs:
-9030 backend tests (52 opt-in deselections),3702 frontend unit/4029 combined
-frontend tests,95% line/90.01% branch coverage and required Cockpit, wheel, build,
-startup and real API fixture checks. The separate matching HTTP fixture join
-`aaf8b4de…` verifies root/prefix8 cases and100 cycles each, maximum2 active/1
-waiting reads and25,178,112 reserved encoded bytes below33,554,432, six completed
-service-header observations/two interruptions and final ownership drains. This
-is source-built integration evidence; installed Caddy/Basic acceptance stays open.
 
 The new asset scoped completion (`efc8bb46…`) passes with all seven new original
 commands reaped, qualifying only the original native no-Node commands001–004
@@ -1790,7 +1765,6 @@ closure are pending. Separately, the negative-response cohort is now bound to
 the actual completed core and quiet-release records; its16 boundary models and
 independent32-member source review pass without an installed acceptance claim.
 
-
 The original transport-v3 cohort now closes false/known in187.817s
 (`f630039a…` root result, `ece8e51e…` report). Chromium passes the three installed
 UI cases: genuine cancellation,30.573s client timeout with explicit recovery,
@@ -1812,7 +1786,6 @@ commands closed normally. Its original six-case/three-engine cohort starts
 503 and valid large-CJK200/client refusal acceptance remain pending the actual
 result. All declared budgets and the current49 selector remain unchanged.
 
-
 The negative-v2 original cohort closes false/known in86.994s (`21d80575…` root,
 `acd74477…` scan10 report). Chromium records two genuine503 catalog responses
 and displays the failure alert with `Diagnostic code: HFAPI005.`. Its collector
@@ -1830,7 +1803,6 @@ separate closure (`f42b35ac…`) verifies the intended v8 input/control paths ar
 absent, all fixed quiet observations reap normally, and current49/base5 remain
 unchanged. The next source generation uses a new consistent control namespace;
 no failed stage, browser or request is replayed.
-
 
 Negative-v3 staging/import pass (`308ca5d4…` / `0a0cd00c…`). The original cohort
 closes false/known in93.186s (`d884d9d6…`), with complete normal original-role
@@ -1863,7 +1835,6 @@ visible in the retained preactivation snapshots; the read-only X11 evidence
 still observes two mapped Firefox windows. The browser/display/descendant
 processes close normally with zero application requests, and WebKit remains
 unattempted. No cause or native transition pass is inferred.
-
 
 The corrected transport-v4 stage/import pass (`5408fba9…` / `a80e717b…`). Its
 original cohort closes false/known in276.341s (`e6b1382a…` root / `b3da4601…`

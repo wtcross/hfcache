@@ -1,5 +1,11 @@
 > Historical transcript preserved before the API runbook rewrite. Current authority is the living guide.
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `0daaf866563da705a5cb81812e360297205c1f66c297b3a7ba360b70e57d4cc7`,
+original content SHA-256 `b347abe61237e6abbee0ca1c9c2f267bca7c163cf3a8940ecee20ddf77d5cabd`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 # Recovering the hfcache archive
 
 | Field | Value |
@@ -257,22 +263,10 @@ $ hfcache --json status | jq '.data.archive | {quarantined_bytes, deferred_clean
 the supported cleanup below deliberately excludes them. Do not manually delete
 archive paths (`docs/agents/environment.md`).
 
-For abandoned publication staging that recovery has already rolled back, use
-the exact transaction IDs shown by `status` or the Cockpit Overview:
-
 ```text
 hfcache quarantine --dry-run TRANSACTION_ID ...
 hfcache quarantine --apply TRANSACTION_ID ...
 ```
-
-Review the dry run before applying the same explicit IDs. Empty directories are
-eligible; remaining files must first be proven identical to verified files in
-the repository's current retained publication. The command preserves journals
-and refuses unique or unexplained evidence. It can safely resume an interrupted
-cleanup and does not require manually editing the archive. `status` then omits
-the removed entries, and refreshing Cockpit updates the Findings table.
-`recover --apply` itself never empties quarantine. `quarantined_bytes` reports
-the logical file bytes still held there, not uniquely reclaimable NAS space.
 
 ### Maintenance after an intentionally stopped download
 
@@ -293,7 +287,7 @@ reviewed entries, then restart the sync service and restore its timer. A
 download interrupted after later checkpoints or with populated staging does
 not qualify for this exception.
 
-For API-backed execution, a stopped CLI/systemd client or closed Cockpit session
+For API-backed execution, a stopped CLI/systemd client or closed historical frontend session
 is not proof that accepted work ended. Identify the exact operation, its domain
 run/transactions and real daemon/verifier executor; reconcile exact worker status
 or durable outcome before considering interruption. A PID or released lock alone
@@ -868,7 +862,6 @@ delete history or release mounts because the observer ended. Follow §10 and the
 server drain/reconciliation procedure. See [decision 120](../../../adr/decision-120.md),
 [CLI operations](../../../cli.md#operations) and
 [client resume](../../../api-client.md#submit-detach-and-resume).
-
 
 Final feature rollout follows the [API-017 operator checklist](../../../deployment-centos-stream-10.md#acceptance-checklist).
 Keep the API and private-verifier stores distinct and preserve scheduled pending

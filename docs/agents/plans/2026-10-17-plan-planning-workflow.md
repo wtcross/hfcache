@@ -1,5 +1,10 @@
 # Establish dated plans and individual task tracking
 
+WEB-027 archival projection: superseded interface references are summarized
+neutrally; exact original text, paths and invocations remain in Git
+`c692d7ae4b866fefd8a743a21afdb729da0f39c4`. Recorded proof hashes still identify
+the original artifacts. See [historical provenance](../history/removed-interface-records.md).
+
 | Field | Value |
 | --- | --- |
 | Plan ID | `2026-10-17-plan-planning-workflow` |
@@ -47,7 +52,7 @@ ADRs. Documentation changes do not imply authorization to operate the archive.
 
 ## Verification and completion
 
-`scripts/check.sh` exited `0`: 1,750 Python tests, 45 Cockpit tests, lock,
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 format, lint, types, and package/plugin builds passed. Documentation links,
 plan/task identity and state, and ADR coverage pass their checks. Invariant
 and ADR review added `INV-011` and decision 107 and amended affected authority

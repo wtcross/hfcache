@@ -1,5 +1,11 @@
 # Implementation Progress
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `7587abe125bde57552b0c69e4df2b697cd77f4979645928bf10bf9c7279c2b68`,
+original content SHA-256 `22fc9f46a5cfa6f6f1832e7e91dbb0dd3fa0f9d8b5480d138333f18f254dfd0b`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 **Current authority (`DOC-010`, 2026-10-17, decision 107).**
 `docs/agents/plans/current.md` selects active work; dated plans own scope/order and
 individual task files own execution status and evidence. This file retains
@@ -27,6 +33,30 @@ The startup paragraph above is the build-out record, superseded by
 changes and plan implementations also review the affected invariants and ADRs
 using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
+## Source interface removal (2026-11-01)
+
+- [x] WEB-027 Remove obsolete interface source and documentation
+  (2026-11-01, this commit — [task](plans/tasks/web-027-remove-obsolete-interface.md)).
+  Removed the complete dedicated frontend/generated tree, configuration, gate and
+  inspection entrypoint, dedicated tests, obsolete guides/records and two obsolete
+  screenshots. Current doc names/content and all 15 remaining raster assets are
+  clear. Retained current shared host/recovery safeguards and necessary LGPL
+  provenance. Catalog retirement is explicit (53 active/two retired); all 95 web
+  cases and original proof identities/layers remain. Metadata/provenance adapters
+  retain exact originals in Git. The validation correction owns children through
+  spawn/exchange/reap, and real-worker fixture budgets remain finite with no
+  production behavior or assertion weakening. Focused 62/4/54 checks pass.
+  Full strict web/build Gate3 passes 9,562 backend/4,051 combined web/16 wheel,
+  three locked profiles, two built-browser checks and real API read fixture;
+  all 1,227 tracked inputs unchanged, 95.02% lines/90.13% branches. Result SHA
+  970178e3077980a906cdd6be94a02019bebd64630d9062f5cc6070b93c0dae08;
+  raw failures and both verified failed-TMP preservation sets remain. Decision161,
+  invariants and shared contracts reviewed; no new runtime dependency or durable
+  operation format. Source plan completes/current clears. User authorizes normal
+  branch-only commit/push to both remotes; actual refs are checked after commit.
+  No production/NAS/service/credential/calendar, main/tag/force or unrelated-cache
+  action follows.
+
 ## Web UI replacement (2026-10-20)
 
 - [x] WEB-026 Complete final validation and operator handoff
@@ -52,9 +82,8 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   pass 224 docs/29 helpers, 9 plan tests and git diff --check. No new runtime/dependency/format/privilege
   or architecture. No production/NAS, merge/push/tag/deploy or live-plugin action.
 
-
 - [x] WEB-025 Deprecate legacy UI and record web independence
-  (2026-11-01, this commit — [task](plans/tasks/web-025-retire-cockpit-plugin.md)).
+  (2026-11-01, this commit — [task](plans/tasks/web-025-independent-web-handoff.md)).
   Root/web/migration/legacy-entrypoint notices implement the explicit user scope;
   no plugin code/test/dependency maintenance, validation, port, cleanup or live
   uninstall. Generic helpers, attribution, history, old artifacts and installed
@@ -69,7 +98,6 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   All93 cases retain minimum layers; final RELEASE-09/DOC-05 remain. Post-adoption
   checks pass224 docs/29 helpers,9 plan tests and git diff --check. WEB-026 is
   next. No production/NAS/remote/live effect.
-
 
 - [x] WEB-024 Complete human guides and workflow acceptance
   (2026-11-01, this commit — [task](plans/tasks/web-024-human-documentation-acceptance.md)).
@@ -88,8 +116,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   dependency, runtime behavior or architectural choice; current contract/ADR review
   is recorded. Post-adoption docs/plan checks pass224 docs/29 helpers,9 tests
   and git diff --check. WEB-025 is next under
-  the explicit no-further-Cockpit-work direction; no production/NAS/remote action.
-
+  the explicit no-further-historical frontend-work direction; no production/NAS/remote action.
 
 - [x] WEB-023 Verify old clients and evidence-preserving rollback
   (2026-11-01, this commit — [task](plans/tasks/web-023-compatibility-and-rollback-drill.md)).
@@ -111,68 +138,6 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   Post-adoption closure checks pass224 human docs/29 helpers,9 plan tests and
   git diff --check. WEB-024 is next; no production/NAS,
   remote publication, live-plugin action or replay follows.
-
-
-- [x] WEB-022 Prove installed native/rootless functionality
-  (2026-11-01, this commit — [task](plans/tasks/web-022-installed-functional-acceptance.md)).
-  All85 through-task scenarios have existing minimum-layer and actual installed
-  evidence under the adopted criteria; ten later cases remain pending. Candidate
-  0.2.78/f829857e has actual3-engine/two-prefix native/rootless coverage, confined
-  roles, pinned inert README/Files/dataset views, guarded configuration and
-  original recovery. Native maintenance/Purge/Repair and schedule/observer effects,
-  rootless denials, CLI/all14MCP tools, browser/client overlap and genuine78worker
-  report joins retain exact scope. Actual protected password rotation now preserves
-  stable subject/original handle/separate bearer sources. Original failed aggregates,
-  unknown handles and Library/Firefox/formBasic qualifications stay preserved; no
-  effect replay or optional-runner pass is claimed. Required web/Cockpit/build
-  Gate21 exits0/1744.448s:9646 backend/4051 combined frontend/581 Cockpit/16 wheel,
-  three locked installs/two built browsers/real API fixture,95.02% lines/90.13%
-  branches;1545 frozen files unchanged, log SHA770728a62a9e56fc29783fa5d661fbb0907a9abf39491c0044716609f6bc8ce7.
-  Contract/invariant/ADR and human acceptance records align. No production/NAS,
-  merge/push/tag/publication or live Cockpit action. Refresh/apply future bounded-
-  testing/effort amendments before WEB-023 compatibility/rollback.
-
-- [x] WEB-021 Package immutable native and rootless web releases
-  (2026-10-29, this commit — [task](plans/tasks/web-021-immutable-ui-release-packaging.md)).
-  Clean source245f2eaa reproduces indexed wheel/sdist/UI; actual API072146b2 uses
-  pinned UBI10micro with verified ancestry, asset bytes and runtime tool absence.
-  Fresh19 offline Python-profile commands pass. Native source8 stage/selection,
-  copied3.14.6 runtime audit and live-role audit pass; both API/worker119 modules,
-  16 UI/helper artifacts and961 shipped source files join. All3 native engines at
-  root+/management and all3 prior-boot rootless engines pass trusted TLS/helper/
-  configuration/navigation smoke with zero mutations/pageerrors/5xx. Recovered
-  rootless actual Apply confirms parent-bind replacement visibility and role/
-  secret/no-IP boundaries; normal executor drain precedes cold native fixture
-  reconstitution. Historical all3 dirty-document upgrade is explicitly joined
-  by unchanged UI/API validator bytes. Final gate6 passes9318 backend/52 opt-in
-  deselections/1114.68s,3702 web unit/4029 combined frontend,95% lines/90.02%
-  branches, required Cockpit/browser/HTTP/build and16 wheel smoke checks, with
-  all1005 frozen product files unchanged and no required skips. Four owned rows
-  complete. INV018–022/ADR007/129/143/145/150/156 review, new ADR158/159 and human
-  release/deployment/security contracts align. Failed gates/stages/collectors,
-  QEMU termination, old/new boot locks and image-size accounting remain qualified.
-  WEB-022 is next for full workflows/native controls and14 positive MCP tools;
-  current smoke has12 successes/2 absent-report errors. No production/NAS,
-  merge/push/tag, uncertain-handle replay or live Cockpit action.
-
-- [x] WEB-020 Harden browser recovery, accessibility and bounded reads
-  (2026-10-29, this commit — [task](plans/tasks/web-020-cross-browser-accessibility-and-load.md)).
-  All six owned rows have actual unit/integration/functional mappings. The final
-  required gate3 passes9039 backend/3702 web unit/4029 combined frontend,95% line/
-  90.02% branch coverage, Cockpit/wheel/build/browser/real HTTP/API checks;52
-  opt-in deselections,1067.78s backend. Source3f97731e and original stdout359596b0…/
-  124539B, stderr4dcb9afe…/9402B are recorded in task020 and the ledger.
-  Real native68 rejected-handle alert speech/PCM closes the actual reader bug;
-  all3 native66 writes/upgrade/original-key privacy/recovery, responsive/zoom and
-  rootless67 guarded scopes remain exact and separately labelled. Original
-  Source9 p95/100-cycle/memory evidence retains its source and limitations.
-  Bounded fresh-byte parsing/virtualization, publication namespace health and
-  local import-error feedback preserve fresh authority, no replay and existing
-  storage/read/permission boundaries. ADR145/157, AD12/ADR113 and INV-018/021 plus
-  human guides align; no runtime dependency or durable-format change.
-  Failed/unknown originals, old Apply/lost-key uncertainty and local simulation
-  limits remain. WEB-021 is pending/handoff only; no production/NAS rollout,
-  merge/push/tag or live Cockpit removal.
 
 - [x] WEB-019 Complete operator Administration and diagnostics
   (2026-10-27, this commit — [task](plans/tasks/web-019-administration-and-diagnostics-ui.md)).
@@ -204,7 +169,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   Aggregate: /var/tmp/web-019-validation-fnvch46d/source3-functional-all-summary.json
   (SHA2563ebb9e27…). This is LOCAL_STORAGE_SIMULATION plus isolated host behavior;
   WEB020–026/full-platform/NAS/production/retirement/final acceptance remain.
-  No new engine/frontend server, merge, push, tag, rollout or live Cockpit removal.
+  No new engine/frontend server, merge, push, tag, rollout or installed predecessor interface removal.
 
 - [x] WEB-018 Implement guarded schedule, observer and journal actions
   (2026-10-27, this commit — [task](plans/tasks/web-018-schedule-observer-and-journal.md)).
@@ -214,7 +179,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   from API receipt certainty. Decision156/INV022 and relevant ADR/contracts record
   explicit optional native confinement, independent grants and no-replay recovery.
   Strict gate6 passes1813.441s on unchanged S5 `415d9b73…`/1500 inputs:8927 backend,
-  3649 web unit/3908 combined frontend,581 Cockpit unit/110 mounted, all required
+  3649 web unit/3908 combined frontend,581 historical frontend unit/110 mounted, all required
   wheel/build/browser/docs checks and no required skips. Line/branch coverage is
   94.90%/90.11%;217 human documents/27 helpers align. S5 differs from runtime S2
   only in two unshipped assertions, with exact1500-file/mode equivalence proof.
@@ -233,8 +198,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   Aggregate: /var/tmp/web-018-validation-blcl67j1/source5-functional-all-summary.json.
   This proves LOCAL_STORAGE_SIMULATION only; WEB019 forms and later platform,
   compatibility, retirement, final acceptance and production rollout remain.
-  No merge, push, Git tag, NAS or live Cockpit action occurred.
-
+  No merge, push, Git tag, NAS or installed predecessor interface action occurred.
 
 - [x] WEB-017 Implement guarded maintenance and integrity remediation
   (2026-10-27, this commit — [task](plans/tasks/web-017-maintenance-ui.md)).
@@ -245,7 +209,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   and query handoff failures. Strict gate2 passes in 1768.399s on unchanged S2
   8e320cf1… / 1481 inputs: 8610 backend tests with 52 unrelated deselections,
   3599 web unit / 3858 combined frontend, 95.06% line / 90.29% branch coverage,
-  581 Cockpit unit / 110 mounted checks and all required builds, wheel profiles,
+  581 historical frontend unit / 110 mounted checks and all required builds, wheel profiles,
   browser and documentation checks (216 documents / 27 helpers), no required skips.
   All 39 current installed browser cases pass: 27 main maintenance, nine repair
   and three final ambiguous-recovery refusals across Chromium, Firefox and WebKit.
@@ -261,7 +225,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   damaged predecessors and pending handles remain preserved. WEB-018 is next.
   Evidence: /var/tmp/web-017-validation-n5qoqk8f/source2c-functional-all-summary.json.
   LOCAL_STORAGE_SIMULATION does not establish NAS or new rootless/platform proof.
-  Production, live Cockpit, rollout, merge, push and Git tags remain untouched.
+  Production, installed predecessor interface, rollout, merge, push and Git tags remain untouched.
 
 - [x] WEB-016 Expose jobs and exact operation reports
   (2026-10-26, this commit — [task](plans/tasks/web-016-operations-and-reports-ui.md)).
@@ -274,7 +238,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   its own count. Strict gate 4 passes in 1781.806 seconds on exact source
   7fa3bb9f… / 1473 inputs: 8608 backend tests with 52 unrelated deselections, 3557
   web unit tests, 3799 combined frontend tests, 95.55% line and 90.37% branch
-  coverage, 581 Cockpit unit tests and 110 mounted checks. All required builds,
+  coverage, 581 historical frontend unit tests and 110 mounted checks. All required builds,
   wheel profiles, browser and documentation checks (215 documents / 27 helpers)
   pass with zero required skips. The current native .36 wheel, UI and image
   3da0c794 match the source, with actual UBI 10 micro ancestry and no runtime Node.
@@ -292,7 +256,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   INV006/007/013/014/018/020/021 and ADR109/115/116/118/120/121/135/136/137/145/148
   are reviewed; ADR121/136/137/145 are amended. WEB-017 is pending next.
   LOCAL_STORAGE_SIMULATION is not NAS, new rootless or WEB022 platform proof.
-  No production, live Cockpit, rollout, merge, push or tag action occurred.
+  No production, installed predecessor interface, rollout, merge, push or tag action occurred.
   Evidence: /var/tmp/web-016-validation-2_9zjimp/.
 
 - [x] WEB-015 Implement repository configuration and tag management
@@ -303,7 +267,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   grants and strict CSRF/CSP/no-replay remain. Genuine-null configuration reads
   and Firefox native POST Origin bugs have actual client regressions/fixes.
   Strict gate3 PASS1645.369s on1457 exactbc1d0602… inputs:8597 backend/52 unrelated,
-  581 Cockpit unit/110 mounted,3496 web unit/3697 combined,95.84%line/91.04%branch,
+  581 historical frontend unit/110 mounted,3496 web unit/3697 combined,95.84%line/91.04%branch,
   all required checks/builds/wheel profiles and no required skips. Native0.2.30
   wheel/UI/imagee6193e0b match source, pinned UBI10micro/no runtime Node.
   Normal33 one-attempt cases PASS976.213s across three engines:24 original keyed
@@ -325,7 +289,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   publication/digest provenance, inert media, immutable upstream navigation and
   finite pre/post-parse work. Card errors stay local. Recovery radio choices
   preserve original handles under WebKit's strict CSP. Strict gate4 passes
-  1465.321s:8591 backend/52 unrelated opt-in deselections,581 Cockpit unit/
+  1465.321s:8591 backend/52 unrelated opt-in deselections,581 historical frontend unit/
   110 mounted Firefox,3404 web unit/3561 combined component,96.01% line coverage;
   all required format/lint/types/contracts/build/wheel/browser/read-API checks
   pass with zero required skips. All1441 frozen source hashes/modes remain exact
@@ -341,7 +305,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   advisories. Image8b7a9608 has pinned UBI10micro ancestry/no runtime Node;
   installed114 modules match fixture0.2.24, canonical0.2.2 unchanged. CARD10–12
   complete; WEB-015 next. Evidence: /var/tmp/web-014-validation-xowemz0k/.
-  No production/NAS/live Cockpit, rollout, merge, push or tag action.
+  No production/NAS/installed predecessor interface, rollout, merge, push or tag action.
 
 - [x] WEB-013 Implement exact-publication model and dataset detail pages
   (2026-10-26, this commit — [task](plans/tasks/web-013-publication-detail-pages.md)).
@@ -351,7 +315,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   Every derived read rejoins the selected SHA reference/generation; surviving
   repair/prune manifests never restore membership or adopt current implicitly.
   Route/auth/stale-response and keyboard-focus regressions pass. Strict gate1
-  passes1608.747s:8591backend/52unrelated opt-in deselections,581Cockpit unit/
+  passes1608.747s:8591backend/52unrelated opt-in deselections,581historical frontend unit/
   110mountedFirefox,3372web unit/3496combined component,95.93%line coverage,
   locked wheel profiles/build/startup/read-API checks and zero required skips.
   All1431 source hashes/modes remain exact at0331b882….
@@ -367,7 +331,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   reviewed/amended; no runtime dependency or endpoint is added. Image4e04c3d1
   has verified UBI10micro ancestry/no runtime Node;114 installed modules match
   fixture0.2.22, canonical0.2.2 unchanged. CATALOG06–08 complete; WEB-014 next.
-  Evidence: /var/tmp/web-013-validation-20o27efw/. No production/NAS/live Cockpit,
+  Evidence: /var/tmp/web-013-validation-20o27efw/. No production/NAS/installed predecessor interface,
   rollout, merge, push or tag action.
 
 - [x] WEB-012 Implement the bounded model and dataset Library
@@ -379,7 +343,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   unknown coverage, failed reads and zero known matches stay distinct. Route/auth
   changes fence late reads; no mutation, Hub request, endpoint or dependency is added.
   Strict gate2 passes1442.837s:8581backend/52unrelated opt-in deselections,
-  581Cockpit unit/110mountedFirefox,3234web unit/3337combined component,
+  581historical frontend unit/110mountedFirefox,3234web unit/3337combined component,
   95.78%web line coverage and all strict/build/wheel/browser/read-API checks;
   zero required skips. All1421 final source inputs remain exact at421e7f8c….
   Forty-two one-attempt installed browser cases pass475.491s (14 per Chromium,
@@ -394,34 +358,8 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   remain exact. INV018/021 and ADR133/145 reviewed/amended, no new dependency.
   Imagea0e509cc retains pinned UBI10micro/no Node;114 installed modules match
   fixture0.2.20, canonical0.2.2 unchanged. CATALOG01–05 complete; WEB-013 next.
-  Evidence: /var/tmp/web-012-validation-aw9l6_l2/. No production/NAS/live Cockpit,
+  Evidence: /var/tmp/web-012-validation-aw9l6_l2/. No production/NAS/installed predecessor interface,
   rollout, merge, push or tag action.
-
-- [x] WEB-011 Preserve original operation recovery across browser sessions
-  (2026-10-26, this commit — [task](plans/tasks/web-011-query-and-operation-state.md)).
-  One authenticated controller owns bounded queries, original-key persistence,
-  finite GET observation, auth-generation clearing, explicit reconnect and the
-  Operations recovery panel. Restored summaries require original authenticated
-  evidence; legacy namespaces and ID-only imports remain distinct. No POST retry,
-  cancellation, false terminal proof or request/credential persistence is added.
-  Strict gate2 passes1501.198s:8581 backend/52 unrelated opt-in deselections,
-  581Cockpit unit/110mountedFirefox,3131web unit/3214combined component, strict
-  types/lint/contracts/build/wheels/startup/browser/read-API checks; zero required
-  skips,95.46%web line coverage. All1413 source inputs remain exact atd1edf7be….
-  Nine one-attempt Chromium156 native installed cases pass89.587s,47actual
-  trusted requests/2original empty Plans, real API restart, quota/tabs/missing
-  history and normal browser/API/helper/Caddy drain. Separate real backend writer
-  tests prove one effect; empty Plans do not claim archive mutation acceptance.
-  The first installed run found the native fetch receiver bug; its failed browser
-  and succeeded original operation/store remain preserved. Central binding and
-  mounted production regressions fix it. Source1 disk-full build and relocated
-  closed artifacts retain exact evidence. Human operations/reconnect guide,
-  navigation/troubleshooting/API/schema/security/license docs align212/27.
-  INV002/005/018/021, AD16/17, FW03/04 and ADR134/137/145 reviewed; relevant dated
-  amendments and LGPL provenance/full notice accompany the port, no new runtime
-  dependency. Final imagea603f14b retains pinned UBI10 micro/no Node;114 installed
-  modules match disclosed fixture0.2.18. OPS01–05 complete; Library WEB-012 next.
-  No production/NAS/live Cockpit/rollout/merge/push/tag action.
 
 - [x] WEB-010 Expose bounded exact-publication card reads (2026-10-26,
   this commit — [task](plans/tasks/web-010-repository-card-read-api.md)).
@@ -432,7 +370,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   Hub, credential, archive-lock, refresh or write capability. Strict independent
   DTO and162-definition/50-mode browser registry validate states/provenance;
   typed client awaits native digest and abort checks before exposing content.
-  Strict gate3 passes1406.731s:8581 backend,581 Cockpit unit,2879 frontend unit/
+  Strict gate3 passes1406.731s:8581 backend,581 historical frontend unit,2879 frontend unit/
   2939 component, all strict/build/wheel and14 actual API browser checks;
   human docs211/helpers27. All1388 regular inputs remain exact at71e7056b….
   New query coverage100%, model96%; source and independent route/auth evidence
@@ -447,7 +385,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   Human guide/API/schema/security/discovery/navigation and ADR142/INV018 align;
   relevant invariant/ADR/FW review complete, no new dependency/durable format/
   CLI/MCP/mutation interface. CARD07–09 complete; selector advances WEB011.
-  Rendering remains WEB014. No production/NAS/live Cockpit, rollout, merge,
+  Rendering remains WEB014. No production/NAS/installed predecessor interface, rollout, merge,
   push or tag action.
 
 - [x] WEB-009 Capture bounded publication-pinned README cards (2026-10-25,
@@ -458,7 +396,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   no-follow descriptor/path stability preserve exact publication authority.
   Old observation/result shapes and counts remain unchanged; optional failures
   warn without inflating integrity. Unknown/unsafe prior cards are preserved.
-  Strict gate passes1413.458s:8500 backend,581 Cockpit unit,2834 web unit/2894
+  Strict gate passes1413.458s:8500 backend,581 historical frontend unit,2834 web unit/2894
   component, strict types/lint, wheel/read-API/browser checks;211 human docs/27
   helpers. All1383 frozen source inputs remain exact at741fe59c….
   Real installed built-UI/Caddy/API application acceptance passes21.287s: three
@@ -473,62 +411,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   Shared image01ef3ffc retains pinned UBI10 micro/no runtime Node; installed112
   modules match disclosed fixture wheel0.2.12. No runtime dependency added.
   CARD01–06 complete; selector advances WEB010, rendering remains WEB014.
-  No production/NAS/live Cockpit, deployment, merge, push or tag action.
-
-- [x] WEB-008 Implement guarded atomic configuration application (2026-10-25,
-  this commit — [task](plans/tasks/web-008-atomic-configuration-application.md)).
-  Exact managed edits require their original successful complete preview, fresh
-  Basic/independent permission and full-byte base. Durable admission precedes one
-  helper handoff. The original flock, first durable pending intent, sealed private
-  outcomes, predecessor preservation and exact confirmation enforce no replay,
-  rollback or uncertain cleanup. Original-key reads preserve interrupted receipts
-  independently of confirmed host history. Maintained legacy writers share guards.
-  ADR154, amended ADR122/141/150/153 and INV001/002/018/020/021 align; human API,
-  configuration/tag, host, security/schema/server and deployment guides accompany
-  the feature. Editor UX remains WEB-015. No runtime dependency is added.
-  Strict gate5 passes1647.627s:8363 backend tests,581 Cockpit unit and all strict
-  frontend/component/wheel/read-API checks;210 human documents/27 helpers validate.
-  All1378 source inputs remain unchanged at93681822b682a6d14d383bccf4b8cc91c7a9432ee43be03371d5382e353756f9.
-  Actual-FS tests cover114 first/120 previous-backup durability cuts. Normal
-  native/rootless acceptance passes78 browser cases; representative helper/API
-  crashes, both legacy orderings, stale-tag refusal and the final23-case
-  permission/queue/genuine-quota suite bring clean installed coverage to125 cases.
-  All required cases pass once; all original roles drain. The final suite proves
-  15517860 used bytes plus2558664 reserve exceeds16777216, without seeded outcomes
-  or patched limits. Its457 requests all satisfy bounded closed-origin capture.
-  Earlier failed recorder/cohorts remain false and retained; explicit disposable
-  retirement preserves original state/receipts and config/key/lock. Shared stock
-  API/UI image241b49a6 remains pinned UBI10 micro without Node. CONFIG06–11
-  complete; selector advances WEB-009. No production/NAS/live Cockpit/rollout,
-  merge, push or tag action.
-
-- [x] WEB-007 Expose safe configuration and exact managed previews (2026-10-25,
-  this commit — [task](plans/tasks/web-007-configuration-read-and-preview.md)).
-  Protected configuration read provides complete editable values and opaque
-  same-capture base identity. Closed bounded stdlib reconstruction preserves
-  protected authority privately; strict managed validation/plans derive exact
-  scope and retain old literal/installed canonical contracts. Empty assessments
-  need no Hub; queued execution rechecks full bytes. Public schemas/158-definition
-  browser IR exclude raw candidates; original operation lookup never replays.
-  ADR153/INV001/002/018/020/021 and relevant earlier ADRs/contracts align; human
-  configuration/tag guide, API/schema/server/security/host/container/script
-  references and navigation accompany implementation. No runtime dependency or
-  archive durable-format change. Strict gate passes1,366.734s:7,982 Python/52
-  unrelated opt-in deselections, all locked wheel profiles,572 Cockpit unit/
-  110 mounted Firefox,2,826 web unit/2,886 combined component, both shell tests
-  and14 real-API browser checks. Web coverage95.11line/92.52branch/92.26function;
-  focused new API coverage90. Native457.793s/rootless493.939s each pass36 cases
-  across three browsers, zero required skips/internal retries, through built UI,
-  real existing Caddy and installed API/helper. Actual Hub SHA/sizing, tag-only
-  stale409, protected fields, old bearer/literal contracts and original-key
-  partial-ack recovery pass. Final2.726s drain/retirement preserves original
-  generations, exact-six-ID opaque backup and four credential aliases; original
-  five infrastructure pairs/key/CIL/receipt/helper unit/kernel remain unchanged.
-  All earlier fixture/gate failures remain false and retained. Image runtime
-  audits110 package/six UI bytes; shared API/UI stays pinned UBI10 micro without
-  Node/package managers. CONFIG01–05 complete, selector advances WEB008. Apply/
-  crash reconciliation remains next; no production/NAS/live Cockpit/rollout/
-  merge/push/tag action. Task records exact hashes, profiles and evidence scope.
+  No production/NAS/installed predecessor interface, deployment, merge, push or tag action.
 
 - [x] WEB-006 Add guarded host status and administration boundary (2026-10-25,
   this commit — [task](plans/tasks/web-006-guarded-host-adapter.md)).
@@ -536,7 +419,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   provide real typed host status and visible denial reasons. Rootless cumulative
   read exhaustion is fixed with a separately bounded4,096-work/1,024-entry budget;
   existing security checks remain. Strict gate passes7,806 Python tests,52 opt-in
-  deselections, locked wheel profiles, strict web/Cockpit and real API React reads.
+  deselections, locked wheel profiles, strict web/historical frontend and real API React reads.
   Built UI through actual shared Caddy/installed native+rootless services passes
   all four modes/three engines/33 assertions per profile with no required skip or
   internal retry. Dedicated native42.487s/rootless60.886s acceptance passes57/105
@@ -547,27 +430,6 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   living contracts/INV020/021/ADRs150–152 align. AUTH08/HOST01–03 complete;
   earlier failed outcomes, credential inodes and opaque backups remain retained.
   No production/NAS/retirement/rollout/publication claim. Next is WEB-007.
-
-- [x] WEB-005 Serve authenticated assets through existing Caddy (2026-10-21,
-  this commit — [task](plans/tasks/web-005-shared-caddy-spa-serving.md)).
-  Actual source14/gate14, guest13/common21 original all-six/monitor0, independent
-  audit283e5818 and fresh compatibility483ed653 pass. Three engines/both prefixes/
-  application+native+rootless yield306trusted+18untrusted checks/zero skip or retry;
-  all131PID/start pairs,40groups,18containers and26endpoints close. Source gate:
-  6643Python/3wheels/572+110Cockpit/2756+2805web/2preliminary+14realread,
-  95.61%line/92.83%branch;1310 hashes/modes unchanged. Artifact4 retains source10
-  provenance with101package/44UI/two-build verification. SDK14MCPtools per
-  generation, Node14MCPtools and two REST credential classes per engine are
-  separate actual observations; no14REST-SDK claim. ADR147/148/149 and human
-  guides align. AUTH09/ROUTE01/04/05/07 full clauses pass; later ROUTE02/03/06
-  clauses, RELEASE03/WEB021 and all other unproved95-case rows remain pending.
-  Supplemental metricsv1 refuses its helper1MiB JSON decode limit; fresh v2's
-  explicit16MiB duplicate-rejecting decoder exits0 (receipt73321b0c…e36d), with
-  no workload replay/product change. Preserve both attempts and their source.
-  Final bookkeeping checks pass78 focused tests,202human/24helper docs and
-  whitespace; all1310 frozen source hashes/modes remain exact.
-  Preserve every failed/UNKNOWN/HOLD and pause/resumption. No production/NAS/
-  cleanrelease/retirement/publication claim. Next is WEB-006.
 
 - [x] WEB-004 Add bounded Basic administrator authentication (2026-10-20,
   this commit — [task](plans/tasks/web-004-basic-auth-and-permissions.md)).
@@ -585,9 +447,9 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   HTTP, live Chromium sandbox/renderers, unchanged installed inputs and complete
   six-API/worker/50-descendant/container drain. Postverify SHA53756288…; source
   snapshotefbae890… matches the final strict gate's1278 unchanged files.
-  `scripts/check.sh --require-web --require-cockpit` exits0 in1107.599s:
+  `historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` exits0 in1107.599s:
   5940Python/52default marker deselections; three clean wheel profiles;
-  572Cockpit unit/110mountedFirefox;21process metadata;2722web unit/2748combined;
+  572historical frontend unit/110mountedFirefox;21process metadata;2722web unit/2748combined;
   two shell/14actual API read checks, coverage95.85%line/92.94%branch.
   Independent22-stage/six-report audit passes; log SHAf8a8641d… and audit
   b5f07ede…; task retains full identities, actual arguments and scoped case map.
@@ -613,7 +475,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   refuse. Original271positive/2000Python-rejected cases and independent literals/
   adversaries verify the boundary. Temporary built React crosses actual API on
   both prefixes; genuine domain/503/401 and labelled schema fault display safely.
-  Required `scripts/check.sh --require-web --require-cockpit` exits0:5452Python,
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
   52opt-in deselected in706.13s; three locked installs;572unit/110mountedFirefox;
   2718webunit/2744combined, coverage95.85line/92.94branch/93.93function;2shell and
   14realAPIChromium tests, zero requiredskip/retry. Exact owned sixPIDs/listeners/
@@ -633,7 +495,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   workspaces without fictional archive facts. Exact Node/pnpm/tool pins, frozen
   lock and all 274 direct/transitive/optional-platform licenses are audited;
   actual production MIT notices remain. No deployed Node/Python dependency is
-  added. Required web gate preserves every backend/Cockpit stage, refuses
+  added. Required web gate preserves every backend/historical frontend stage, refuses
   missing inputs/tools, skips and timeouts, checks actual strict negative
   fixtures, coverage, production output and sandboxed Chromium. Unique evidence
   paths retain failures. Independent real copied assertion-failure/success and
@@ -643,8 +505,8 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   remains explicit. New version table exposed an overly broad matrix parser;
   scope correction preserves exact eleven points and every mapped test.
   Focused 104 tests and independent review pass. Final
-  `scripts/check.sh --require-web --require-cockpit` exits0: 5337 Python tests,
-  52 opt-in deselected in708.97s; three locked wheel profiles; 572 Cockpit unit
+  `historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` exits0: 5337 Python tests,
+  52 opt-in deselected in708.97s; three locked wheel profiles; 572 historical frontend unit
   zero skip/110 mounted Firefox; 45 web unit/50 combined component; 2 real
   Chromium tests zero skip/retry. Coverage98.46%line/98%branch, 47,654 gzip JS
   bytes, deterministic consecutive builds, missing-browser refusal. Gate log
@@ -657,7 +519,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   docs194human/19helpers and44doc tests pass. INV-003/010/019, FW-01–04,
   AD-01/15, retained CP-01–14 and ADR88/113/138/143 reviewed. All95 feature
   cases remain pending; no Caddy/API/Basic/installed/native/rootless/NAS/
-  production acceptance or Cockpit retirement. Current advances WEB-003;
+  production acceptance or historical frontend retirement. Current advances WEB-003;
   handoff33 retains all restrictions, original state and unrelated guests.
 
 - [x] WEB-001 Activate web contracts and stabilize baseline framing (2026-10-20,
@@ -671,268 +533,22 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   transition guides align. Available KVM base/Caddy OCI and a safe provisioning
   path are recorded; five earlier guests remain untouched.
   Baseline: 5,299 Python tests, build and three installs pass, then one of 570
-  Cockpit unit tests fails. Focused and minimal shell reproduction proves a
+  historical frontend unit tests fails. Focused and minimal shell reproduction proves a
   builtin-only parser wait returns -1 before effects. Bounded in-memory ERE
   capture removes that wait while retaining exact frame/base64/UTF-8, external
   status, lock and backup guards. Deterministic old-fail/new-pass, empty-base,
   malformed/maximal-frame and 20/20 confirmation runs pass; maximum parse 0.415 s.
-  Final `scripts/check.sh --require-cockpit` exits 0: 5,308 Python tests pass,
+  Final `historical gate invocation (original command SHA-256 `ab4aa491639185b549f0163c17b944f2911a92c798ca15b166bf8c853059955f`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` exits 0: 5,308 Python tests pass,
   52 opt-in deselected in 770.35 s; three locked install profiles; 572 unit tests
   with zero skips, 110 mounted Firefox tests, lint/style/types and production
   build. Log SHA256 `7f3897c3...`; exact artifacts and evidence are task-owned.
   Focused 86 plan/docs and 140 backend regressions pass; docs: 194 human/19 helpers.
   Required ADR/invariant review is complete; parser repair under decision 138 adds
   no dependency/wire/permission exception. All 95 web cases remain pending; no UI
-  functional, installed or production acceptance or Cockpit retirement is claimed.
+  functional, installed or production acceptance or historical frontend retirement is claimed.
   Selector advances to WEB-002; handoff 33 retains guards/unknown state and the
   prohibition on remote publication, production changes and NAS access. No
   unrelated backlog is activated.
-
-## Guarded Cockpit repair release (2026-10-20)
-
-- [x] OPS-023 Deploy and accept clean guarded0.2.2 (2026-10-20, this commit —
-  [plan](plans/2026-10-20-plan-cockpit-rest-rollout.md),
-  [task](plans/tasks/ops-023-cockpit-rest-host-rollout.md),
-  [evidence](plans/support/cockpit-rest-rollout/acceptance-record.md)). User's
-  merge/main-push/deploy authority follows published clean1c68501. New artifacts
-  and all6actual fixture proofs pass, including126old/current reader observations.
-  Clean extended gate5299Python/570unit0skip/110mounted/16installedbuild and
-  explicitmake pass. Root-private35file/402065B backup precedes actual API-first
-  non-killing drain, zeroPIDs/cgroups/containers/sockets and original-lock handoff.
-  Current0.2.2/indexbc40f9d7/appfec39364; newREADYguard1868228 holdsoriginal27:2273.
-  Original config/candidate/predecessor/rootconfiglock,6stores/handles andsecret
-  IDs/bytes unchanged. Policy grants configuration only; all other5effects denied.
-  Actual installed64file/9binding/TLS/13HTTPauth-MCP/14tool/APIoriginworkerPROBE/
-  notify/PID1confinement/hostCLI0.2.2 checks pass. Original failedTimestral result
-  is byte-identical/HFMNT010/exit20; no replay/cancel. Live-runtime static verifier
-  error is isolated/reproduced/vendor-confirmed; only after actual zeroexecutor
-  proof, one authenticated manager reexecution restoresendpoint/samePID+invocation.
-  First rootPATH refusal precedes guard/selector effects; all failed ledgers retained.
-  Localv0.2.2 objectc69ef761 targets clean1c68501 after actualacceptance. Final
-  strict NAS-shadowed extended gate exits0:5299Python704.87s/570unit0skip/110mounted/
-  16build47.17s, log71cc2234..., runtime15min16.141s. Parent invariant/ADR review
-  holds; no dependency/schema/architecture change. Human deployment/rollback/
-  verification guidance updated; task/plan complete, selectorinactive/nextnone.
-  Final main commit publication to both remotes follows without tags/force; exact
-  refs are verified afterward. Browseroriginal/NAS/liveworkload/otherhost/calendar
-  holds and five guests/unknown candidates remain; Operator handoff32 owns them.
-
-- [x] REL-015 Prepare0.2.2 release source (2026-10-20, this commit —
-  [plan](plans/2026-10-20-plan-cockpit-rest-rollout.md),
-  [task](plans/tasks/rel-015-cockpit-rest-release-source.md)). Latest user explicitly
-  authorizes merge/main pushes then local deployment. Main fast-forward/bothrefs
-  verified atcdc35a4 before host preparation; all9repair commits preserved.
-  Newversion0.2.2 is unused locally/onbothremotes/inprotectedstage; metadata and
-  uvlock change projectversiononly,94lockedpackages unchanged. README/changelog
-  include CATdiscovery andCPR plus observed0.2.1rollback limits, no deployedclaim.
-  Strict extended gate under actual empty read-only NAS shadow exits0:5299Python/
-  52deselected in702.67s,3lockedprofiles,actualfrontend570unit0skip/110mounted/
-  lint/style/types/build, then16build-marked in44.59s. Invocation135107101a114644b8c9ba063138cef7,
-  runtime15min13.696s; first launch refusal preserved, no invented symptom cause.
-  Docs188human/19helpers/diff pass. Reviewed parent invariants/ADRs/agentINV011;
-  no runtime/dependency/durable/architecture change. Original authenticated
-  Timestral result is now failed/HFMNT010/exit20, observed without replay/guardrelease.
-  Production0.2.1/config/candidate/backup/locks/masks/NASro/secrets unchanged.
-  [Evidence](plans/support/cockpit-rest-rollout/acceptance-record.md).
-  NextOPS023 uses exact clean committed source, protectedbackup/actualdrain and
-  original-lock handoff, fresh installed acceptance and required local deployed tag.
-
-## Cockpit REST repair (2026-10-19)
-
-- [x] CPR-001 Freeze baseline and activate corrective contracts (2026-10-19,
-  this commit — [plan](plans/2026-10-19-plan-cockpit-rest-repair.md),
-  [task](plans/tasks/cpr-001-baseline-and-contracts.md)). HEAD matched reviewed
-  dcc2c562; no competing plan or CPR collisions. Pure and mounted Firefox
-  investigations reproduced error replacement, uncertain Apply and local-handle
-  lifetime defects without claiming real PAM/API acceptance. Decision134 adopts
-  bounded stage/identity-preserving repair contracts; CP-04/09 exceptions remain
-  pending explicit replacements. Historical CAT selector test now verifies the
-  completion commit rather than freezing today's selector. Initial gate 1 failed/
-  5007 passed; focused correction 2 passed; full retry 5008 passed/42 deselected,
-  three locked wheel profiles, actual Cockpit lint/style/types/170 tests/build.
-  [Evidence](plans/support/cockpit-rest-repair/acceptance-record.md). Local-host
-  development authority now permits necessary backed-up/restored changes without
-  NAS impact; no host mutation, service outage or archive access performed.
-  Isolated KVM fixture prerequisites identified; installed cause remains unresolved.
-
-- [x] CPR-002 Preserve bridge evidence and own read connections (2026-10-19,
-  this commit — [task](plans/tasks/cpr-002-bridge-errors-and-reconnect.md)).
-  Known safe stage/problem/process fields and exact failed Envelopes survive;
-  untrusted rejection prose/diagnostics are withheld. Finite close-aware D-Bus
-  reads, sequential polls, old-generation rejection and privilege gates prevent
-  stale readiness or mutation replay. Schedule reads/portal actions have mounted
-  regressions; negative confirmation retains original classification while
-  apparent success still needs successful postchecks. Full gate: 5008 passed/
-  42 deselected, three wheel profiles, actual frontend lint/style/types, 221 unit
-  +12 mounted Firefox cases and build. Explicit frontend gate passed. Reviewed
-  CP-01–14/INV-006 and decisions122/127/133/134; no application dependency/schema/
-  REST authority change. [Evidence](plans/support/cockpit-rest-repair/acceptance-record.md).
-  Authorized local KVM prep added twelve signed development RPMs and boots an
-  isolated guest with synthetic credentials/no default route; production app,
-  guards, credentials, mounts and NAS untouched. [Runtime record](plans/support/cockpit-rest-repair/runtime-setup.md).
-  Guest application/PAM chain and original installed cause remain unproven;
-  higher candidate preservation/reconciliation and operation registry follow.
-
-
-- [x] CPR-003 Preserve candidate evidence and reconcile guarded stages (2026-10-19,
-  this commit — [task](plans/tasks/cpr-003-candidate-validation-pipeline.md)).
-  Original failed API Envelopes and bridge/process causes survive independently
-  of strict assessment/readiness. Captured draft/base and bounded stage evidence
-  remain in app memory across tab unmount. Read-only exact inspection creates no
-  files/lock/backup; unknown candidates remain. Explicit matching revalidation
-  skips writes; uncertain install requires installed/backup proof, API confirmation
-  and acknowledgement. Required preview success now proves exact selectors,
-  revisions/resolved commits and complete sizing. Backend defaults cannot bypass
-  sizing or crash the form. Focused pipeline101, real temporary guard62, config36,
-  mounted30 passed, with actual red/green evidence. Full gate:5008 passed/42
-  deselected,787.38s; three wheel profiles; actual frontend lint/style/types,
-  327 unit +30 mounted tests/build. Explicit frontend gate passed. CP-11/INV-006
-  and decisions122/133/134 reviewed/amended; no new dependency/schema/API authority.
-  [Evidence](plans/support/cockpit-rest-repair/gates/cpr-003.txt).
-  Isolated guest original guard/NFS-ro/masks remain; real failed startup exposed
-  omitted fixture prerequisites already in historical operator records. Living
-  staging docs now state them; exact next empty-placeholder/executor proof is in
-  [runtime handoff](plans/support/cockpit-rest-repair/runtime-003.md). No real API/
-  PAM acceptance or original installed symptom fix claimed, no production/NAS
-  effects. CPR-004 follows; required real-runtime and final gates remain pending.
-
-
-- [x] CPR-004 Retain original scoped operations and block uncertain resubmission
-  (2026-10-20, this commit — [task](plans/tasks/cpr-004-operation-recovery-and-replay-guards.md)).
-  Application registry persists keys before transmission, independently retains
-  IDs across detached/tab/reload views and offers authenticated original lookup/
-  wait only. Bounded32-record/64KiB storage refuses corruption/quota/capacity;
-  restored terminal summaries stay unverified until original authenticated result
-  confirmation. No raw TOML/log/body/credential storage or replacement key.
-  Fresh seven-field client authority and same-process compare-only pin prevent
-  changed/unknown target observation. Uncertain Apply consumes its preview and
-  cannot reuse stale success; candidate recovery sends no second sizing/write,
-  keeps original errors and invalidates stale authority acknowledgement.
-  Both fixed launcher hops preserve option-like handles after --. Full gate
-  reproduced a real empty Unix write/BrokenPipe/premature-close/EBADF defect;
-  matching the locked backend's no-op preserves the received response. Actual
-  deterministic red/green plus200/200 original-case repeats passed; existing
-  transport fixture and timeouts unchanged. Initial gate5088passed; corrected
-  finalgate5101passed/42deselected606.10s, three locked wheel profiles, actual
-  frontend lint/style/types,412 unit/47 mounted cases/build. Explicit frontend
-  gate passed. Failed gate1/5098 and earlier red evidence retained. CP02/08/10/11,
-  INV006, ADR119/122/134 reviewed/amended with index/CLI/client/operator docs.
-  No dependency, archive format, REST route, credential or guard authority change.
-  [Evidence](plans/support/cockpit-rest-repair/gates/cpr-004.txt).
-  Older isolated fixture now passes actual rootless launcher/UDS/candidate
-  validation; current-source real Cockpit/PAM/reconnect and original installed
-  cause remain unproven, no production/NAS effects. CPR-005 follows; CP04/09
-  service/report exceptions remain until their explicit packages.
-
-- [x] CPR-005 Align manual REST jobs and guarded host controls (2026-10-20,
-  this commit — [task](plans/tasks/cpr-005-rest-operations-and-host-controls.md)).
-  Full manual sync/verification use original keyed REST receipts/results; scheduled
-  observer state/journals remain separate. Fresh protected six-category policy and
-  root-only indexed-release/guard/unit proof gate every scoped effect. Existing
-  rootless scheduled bindings are unproven, so schedule/observer control remains
-  denied. Calendar injection, direct permission bypass, mutable callback intent,
-  arbitrary null-as-read dispatch and partial-mutation/remount loss were reproduced
-  and repaired. Closed immutable commands preserve original action identity;
-  bounded8-host/64KiB app-memory schedule attempts retain pending/uncertain effects
-  across tabs, with explicit exact read/ack and no replay/reload/restart.
-  Actual subprocess CLI/Unix socket/private verifier3 tests and protected host61
-  tests pass; full gate5165 Python/42 deselected in829.52s, three wheel profiles,
-  actual frontend lint/style/types,436 unit/62 mounted cases/build. All source
-  failure evidence retained. CP04/related boundaries/INV006 reviewed; repository
-  ADR135 accepted, ADR89/122/134/index/register and human guides amended. No runtime
-  dependency, REST route, archive format, credentials, scheduler or binding expansion.
-  [Evidence](plans/support/cockpit-rest-repair/gates/cpr-005.txt). Current-source
-  real Cockpit/PAM V54 and original installed symptom remain unproven. Production,
-  NAS and older guest evidence/guards/masks/locks unchanged. Continue CPR-006;
-  direct-report exception remains until its replacement, plan stays active.
-
-- [x] CPR-006 Read run reports through authenticated REST (2026-10-20,
-  this commit — [task](plans/tasks/cpr-006-rest-run-reports.md)). Fixed one-page
-  CLI inventory and exact-ID detail preserve original Envelopes with independent
-  bounded read/cursor metadata. Actual subprocess/private-UDS reader/writer tests
-  deny client archive/config access; report identities, historical fingerprints,
-  corrupt/missing reports, limits and stale cursors remain distinct. Mounted UI
-  replaces pages, rejects stale results, serializes detail reads and keeps safe
-  bounded optional journals independent of outcome. Direct privileged archive
-  reader removed only after parity; static2red→2green, component baseline and
-  initial journal/detail-loading races retained. Initial full gate1failed/5234pass
-  exposed a missed independent route reference; additive36-mode/44-row parity
-  preserves all old SDK evidence. Final gate5241pass/42deselected in683.23s,
-  three wheel profiles, actual frontend lint/style/types/495unit/71mounted/build;
-  explicit frontend gate also passed. CLI168/parity167/report90/journal+static30
-  focused tests pass. INV005/006 and affected CP/ADR review complete; actual next
-  ADR136, ADR122/134 status/amendments/index, CP01/09 and human contracts/guides
-  updated together. [Evidence](plans/support/cockpit-rest-repair/gates/cpr-006.txt).
-  No runtime dependency, durable/API/MCP authority change or production/guest/NAS
-  action. V54/current artifact and original installed symptom remain unproven.
-  Continue CPR-007, keeping the plan selected and all historical restrictions.
-
-- [x] CPR-007 Validate failed reads and separate deployment identities (2026-10-20,
-  this commit — [task](plans/tasks/cpr-007-read-results-and-diagnostics.md)). Original
-  negative Envelopes survive CLI success-only formatters and Version/Estimate/
-  Status/Inventory/Doctor presentation. Strict partial/unavailable/empty states,
-  host/session owner recovery, queued handlers, modal opening identities and
-  current-store passive invalidation prevent stale readiness or erasure of newer
-  explicit inspection/confirmation. Existing version --server, complete paging,
-  original operation identity and no-replay rules remain. Advisory strict browser
-  provenance separates selected release and authenticated client/API facts; FIFO
-  and ancestor-symlink escapes have actual RED/GREEN and independent review.
-  Exact baseline26component failures, final104mounted passes; focused142CLI,
-  24read/12estimate/9inventory/9connection/14build/4authority-effect passes. Earlier
-  failed/transitional gates retained. Final full gate5276pass/42deselected in
-  693.88s, three wheel profiles, actual frontend lint/style/types/561unit/104mounted/
-  build, zero frontend skips. [Evidence](plans/support/cockpit-rest-repair/gates/cpr-007.txt).
-  INV006/affected CPs and server health reviewed; actual ADR137, older ADR122/134
-  amendments/status/index, register and human guides agree. No new dependency,
-  durable/API/MCP authority or production/guest/NAS action. V54/current clean
-  artifact and original installed cause remain unproven. Continue scoped CPR-008.
-
-- [x] CPR-008 Prove layered boundaries and repair actual runtime defects (2026-10-20,
-  this commit — [task](plans/tasks/cpr-008-cross-boundary-regressions.md)). Installed
-  wheel/private authenticated UDS10/10 matches all90Python source modules;
-  compatibility300/300, guarded shell/filesystem/FD68/68 and109mounted pass.
-  Actual masked timers lack MainPID; inspector now requests strict per-unit facts.
-  Native ASCII/NUL controls reproduce real privileged text-bridge disconnect;
-  canonical bounded ASCII frames decode exact UTF-8 before filesystem effects.
-  Actual enforcing PID1 stdout-file denial after installation is repaired with an
-  anonymous pipe and bounded local collector, preserving separate original exits
-  and withholding output on collection/postcheck failure. ADR138/139 and older
-  ADR88/92/122/134/135, affected CPs/INV006 and human contracts agree; no new
-  dependency or durable/API/MCP authority. Fifth independent isolated guest passes
-  all12 native PAM/rootless/secret/profile/config-install-confirm/interruption/
-  read-only reconciliation checks; original candidate-write/bridge/terminated
-  survives, Validate staysdisabled, no replay/install/cleanup after uncertainty.
-  Third-guest authenticated original-after-disconnect lookup/wait independently
-  preserves exact original result. Final strict gate5299Python/52deselected in
-  772.44s, three profiles, actual frontend lint/style/types/570unit0skip/109mounted/
-  build. [Accepted evidence](plans/support/cockpit-rest-repair/gates/cpr-008-pipe.txt).
-  Earlier failed snapshots, all five guests/locks/masks/credentials and unknown
-  thirdcandidate/unconfirmed fourthinstallation remain preserved; no production,
-  NAS, registry, push/merge/tag. Original installed symptom remains unproven.
-  Continue only CPR-009 release/parity/extended+explicitmake/operator handoff.
-
-- [x] CPR-009 Complete release evidence and operator handoff (2026-10-20,
-  this commit — [task](plans/tasks/cpr-009-release-evidence-and-handoff.md)).
-  Final strict extended gate exit0:5299Python/52deselected in757.36s,3locked wheel
-  profiles,actual frontend lint/style/types/570unit0skip/110mounted/build, then
-  16build-marked/5335deselected in45.18s (old-wheel2/smoke4/installedCLI10).
-  Separate final explicitmake passes570unit/110mounted; focused parity578,
-  identity45 and Diagnostics4 pass. Added planned controlled V55 skew coverage;
-  new-test literal lint failure corrected and retained, no fabricated product RED.
-  Two owned DESTDIR probes prove five exact assets/documented077vs022 modes;
-  no host install. All90runtime module bytes remain unchanged; new README metadata
-  explains wheel638a3274…cec1b vs accepted native578fd699…8392d. Dirty parent0dc2c93
-  browser has publicinput96fa3…f7eaf7 and JS30e03a88…8651f5; no clean/deployed claim.
-  F01–F11/V01–V60 and CP01–14/INV005/006/agentINV011/ADR134–139 reviewed; no new
-  runtime/dependency/schema/authority/version/architectural choice. Human install,
-  reports/manual jobs/cache/identity/release/removal docs and evidence links agree.
-  All9tasks/plan completed, selector cleared; historical backlog remains inactive.
-  [Acceptance](plans/support/cockpit-rest-repair/acceptance-record.md) and
-  [operator handoff](plans/support/cockpit-rest-repair/operator-handoff.md) preserve
-  five isolated guests/unknown attempts/backup/locks/original handles. Production
-  parity/original symptom and NAS/workload holds remain separate. Later user
-  explicitly authorizes final completed branch pushes to Forgejo and GitHub after
-  commit only; no merge/tag/force/registry/deployment/live workload.
 
 ## Tags and discovery (2026-10-19)
 
@@ -943,7 +559,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   discovery/record/query contracts, optional metadata namespace, historical tag
   authority and narrow atomic adjunct exception are explicit in decision 133 and
   INV-018; relevant ADRs amended. Full baseline gate exited 0: 4315 passed/40
-  deselected, build/three locked profiles and actual Cockpit lint/types/135 tests/
+  deselected, build/three locked profiles and actual historical frontend lint/types/135 tests/
   build. Final changed-doc alignment (182 docs/19 helpers), 173 affected parser/
   contract tests and whitespace check passed. All feature code remains pending;
   no live/credential/production/push action occurred.
@@ -955,12 +571,12 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   comparisons, six-field authority and strict wrappers; real keyed admission
   distinguishes tag-only candidate content. Shared frontend fixture and config/
   discovery/example docs added. Focused 193 and final 43 tests passed. Full gate:
-  4351 passed/40 deselected, build/three locked profiles and actual Cockpit lint/
+  4351 passed/40 deselected, build/three locked profiles and actual historical frontend lint/
   types/135 tests/build. INV-001/002/005/018 and decisions 119/122/133 reviewed;
   no new architectural choice/dependency, live action or push.
 
-- [x] CAT-003 Add Cockpit tag authoring (2026-10-19, this commit —
-  [task](plans/tasks/cat-003-cockpit-tag-authoring.md)). Legacy-safe optional tags,
+- [x] CAT-003 Add historical frontend tag authoring (2026-10-19, this commit —
+  [task](history/removed-interface-records.md)). Legacy-safe optional tags,
   shared normalization, existing-config suggestions and repaired draft mode
   switching preserve labels. Exact installed-byte confirmation holds the root
   flock across API validation, buffers bounded stdout until postcheck and requires
@@ -968,7 +584,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   hashes; backup/lock/privilege boundaries remain. CP-11/ADR122 amended under
   INV-018. Frontend gate actually ran; final focused guards/runner: 36 passed.
   Full gate: 4351 passed/40 deselected, build/three locked profiles and actual
-  Cockpit lint/types/169 tests/build. Docs/whitespace and independent review pass.
+  historical frontend lint/types/169 tests/build. Docs/whitespace and independent review pass.
   No production/live/credential/push action or new runtime dependency.
 
 - [x] CAT-004 Implement bounded supplemental metadata records and storage
@@ -979,7 +595,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   apply with shared budgets; unsupported/unsafe prior records and ambiguous temps
   remain preserved. No journal/index/GC/evidence rewrite. Review gaps fixed and
   final independent review clear. Focused 518 pass; full gate 4415 passed/40
-  deselected, build/three locked profiles and actual Cockpit lint/types/169 tests/
+  deselected, build/three locked profiles and actual historical frontend lint/types/169 tests/
   build. Affected INV/FS/TX and decision 133 reviewed; human contracts updated.
   No new dependency, production/live/credential/push operation.
 
@@ -991,7 +607,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   Hostile allocation/Unicode/alias fixtures and network/import/open spies cover
   V12-V14; independent review clear. Expanded focused 224 passed; final extractor
   37 passed. Full gate: 4452 passed/40 deselected in 485.46s, build/three locked
-  profiles and actual Cockpit lint/types/169 tests/build. INV-018/AD-15/133 and
+  profiles and actual historical frontend lint/types/169 tests/build. INV-018/AD-15/133 and
   related FS/authority requirements reviewed; human contracts/links updated.
   No runtime dependency, production/live/credential/host/push operation.
 
@@ -1002,7 +618,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   Safe tensor extents and contradiction checks never read tensor bodies;
   unbuffered source reads and realistic tokenizer arrays retain finite budgets.
   V15-V19 focused 194 passed; independent review clear. Full gate: 4551 passed/
-  40 deselected in 486.30s, build/three locked profiles and actual Cockpit
+  40 deselected in 486.30s, build/three locked profiles and actual historical frontend
   lint/types/169 tests/build. INV-018/AD-15/133 and related FS/authority requirements
   reviewed; human supported-subset/source/evidence docs updated. No new runtime
   dependency, production/live/credential/host/push operation.
@@ -1015,7 +631,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   unsupported/contradictory candidates stay non-available; header arithmetic and
   aggregate work are bounded. V20-V22 expanded focused 248 pass; independent review
   and 4,394-case type probe clear. Full gate: 4605 passed/40 deselected in
-  485.32s, build/three locked profiles and actual Cockpit lint/types/169 tests/
+  485.32s, build/three locked profiles and actual historical frontend lint/types/169 tests/
   build. INV-018/AD-15/133 and related FS/authority requirements reviewed; human
   producer/layout/schema/evidence docs updated. No new dependency or production/
   live/credential/host/push operation.
@@ -1030,7 +646,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   guards keep optional errors visible without changing successful domain exits.
   V23-V25 focused 221 pass; logging/MCP expectation checks 73 pass; independent
   review clear. Full gate: 4628 passed/40 deselected in 494.66s, build/three locked
-  profiles and actual Cockpit lint/types/169 tests/build. INV-018/AD/TX/FS and
+  profiles and actual historical frontend lint/types/169 tests/build. INV-018/AD/TX/FS and
   decision 133 reviewed; human lifecycle/schema/CLI contracts updated. No new
   dependency or production/live/credential/host/push action.
 
@@ -1044,7 +660,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   refuses without recovery/repair/prune/cleanup; no Hub/credential/config/hash
   authority is added. V26-V28 focused 184 pass, including 49 new cases and actual
   same-key/new-key runner replay; independent review clear. Full gate: 4677 pass/
-  40 deselected in 507.48s, build/three locked profiles and actual Cockpit lint/
+  40 deselected in 507.48s, build/three locked profiles and actual historical frontend lint/
   types/169 tests/build. INV-018/AD/FS/TX and decision 133 reviewed; architecture,
   discovery/schema and invariant/ADR links current. No new runtime dependency,
   production/live/credential/host/push action or public endpoint activation.
@@ -1057,7 +673,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   stays inert, and secret substitutions cannot change visible matches or cursor
   identity. Opaque source curation hashes stay durable and are withheld from read
   projections. V29-V35 focused 270 pass; full gate 4839 pass/40 deselected in
-  507.37s, build/three locked profiles, actual Cockpit lint/types/169 tests/build.
+  507.37s, build/three locked profiles, actual historical frontend lint/types/169 tests/build.
   INV-018/FS/AD and decision 133 reviewed, discovery/schema/invariant/ADR links
   current. No runtime dependency, production/live/credential/host/push action.
 
@@ -1071,7 +687,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   include concrete HTTP evidence. Taxonomy aligns missing resources and unsafe
   metadata; hidden exact identities cannot reveal membership. Focused 208 pass;
   final full gate 4875 pass/40 deselected in 535.67s, build/three locked profiles,
-  actual Cockpit lint/types/169 tests/build. Earlier audit failures/interrupted
+  actual historical frontend lint/types/169 tests/build. Earlier audit failures/interrupted
   runs remain task-owned history. INV-012/014-016/018, FS/AD and decisions 113/133
   reviewed; human API/server/discovery and enforcement links current. No runtime
   dependency, production/live/credential/host/push action.
@@ -1086,7 +702,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   skips, exact GGUF headers, lost acknowledgement with an active held write and
   interrupted restart without replay. Forbidden-capability spies remain clear.
   Focused 223 pass; full gate 4899 pass/40 deselected in 544.62s, build/three locked
-  profiles and actual Cockpit lint/types/169 tests/build. INV-012/014/015/018,
+  profiles and actual historical frontend lint/types/169 tests/build. INV-012/014/015/018,
   TX/FS/AD and decisions 114-117/133 reviewed; API/server/discovery/schema and
   enforcement links current. No runtime dependency, host, production/live,
   credential or push action.
@@ -1100,7 +716,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   DTOs and UUID value types preserve strict base-client import isolation and
   serialized formats. Independent REST parity covers 34 modes/44 route rows.
   V41-V43 focused post-fix 326 pass; full gate 4956 pass/40 deselected in 552.27s,
-  build/three locked profiles and actual Cockpit lint/types/169 tests/build.
+  build/three locked profiles and actual historical frontend lint/types/169 tests/build.
   Earlier import-boundary failure and correction remain task-owned history.
   INV-006/012/014/015/018 and decisions 118-120/133 reviewed; human CLI/client/API/
   discovery/quickstart and enforcement links current. No runtime dependency,
@@ -1115,7 +731,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   Independent schemas/mutation sweeps and archive/control snapshots cover all
   tools; actual REST/MCP payloads/coverage/facets/identities agree. V44-V46 focused
   165 pass; corrected example 6 pass. Full gate: 4988 pass/40 deselected in 579.39s,
-  build/three locked profiles, actual Cockpit lint/types/169 tests/build. Prior
+  build/three locked profiles, actual historical frontend lint/types/169 tests/build. Prior
   documentation-example parser failure remains task history. INV-016/018,
   AD-10/15/21/FW-01 and decisions 124/125/133 reviewed; contracts/ADRs/router/
   navigation and installation-checker catalog current. No runtime dependency,
@@ -1131,7 +747,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   and blocked/canceled catalog workers retain shared leases until completion.
   Frontend hostile-label cases reject without echo. V47-V50 focused 396 pass;
   full gate 4999 pass/40 deselected in 583.75s, build/three locked profiles and
-  actual Cockpit lint/types/170 tests/build. INV-002/006/012/016/018 and decisions
+  actual historical frontend lint/types/170 tests/build. INV-002/006/012/016/018 and decisions
   111/113/125/133 reviewed; discovery/security/invariant/ADR rationale current.
   No runtime dependency or production/live/credential/host/push action.
 
@@ -1146,7 +762,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   replay. Artifact hashes and all V01-V55 concrete references are retained.
   Focused lifecycle/evidence 9 pass; actual old targets 2 pass. Final
   `scripts/check.sh --with-build`: 5008 pass/42 deselected in 583.36s, three locked
-  profiles, actual Cockpit lint/types/170 tests/build, and 6 extended build/
+  profiles, actual historical frontend lint/types/170 tests/build, and 6 extended build/
   compatibility tests pass in 18.26s. Human guides/navigation/Unreleased notes,
   INV-018/decision 133 and operator handoff 24 current; all sixteen serial tasks
   complete and selector inactive. No new runtime dependency, production/live/
@@ -1164,7 +780,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   requirements have living human homes; no archive behavior changed. Focused
   checks: 120 passed. Full `scripts/check.sh`: 4062 passed/40 opt-in deselected,
   formatting/lint/types/build and all three locked install profiles passed;
-  actual Cockpit lint/135 tests/build passed with no skip. Markdown links/anchors,
+  actual historical frontend lint/135 tests/build passed with no skip. Markdown links/anchors,
   independent migration audit and diff whitespace checks passed. Reviewed
   FS-02/03/04/19, AD-17/18, INV-010/011 and process ADRs; technical guarantees and
   host restrictions unchanged. The later user instruction permits github/forgejo
@@ -1180,7 +796,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   transitional entries retired. Independent parity keeps all 29 CLI modes and
   selected real evidence; registry checks cover 34 routes/39 rows/15 strict POST
   models. Focused checks 88 passed; full `scripts/check.sh`: 4173 passed/40
-  deselected, build/three locked profiles and actual Cockpit lint/135 tests/build
+  deselected, build/three locked profiles and actual historical frontend lint/135 tests/build
   passed. Reviewed INV-002/005/006/016 and ADR119/120/121/123; no runtime/format/
   dependency/architectural change. No live operation; existing restrictions stay.
 
@@ -1192,7 +808,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   preserved original bodies/hashes and repaired descriptive links. Actual mounted
   registry and disposable HTTP/TLS output now check the human tables/example.
   Focused 223 passed; full `scripts/check.sh`: 4173 passed/40 deselected,
-  build/three locked profiles and actual Cockpit lint/135 tests/build passed.
+  build/three locked profiles and actual historical frontend lint/135 tests/build passed.
   INV-002/003/007/010/016, ADR124/125 reviewed: no runtime/format/dependency change.
   Whole-archive trust and nine-read-only-tool boundary preserved. No host action.
 
@@ -1206,23 +822,9 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   private-worker/reader/no-replay fixtures pass. Fixed a test fault factory's
   fixture lifetime and added restoration regression. Focused 180 plus final 50
   checks passed. Full `scripts/check.sh`: 4209 passed/40 deselected, build/three
-  locked profiles and actual Cockpit lint/135 tests/build passed. AD-13/16/17,
+  locked profiles and actual historical frontend lint/135 tests/build passed. AD-13/16/17,
   FS-19, TX-06/07 reviewed; editorial/test alignment, no runtime/schema/ADR change.
   Existing guards and live acceptance restrictions remain; no host operation ran.
-
-## Deployment and Cockpit profiles (2026-10-18)
-
-- [x] DOC-015 Align deployment and Cockpit guides with runtime profiles
-  (2026-10-18, this commit — [task](plans/tasks/doc-015-deployment-runtime-and-cockpit-guide-alignment.md)).
-  Rewrote selected rootless/native/reader/consumer deployment, preserved rollback/
-  drain/guard rules and eight historical guide bodies/hashes. Role matrix matches
-  actual helper argv; Cockpit fixed launcher/rendered client, blocked system-bus
-  controls and host-local report exception are explicit. Descriptive anchors and
-  dated acceptance scope repaired; 55 transitional entries retired. Focused 417
-  plus final 14 passed. Full `scripts/check.sh`: 4210 passed/40 deselected,
-  build/three locked profiles and actual Cockpit lint/135 tests/build passed.
-  CP-01–14 and ADR121/126–129/131/132 reviewed; no runtime/schema/dependency change.
-  No host action; guard/NAS-ro/locks/stores/handles/calendar restrictions unchanged.
 
 ## Technical contract consolidation (2026-10-18)
 
@@ -1236,7 +838,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   generation gap remains disclosed without weakening requirements or activating
   backlog. Focused 493 passed; human link/anchor scan zero broken. Full gate:
   4210 passed/40 deselected in 477.78s, build/three locked profiles and actual
-  Cockpit lint/types/135 tests/build passed. No host/NAS/manager action.
+  historical frontend lint/types/135 tests/build passed. No host/NAS/manager action.
 
 ## Reader onboarding and navigation (2026-10-18)
 
@@ -1248,7 +850,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   cover exact identity/hash/path sets, rejected corruption/mismatch, destination
   preservation and fresh-instance retry; quickstart grammar parses without effects.
   Focused 82 and final 15 passed. Full gate 4228 passed/40 deselected in 476.18s,
-  build/three locked profiles and actual Cockpit lint/types/135 tests/build passed.
+  build/three locked profiles and actual historical frontend lint/types/135 tests/build passed.
   FS-12/INV-008–010/AD-05/13/21 reviewed; editorial/help/test changes only.
   No host/NAS/manager action; retained restrictions and consumer ownership unchanged.
 
@@ -1262,7 +864,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   recipes. Import/help isolation, actual REST/MCP/role facts, numeric/default/
   semantic configuration constraints and 177 source/snapshot hash pairs are tested.
   Focused 246 plus final 95 passed. Full --with-build gate: 4315 passed/40 deselected
-  in 483.90s, three locked profiles, actual Cockpit lint/types/135 tests/build and
+  in 483.90s, three locked profiles, actual historical frontend lint/types/135 tests/build and
   four wheel smoke tests passed. INV-010/dependency/authority contracts reviewed;
   no runtime dependency/format/application authority change or live-host action.
 
@@ -1276,7 +878,7 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   unit test, stale failure-hook comment, upgrade guidance and ADR links repaired.
   Human checker: 180 docs/19 helpers, zero errors/baseline. Focused 59 passed.
   Final --with-build gate: 4315 passed/40 deselected in 485.24s, build/three locked
-  profiles, actual Cockpit lint/types/135 tests/build and four wheel smoke passed.
+  profiles, actual historical frontend lint/types/135 tests/build and four wheel smoke passed.
   All twelve packages complete; plan closed and selector cleared. No runtime,
   archive format, dependency, version, pin, credential or production change.
   Feature-only normal github/forgejo pushes follow per explicit user steering;
@@ -1313,7 +915,7 @@ NAS-shadowed `scripts/check.sh` exits 0 in `hfcache-ops022-gate`; protected proc
 mount evidence confirms an empty read-only tmpfs over `/srv/hfcache`.
 Formatting/lint/types/docs alignment pass; 4,315 Python tests pass/40 opt-in
 deselected in 495.19 seconds, distribution build and all three locked installation
-profiles pass, as do actual Cockpit lint/style/types/135 tests/production build.
+profiles pass, as do actual historical frontend lint/style/types/135 tests/production build.
 Task retains the exact command, invocation and protected log SHA-256. Final
 `13:56:31/34 UTC` validation/lookup confirms the same 160-entry fingerprint and
 guard-held `waiting_lock`, no domain run/result. Invariant/ADR review finds no
@@ -1652,7 +1254,7 @@ evidence and the reasoning).
   retention deferred until every queued snapshot is consumed close the races
   introduced by overlap. Run reports retain completed transfer counters after a
   later failure. New queued/hash events make WAN-idle local work explicit in
-  journald and Cockpit. Barrier, aggregate refusal, copy capacity, shared-SHA
+  journald and historical frontend. Barrier, aggregate refusal, copy capacity, shared-SHA
   retention, failure, ordering, strict-mode, recovery, logging, and full-gate
   coverage exercise the pipeline.)
 - [x] SYNC-008 Keep hardlink failure injection aligned with the real syscall
@@ -1671,7 +1273,7 @@ evidence and the reasoning).
 - [x] REL-005 Cut and compatibility-check the 0.1.4 release candidate
   (2026-08-11, this commit — version and lock move together to 0.1.4;
   `CHANGELOG.md` accounts for the complete 25-commit delta from the deployed
-  v0.1.3 tag — public/agent documentation, bounded service memory, the Cockpit
+  v0.1.3 tag — public/agent documentation, bounded service memory, the historical frontend
   administration package, and `SYNC-006`–`SYNC-008` — while README states
   honestly that v0.1.3 remains deployed until the upgrade proof completes. The
   decision-95 cross-format drill used `docs/recovery.md` §6's isolated loopback
@@ -1689,7 +1291,7 @@ evidence and the reasoning).
   Integration evidence: the real-Hub suite passes 24 tests; the live-NFS suite
   passes 11 with its pre-initialization case skipped; `scripts/check.sh
   --with-build` exits `0`, including the default suite, type/lint/format/lock
-  checks, 42 Cockpit tests and production build, wheel build, and clean-wheel
+  checks, 42 historical frontend tests and production build, wheel build, and clean-wheel
   install smoke.)
 
 ## Explicit repository purge (PUR, 2026-08-15)
@@ -1711,7 +1313,7 @@ evidence and the reasoning).
   tests, and the self-checking crash/failure matrix cover the new path. Operator,
   recovery, security, CLI, schema, plan, and architecture contracts were updated
   together. `scripts/check.sh` exits `0`: 1,650 default tests, wheel/sdist build,
-  and all 42 Cockpit tests plus production build. No live archive content was
+  and all 42 historical frontend tests plus production build. No live archive content was
   touched; release compatibility, deployment, and the requested live purge are
   separate release/operator work.)
 
@@ -1759,35 +1361,6 @@ evidence and the reasoning).
   `nfs-server` was restored to inactive. `scripts/check.sh --with-build` exits
   `0`; live switching and the requested purge remain the next operator step.)
 
-## Cockpit administration plugin (CPT, 2026-07-30)
-
-A browser administration UI for the deployed writer, as a Cockpit package in
-`cockpit/`. `docs/cockpit.md` is the contract (`CP-01`–`CP-14`); decisions
-87–89 record the shape and what lost. Read the contract before working any
-package in this family.
-
-- [x] CPT-001 Cockpit plugin contract and work-package plan (2026-07-30, this commit — decisions 87–89. `docs/cockpit.md`: rules `CP-01`–`CP-14`; the privilege model — superuser bridge, then `runuser` to the service identity, root never runs the CLI; the operation surface mapped to `docs/cli.md` and `docs/operations.md` mechanisms; envelope and exit-code rendering; the configuration validate-install pipeline with `plan` previews against candidate files; the timer drop-in protocol; the pnpm toolchain and the conditional plugin gate; testing scope and version-1 non-goals. `AGENTS.md`'s context map gains the row routing plugin work to the contract. The 2026-07-30 feasibility review established the facts the contract encodes: no publish command exists — publication is a stage of `sync` and `repair` is the only republish; cockpit 364 is installed and its socket active on the writer; node LTS and pnpm are provisioned operator-side under `PNPM_HOME`. Doc-only: no source, no packaging, no durable format touched. `./scripts/check.sh` exit `0`)
-- [x] CPT-002 Scaffold `cockpit/` from the starter kit under pnpm (2026-07-30, this commit — decision 90. Derived from starter-kit @ `a099cb10` with cockpit `pkg/lib` pinned at `47108e2f` ("364 + 95 commits" — the deployed cockpit 364's own era), fetched by the Makefile into a throwaway git repository so cockpit objects never enter this one. Deviations from the kit as shipped: pnpm 11 via `PNPM_HOME` with a committed `pnpm-lock.yaml` and frozen installs (decision 88; `pnpm-workspace.yaml` carries pnpm 11's `allowBuilds` approvals for esbuild and @parcel/watcher, whose install scripts link the platform binary and build the native watcher); no gettext/po pipeline, no RPM/tarball/test-VM targets; `build.js` derives the bundled-package list from the pnpm `.pnpm` layout instead of package-lock.json; unit tests run under `node --test` — node 24 strips TypeScript natively, so the runner adds no dependency at all. `make` 4.4.1 installed host-side via dnf as the one new build tool (the Makefile is the workflow's spine and DoD's install path). The Makefile exports the resolved pnpm's directory onto recipe PATH, because lifecycle scripts need `node` beside pnpm and a non-login shell has neither. Gate wiring: `scripts/check.sh` runs `make -C cockpit check` (frozen install, ESLint, Stylelint, node:test, fresh production build) when `cockpit/`, pnpm, and make are all present, and prints a loud SKIP naming the missing tool otherwise. Proven here: `make` builds `dist/` in 2.4 s; `make lint test` clean with 1 test passing; `make devel-install` symlinks `dist` and `cockpit-bridge --packages` lists `hfcache: /home/<operator>/.local/share/cockpit/hfcache`; the manifest registers one entry labelled "hfcache" in the Tools section (the placement decision contract §8 left to scaffold time). `./scripts/check.sh` exit `0` with the plugin stage executed)
-- [x] CPT-003 Invocation layer: envelope client, service-identity spawn, systemd D-Bus helpers (2026-07-30, this commit — four pure modules under `cockpit/src/lib/` (no cockpit import, so they run under node) and two browser-bound under `cockpit/src/api/`. `envelope.ts`: parse plus the `schema_version` gate refusing anything but `1` with upgrade guidance (`CP-02`); `classifyEnvelope` mapping exit codes to UI states with `HFMNT010` as first-class busy (`CP-10`); ops §7 operator guidance per exit code. `command.ts`: the one invocation shape — `runuser -u hfcache -- <cli> --config … --json` (`CP-03`), candidate-config override for the contract's §6 pipeline, and the §1.1 selector grammar (two-segment ids, abbreviated SHAs rejected as `HFARG001` would). `events.ts`: logfmt parser and the closed 13-name §24 vocabulary verbatim from `hfcache.logging.EVENTS`; unknown names are ignored, never errors. `warnings.ts`: ops §8 guidance carried inline. `api/hfcache.ts`: spawn through the superuser bridge with stdout accumulated so the envelope is recovered from non-zero exits — the envelope is emitted even on failure, so an empty stdout is the only spawn-level error. `api/systemd.ts`: D-Bus start/stop/enable/disable/daemon-reload plus unit-state, service-result, and timer-state reads, with `hfcache.target` (`CP-05`) and `hfcache-verify.timer` (`CP-06`) refused structurally inside the module rather than trusted to call sites. The plugin gate grows `tsc --noEmit` (with `skipLibCheck`, because PatternFly 6.1's own .d.ts does not self-check) — esbuild strips types and eslint does not run the checker, so before this nothing type-checked. 22 unit tests: envelope shapes including failure envelopes and the schema refusal, classification per contract §4, argv and selector grammar, real journal lines quoted from ops §4, quoted-logfmt unquoting, unknown-event tolerance — and `warnings.test.ts` parses `docs/operations.md` §8 itself, the repository's tests-parse-the-docs pattern applied to the plugin, so the UI's guidance cannot drift from the runbook. `./scripts/check.sh` exit `0` with the plugin stage running lint, typecheck, all 22 tests, and a production build)
-- [x] CPT-004 Dashboard: status, doctor, version, warnings (2026-07-30, this commit — the Overview tab renders the live deployment: `status --json` drives an archive-health card (the ops §1 six fields plus capacity — available/reserve/headroom bytes — and identity/root), a findings table for the structured staging/quarantine observations status reports (the live archive currently shows 3 unfinished transactions and 2 stale staging entries left by the 2026-07-29 incident, so the card renders real signal on first paint), the envelope's coded warnings with ops §8 guidance inline via `WARNING_GUIDANCE`, and the repository table — id, type, enabled/unmanaged, current SHA short-form with full-SHA tooltip, retained count, last run, verification state — 19 rows on this deployment. `doctor` runs on demand, read-only or full, rendering the ordered `checks[]` with pass/fail/skipped labels; `version` renders its §4.1 payload. Shared pieces in `components.tsx`: one `EnvelopeAlert` for every surface, mapping `classifyEnvelope` to alert variants with `HFMNT010` presented as normal single-writer serialization (`CP-10`), and issue rows that always carry the stable code. The `useHfcache` hook holds envelopes; a non-zero exit is a value, not an error. `@patternfly/react-table` added at 6.6.0: react-core ships no table, cockpit's `ListingTable` wraps react-table, and 6.1.0's types predate the `hasAnimations`/`isContentExpanded` props pkg/lib uses — browser-bundled and build-time resolved, `CP-14` untouched. Status/version/list payload shapes were captured from the deployment itself, because `docs/cli.md` §4.1 abbreviates them. 25 unit tests; `./scripts/check.sh` exit `0` with the plugin stage)
-- [x] CPT-005 Archive browser and run reports (2026-07-30, this commit — two tabs. **Repositories**: `list --revisions --json` as an expandable table — repository, type, enabled/unmanaged, current SHA, retained count, current-revision size; expanding shows every retained revision with generation (current marked), commit, file count, size, published timestamp, and verification state, which is the per-publication-instance reading decision 62 requires. **Runs**: the `CP-09` read — `runs/*.json` listed and read as the service identity via `runuser`, names validated against the `<UTC>-<run-id>.json` grammar before any path is built (`lib/reports.ts`, unit-tested against traversal and case tricks); newest 50 shown with parsed start time and run id; a selected report renders the §6-schema fields (command, outcome, exit code, invocation mode, per-repository outcomes with byte counts, totals with `_bytes` keys formatted) plus raw JSON behind an expander, degrading gracefully for verification reports. The run_id join is a button: `journalctl -g run_id=<id>` over the persistent journal renders the run's structured trail beside its durable report, exactly the ops §4 join. 28 unit tests; `./scripts/check.sh` exit `0` with the plugin stage)
-- [x] CPT-006 Sync operations: units, schedule, selector sync, live activity (2026-07-30, this commit — the Sync tab. **Full runs through the unit** (`CP-04`): Sync now starts `hfcache-sync.service` behind a dialog stating it is the production unit and that a long run is never killed for being long; the button disables while a run is active, because a second start merges (ops §9). Stop is `systemctl stop` behind a consequence dialog quoting the crash-shape guarantees — published stays published, partials resume (`AD-09`) — and reconciliation surfaces automatically afterwards: `recover --dry-run` runs and renders its envelope (`docs/cockpit.md` §5), with apply deferred to the Maintenance tab. **Schedule** (`CP-05`): pause/resume operate on `hfcache-sync.timer` alone — the pause dialog says the mount and target are untouched and that a Persistent timer whose calendar elapsed while stopped fires once on resume; unit-file state, next elapse, and last trigger render from D-Bus timer properties via the new `useUnitPoll` (5 s polling). **Selector sync** (decision 89): enabled repositories from `status` as checkboxes; the confirm dialog states the page-process consequence before starting; the run streams with stderr merged (`err: "out"`) so the §24 checkpoint events are a live feed, and the envelope is recovered from the stream tail by `extractEnvelope` — a pure scanner over line starts (logfmt lines never begin `{`), unit-tested over mixed streams; a spawn-level failure also surfaces reconciliation. **Live activity** for unit runs: `journalctl -f` follower (closed on unmount) rendering latest-event-per-repository from the closed vocabulary plus the raw tail. 30 unit tests; `./scripts/check.sh` exit `0` with the plugin stage)
-- [x] CPT-007 Verification surfaces (2026-07-30, this commit — the Verification tab, estimate-first by layout. **Estimate**: `verify --estimate` rendered as the maintenance-window answer — repositories, revisions, unique objects/bytes, estimated duration (new `formatDuration`), measured throughput or "unknown", detected storage-maintenance overlap. **Full verification**: only via `systemctl start hfcache-verify.service` (`CP-04`) behind a dialog stating the shared application lock's 24-hour wait and the HFWRN010 overlap check; while active the generalized `UnitActivity` journal follower (extracted from CPT-006's sync-only version) renders the closed-vocabulary feed; last Result/ExecMainStatus shown. **One revision**: a selector input validated live by the §1.1 grammar — the full-40-hex requirement enforced client-side exactly as `HFARG001` would — run as a streamed page process (read-only, so interruption reads nothing further), envelope + findings summary rendered; the Repositories tab's expanded revision rows now show the full commit SHA precisely so it can be copied into this form. **Quarterly timer**: display only (`CP-06`) — unit-file state, next elapse, and the handoff-item-8 reason written out; no operating control exists in the DOM, and `api/systemd` refuses the unit anyway. 31 unit tests; `./scripts/check.sh` exit `0` with the plugin stage)
-- [x] CPT-008 Configuration editor and add-repository flow (2026-07-30, this commit — decision 91. The Configuration tab, two modes over one pipeline (`CP-11`). **Form mode** renders the whole schema: per-repository rows (id, type, revision with the §6 reference grammar validated live — including the abbreviated-SHA refusal — enabled, comma-separated `declared_dependencies`, add/remove with the `AD-06` never-deletes note inline) and all 19 global keys of §3–§5 as a data-driven grid, each with its documented constraint as the hint (`lib/config.ts` `GLOBAL_FIELDS`); serialization is canonical with a generated header naming the plugin, the write time, and the comment loss. **Text mode** edits the document verbatim. **The pipeline**: candidate written to `/etc/hfcache/.candidate.toml` at `0640 root:hfcache` via a root shell (mktemp + chown + rename — cockpit.file cannot set ownership); `config validate --json` against the candidate as the service identity, `HFCFG`/`HFARG` issues mapped back onto form fields best-effort (structured context first, then the `[path]` message convention — `extractFieldPath`, unit-tested) with verbatim messages always shown; when the candidate adds or retargets an enabled repository, `plan` runs **against the candidate file** — no lock, no mutation — and renders the runbook's mandatory sizing numbers (resolved SHA, logical/new/publication bytes); install copies one predecessor to `config.toml.bak` then fsyncs and renames; re-validate reports the fingerprint run reports will carry. `smol-toml` bundled for parse/stringify (decision 91). The §10 worked example in `docs/configuration.md` is the test fixture: parse, field coverage of all 19 keys, and serialize round-trip are asserted against the contract's own document. 38 unit tests; `./scripts/check.sh` exit `0` with the plugin stage)
-- [x] CPT-009 Sync schedule editor (2026-07-30, this commit — a Schedule card on the Sync tab, drop-in only (`CP-12`). The managed file is `/etc/systemd/system/hfcache-sync.timer.d/50-cockpit.conf`, generated with a header naming the plugin and the restore path; its `[Timer]` section clears the list-valued `OnCalendar=` with an empty assignment before setting the replacement — the systemd subtlety `lib/schedule.ts` encodes and the tests assert (clear precedes set), with `RandomizedDelaySec=` optional. Apply is gated on **Check calendar**: `systemd-analyze calendar --iterations=1` runs unprivileged, its normalized form and next elapse render, and editing the expression invalidates the check. Applying (or resetting, which removes the drop-in and its directory when empty) is confirmed by a dialog carrying the `Persistent=true` consequence — a calendar that elapsed while the timer was stopped fires once on restart — then daemon-reload and a timer restart only when the timer was active (`restartUnit` added to `api/systemd`, behind the same `CP-05`/`CP-06` structural guards). The shipped schedule (02:00 local, deliberately; 30 m randomized delay) and the merge-into-running semantics are stated beside the controls. `parseCalendarCheck` is tested against ops §9's own sample output. 41 unit tests; `./scripts/check.sh` exit `0` with the plugin stage)
-- [x] CPT-010 Maintenance operations (2026-07-30, this commit — the Maintenance tab. **Prune** and **recover** share one dry-run-first component: the dry run renders its envelope, a scalar summary, and the full plan behind an expander; Apply stays disabled until a dry run in this session came back clean, and its confirmation dialog carries the operation's own guarantee — prune quotes `TX-06` (fails toward more data), recover quotes idempotence and `AD-16` (never guesses, never deletes unknown data). Blocked recovery states surface through the envelope's `HFTXN` codes in the shared alert, matching ops §6's reading. **Repair**: selector input under the same full-SHA grammar as verification, optional `--reason` recorded to the audit trail, and a confirmation stating the `AD-13` contract — verified against the *original* manifest, stops without switching if any digest differs, superseded instance readable through the grace floor — plus the page-process consequence; runs streamed with the command log behind an expander. The "launch from a finding" shape is copy-the-SHA: findings name the revision, and the form validates it exactly as `HFARG001` would. 41 unit tests; `./scripts/check.sh` exit `0` with the plugin stage)
-- [x] CPT-011 Packaging, deployment docs, and live evidence (2026-07-30, this commit — **Packaging:** `sudo make -C cockpit install` placed the production build (compressed bundles + manifest) at `/usr/share/cockpit/hfcache`, root-owned; `cockpit-bridge --packages` lists `hfcache` (the development symlink, which shadows the system copy for this user — both paths proven). **Docs:** deployment runbook gains §16 (build/install/update/remove, the plugin's two pieces of host state, the privilege posture); `docs/security.md` gains T-13 and controls-summary row 18; `docs/operations.md` closes with the plugin pointer — the reconciliation `docs/cockpit.md` §10 deferred to this package. **Live evidence, on the deployment, using the plugin's exact invocation shapes:** `status`, `version`, `list --revisions` (12 repositories), and `doctor` (all 17 named checks in contract order, outcomes pass/skipped) all parsed at `schema_version` 1, exit `0`; `verify --estimate` exit `0` — 12 repositories, 16 revisions, ~31.6 h estimated full read at the measured 33 MB/s, which is itself the reason the full-verify surface matters. **Timer-only pause/resume:** stop/start of `hfcache-sync.timer` flipped only the timer between `active`→`inactive`→`active` while `hfcache.target`, `srv-hfcache.mount`, and the executing sync stayed untouched (`CP-05` observed). **Drop-in cycle:** `systemd-analyze calendar` validated `*-*-* 02:30:00`; the managed drop-in applied it (next elapse Fri 02:35:49, inside the randomized window; no spurious Persistent fire — the service stayed on its own run); removal restored the shipped schedule (next elapse Fri 02:21:26) and removed the directory. **Configuration round-trip through the §6 pipeline, forward and back:** candidate at `0640 root:hfcache`, `config validate` exit `0` with fingerprint `6b813bb8…`→`87eedf3c…`→`6b813bb8…` — the starting fingerprint is byte-for-byte the one the running sync's `run.started` event carries — ending `sha256`-identical to the start (`cf0dcc21…`) with `config.toml.bak` present at `0640 root:hfcache`. **The unit-start path:** the entire evidence window ran beside production reality — catch-up run `d694a1b6…` (started 2026-07-29 05:34, 19 repositories) published `moonshotai/Kimi-K3` at 1.56 TB mid-window and was downloading its unsloth mirror; the plugin's `StartUnit` call was issued against it and merged with **zero** new `run.started` events, exactly ops §9's semantics, and the run's closed-vocabulary events were captured live (`publication.completed` with `hashed_bytes=1560998984390` among them); the unit's last completed execution reads `Result=success`, `ExecMainStatus=0`. **Post-conditions:** SELinux `Enforcing`, AVC count today 0 before and after; `hfcache-verify.timer` `disabled`; `ProtectProc=invisible` confirmed applied on both units via `systemctl show` (check-hardening 22/23 — the one failure is the probe's idle-system assumption meeting the live run's same-uid pid, dissected in handoff item 13); nothing under `/srv/hfcache` was created or modified by anything except the application's own runs — the plugin's writes were `/etc/hfcache/{.candidate.toml,config.toml,config.toml.bak}` and the timer drop-in, all cycled back. Three lock-gated proofs are handoff item 13 with exact commands and expected outcomes: the single-revision verify, a fresh start-to-`Result=success`, and the 23/23 re-run — blocked by the terabyte catch-up holding the one archive lock (`AD-17`), and stopping a production 1.5 TB download to manufacture evidence was not a serious option. **Manual smoke checklist (browser-only behavior; operator):** (1) log into Cockpit as an administrator with the superuser bridge active, open Tools → hfcache; (2) Overview shows archive health with real findings, repositories table, doctor buttons produce the 17-check list, version card populated; (3) Sync tab shows the running/idle service state, live activity feed during a run, pause/resume flips only the timer, the selector-sync dialog states the page-process consequence; (4) Schedule card: check-calendar renders normalized form + next elapse, apply/reset both confirm with the Persistent warning; (5) Repositories tab expands to revision detail with full SHAs; (6) Verification tab: estimate renders sizes, revision form rejects an abbreviated SHA inline, quarterly timer card shows disabled with the handoff-8 reason and no enable control anywhere; (7) Configuration tab: form mode renders 19 global fields + repository rows, an invalid value comes back mapped onto its field at validate, text mode preserves comments, install shows the fingerprint; (8) Maintenance tab: prune/recover Apply stays disabled until a clean dry run, repair form requires the full SHA; (9) without administrative access, mutating controls are absent or fail closed. `./scripts/check.sh` exit `0` with the plugin stage)
-- [x] CPT-012 Operator documentation: `docs/cockpit-plugin/` and README surfacing (2026-07-30, this commit — four operator-facing pages written against the contract for whoever deploys and uses the plugin: `docs/cockpit-plugin/README.md` (what it is, what it deliberately will not do, doc map), `installation.md` (requirements, production build and install, the build-elsewhere-copy-`dist/` path for hosts without node, development loop with the shadowing caveat, update, removal including the managed host state), `usage.md` (access model; the cross-cutting reading rules — exit-code alert table, `HFMNT010` as busy-not-failure, unit runs versus page processes — then every tab), and `troubleshooting.md` (eleven symptom→cause→fix entries, missing menu entry through leftover managed state). `cockpit/README.md` added as the subtree's pointer to contract and guide. Root `README.md` gains a Browser administration section, documentation-table rows for `docs/cockpit.md` and `docs/cockpit-plugin/`, the `cockpit/` repository-layout row, and the license split (MIT with the LGPL-2.1-or-later subtree, decision 90). `AGENTS.md`'s context map routes plugin work to the operator docs beside the contract; `docs/cockpit.md` names them non-normatively (contract wins on disagreement). One runbook correction folded in: deployment §16's build line becomes `make -C cockpit clean && make -C cockpit NODE_ENV=production` — `install` copies whatever `dist/` holds, so the bare `make` §16 showed would install an unminified development bundle, where CPT-011's actual install was the check target's production build; §16 now says what was done and why. Doc-only otherwise: no source, no packaging, no durable format touched. `./scripts/check.sh` exit `0` with the plugin stage)
-- [x] CPT-013 Authenticated plugin invocations: transient units with `ImportCredential` (2026-07-30, this commit — decision 92, prompted by a live `HFHUB003` from the plugin's doctor surface the day `hub.expected_account` was set: every `runuser`-spawned command was anonymous by construction. **Code:** `hfcacheArgv` becomes the §2 `systemd-run` shape (transient unit, service identity, `ImportCredential=hf-token`, `UMask`/`MemoryHigh`/`HF_HOME`/`HF_XET_CACHE` parity with the sync unit); UI copy in sync/verify/maintenance restates the new lifetime (closing the tab detaches the view; the run continues into its run report). **Contract:** `docs/cockpit.md` §2 rewritten around the transient unit with `CP-03`/`CP-08` amended and §5's selector-sync lifetime updated; `docs/security.md` T-13 controls note the PID-1-only decryption; `packaging/…/credential.conf.example` migrates the store to `/etc/credstore.encrypted/hf-token`, corrects its unit-binding claim to name binding, and its drop-in body to `ImportCredential=hf-token`; operator docs (`usage.md`, `troubleshooting.md`) updated, the latter gaining the anonymous-doctor entry and the pipe-don't-redirect note. **Systemd facts verified on this host (systemd 257):** exit codes propagate through `--wait --pipe` (a forced 20 arrived as 20); import of an absent credential is skipped with the unit starting normally; a transient unit survives its killed waiter (`active` until stopped); stdout redirected to a user-labelled file reproduces the `init_t`→`user_tmp_t` AVC and the API-bus drop, recovered with `SIGUSR1` — four denials in the audit log, all mine, all this probe. **Deployed and proven live:** credential migrated by byte-identical copy into `/etc/credstore.encrypted/` (old file removed after `cmp`), installed drop-in now the one-line import, `daemon-reload` + `systemd-analyze verify` clean, `systemctl show` reports `ImportCredential=hf-token`; the plugin's exact argv ran `doctor --read-only` end to end — envelope `schema_version` 1, `credential` row "token from systemd-credential", `hub_identity` row "the Hub reports this run as wtcross", exit `0`; production build installed to `/usr/share/cockpit/hfcache` (bundle greps for `systemd-run`), the 1.56 TB catch-up sync running untouched through the whole window. 42 unit tests (the argv-shape test rewritten for the new shape, plus a new CP-08 no-token-surface assertion); `./scripts/check.sh` exit `0` with the plugin stage)
-- [x] CPT-014 Link repository rows to Hugging Face (2026-08-30, this
-  commit — decision 101. The Repositories tab renders each repository name as
-  a type-aware external link: models at `/<owner>/<name>`, datasets at
-  `/datasets/<owner>/<name>`. Identifier segments are percent-encoded; a new
-  tab plus `noopener noreferrer` preserves the Cockpit session boundary and no
-  archive credential enters the URL (`CP-08`). A pure URL builder covers both
-  repository types and encoding. 44 Cockpit unit tests; `scripts/check.sh`
-  exit `0` with the plugin stage)
-
 ## Authenticated restricted repositories (HUB, 2026-08-23)
 
 - [x] HUB-010 Enable explicitly authenticated private and gated repository sync
@@ -1800,7 +1373,7 @@ package in this family.
   `hub.expected_account` is enforced before repository access by `plan`,
   `sync`, and `repair`, and repair now classifies repository metadata before
   downloading. AD-21 and the configuration, CLI, security, operations,
-  deployment, Cockpit, and consumer-boundary contracts define the policy,
+  deployment, historical frontend, and consumer-boundary contracts define the policy,
   revocation, purge, and rollback behavior. Verification: focused sync/crash
   suite, 184 passed; Hub live suite, 24 passed; `scripts/check.sh`.)
 
@@ -1828,7 +1401,7 @@ package in this family.
   transferred pair and the mandatory new-destination rule. No consumer-host
   state was mutated by this repository package; that root action remains for
   the operator. Three focused script tests; `scripts/check.sh`: 1,673 passed,
-  40 deselected, sdist and wheel built; Cockpit stage skipped on this consumer
+  40 deselected, sdist and wheel built; historical frontend stage skipped on this consumer
   because pnpm or make is absent.)
 
 - [x] OPS-010 Add the verified-model vLLM container launcher
@@ -1844,31 +1417,11 @@ package in this family.
   no deployment image, model, or config was placed in scope. Seven focused
   script tests exercise validation and both generated runtime shapes;
   `scripts/check.sh`: 1,680 passed, 40 deselected, sdist and wheel built;
-  Cockpit stage skipped on this consumer because pnpm or make is absent.)
+  historical frontend stage skipped on this consumer because pnpm or make is absent.)
 
 ## Three-revision retention (RET, 2026-09-14)
 
-- [x] RET-010 Default to three retained revisions, preserving explicit five
-  (2026-09-14, this commit — decision 102. Strict configuration accepts `3`
-  or `5`, with omission selecting `3`; Cockpit offers the same numeric choices.
-  Contracts, examples, and operator guidance describe adoption, rollback, and
-  repeated prune rounds. Existing explicit-five scenarios remain covered;
-  new regression coverage proves fourth-publication rotation and reducing an
-  existing five-revision history to three. No durable JSON shape changes.
-  Verification: 267 focused Python tests; `scripts/check.sh` exit `0`, with
-  1,689 Python tests and all 45 Cockpit tests, types, lint, and production build.)
-
 ## Release 0.1.7 (REL, 2026-09-14)
-
-- [x] REL-008 Cut the three-revision retention release candidate
-  (2026-09-14, this commit — version and lock move together to 0.1.7;
-  README and changelog describe the default and explicit-five compatibility.
-  Deployment §14 records the configuration rollback barrier. The installed
-  0.1.6 binary rejects the proposed live value of three with `HFCFG011`,
-  exit `10`, as expected. No durable JSON format changes, so no cross-format
-  archive drill is required. `scripts/check.sh --with-build` exits `0`:
-  1,689 Python tests, 45 Cockpit tests, production build, and four installed
-  wheel smoke tests.)
 
 - [x] OPS-011 Deploy three-revision retention and prune the live model history
   (2026-09-14, this commit — staged and switched to 0.1.7 only through
@@ -1876,7 +1429,7 @@ package in this family.
   five-revision configuration and the proposed three-revision configuration.
   Atomically installed the single-key change, preserving `0640 root:hfcache`
   and the predecessor at `/etc/hfcache/config.toml.ret010.bak`. Installed the
-  production Cockpit build and matched all five deployed files by digest.
+  production historical frontend build and matched all five deployed files by digest.
   Explicit selectors covered seven enabled, archived models. Three reviewed
   prune rounds removed 7, 5, and 1 revisions, respectively: runs
   `2af25a222431434e8ef0a2f0e387b554`, `39e199c3e88440a9bfbbc95746e9dcc7`,
@@ -1909,11 +1462,11 @@ package in this family.
   identity checks, and fresh hashes through each unlink. Interrupted cleanup
   resumes from its proven remaining subset. Original journals and publication
   references remain unchanged; no new durable JSON shape is introduced.
-  CLI/recovery contracts and Cockpit's event vocabulary cover the operation.
+  CLI/recovery contracts and historical frontend's event vocabulary cover the operation.
   Verification: 53 cleanup scenarios, including swapped ancestor directories,
   shared hardlinks, incomplete provenance, whole-batch refusal, and partial
   cleanup; 118 focused tests passed. `scripts/check.sh` exit `0`: 1,743 Python
-  tests, 45 Cockpit tests, types, lint, and production builds. Live NFS suite:
+  tests, 45 historical frontend tests, types, lint, and production builds. Live NFS suite:
   11 passed, one expected initialized-archive skip.)
 
 ## Releases 0.1.8–0.1.10 (REL/QUA, 2026-09-14)
@@ -1923,7 +1476,7 @@ package in this family.
   README/changelog describe the explicit cleanup scope and deployment §14
   records unchanged-format rollback to 0.1.7. No cross-format archive drill
   is needed. `scripts/check.sh --with-build` exits `0`: 1,743 Python tests,
-  45 Cockpit tests, production build, and four installed-wheel smoke tests.
+  45 historical frontend tests, production build, and four installed-wheel smoke tests.
   The live NFS suite already passed at QUA-001. The running 0.1.7 sync
   must finish before the staged candidate becomes current.)
 
@@ -1935,7 +1488,7 @@ package in this family.
   apply. Four new regression cases cover the real early journal shapes and
   refusal after publication rename. Version/lock/changelog/README move to
   0.1.9, superseding staged 0.1.8. `scripts/check.sh --with-build` exits `0`:
-  1,747 Python tests, 45 Cockpit tests, production builds, and four installed
+  1,747 Python tests, 45 historical frontend tests, production builds, and four installed
   wheel smoke tests. No durable JSON change or cross-format drill is needed.)
 
 - [x] QUA-003 Scope checkpoint validation to quarantine deletion authority
@@ -1946,13 +1499,13 @@ package in this family.
   and recovery ordering. All 43 live plans passed as the service identity using
   the updated module: six files, 86 directories, 1,688,517 logical bytes.
   Version 0.1.10 supersedes 0.1.9. `scripts/check.sh --with-build` exits `0`:
-  1,750 Python tests, 45 Cockpit tests, production builds, and four installed
+  1,750 Python tests, 45 historical frontend tests, production builds, and four installed
   wheel smoke tests. No durable formats change.)
 
 - [x] OPS-012 Deploy 0.1.10 and clean the reviewed quarantine findings
   (2026-09-14, this commit — deployed only through `install-release.sh`, with
   the prior versions retained. Config validation preserved fingerprint
-  `f9388bb0…` and the maximum of three; all five deployed Cockpit files match
+  `f9388bb0…` and the maximum of three; all five deployed historical frontend files match
   the production build. The operator explicitly authorized stopping sync
   `bf1f901508ae4fb4990157d69125ab78`, cleaning, and restarting with its cache.
   Confirmed service/PID termination and the free writer lock. Decision 104's
@@ -1979,20 +1532,10 @@ package in this family.
   required bytes; the sync timer is active and enabled, verification disabled.
   The resumed run is still in progress; normal active staging may appear in
   Overview, while quarantine remains clear. Evidence is in `.git/qua001/`.
-  `scripts/check.sh` exits `0`: 1,750 Python tests, 45 Cockpit tests, and
+  `scripts/check.sh` exits `0`: 1,750 Python tests, 45 historical frontend tests, and
   production builds. Formal release proof remains handoff item 15.)
 
 ## Repository synchronization (OPS, 2026-10-17)
-
-- [x] OPS-013 Reconcile local and remote main histories
-  (2026-10-17, this commit — refreshed both remotes: GitHub main at
-  `e35048a` is an ancestor of local main, while Forgejo main at `7368973`
-  contains only the additional `.scratch/` ignore rule. Merged that commit
-  without conflicts, retaining all nine local commits through `82bfb7a`
-  and every existing work-package boundary. `scripts/check.sh` exits `0`:
-  lock, formatting, lint, types, 1,750 Python tests, 45 Cockpit tests, and
-  package and production plugin builds. The merge is ready for normal
-  fast-forward pushes to both remotes; no history is rewritten.)
 
 ## Invariant and architectural decision registers (DOC, 2026-10-17)
 
@@ -2010,7 +1553,7 @@ package in this family.
   is explicitly tracked as `RET-011`. Validation: all 105 historical decision
   bodies preserved, ADR coverage/index and local link/anchor checks pass,
   and cited local git commit objects resolve. `scripts/check.sh` exits `0`:
-  lock, format, lint, types, 1,750 Python tests, 45 Cockpit tests, wheel/sdist,
+  lock, format, lint, types, 1,750 Python tests, 45 historical frontend tests, wheel/sdist,
   and the production plugin build.)
 
 - [ ] RET-011 Resolve the publication-generation contract/implementation gap
@@ -2042,7 +1585,7 @@ package in this family.
   migrated or activated. Invariant/ADR review completed. Documentation
   link/anchor, plan/task identity/state, and ADR coverage checks pass.
   `scripts/check.sh` exits `0`: lock, format, lint, types, 1,750 Python tests,
-  45 Cockpit tests, package builds, and production plugin build.)
+  45 historical frontend tests, package builds, and production plugin build.)
 
 ## REST API and read-only MCP (API, 2026-10-17)
 
@@ -2054,10 +1597,10 @@ package in this family.
   API/server contracts define 29 parity rows across 14 CLI families, roles,
   effects and execution. Decisions 108/109 explicitly amend FW transport and
   bounded non-resuming receipt boundaries. Reviewed FS/TX, credentials, output,
-  consumer, Cockpit and planning invariants; INV-012–016 identify pending
+  consumer, historical frontend and planning invariants; INV-012–016 identify pending
   enforcement owners. Local links and parity table checks pass. Baseline and
   post-change `scripts/check.sh` exit 0: lock, format, lint, types, 1,750 Python
-  tests, 45 Cockpit tests, package builds and production plugin build.
+  tests, 45 historical frontend tests, package builds and production plugin build.
   No dependencies, runtime implementation, deployment or archive operations.)
 
 - [x] API-002 Extract transport-neutral query services and command results
@@ -2074,7 +1617,7 @@ package in this family.
   336 existing targeted tests and 47 new query/evidence tests pass. Initial gate
   stopped on two deliberate immutable-mutation test type errors; targeted test
   annotations corrected. Final `scripts/check.sh` exits 0: lock, format, lint,
-  types, 1,797 Python tests, 45 Cockpit tests, wheel/sdist and plugin builds.
+  types, 1,797 Python tests, 45 historical frontend tests, wheel/sdist and plugin builds.
   Changed documentation links, parity-table structure and git whitespace pass.
   No host/live checks or production operations. HTTP traversal review/pagination
   and bounds remain API-006 scope; runtime HTTP routes remain planned.)
@@ -2099,7 +1642,7 @@ package in this family.
   interleaving/interrupt selection: 20 passed, 113 deselected. Initial test
   fixtures and two characterized rendering/refusal regressions corrected.
   `rtk proxy bash scripts/check.sh` exits 0: lock, format, lint, types,
-  1,816 Python tests, 45 Cockpit tests, wheel/sdist and production plugin builds.
+  1,816 Python tests, 45 historical frontend tests, wheel/sdist and production plugin builds.
   Changed-document links, task dependencies/current pointer, parity matrix and
   git whitespace pass. No durable schema/dependency change or production/host
   operation. Full-only offline env handling remains API-004; HTTP/isolated
@@ -2127,7 +1670,7 @@ package in this family.
   metadata deferred to receipts. Focused suites pass 310 and 163 tests; sync
   propagation/interruption selection passes 6 (113 deselected).
   `rtk proxy bash scripts/check.sh` exits 0 on its first full attempt: lock,
-  formatting, lint, types, 1,835 Python tests (40 deselected), 45 Cockpit tests,
+  formatting, lint, types, 1,835 Python tests (40 deselected), 45 historical frontend tests,
   wheel/sdist and production plugin build. Local links, task/current/dependency
   records, parity matrix, all 111 numbered decision/ADR records and whitespace
   pass. No durable schema/dependency, ASGI/MCP code or production operation;
@@ -2157,7 +1700,7 @@ package in this family.
   360 passed. `rtk proxy bash scripts/check.sh` exits 0 on its first full
   attempt: locked server-extra sync, format/lint/types, 2,009 Python tests
   (40 deselected), wheel/sdist, real isolated offline locked base/server wheel
-  install/import/help/version checks, 45 Cockpit tests and production build.
+  install/import/help/version checks, 45 historical frontend tests and production build.
   Links, task/current/dependencies, parity matrix, 112 decision/ADR records and
   whitespace pass. No durable archive schema, runtime REST route/listener,
   MCP dependency/import, production operation or deployment; live/NFS/host and
@@ -2187,7 +1730,7 @@ package in this family.
   capacity race. Estimator and deterministic delayed/cancelled-worker ownership
   regressions fix both. Fourth `rtk proxy bash scripts/check.sh` exits 0:
   locked sync, format/lint/types, 2,133 Python tests (40 deselected), wheel/sdist,
-  isolated locked base/server install/import/help/version, 45 Cockpit tests and
+  isolated locked base/server install/import/help/version, 45 historical frontend tests and
   production build. Links/current/dependencies, 8 implemented/21 planned parity
   rows, 113 decision/ADR records and whitespace pass. Real socket/TLS tests use
   test-only OpenSSL certificates; live/NFS/installed-host and extra build-marker
@@ -2220,7 +1763,7 @@ package in this family.
   two added ENOSPC fsync acceptance cases then passed without source changes.
   The definitive `rtk proxy bash scripts/check.sh` exits 0: lock/format/lint/types,
   2,224 Python tests (40 deselected, 118.15 seconds), 0.1.10 sdist/wheel, isolated
-  locked base/server install/import/help/version, 45 Cockpit tests and production
+  locked base/server install/import/help/version, 45 historical frontend tests and production
   build. No gate attempt failed. Final links/current/dependencies, 9 implemented /
   20 planned matrix rows, 114 decision/ADR records and whitespace pass. Live/NFS,
   installed-host and extra build-marker suites did not run. No production archive/
@@ -2254,7 +1797,7 @@ package in this family.
   creates no archive/operation records and emits no stdout/stderr. Definitive
   `rtk proxy bash scripts/check.sh` exits 0: lock/format/lint/types, 2,309 Python
   tests (40 deselected, 124.99 seconds), 0.1.10 sdist/wheel, isolated locked
-  base/server install/import/help/version, 45 Cockpit tests and production build.
+  base/server install/import/help/version, 45 historical frontend tests and production build.
   No gate attempt failed; the separate positive probe exposed the corrected bug.
   Final links/current/dependencies, 9 implemented / 20 planned rows, 115 decision /
   ADR records and whitespace pass. Live/NFS, installed-host and extra build-marker
@@ -2287,7 +1830,7 @@ package in this family.
   expectation corrections preceded the gate. First full
   `rtk proxy bash scripts/check.sh` exits 0: lock/sync, 321 formatted files,
   lint/types, 2,473 Python tests (40 deselected, 137.10 seconds), 0.1.10 sdist/wheel,
-  locked isolated base/server install/import/help/version, 45 Cockpit tests and
+  locked isolated base/server install/import/help/version, 45 historical frontend tests and
   production build. No gate attempt failed or required a fix. Final links/current/
   dependencies, 17 implemented / 12 planned rows, 116 decision/ADR records and
   whitespace pass. No new durable format/dependency/MCP or production operation;
@@ -2316,7 +1859,7 @@ package in this family.
   seconds; adversarial: 127 in 15.19; seven real HTTP/shared-domain cases pass.
   First full `rtk proxy bash scripts/check.sh` exits 0: lock/sync, 327 formatted
   files, lint/types, 2,685 Python tests (40 deselected, 163.41 seconds), 0.1.10
-  sdist/wheel, locked isolated base/server install/import/help/version, 45 Cockpit
+  sdist/wheel, locked isolated base/server install/import/help/version, 45 historical frontend
   tests and production build. No functional fix/gate failure; one module-docstring
   correction had supplemental checks and was included in final builds/installs.
   Final links/current/dependencies, 27 implemented / 2 planned rows, 117 decision/
@@ -2353,7 +1896,7 @@ package in this family.
   `rtk proxy bash scripts/check.sh` exits 0: lock/sync, 337 formatted files,
   lint/types, 2,852 Python tests (40 deselected, 163.45 seconds), 0.1.10 sdist/wheel,
   actual locked base/server install/import/help/version including client imports,
-  45 Cockpit tests and production build. No gate failure/correction or post-freeze
+  45 historical frontend tests and production build. No gate failure/correction or post-freeze
   source change. Final links/current/dependencies, 27 implemented / 2 planned rows,
   118 decision/ADR records, example and whitespace pass. No new dependency/durable
   archive shape/MCP or production operation; live/NFS/installed-host and extra
@@ -2389,7 +1932,7 @@ package in this family.
   `rtk proxy bash -c 'bash scripts/check.sh > .scratch/api-012-gate.log 2>&1'`
   exits 0: lock/sync, 345 formatted files, lint/types, 2,953 Python tests
   (40 deselected, 195.16 seconds), 0.1.10 sdist/wheel, locked isolated base/server
-  install/import/help/version, 45 Cockpit tests and production build. No gate
+  install/import/help/version, 45 historical frontend tests and production build. No gate
   failure/correction/retry or post-freeze source change. Final links/current/
   dependencies, 29 implemented / 0 planned rows, 119 indexed decision/ADR records
   and whitespace pass. No durable format/MCP or production operation; live/NFS/
@@ -2425,7 +1968,7 @@ package in this family.
   `rtk proxy bash -c 'bash scripts/check.sh > .scratch/api-013-gate.log 2>&1'`
   exits 0: lock/sync, 351 formatted files, lint/types, 3,031 Python tests
   (40 deselected, 303.11 seconds), 0.1.10 sdist/wheel, actual locked base/server
-  installation/import/help/version, 45 Cockpit tests and production build.
+  installation/import/help/version, 45 historical frontend tests and production build.
   No gate failure/correction/retry or post-freeze source change. Final links/
   current/dependencies, 29 implemented parity rows, 120 unique indexed decision/
   ADR records and whitespace pass. No durable schema/dependency/MCP or production
@@ -2469,7 +2012,7 @@ package in this family.
   `rtk proxy bash scripts/check.sh > .scratch/api-014-gate.log 2>&1` exits 0:
   lock/sync, 360 formatted files, lint/types clean, 3,223 Python tests
   (40 deselected, 349.85 seconds), 0.1.10 sdist/wheel, actual locked isolated
-  base/server install/import/help/version, 45 Cockpit tests and production build.
+  base/server install/import/help/version, 45 historical frontend tests and production build.
   No post-gate source change. Final links/current/dependencies, 29 implemented
   parity rows, 121 unique indexed decision/ADR records and whitespace pass.
   New private handle only; archive/receipt formats and dependencies unchanged.
@@ -2478,9 +2021,9 @@ package in this family.
   verify-calendar acceptance remain explicit operator holds; live/NFS and extra
   build-marker suites did not run. Next is API-015 pending after this commit.)
 
-- [x] API-015 Preserve Cockpit workflows through guarded API clients
+- [x] API-015 Preserve historical frontend workflows through guarded API clients
   (2026-10-18, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](plans/tasks/api-015-cockpit-api-client-compatibility.md)).
+  [task](history/removed-interface-records.md)).
   Fixed service-identity transient CLI commands use local client TOML/socket and
   systemd API-only `hfcache.api`, never Hub/browser bearer authority. Strict
   complete/coherent schema-1 terminal parsing preserves failures and safe upgrade
@@ -2501,14 +2044,14 @@ package in this family.
   CP-01–14/INV-002/003/006 and affected operator/client/config/security/contracts,
   README/Unreleased agree. Focused runner 35, envelope/unit 19 and candidate 59
   cases pass; actual disposable Bash/flock/cmp/fsync/rename guards fake only the
-  systemd leaf. Standalone complete Cockpit gate passes 127 tests/2.035 seconds,
+  systemd leaf. Standalone complete historical frontend gate passes 127 tests/2.035 seconds,
   lint/style/types and production build. Source and decompressed production
   searches find no bearer/Authorization/API token-file/Hub-token/environment
   handling, while expected API name/socket/client path remain. First full
   `rtk proxy bash scripts/check.sh > .scratch/api-015-gate.log 2>&1` exits 0:
   lock/sync, 361 formatted files, Ruff/types clean, 3,223 Python tests
   (40 deselected, 352.53 seconds), 0.1.10 sdist/wheel, actual locked isolated
-  base/server install/import/help/version, 127 Cockpit tests/2.093 seconds and
+  base/server install/import/help/version, 127 historical frontend tests/2.093 seconds and
   production build/1,171 ms. No gate correction/restart or post-gate source change.
   Final links/current/dependencies, 29 implemented parity rows, 122 unique indexed
   decision/ADR records and whitespace pass. No durable JSON/dependency/MCP or
@@ -2516,7 +2059,6 @@ package in this family.
   cgroup/custom masks/hardening/SELinux/NFS/drain/verify-calendar checks remain
   operator holds; live/NFS and extra build-marker suites did not run. Next is
   API-016 pending after this commit; REST acceptance still gates all MCP work.)
-
 
 - [x] API-016 Prove complete REST and CLI parity before MCP
   (2026-10-18, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
@@ -2549,7 +2091,7 @@ package in this family.
   exits 0: lock/sync, 368 formatted files, Ruff clean, Pyrefly 0 errors
   (11 suppressed, 57 warnings not shown), 3,324 Python tests
   (40 deselected, 358.69 seconds), 0.1.10 sdist/wheel and actual locked isolated
-  base/server install/import/help/version. Complete Cockpit lint/style/types,
+  base/server install/import/help/version. Complete historical frontend lint/style/types,
   127 tests in 2.134 seconds and production build in 1,224 ms pass; required extra
   wheel smoke passes 4 tests (3,360 deselected, 4.48 seconds). No gate correction,
   restart or post-gate source change. Final links/anchors/current/dependencies,
@@ -2560,7 +2102,6 @@ package in this family.
   tag. Live Hub/NFS and actual systemd/cgroup/no-IP/credential/custom-path/browser/
   PAM/SELinux/drain/rollback/verify-calendar proof remain deployment holds in
   Operator handoff 16/17; repository acceptance does not assert those passed.)
-
 
 - [x] MCP-001 Mount optional authenticated FastMCP after REST acceptance
   (2026-10-18, this commit — [plan](plans/2026-10-17-plan-rest-api-and-mcp.md),
@@ -2592,13 +2133,13 @@ package in this family.
   HTTPX/HTTPX2 private-transport borrowers. Shared public ApiCli exchange replaces
   those wrappers; zero private borrowers remain and 79 focused cases pass in
   6.80 seconds with interruption/retry/restart/no-second-POST proof preserved.
-  No runtime/semantic correction; first log is retained and build/install/Cockpit
+  No runtime/semantic correction; first log is retained and build/install/historical frontend
   were not reached. Definitive
   `rtk proxy bash scripts/check.sh > .scratch/mcp-001-gate-rerun.log 2>&1`
   exits 0: lock/both-extra sync, 373 formatted files, Ruff clean, Pyrefly 0 errors
   (11 suppressed, 59 warnings not shown), 3,394 Python tests (40 deselected,
   377.89 seconds), 0.1.10 sdist/wheel and actual locked isolated base/server/
-  server+MCP install/import/help/version checks. Cockpit lint/style/types,
+  server+MCP install/import/help/version checks. historical frontend lint/style/types,
   127 tests in 2.152 seconds and production build in 1,203 ms pass. No source
   change after definitive acceptance. Decision 124, 064/108/112/113/123/framework/
   AD-21 amendments, FW-03/04 and INV-002/003/012–016, logging/original/active plan
@@ -2638,7 +2179,7 @@ package in this family.
   lock/both-extra sync, 380 formatted files, Ruff clean, whole Pyrefly 0 (11 suppressed,
   59 warnings not shown), 3,481 Python tests (40 deselected, 401.60 seconds), 0.1.10
   sdist/wheel and all three actual locked isolated base/server/server+MCP
-  installation/import/help/version checks. Cockpit lint/style/types, 127 tests
+  installation/import/help/version checks. historical frontend lint/style/types, 127 tests
   (0 failures, 2.093 seconds) and production build 1,246 ms pass. No gate failure/
   correction/restart or post-freeze source change. Decision 125 and AD-10/15/21,
   113/124 amendments, FS-08–12/16, INV-005/007/008/012–016 and affected MCP/server/
@@ -2681,7 +2222,7 @@ package in this family.
   lock/both-extra sync, 383 formatted files, Ruff clean, whole Pyrefly 0 errors
   (11 suppressed, 59 warnings not shown), 3,522 Python tests (40 deselected,
   417.54 seconds), 0.1.10 sdist/wheel and all three actual locked isolated
-  base/server/server+MCP installation/import/help/version checks. Cockpit lint/
+  base/server/server+MCP installation/import/help/version checks. historical frontend lint/
   style/types, 127 tests in 2.112 seconds and production build in 1,234 ms pass.
   No full-gate failure/correction/restart or runtime source change. AD-21,
   124/125 and INV-002/003/007/010/016 are reviewed; current MCP/security proof
@@ -2721,7 +2262,7 @@ package in this family.
   (40 deselected, 425.94 seconds), 0.1.10 sdist/wheel, all three actual locked
   isolated base/server/server+MCP installation/import/help/version profiles,
   including exact-nine enabled registry and zero resources/templates/prompts.
-  Cockpit lint/style/types, 127 tests in 2.141 seconds and production build in
+  historical frontend lint/style/types, 127 tests in 2.141 seconds and production build in
   1,268 ms pass; extra build-marker wheel subset: 4 passed, 3,652 deselected in
   5.66 seconds. No gate failure/correction/restart or post-freeze source/semantic
   change. AD-21, 124/125 and INV-002/003/008/010/011/012/013/016 are reviewed;
@@ -2755,7 +2296,7 @@ package in this family.
   prior broad integration: 375 in 78.05. Four socket cases exercise Unix/TCP ×
   page/retained-event caps of 1 with actual private full verification, reader
   metadata/history/writer refusal and no extra operation/leak. Standalone
-  Cockpit check exits 0. Current quickstart replaces retired direct-backend
+  historical frontend check exits 0. Current quickstart replaces retired direct-backend
   commands with authenticated API setup and distinguishes reader diagnostic
   jobs. Anchor/parity selection: 63 passed in 1.07 seconds. Client/CLI/invariant
   contracts and ADR 118/120 record the existing-contract correction; no new
@@ -2775,7 +2316,7 @@ package in this family.
   tests passed, 40 deselected in 442.05 seconds; 0.1.10 sdist/wheel and all
   three actual locked isolated base/server/server+MCP import/help/version
   installation profiles, including exact-nine enabled tools and zero resources/
-  templates/prompts. Cockpit lint/style/types, 127 tests in 2.110 seconds and
+  templates/prompts. historical frontend lint/style/types, 127 tests in 2.110 seconds and
   production build in 1,291 ms pass; extra wheel subset: 4 passed, 3,660
   deselected in 5.33 seconds. No full-gate failure/correction/restart or
   post-freeze source/semantic change. Final records/links/dependencies, all
@@ -2818,7 +2359,7 @@ package in this family.
   sync, 395 formatted files, Ruff clean, whole Pyrefly 0 errors (11 suppressed,
   59 warnings not shown), 3,624 passed, 40 deselected in 455.10 seconds;
   0.1.10 sdist/wheel and three actual locked base/server/server+MCP installation/
-  import/help/version profiles. Cockpit lint/style/types, 127 tests in 2.027
+  import/help/version profiles. historical frontend lint/style/types, 127 tests in 2.027
   seconds and production build in 1,257 ms pass. Task retains final gate log
   SHA and service duration 8 minutes 19.635 seconds. No extra build-marker subset was
   required for this guard-only package. INV-003/010/011/014/015, AD-16/17, FS-18/19,
@@ -2843,13 +2384,13 @@ package in this family.
   Nine exact protected current bindings pin helper/profile/images/config together;
   indexed fsynced staging and real temporary switch/rollback refuse drift/unknown
   evidence. Task retains exact artifacts, failed attempts and uncertain-fsync rules.
-  Focused installer 106/helper 28/build-probe 34 and Cockpit 135 pass. A manually
+  Focused installer 106/helper 28/build-probe 34 and historical frontend 135 pass. A manually
   stopped metadata-review gate and passing pre-selector gate remain separate;
   neither is substituted for final corrected acceptance. Final NAS-shadowed
   `rtk proxy bash scripts/check.sh --with-build` confirms pipeline exit 0:
   lock/both-extra sync, 404 formatted, Ruff/whole Pyrefly 0, 3,792 Python passed/
   40 deselected in 453.62 seconds, 0.1.10 sdist/wheel and three actual locked
-  base/server/server+MCP installation profiles. Cockpit lint/style/types,
+  base/server/server+MCP installation profiles. historical frontend lint/style/types,
   135 tests in 2.213 seconds/build 1,178 ms; extra wheel subset 4 passed/
   3,828 deselected in 5.15 seconds. Exact log hash and unit duration are in task.
   INV-002/003/006/010–016, AD-16/17/21, CP-01–14 and 111/121/122/126 are reviewed;
@@ -2872,7 +2413,7 @@ package in this family.
   preparing, not deployed/tagged, preserving historical feature/deployment proof.
   Required NAS-masked --with-build gate confirms exit 0: 405 formatted, Ruff/whole
   types 0, 3,792 Python passed/40 deselected in 461.15 seconds, 0.2.0 wheel/sdist
-  and three locked isolated installation profiles. Cockpit lint/style/types,
+  and three locked isolated installation profiles. historical frontend lint/style/types,
   135 tests in 2.273 seconds/build 1,221 ms and four extra wheel smokes in
   7.15 seconds pass. Task retains exact log/preview hashes and successful unit
   duration. Preview artifacts are not deployable; REL-012 must build from this
@@ -2896,7 +2437,7 @@ package in this family.
   readability controls. Native selector stays 0.1.10. Corrected NAS-masked
   --with-build confirms exit 0: 405 formatted/Ruff/whole types 0, 3,792 Python
   passed/40 deselected in 507.85 seconds, three locked installation profiles,
-  135 Cockpit tests in 2.276 seconds/build 1,200 ms and four wheel smokes in
+  135 historical frontend tests in 2.276 seconds/build 1,200 ms and four wheel smokes in
   5.31 seconds. Local exports are protected/hash-verified, not loaded into the
   service engine. Runtime/package inputs match 481fcc4 and its worktree stays
   Git-clean; this evidence commit is distinct from source. Reviewed
@@ -2918,7 +2459,7 @@ package in this family.
   not end-to-end verification acceptance. No allow/label/execution bypass; new
   operator hold 22 requires a separately authorized design review. Final masked
   --with-build exits 0: 407 formatted/Ruff/whole types 0, 3,827 Python/40 deselected
-  in 471.22s, 0.2.0 builds/three locked profiles, 135 Cockpit tests/build and four
+  in 471.22s, 0.2.0 builds/three locked profiles, 135 historical frontend tests/build and four
   extra wheel smokes. Reviewed INV-002/003/005–007/010–016 and decisions 65/75/79/
   121/126/127; host policy is separate from unchanged app artifacts. Records/
   links/whitespace pass; REL-011 next pending until commit. NAS remains ro,
@@ -2930,7 +2471,7 @@ package in this family.
   (2026-10-18, this commit — [task](plans/tasks/rel-011-local-release-and-handoff.md)).
   Final NAS-masked --with-build exits 0: 407 formatted/Ruff/whole types 0,
   3,827 Python passed/40 deselected in 455.86 seconds, 0.2.0 builds/three locked
-  profiles, 135 Cockpit tests/build and four wheel smokes. Root creates verified
+  profiles, 135 historical frontend tests/build and four wheel smokes. Root creates verified
   local annotated v0.2.0 from clean reviewed 11ddd55; task records tag object,
   peel, full-note hash and exact deployed clean-481fcc4 artifact identities.
   Evidence-only closure changes no app/image/profile/host; tag target, build
@@ -2954,7 +2495,7 @@ package in this family.
   container-peer/notify/isolation/direct-drain pass; failed early-stop regression,
   superseded untested preview 1 and simulated-PID1 source fixtures remain explicit.
   Full masked --with-build exits 0: 415 formatted/Ruff/whole types 0, 3,912 Python/
-  40 deselected in 487.56s, 0.2.1 builds/three locked profiles, 135 Cockpit tests/
+  40 deselected in 487.56s, 0.2.1 builds/three locked profiles, 135 historical frontend tests/
   build and four wheel smokes. Reviewed INV-002/003/005–007/010–016, AD-16/17/21,
   FS/TX and decisions 115/121/126/127/128/offline verification; contracts/index/
   register/enforcement links and final records/whitespace pass. REL-013 remains
@@ -2973,7 +2514,7 @@ package in this family.
   TLS/REST/MCP/client proofs pass. Failed foundations, stopped gate, provenance
   race correction and superseded Debian evidence remain explicit. Fresh masked
   --with-build exits 0: 423 formatted/Ruff/whole types 0; 4,057 Python/40 deselected
-  in 469.08s; 0.2.1 wheel/sdist/three locked profiles; 135 Cockpit tests/build and
+  in 469.08s; 0.2.1 wheel/sdist/three locked profiles; 135 historical frontend tests/build and
   four wheel smokes. Reviewed INV-002/003/005–007/010–016, FW-03/04, AD-16/17/21,
   FS/TX and decisions 126–129; contracts/register/ADR/source-test links, records
   and whitespace reconcile. REL-013 stays pending until commit and repeats all
@@ -2992,7 +2533,7 @@ package in this family.
   drop/restart claim. Protected 0.2.1 stage/index 64 files passes actual UID 981
   access and 36 control-reader cases, preserving both stages/fixtures. Clean-source
   masked --with-build exits 0: 423 formatted/Ruff/whole types 0; 4,057 Python/
-  40 deselected in 510.38s; three locked profiles; 135 Cockpit tests/build and four
+  40 deselected in 510.38s; three locked profiles; 135 historical frontend tests/build and four
   wheel smokes. Reviewed INV-002/003/005–007/010–016, AD-16/17/21, FS/TX and
   decisions 65/75/79/115/121/126–129; no source/dependency/schema/domain change.
   Records/links/current/whitespace reconcile; OPS-018 stays pending until commit.
@@ -3011,7 +2552,7 @@ package in this family.
   client, real READY/peer/isolation/effective units and unchanged stores/locks/
   six secrets pass. Refused intermediate snapshots/quiescence and ledger typo
   remain explicit. Full masked --with-build exits 0:423 formatted/Ruff/types 0;
-  4,057 Python/40 deselected in 473.93s; three locked profiles; 135 Cockpit tests/
+  4,057 Python/40 deselected in 473.93s; three locked profiles; 135 historical frontend tests/
   build and four wheel smokes. Reviewed INV-002/003/005–007/010–016, AD-16/17/21,
   FS/TX and decisions 65/115/121/126–129; no source/dependency/schema/authority
   change. Living status/contracts/handoff/ADR links and final records/whitespace
@@ -3023,7 +2564,7 @@ package in this family.
   (2026-10-18, this commit — [plan](plans/2026-10-18-plan-container-worker-listener.md),
   [task](plans/tasks/rel-014-container-worker-release.md)). Fresh masked
   --with-build exits 0:423 formatted/Ruff/whole types pass; 4,057 Python/40 deselected
-  in 472.40s; three locked profiles; 135 Cockpit tests/build and four wheel smokes.
+  in 472.40s; three locked profiles; 135 historical frontend tests/build and four wheel smokes.
   Actual annotated local v0.2.1 object 9c8fc386… targets clean reviewed deployment/
   evidence 156506f; deployed immutable artifact source remains 4088994, not this
   records commit or gate artifacts. Exact note/cat-file hashes and existing
@@ -3125,6 +2666,17 @@ item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
 
+2026-11-01 WEB-027 completes source removal and strict source/build acceptance.
+The local feature branch is ready for the explicitly authorized normal push to
+both remotes; actual publication is verified after commit. The current selector
+is clear and no old backlog is activated. Current web guidance and original-handle,
+permission, confinement and rollback safeguards remain; production installed
+services, credentials, original guards/locks/unknown handles, archive state and
+calendars are unchanged. No production transition or live software uninstall is
+performed by this source work. See [human acceptance](../web-ui/test-release-acceptance.md)
+and [operator handoff](../web-ui/deployment.md#operate-the-unreleased-web-interface).
+
+
 2026-11-01 WEB-026 completes the Web UI replacement plan and clears the selector.
 All 95 scenarios retain actual required-layer evidence; final source gate and
 fresh owned native/rootless Chromium/root identity/reload/closure plus original
@@ -3145,7 +2697,6 @@ No old backlog is activated. The local branch is the reviewable implementation;
 a later production transition requires its own explicit authorization and actual
 target acceptance under existing holds.
 
-
 2026-11-01 WEB-025 deprecation/independence completes under the user's explicit
 no-further-plugin-work instruction.93 of95 cases retain all minimum layers.
 Continue WEB-026 final gate, read-only current installed observations/original
@@ -3155,7 +2706,6 @@ calendars, user caches and live plugin remain. No production/NAS workload,
 merge/push/tag/deploy/uninstall. Exact successful generated Gate24 TMP alone is
 inventoried/retired with logs/manifests/13 outputs retained; generated frontend
 reports remain byte-verified behind their canonical paths. No unknown cleanup.
-
 
 2026-11-01 WEB-024 guides and required source gate complete;92 of95 cases retain
 all minimum layers. Continue proportional WEB-025 deprecation then final WEB-026
@@ -3168,7 +2718,6 @@ remains excluded. WEB-023 disposable generated TMP alone was inventoried/retired
 after success, with logs/manifests/13 outputs retained; its exact frontend evidence
 trees remain byte-verified behind canonical paths. No unknown cache/data cleanup.
 
-
 2026-11-01 WEB-023 completes source/owned-fixture compatibility and rollback;
 both native/rootless fixtures are restored78. Continue WEB-024 guide acceptance,
 then proportional legacy deprecation and final handoff. Native original SDK
@@ -3180,13 +2729,12 @@ completed cases retain minimum layers; seven remain. The user's latest direction
 excludes further legacy plugin work/validation. Production/NAS/remote/live-install
 holds remain, with no merge/push/tag/deployment or uninstall.
 
-
 2026-11-01 WEB-022 source/owned-installed acceptance completes with actual
 Gate21 inner/outer0 and required-layer reconciliation of85 scenarios. Ten later
 cases remain pending. Earlier failed aggregates, unknown handles and Library/
 Firefox/formBasic qualifications remain intact. Continue authorized023–026 in
 order, first refreshing/applying bounded-testing and effort amendments. Production
-permissions/guards/NAS-ro/locks/credentials/calendars/user caches/live Cockpit and
+permissions/guards/NAS-ro/locks/credentials/calendars/user caches/installed predecessor interface and
 remote holds remain unchanged; no production acceptance or replay follows.
 
 2026-11-01 resumed by the user's fresh-session execution goal: the plan is
@@ -3205,7 +2753,6 @@ preserved. No runtime, guest, browser, operation, cache cleanup or commit occurs
 at this handoff. Resume using the [implementation prompt](plans/support/web-ui/fresh-session-implementation.md)
 or [copyable goal](plans/support/web-ui/fresh-session-goal.md); reconcile retained
 evidence first and keep the after-WEB-022 testing/effort amendment order.
-
 
 2026-11-01 [explicit acceptance adoption](plans/tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-11-01-acceptance-proposal-adopted-task-continues): user “i accept the new proposal”. WEB-022 recovers
 from the decision blocker to in_progress; plan active. Adopted product-focused
@@ -3324,16 +2871,6 @@ b189fe19 unapplied/high-medium-high-medium.
 
 Earlier checkpoint follows.
 
-2026-11-01 [latest Gate20/product-gap checkpoint](plans/tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-11-01-gate20-passes-product-acceptance-remains-open): full source gate innerfa2b6d86/outer2596cc63
-passes0/1723s/all1543 unchanged (9645 backend/4051 frontend/581 Cockpit/16 wheel,
-three locked profiles/two built-browser/real HTTP). Successful TMP retirement48f3300c
-retains inventory/extents/13 outputs/two all-UID checks; net953991168 B gained,
-Root1566720000 B; Gate19/VMs/originals/user cache unchanged. CONFIG-12 add model+
-dataset/Apply30 then remove archived dataset config/Apply29 is prepared, not run;
-seven publications must remain and neither old Apply repeats. Stock branch attempt
-scratch-only/no weakening. Overall INCOMPLETE/full13/AUTH-05/85×18 open; WEB-022
-in_progress, optional user decision unanswered,23–26 pending/future patch unapplied.
-
 Earlier checkpoint follows.
 
 2026-11-01 [latest read-only follow-up](plans/tasks/web-022-installed-functional-acceptance.md#checkpoint-2026-11-01-separate-read-only-navigation-and-b-recovery) d008066c passes0: independent discard navigation and exact
@@ -3413,7 +2950,7 @@ observer expiry, with zero POST/operation and all state preserved. A single boun
 read now passes568 focused regressions and canonical wire regeneration, with
 deadlines, authority checks and public DTOs intact. Gate16 stops at ADR143 record
 placement before tests/build, with all1542 files unchanged; that wording is
-corrected. Gate17 passes9645 backend/three wheel profiles/581 Cockpit, then fails
+corrected. Gate17 passes9645 backend/three wheel profiles/581 historical frontend, then fails
 test-driver cleanup lint; a small correction passes full web lint with product
 runtime unchanged. Full Gate18/new Source16/78 existing SPA flow remain pending.
 Qualified Source12
@@ -3427,171 +2964,6 @@ SDK133094 exits20; holder133091 exits0 after one reviewed release; the original
 backend succeeds. No Stop/SDK/signal replay. B qualifies0; C qualification remains
 pending. Rootless capture1 fails on inherited cwd;2 is prepared. Current helpers
 remain active. Full AUTH-05/HOST-10/RELEASE-04 and85×18 stay open.
-
-2026-10-31 continuation: focused native configuration follow-up0 qualifies its
-one cell; old native-six aggregate stays false. Check6 docs221/29,plan9/shadow0
-covers its prior record snapshot. Eight completed static packages preserve0 on
-same-host root `cs-root` under `/var/tmp/web022-retained-static-packages2`, with
-original paths linked from `cs-home`: Home76840960→516915200B, root2254680064→
-1815547904B; bytes/semantic metadata/aliases retained, no guest changes. Capacity
-refusal10f234d0… before intent/SSH/browser remains. Pure installed recovery plan0
-observes903a88 age58.93h/24h, actionable1/blocked0/problems0 without a job/write.
-Public differential inputs/owned Hub setup0 remain; present1's retained cache-
-symlink observation failure26d7f7b2… has independently proved no effects.
-Present2 remains transport/browser1 after two passed UI steps, successful original
-Sizing and confirmed/pendingfalse Apply. Only the new7-SHA enabled repository is
-added to the old28 disabled entries; no Sync or Sync-admission POST occurs. The
-late Edit lookup misses page2 in a25-row list, a test pagination error. Context/
-browser/server close; old seven publications/unknowns/real archives/private
-originals/roles/original1722 stay exact. Present3 remains1 on comparing a dynamic
-HTTP request_id. Present4 remains1 after SAME-original Sizing/Apply UI observation
-and host confirmation pass, then a wrongly nested entry-tags locator fails despite
-page2's enabled Edit button. Both are zero-POST/operation, closed/preserved, no Sync.
-Present5 remains transport/browser1. Its first five browser steps pass: SAME-
-original observations/page2, one FIRST selected Sync, same-original reload and
-loaded hostile README/source. Actual Sync publishes7-SHA/e6ad4b8a…/generation1,
-8files/16926B downloaded/published, reused0, with truthful HFWRN011 warnings.
-Known a88 is quarantined/failedHFTXN003; one new RecoveryReport records the remedy.
-Present5's same-document Files-navigation and parent collector failures stay
-false. Read-only qualification2 passes exact effect/preservation joins; its only
-extra allowance is the exact191B normal HF cache marker. Present6 remains1 after
-four passed read steps/first four AND queries on a CDP response-body timing error.
-Fresh pure-GET present7 now passes transport/browser0/all five steps/nine queries
-in one Chromium/root cell, with zero POSTs/operations, all closures and six root
-proofs true. No Sync/Sizing/Apply repeats or full85×18 stamp follow. Native29/30/8
-and independent rootless28/29/7 remain distinct. Preserved artifacts stay on this
-host's root `/var/tmp`, with original home paths linked; measured after7 free is
-root1815605248B/home470507520B. Historical relocation before/after figures stay
-historical. Revision8 attempts1/2 remain false before POSTs; their DOM/CDP observations
-are retained, including the UI client's normal finally abort after decoding.
-Attempt3's actual browser passes all six steps/closures/zero errors: one original
-Sizing/Apply/selected Sync publishes8/5ef704ee…/generation2,6609B published,
-382B downloaded/6227B reused with HFWRN011. Retained7 README/source and current8
-unsupported/no-body/no-fallback UI pass. Its original parent remains transport1
-on old cache-lock timestamps; qualification1/2 also stay false. Independent
-read-only qualification3 passes0/9ca547c1… with all seven boolean proofs, allowing
-only14 shared-payload link/ctime rows and seven exact empty cache-lock timestamp
-changes; exact8 tree inventory joins its origin. All other old/current state
-stays exact. Root-viewed images qualify only their loaded panels. Native now
-29/30/9/current8 at that checkpoint. Revision9 now passes transport/browser0/
-all six UI steps in ONE Chromium/root cell, receipt8a34e9c1…: one original
-Sizing/Apply/selected Sync publishes9/ed17f321…/gen3,6286B published/59B downloaded/
-6227B reused/HFWRN011, no new Recovery. Current9 unsafe/NUL body withheld,
-retained8 unsupported/7 present and explicit-current no-fallback all pass. All
-closures/six boolean preservation proofs pass, allowing only21 shared-payload
-link/ctime rows and seven exact cache-lock timestamps. Native now29/30/10;
-rootless28/29/7 is unchanged. Actual six-cell read aggregate remains1/a44f42d9…:
-four Chromium/Firefox cells pass all six steps each; both WebKit prefixes pass
-authority and every README DOM/source assertion before screenshot-induced CSP
-console errors fail strict health checks. All close/zero effects/root preservation
-hold; the final probe is unrun in that aggregate. Separate real probe1 fails:
-typed search→Models at75.2ms clears the field/hash and returns15 models instead
-of1. A contract-first three-file fix reads current DOM search before applying
-q+type together; literal-Unicode/pending-clear regressions fail before and pass
-23/23 after, lint/format0. INV018/021/ADR145 need no new architecture. Installed
-fixed-artifact verification is pending; post-fix gate13 is now running on freeze5,
-driver3855 unchanged. Independent WebKit screenshot diagnostic0 confirms
-console/CSP0 before capture, then Playwright's HEAD `body {}` style adds the CSP
-error; no app CSP change is needed. Fresh no-screenshot WebKit follow-up0/818d8c17…
-passes both prefixes/all six steps and nine AND queries each, console0/closures/
-all six preservation proofs. Its nine-query aggregates46.14/77.52s fit the pilot's
-120s scope; strict driver45s/performance/mapped acceptance is unchanged. Together
-with the four earlier Chromium/Firefox cells this supplies six native source75
-read cells; original aggregate stays false. Gate12 remains historical pre-fix
-green; only its generated TMPDIR retires0,179508 entries/two no-reference checks/
-logs retained, root882089984→1807298560B. Source75 corpus worker UI now passes0/
-a65fcdaf…/five steps in ONE Chromium/root cell: full4 repos/10 publications/
-23 objects/41279B and revision9 scope1/1/8/6286B are clean0, with original result/
-persisted report/UI/same-original reload joins and18 Library refreshes. All nine
-root proofs/closures/no errors pass; old reports/payloads and new full37523d22…
-marker survive the narrow run. Separate clients0/ed69d827… join four CLI reads and
-28 MCP calls across both prefixes during the SAME browser/refresh2→5, both report
-tools reading these genuine new worker reports. This is one-cell overlap, no
-installed-qfix/full client-matrix claim. Gate13 now passes inner/outer0/dca41acd…/
-0a0c45c8…, all1006 frozen files unchanged,9580 backend/4051 combined frontend/
-Cockpit/16 wheel/two built-browser/real HTTP and locked profiles. Clean source14/
-version76 cut0/d4d99f8d… is complete, main refs/index/product unchanged. Native14
-build now passes0/b4eaf3ae…/18 artifacts, reproducible clean backend/UI, with
-postproof620873aa… and selected UIba76372c…. API76 canonical build0/98aae0b4… is
-also real; canonical API76 runtime foundation now passes0/e529c2eb… with proof
-93c873f6…/shadow0, preserving stores/main/reserves. Normal native76 A/B/C now
-pass0/e1b11a1c…/dc726678…/451293b7…/8228400d…, selected76/RW903, original1722/
-keys/old stores/reports/Hub retained,19 bindings/six grants/original SELinux receipt
-unchanged. New helper/worker/API/Caddy are86976/86996/87017/87027. Installed q fix
-is now verified in five cells from original aggregate1/71235451… plus fresh
-WebKit-management2 pass0/6f35217a…: both literal/clear cases85/84ms, strict health/
-closures/seven root proofs pass. Original aggregate stays false: its406ms typed
-click missed the timing target, clear was unrun; no app bug is inferred.
-Source75 failure21598052… stays retained. Rootless76 normal app start0/bda51883…
-now precedes actual six-cell q/type pass0/19d7e7c3… in97.165s:12 fresh cases,
-strict health/all closures/six preservation proofs, zero effects. Native76 remains
-29/30/10; independent rootless76 remains28/29/7. Native's first schedule530db125…
-stays failed: validation200/one replacement202 precedes ec674 interrupted/no
-result, rejected before protected work by retained foreign3f history. GET observer
-830efb44… stays aggregate1 for one expected direct409 console message; scope
-184ac01a… qualifies actual UI lookup/Observe200, unknown/pendingfalse, blocked
-submission, same key/closures/preservation, without reconciling the original.
-Same-guest fresh-control prepare0/eee774bc… and independent review3627a890… retain
-the old API store at its path, foreign history/backups/server inodes,903 payloads/
-reports/SDK state/keys/locks and identical65e929fe… authority. First restart7ec644f8…
-stays failed after four normal starts. Read-only qualification2 passes0/a72d807a…
-in5.279s against those same roles and the established new-store lock, with all
-preservation joins and zero new starts. Fresh schedule2 now has scoped six-cell coverage0/cd798799…: five complete
-sessions plus explicit Firefox-management2+2 continuation,24 unique confirmed
-originals and default/inactive final state. Raw Firefox9dae3804… remains failed
-after Replace/Resume and a disabled-Edit wait; GET diagnostic0/35bcc3ad… restores
-both original outcomes and observes enabled controls, without establishing the
-lost page's cause. Only fresh Pause/Reset0/4dbc97db… follows, recovering all four
-after reload; WebKit root/management0/abd3239d…/89679218… finish their unrun cells.
-No full HOST case/matrix stamp follows. Rootless76 admin1/8f027823… remains1/
-919.435s on forbidden-locator console404s/read deadlines; admin2/5bdb14be… remains1/
-301.809s on abort/deadline and expected400-versus-actual422 assertions. All close,
-no operations/effects; admin2 sends one pure validation422. Ordinary workload3
-passes0/740d46ba… in580.334s: six cells/six UI callbacks each,12 pure validations,
-zero operations, all seven preservation flags/closures; maximum callback32.101s.
-35/36 UI response bodies are captured; one Chromium-management body is unavailable,
-so no complete wire-transfer claim follows.
-Focused rootless tag19 passes0/231f8cc6… in479.852s: six cells/19 fresh callbacks
-each,114 passes, maximum10.165s; each joins16 queries and three client refusals.
-Zero POSTs/operations, all seven preservation flags/closures and strict console/
-CSP checks pass. Split tag-provenance/bounds scope adds no full-case/matrix stamp
-or completed-transfer claim. Earlier aggregate failures stay false.
-The tracked test driver now replaces the overlong tag aggregate with19 named
-45s callbacks; CATALOG-02 requires all19, with52 baseline assertion IDs and16
-case mappings. Exact query/hash/settled-DOM and client-side no-request refusals
-remain; no receipt import or timeout relaxation is added. Driver8cba6cd6…/
-runner70b3a8fb… and the existing unit fixture's ID list are the only new test
-changes. Existing Node metadata18 and Python functional-runner545 checks pass0;
-the initial27 stale-fixture-ID failures stay retained. Ruff/ESLint/format/syntax
-pass; no new full gate covers this test-only integration. Installed tools3855
-and source76 runtime/UI are unchanged, ordinary/negative integration is pending.
-Rootless configuration-negatives1 remains transport/browser1/1320d5a6… in699.559s:
-five cells each pass25 callbacks/24 local refusals; WebKit-root times out on its
-first10s Administration navigation click before config GET. Zero POSTs/operations,
-strict health/all closures and all other preservation flags pass. Focused fresh
-WebKit-root2 is running, not yet qualified; any later coverage must join original
-five plus its actual result, retaining the failed aggregate. No server422 claim
-comes from these local form refusals.
-Native maintenance4 remains transport/browser1/fa102fc6… in1084.098s: seven UI
-steps pass, publishing only the new903 copy's B/C/D pairs, each2files/4751B,
-with four successful Sizings and three confirmed Applys. Apply-E original
-7d6d6295954ab6087f8f1ec8bc344a2b fails20/HFAPI022 on protected policy inspection
-timeout before helper handoff; it is not resubmitted. Read-only0d8be27c…/
-cb8b2777… prove empty events, configuration-D/retention5 and no pending host or
-configuration intent/application audit for that failed original. The UI correctly
-fails closed under ADR154; no product defect is established. All browsers close,
-with zero unexpected page/console/5xx errors, and the old ten publications,
-worker reports, private originals, roles/keys/1722/Hub remain protected. E Sync,
-retention reduction, prune and purge are unrun. Fresh-context M5 preparation is
-for a distinct reviewed remaining workflow, not replay or a false M4 pass.
-TARs4 preservation passes0/12807934… at same-host ROOT
-`/var/tmp/web022-retained-public-source-tars4`: four completed public source6–9
-TARs retain bytes/semantic metadata/old HOME aliases and88 producer/artifact
-hashes. HOME276353024→346816512B/net70463488B; ROOT1975537664→1904615424B.
-FIEMAP70660096 exclusive bytes remains separate from actual net free movement.
-Source10–13 capture-only originals stay untouched; no VM/image/checkout/venv/
-private-store cleanup, off-machine backup or lowered reserve occurs. WEB-022
-and full85×18 remain open; check18 is historical to these new records.
 
 Native maintenance1 stays1/6e15398a…/41.963s before POST on the outdated clean-
 paragraph locator. Numbered2's pre-intent capacity refusal30089af6… remains;
@@ -3692,7 +3064,7 @@ Source13/historical gate9 inner0/outer143 stay
 distinct. Gate10 types1 remains; two fixture typing fixes enter freeze2,
 still only four changed test files/1002 unchanged. Gate11 now passes inner0/
 2625.186s and outer0/2626.031s:1006 unchanged,9580 backend/52 deselected,4049 combined
-frontend,581 Cockpit,16 wheel and two built-browser fallback checks. The two
+frontend,581 historical frontend,16 wheel and two built-browser fallback checks. The two
 readiness waits postdate gate11's passing source; current driver3855cebb/freeze4
 adds test35s HTTP-response wait before existing10s exact-base DOM, leaving
 fetch30s/queue caveat/strict45s and app unchanged. Current full gate remains
@@ -3707,14 +3079,14 @@ pre-effect collector refusal remain retained; no stop replay. Current API56028,
 helper55998,worker56017,Caddy56038 run75. Actual old74 Chromium/root page passes
 ROUTE-08: visible unsaved draft and two original handles retained, explicit reload
 invitation, no automatic reload/POST. Raw RELEASE08 naming is qualified, never
-Cockpit-absence credit. Finite owned4-SHA Hub3 setup0 preserves oldB listener
+historical frontend-absence credit. Finite owned4-SHA Hub3 setup0 preserves oldB listener
 inputs/final evidence and all app/archive state; new publication counter proof
 remains pending. Existing driver adds five mapped rows (16total/34steps),24
 focused existing tests/lint0; no new mapping is browser-accepted yet. Task022 owns
 exact receipts/hashes. Full85×18 remains open; WEB-023–026 remain pending.
 
 WEB-022 source13 checkpoint: required code/build gate9 inner0 proves9580 backend,
-4049 combined frontend,581 Cockpit and16 wheel checks on1006 frozen files. Outer
+4049 combined frontend,581 historical frontend and16 wheel checks on1006 frozen files. Outer
 collector143 remains failed and is separately qualified from the complete log.
 Native75 and API75 build0; restricted API foundation/export0. Native74's real
 4751B Sync/published_bytes0 defect is fixed locally with171 sync checks; actual
@@ -3724,7 +3096,7 @@ native75 normal upgrade/GET-only old-page version check are running; no pass is
 credited in advance. Main stays0.2.2; task022 owns exact receipts/identities and
 full85×18 acceptance remains open. Existing original unknown/staged operations,
 keys/stores/locks/failed attempts and all old guests remain retained. Reuse browser
-rootfs; no20GB requirement, production/NAS, remote publication or Cockpit removal.
+rootfs; no20GB requirement, production/NAS, remote publication or historical frontend removal.
 
 WEB-022 latest: rootless UI4 keyboard/mobile/reduced-motion passes all six cells,
 transport0/browser0, with all root preservation flags true and mobile screenshot
@@ -3736,7 +3108,7 @@ evidence/seed/configuration/candidate/pending/API receipts/roles/guard stay exac
 Apply750b5d21/pending61497804 remains unresolved after its separate read-only
 recovery. Task names the UI4/UI3/UI3b receipts and retained failures. Native73
 UI6's six-cell/12-job qualification remains separate. Gate8 passes0/1902.967s:
-9574 backend/52 deselections,3708 web unit/4049 combined frontend,581 Cockpit,
+9574 backend/52 deselections,3708 web unit/4049 combined frontend,581 historical frontend,
 16 wheel checks; all1006 product files unchanged, log97aa79a7…6570. Clean auxiliary
 source12/739ab/version74 builds release12 and canonical API image d5f741cf (exit0);
 main stays0.2.2. Initializer/foundation/OCI export/pack12 render now pass0,
@@ -3893,7 +3265,7 @@ reserve, without deleting failed fixtures or operation evidence. Task/evidence m
 carry exact identities and receipts. WEB-022/full85×18 remain incomplete.
 
 WEB-022 required gate7 passes0 in1637.91s on2026-10-30:9569 backend/52 opt-in
-deselections,3708 web unit/4049 combined frontend,581 Cockpit and16 wheel smoke;
+deselections,3708 web unit/4049 combined frontend,581 historical frontend and16 wheel smoke;
 all three locked wheel installation profiles and required browser/HTTP checks pass.
 All1006 frozen product files stay unchanged; log SHA256
 3659aa84266c0433b36c05cd34aefee8cb7e8d5e2092e43d6d13b17cad4e1bb2.
@@ -3970,22 +3342,6 @@ totals0. This proves explicit refresh recovery and these views on native72 only.
 Required85×18 acceptance is still
 incomplete. User steering prioritizes actual UI testing without new harness
 features. All older uncertain operations and failed collectors stay preserved.
-
-WEB-022 installed checkpoint2026-10-30 remains in progress at parent2c44f2d.
-Its [task](plans/tasks/web-022-installed-functional-acceptance.md) records the
-owned loopback-only RW transition, real offline full verification0 and all14
-positive MCP tools at both prefixes during browser operation, followed by clean
-source9 native selection. Required gate2 exits0 in2043.63s:9402 backend/52 opt-in
-deselections,3708 web unit/4049 combined frontend,16 wheel smoke checks and
-required web/Cockpit/build checks; all1006 frozen product files stay unchanged at
-that gate checkpoint.
-Retained log SHA25699afc00c1674516eeb8ee819c376866b235a79109b98bb72ae39cfd4ef215712.
-Three native schedule cells pass their four effects; original Firefox
-`/management` operationf04156226b4e9fa82b4268e59102c0f6 remains interrupted/
-HFAPI015, effect_unconfirmed/pendingtrue with file installed/manager unknown.
-Its private key, marker, full fixture and failed report are preserved without
-replay/reset. Actual normal drain0 leaves that guest guard-only: bootb2f9c836,
-NFS-ro, READY25331/original global1641, no API/worker/helper/Caddy actors.
 
 A disjoint owned target is prepared from the retained pre-recovery backup:
 boota213b3ea-5945-4a1d-ad4d-8cf354393a36,
@@ -4197,7 +3553,7 @@ actual transcripts; no installed proof or standalone original log is invented,
 and a new full gate is still pending. These qualified
 schedule and prerequisite results do not complete native/rootless acceptance:
 observer, rich workflows and the full85-case/18-cell matrix remain required,
-while the existing runner implements eleven case mappings. No production/NAS, live Cockpit,
+while the existing runner implements eleven case mappings. No production/NAS, installed predecessor interface,
 remote publication or original-handle replay authority is added. These current
 fixture facts supersede only earlier handoff live-state descriptions below.
 
@@ -4220,14 +3576,14 @@ all14 positive MCP calls, deliberate restricted-profile denials and its full
 functional gate. It must not promote the12-positive/2-absent-report smoke or
 configuration-only grants into those results. Later rollback, human walkthrough,
 conditional source retirement and final gate remain required. Production/NAS,
-live Cockpit uninstall, merge/push/tags and replay of uncertain old work remain
+installed predecessor interface uninstall, merge/push/tags and replay of uncertain old work remain
 excluded. The earlier WEB-020 handoff below retains its original package scope.
 
 WEB-020 completed 2026-10-29, **this commit**:
 `WEB-020: harden browser recovery, accessibility and bounded reads`.
 All six owned acceptance rows are complete. Final required gate3 exits0 on
 canonical3f97731e/1528:9039 backend/52 opt-in deselections/1067.78s backend,
-3702 web unit/4029 combined frontend,95% line/90.02% branch coverage, Cockpit,
+3702 web unit/4029 combined frontend,95% line/90.02% branch coverage, historical frontend,
 wheel/build/browser smoke and real HTTP/API React integration all pass.
 Original stdout359596b0…/124539B and stderr4dcb9afe…/9402B are retained under
 `/var/tmp/web-020-validation-nvj5zeg7/direct-application-status-fix-gate3.*`.
@@ -4239,13 +3595,12 @@ app/runtime/UI bytes are identical. INV-018/021 and ADR145/157 with AD12/ADR113
 are aligned; the error-alert fix adds no authority, wire, dependency or execution
 boundary. Original interrupted Apply/lost-key uncertainty remains unreplayed.
 Next is **WEB-021 pending/handoff only**, not started. Production/NAS deployment,
-merge/push/tag and Cockpit retirement remain outside this completed package.
+merge/push/tag and historical frontend retirement remain outside this completed package.
 
 ### Retained WEB-020 execution checkpoints
 
 The following original checkpoints retain their historical statuses and evidence;
 the completed handoff above and task020 supersede their former pending state.
-
 
 Current WEB-020 direct application checkpoint (2026-10-29): the user directed
 testing the application and stopping additional harness-validation/model/binder/
@@ -4271,27 +3626,13 @@ preserved for an incorrect response-envelope assertion; another continuation's
 Chrome auth-challenge selection is also a script issue, not a product defect.
 The subsequent configuration and upgrade outcomes remain unaccepted, as below.
 
-Direct health exposed a real product bug: the four documented optional publication
-directories were reported unknown. The narrow archive inspection fix preserves
-initialization, sentinel/symlink and traversal rules; 153 focused regressions and
-Ruff pass. The required archive wire-audit pin and regenerated contracts are now
-updated with unchanged wire shape. The complete product gate2 exits0:9039 tests
-pass/52 deselected in 1196.62s, with frontend/Cockpit/installation/build and every
-other required check passing; logs are
-`/var/tmp/web-020-validation-nvj5zeg7/direct-application-fix-gate2.*`.
-Native 0.2.66 source `5d1fbe6e…`/wire `320c5fb1…` is staged and normally switched/started
-(helper 25579/verifier 25605/API 25613/Caddy 25619). Switch evidence `f74ca077…` and
-actual HTTP `d83eb9c0…` prove initialized archive health with zero unknown entries,
-ready/valid policy, supported native six grants and matching 0.2.66 UI/bootstrap.
-Native 0.2.65 remains unqualified/inactive; rootless 0.2.67 is built only, not guest-accepted.
-
 Original preview `e4fb1f4f…` succeeded and Apply `1b808e75…` is interrupted. Its transmission
 exists and original application key is lost; no replay or recovered success is
 claimed. Failed upgrade attempt `e41f6f0…` stays false because Root switched before
 all three old pages were ready (Firefox connection refused; WebKit not reached).
 Exact upgrade acceptance remains open. All six WEB-020 acceptance rows stay open
 pending native writes/race-equivalent checks, rootless, zoom/reader and final
-mapping/docs/commit. Production, NAS, rollout, merge/push/tags and live Cockpit
+mapping/docs/commit. Production, NAS, rollout, merge/push/tags and installed predecessor interface
 remain outside this work. Task020 has the complete paths; retained history follows.
 
 Subsequent native 0.2.66 direct recovery `27fad989…` passes all three browsers,
@@ -4520,8 +3861,7 @@ Race11 attempt1 then fails before cases at old51 helper startup (`46505372…`):
 browser exits normally, but native start/wait closure remains unqualified and
 all handles/current phase are preserved. Bounded read-only inspection is next;
 no replay, successful race or restored63 completion is inferred.
-Production/NAS/Cockpit, merge/push/tags and rollout remain outside scope.
-
+Production/NAS/historical frontend, merge/push/tags and rollout remain outside scope.
 
 Latest WEB-019 checkpoint (2026-10-27, this commit): WEB001–019 are complete on
 feat/web-ui; [task019](plans/tasks/web-019-administration-and-diagnostics-ui.md)
@@ -4546,7 +3886,7 @@ limits remain explicit. Aggregate source3-functional-all-summary.json in
 /var/tmp/web-019-validation-fnvch46d (SHA2563ebb9e27…) pins evidence and sources.
 Reuse the same guest/Caddy/engines. This proves no NAS/production/full-platform
 acceptance and authorizes no rollout. Production0.2.2, live guards/calendars/
-credentials/Caddy and Cockpit remain untouched; merge/push/Git tags/live plugin
+credentials/Caddy and historical frontend remain untouched; merge/push/Git tags/live plugin
 removal stay outside scope.
 
 Latest WEB-018 checkpoint (2026-10-27, this commit): WEB001–018 are complete on
@@ -4572,9 +3912,8 @@ Aggregate: /var/tmp/web-018-validation-blcl67j1/source5-functional-all-summary.j
 (SHA256dbad3dfc…). Existing guest/Caddy/engines are reused; no additional engine or
 frontend server is needed. This is LOCAL_STORAGE_SIMULATION, not NAS/production
 or the later full platform matrix. Production0.2.2, live guards/calendars/
-credentials/Caddy and Cockpit remain untouched. Rollout/merge/push/Git tags/live
+credentials/Caddy and historical frontend remain untouched. Rollout/merge/push/Git tags/live
 plugin removal remain unauthorized here.
-
 
 Latest WEB-017 checkpoint (2026-10-27, this commit): WEB001–017 are complete on
 feat/web-ui; WEB-018 is pending through the current selector. [Task017](plans/tasks/web-017-maintenance-ui.md)
@@ -4600,7 +3939,7 @@ all WEB015/016 pending handles and failures remain separate preserved evidence.
 Current aggregate: /var/tmp/web-017-validation-n5qoqk8f/source2c-functional-all-summary.json.
 This is owned native LOCAL_STORAGE_SIMULATION, not live NAS, new rootless UI or
 WEB022 platform acceptance. Production 0.2.2, guards, calendars, credentials and
-live Cockpit remain untouched. No rollout, merge, push, tag or live plugin
+installed predecessor interface remain untouched. No rollout, merge, push, tag or live plugin
 removal is authorized; later platform/parity/rollback/final gates remain required.
 
 Latest WEB-016 checkpoint (2026-10-26, this commit): WEB001–016 are complete on
@@ -4627,7 +3966,7 @@ Current aggregate: E=/var/tmp/web-016-validation-2_9zjimp/source4-functional-all
 This is LOCAL_STORAGE_SIMULATION application acceptance, not live NAS or new
 rootless UI proof. WEB022 platform, compatibility, parity, final acceptance and
 production rollout remain separate. Production 0.2.2, guards, calendars,
-credentials and live Cockpit remain untouched. No rollout, merge, push, tag or live
+credentials and installed predecessor interface remain untouched. No rollout, merge, push, tag or live
 plugin removal is authorized.
 
 Latest WEB-015 checkpoint (2026-10-26, this commit): WEB001–015 complete on
@@ -4647,7 +3986,7 @@ acceptance on owned read-only loopback NFS with synthetic publications, not new
 rootless UI, production/NAS ingestion or WEB022's platform matrix. Earlier WEB008
 rootless/core proof remains unchanged; later compatibility/parity/final acceptance
 are still required. Production0.2.2, writer guards, calendars, credentials, NAS and
-live Cockpit are untouched. No rollout, merge, push, tag or plugin removal.
+installed predecessor interface are untouched. No rollout, merge, push, tag or plugin removal.
 
 Latest WEB-014 checkpoint (2026-10-26, this commit): WEB001–014 complete on
 feat/web-ui; continue WEB-015 through the current selector. README rendering,
@@ -4661,7 +4000,7 @@ all original browser/API/Caddy roles drained normally, configuration/source/full
 bytes remain exact and operation count is0. Earlier prefixes/cohorts are retained.
 This is local NFS-metadata simulation, separate from later native/rootless platform,
 parity, compatibility and final acceptance. The five infrastructure pairs remain
-original; production0.2.2, guards/credentials/calendars/NAS and live Cockpit remain
+original; production0.2.2, guards/credentials/calendars/NAS and installed predecessor interface remain
 untouched. No merge, push, tag, rollout or live plugin removal is authorized.
 
 Latest WEB-013 checkpoint (2026-10-26, this commit): WEB001–013 complete on
@@ -4677,7 +4016,7 @@ preserve all other metadata/source identities and bytes, configuration remains
 unchanged and operation count is0. The five infrastructure pairs remain original.
 This is explicit local NFS-metadata simulation, separate from later full native/
 rootless platform, parity, compatibility and final acceptance. Production0.2.2,
-credentials/calendars/guards and live Cockpit remain untouched. No merge, push,
+credentials/calendars/guards and installed predecessor interface remain untouched. No merge, push,
 tag, rollout or live plugin removal is authorized.
 
 Latest WEB-012 checkpoint (2026-10-26, this commit): WEB001–012 complete on
@@ -4693,7 +4032,7 @@ are normally stopped, archive/configuration bytes and identities are unchanged,
 and the original five infrastructure pairs remain. This application fixture uses
 explicit local NFS-metadata simulation; full native/rootless platform, parity,
 compatibility and final acceptance remain later tasks. Production0.2.2,
-credentials/calendars/guards and live Cockpit remain untouched. No merge, push,
+credentials/calendars/guards and installed predecessor interface remain untouched. No merge, push,
 tag, rollout or live plugin removal is authorized.
 
 Latest WEB-011 checkpoint (2026-10-26, this commit): WEB001–011 complete on
@@ -4713,7 +4052,7 @@ Source2 evidence is /var/tmp/web-011-validation-1oxmmhrk/functional-native-sourc
 These actual empty Plan executions prove recovery behavior, not archive effects,
 NAS or the later full platform matrix. Source2 stock API/UI imagea603f14b uses
 pinned UBI10 micro without Node; projected rootless0.2.19 has no new functional claim.
-Production0.2.2, real credentials/calendars/guards and live Cockpit are untouched.
+Production0.2.2, real credentials/calendars/guards and installed predecessor interface are untouched.
 Rollout, merge, push and tag remain unauthorized. Earlier checkpoints retain their
 original historical scope.
 
@@ -4733,7 +4072,7 @@ tar retains old inventories and must never be presented as a release candidate.
 Toy ref transitions are external storage simulation; no production/NAS/platform
 acceptance is inferred. Guard/key/locks, loopback NFS, earlier test state and failed
 runs remain preserved. Production0.2.2, real credentials/calendars/guards and live
-Cockpit are untouched. Rollout, merge, push and tag remain unauthorized.
+historical frontend are untouched. Rollout, merge, push and tag remain unauthorized.
 Earlier checkpoints below retain their original historical scope.
 
 Latest WEB-009 checkpoint (2026-10-25, this commit): WEB001–009 complete on
@@ -4752,7 +4091,7 @@ key/lock, loopback NFS and historical helper/runtime state are unchanged. Old
 released-source status/inventory read the new adjunct environment, but catalog
 refuses HFVER007/exit40; preserve cards and choose a compatible reader rather
 than deleting metadata. Human rollback guidance records that limitation.
-Production0.2.2, NAS/guards/calendars/credentials and live Cockpit remain untouched.
+Production0.2.2, NAS/guards/calendars/credentials and installed predecessor interface remain untouched.
 Production rollout, merge, push and tag remain unauthorized. Earlier checkpoints
 below are historical evidence.
 
@@ -4774,7 +4113,7 @@ the recorder-overflow run, whose25 passing application assertions did not establ
 acceptance. Its corrected fresh23-case cohort passes553.269s with complete457
 request capture and normal drain. Disposable retirement is not a product recovery
 procedure; no outcome phase is edited or operation replayed. Production0.2.2,
-NAS/guards/calendars/credentials and live Cockpit remain untouched. Production
+NAS/guards/calendars/credentials and installed predecessor interface remain untouched. Production
 rollout, merge, push and tag remain unauthorized. Earlier checkpoints below are
 historical evidence.
 
@@ -4794,10 +4133,10 @@ native's original passing disabled-token profile stays distinct. The shared
 production recipe remains pinned UBI10 micro; the private test-CA image is
 unshipped. Preserve both original summaries/operation stores and private
 predecessors. Production0.2.2, NAS-ro/independent guard, masks/calendars, real
-credentials and live Cockpit remain untouched. No merge/push/tag/deployment is
+credentials and installed predecessor interface remain untouched. No merge/push/tag/deployment is
 authorized by this implementation plan. Earlier checkpoints below are history.
 
-Latest WEB-006 checkpoint252: native32 ordinary normal/postrun/preservation pass; original rootless38 failed and is fully backed up/retired/preserved. Original-window manager/kernel/USER metadata records enforcing boundary refusals, with no original client/method/fatal-path cause or new grant inferred. Source25/gate25 remain valid; all4cases and rootless/dedicated acceptance remain pending. See task006 for exact receipts; no production/NAS/live Cockpit action.
+Latest WEB-006 checkpoint252: native32 ordinary normal/postrun/preservation pass; original rootless38 failed and is fully backed up/retired/preserved. Original-window manager/kernel/USER metadata records enforcing boundary refusals, with no original client/method/fatal-path cause or new grant inferred. Source25/gate25 remain valid; all4cases and rootless/dedicated acceptance remain pending. See task006 for exact receipts; no production/NAS/installed predecessor interface action.
 
 Latest WEB-006 checkpoint238: exact original broker journal ACTUALLY PASSES0.910336s and records7 enforcing helper_t→unconfined_dbusd_t dbus(send_msg) refusals; current broker caps0/audit-write false, no client PID/method inferred. Reviewed seven-file singleton permission/contracts/tests patch APPLIED; focused144 tests/Ruff/docs20727/diff pass. Source25 ACTUALLY CAPTURED59f78c03/1361 and projected753a5334 (.16 only2TOML fields), then frozen with5 bookkeeping exclusions. Original strict gate25 outer3903965/start437194105 is RUNNING. Owned native016 readonly assessmentv1/v2 both refuse before installer/restorecon: channel-before-WORK and intended duplicate-control guard; freshv3 guard/call-order correction pending. Guest policy remains old2416/1d9/725f, failed36 fully preserved. All4cases pending,WEB006 uncommitted,WEB007–026 pending.
 
@@ -4820,7 +4159,7 @@ returns32/reaps, stderr158bytes/SHAa088589d; readonly remount/import/wheel copy
 were not reached. `bind_may_be_present=true`, `readonly_proved=false` remain
 unchanged. Exit32 is not proof of absence. All13roles strictquiescent,4cgroups
 empty,5endpoints refused; release failures[]. No reinstall/staging, selector,
-service, policy, timer, credential, production/NAS or live Cockpit changes.
+service, policy, timer, credential, production/NAS or installed predecessor interface changes.
 
 Next is a separate readonly collection of the retained credential-free mount
 error, actual mountinfo and target inode/emptiness before any new action.
@@ -4831,7 +4170,6 @@ admission remain valid; package projection remains incomplete.
 
 Checkpoint111 `.scratch/web-006-source16-current-state-v111.json` SHA256
 6419787fb1bc5c17044b90f96e7971a6606346be86e5b1f461332584f9c1eda6. WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted.
-
 
 WEB-006 checkpoint110 update2026-10-23: separate retained-data completion passes.
 
@@ -4867,8 +4205,7 @@ API/UI artifact07bd818e retains pinned UBI10micro base/no frontend server.
 
 Checkpoint110 `.scratch/web-006-source16-current-state-v110.json` SHA256
 8755819e19cf085a54f38102c194024cccc6f150ddb1b7f3bc5e4caab9a23743. All21success-dependent scopes stay inert. WEB-006/
-AUTH-08/HOST-01–03 incomplete/uncommitted; production/NAS/live Cockpit untouched.
-
+AUTH-08/HOST-01–03 incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint109 update2026-10-23: source16 transfer stops at readable-parent boundary.
 
@@ -4901,8 +4238,7 @@ authority or installed browser acceptance has occurred.
 
 Checkpoint109 `.scratch/web-006-source16-current-state-v109.json` SHA256
 a504a66cc61d982cb5dc14eef34bc91272e74fc01d62e414de0b8dd6f1fea63c. WEB-006/AUTH-08/HOST-01–03 remain incomplete; original failed
-native/build/audits stay preserved. Production/NAS/live Cockpit untouched.
-
+native/build/audits stay preserved. Production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint108 update2026-10-23: separate streaming audit and fixed fixture admission pass.
 
@@ -4956,8 +4292,7 @@ prelabelled public inputs, actual same-Caddy negative TLS epoch/preflight, then
 fresh native/rootless acceptance. All21 success-dependent scopes stay inert.
 WEB-006/AUTH-08/HOST-01–03 remain incomplete; gate16 source2da61616 stays green.
 Shared API/UI image07bd818e retains pinned UBI10micro ancestry; no separate
-frontend image/server. Production/NAS/live Cockpit remain untouched.
-
+frontend image/server. Production/NAS/installed predecessor interface remain untouched.
 
 WEB-006 checkpoint107 update2026-10-23: retained rootfs diagnostic failures remain preserved.
 
@@ -4985,8 +4320,7 @@ independently ready and no new guest fixture/authority is selected.
 
 Checkpoint107 `.scratch/web-006-source16-current-state-v107.json` SHA256
 9fd53bddcd4f21a64a49b09cfdb356dd5f5d0bf0a7b90f25503a1878d6935c8b. WEB-006 remains incomplete/uncommitted; AUTH-08/HOST-01–03
-stay pending. Production/NAS/live Cockpit remain untouched.
-
+stay pending. Production/NAS/installed predecessor interface remain untouched.
 
 WEB-006 checkpoint106 update2026-10-23: paired OS probes pass; comparison fails, image remains ineligible.
 
@@ -5019,8 +4353,7 @@ Source16 gate/projection and UBI10micro API/UI provenance remain unchanged.
 
 Checkpoint106 `.scratch/web-006-source16-current-state-v106.json` SHA256
 0902df53ec3063a0b44fe85815d693fffc9fc24c723f234af27baa4cf6052270. AUTH-08/HOST-01–03 and WEB-006 remain incomplete/uncommitted;
-no production/NAS/live Cockpit changes.
-
+no production/NAS/installed predecessor interface changes.
 
 WEB-006 checkpoint105 update2026-10-23: host-only corrected test-source projection passes.
 
@@ -5046,8 +4379,7 @@ All21 success-dependent scopes stay inert and no fresh22 is selected.
 
 Checkpoint105 `.scratch/web-006-source16-current-state-v105.json` SHA256
 b665cf4e259eae7d60f29db4cd32011fcedaaaa14decb5f799ae54ca8476d9e7 records this limited result. WEB-006 remains incomplete/
-uncommitted; no installed acceptance, production/NAS or live Cockpit change.
-
+uncommitted; no installed acceptance, production/NAS or installed predecessor interface change.
 
 WEB-006 checkpoint104 update2026-10-23: separate read-only diff passes; image still ineligible.
 
@@ -5086,8 +4418,7 @@ eligibility; it cannot select a guest or relabel old artifact provenance. All136
 canonical source hashes/modes remain source16/2da61616 and its strict gate stays
 passed. Checkpoint104 `.scratch/web-006-source16-current-state-v104.json` SHA256
 d4e4a4506cd49f26b32641234b053c4a381e5da815b47680f840246332cc740e records the actual evidence. WEB-006 remains
-incomplete/uncommitted; production, NAS and live Cockpit remain untouched.
-
+incomplete/uncommitted; production, NAS and installed predecessor interface remain untouched.
 
 WEB-006 checkpoint103 update2026-10-23: original image build audit fails, no replay.
 
@@ -5131,8 +4462,7 @@ canonical source hashes/modes still match source16/2da61616 and its strict gate
 remains passed. Checkpoint103
 `.scratch/web-006-source16-current-state-v103.json` SHA256
 8e2c075d4ea8936c6ebf857857f9bd1cae5040ca5f6093d5bdbbd3b460b22db1 records the actual evidence. WEB-006 remains
-incomplete/uncommitted; production, NAS and live Cockpit remain untouched.
-
+incomplete/uncommitted; production, NAS and installed predecessor interface remain untouched.
 
 WEB-006 checkpoint102 update2026-10-23: actual test-image trust measurement passes.
 
@@ -5170,18 +4500,9 @@ provenance and never reinstalls/restages existing0.2.4/0.2.5. All21 successors
 remain inert; no fresh22 is selected and installed acceptance remains pending.
 Checkpoint102 `.scratch/web-006-source16-current-state-v102.json` SHA256
 004bbfcf0e8dc366cedae0a424ce97cb95f090e8e69006cd07f6f22b5d7d92e8 records the actual evidence. WEB-006 remains
-incomplete/uncommitted; production, NAS and live Cockpit remain untouched.
-
+incomplete/uncommitted; production, NAS and installed predecessor interface remain untouched.
 
 WEB-006 checkpoint101 update2026-10-23: strict source16 and public CA export pass.
-
-The actual strict source16 gate `scripts/check.sh --require-web --require-cockpit`
-passes with exit0 in 1272.636739s, finished 2026-10-23T11:14:31.974754+00:00.
-Gate3356374/start422134118 and owned wrapper3356373/start422134097 are reaped
-and absent. All1361 frozen hashes/modes still match snapshot2da61616; no source
-drift is reported. The log records7749Python passes/52opt-in deselections,
-three locked wheel profiles and all required Cockpit/web stages. This gate does
-not establish installed Caddy/native/rootless host acceptance.
 
 Separate original public-CA export21v3 passes0 in1.208270s. Its owned executor
 3374598/start422255577 and SSH child close; both fixed queries return0/reap.
@@ -5204,8 +4525,7 @@ test tree/projection must bind those files without reinstalling existing0.2.4/
 0.2.5 or relabelling old runtime evidence. Checkpoint101
 `.scratch/web-006-source16-current-state-v101.json` SHA256b5afd8dfc3b76dccf3a3a0a8179d1a1cc6128dd459af8da632425619f009e3ba
 records the current evidence. WEB-006 remains incomplete/uncommitted.
-Production, NAS and live Cockpit remain untouched.
-
+Production, NAS and installed predecessor interface remain untouched.
 
 WEB-006 checkpoint100 update2026-10-23: source16frozen/strictgaterunning.
 
@@ -5245,7 +4565,7 @@ canonicalfiles differ fromsource15:2hostdriver/test files +API/development/
 troubleshootingdocs. All108Python packagebytes andweb/src inputs are unchanged.
 Source16 is FROZEN1361leaves: inventory21b55abf/244519, snapshot2da61616,
 archivebb167d3c/17725440, capturec1f22118. Its actual strictcommand
-`scripts/check.sh --require-web --require-cockpit` started2026-10-23T10:53:19Z,
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 PID3356374/start422134118, ownedwrapper3356373/start422134097; gate16.log and
 pendinggate16-result retain evidence. NOgatePASS is claimedwhileitisrunning.
 Onlythe5bookkeepingexclusions maychange untilcompletion. Originalsource15
@@ -5257,8 +4577,7 @@ untrustedprofiles andallTLS/confinement checks. NoactualCAexport/imagebuild or
 fresh22 isclaimedhere. Allfailed21/normal/rootless/negative/fault scopes remain
 inert. Checkpoint100 `.scratch/web-006-source16-current-state-v100.json` SHA256
 79fcd443def544c411b71dc50cb9bf926351a33c05936640e37b6cb4bb84a3a5 records currentevidence. WEB-006 remainsincomplete/uncommitted;
-no production/NAS/liveCockpit changes occurred.
-
+no production/NAS/livehistorical frontend changes occurred.
 
 WEB-006 checkpoint99 update2026-10-23: actualsavedcases/finiterefusalvalues.
 
@@ -5302,8 +4621,7 @@ source15 strictgate/APIUIimage provenance remains original. All21dependent
 normal/rootless/negative/fault/retirement scopes remain inert; nofresh22selected.
 Checkpoint99 `.scratch/web-006-source15-current-state-v99.json` SHA256
 c7fdbda4cc45377c25578098a4f213a79767125be656d6dfbab7a3da9fcbc84e retains actualevidence. WEB-006 remains incomplete/uncommitted;
-production/NAS/liveCockpit untouched.
-
+production/NAS/livehistorical frontend untouched.
 
 WEB-006 checkpoint98 update2026-10-23: failedsaved21collector shape correction.
 
@@ -5338,7 +4656,6 @@ selected. All1361canonical source hashes/modes remain unchanged. Checkpoint98
 8ba65ed8d4f00afa22321650efa17d9a7dec1563623748e3099fcb37c12a46da records the failed diagnostic and partial evidence honestly.
 WEB-006 remains incomplete/uncommitted; no production/NAS changes.
 
-
 WEB-006 checkpoint97 update2026-10-23: native21 fails, strictpost passes.
 
 Original native21 actually fails1/55.859822s: executor3313424/start420312313
@@ -5372,7 +4689,6 @@ original21 diagnosis is next, without rawEnv/keybody reads or engine/service
 replay. Checkpoint97 `.scratch/web-006-source15-current-state-v97.json` SHA256
 81c02c021a6015f3d7699dd7f4ca3e7411ed41d36f601d9e42a95a455a248c70 records actualfailure and independent closure. WEB-006 remains
 incomplete/uncommitted; no production/NAS changes or application acceptance.
-
 
 WEB-006 checkpoint96 update2026-10-23: original fresh21 preparation passes.
 
@@ -5418,7 +4734,6 @@ eeb4a9619ba3eca357b84cff3a57e5f67e5cb2b382f94f1ddf98dae88d596e24 retains the act
 are next; rootless/negative/fault/secret/drain acceptance remains pending.
 No production/NAS actions occurred and WEB-006 remains uncommitted.
 
-
 WEB-006 checkpoint95 update2026-10-23: original fresh21 donors pass.
 
 Original fresh21 donor transfer passes0/1.674933s, executor3311064/
@@ -5454,7 +4769,6 @@ remain unchanged; native/rootless UI/helper/negative/fault/secret/drain proof
 is still pending. Checkpoint95 `.scratch/web-006-source15-current-state-v95.json`
 SHA256 5f21619d00a9c797d04f4b7e9c725d84ea70782cc89620e605c70f891b2cc441 records the actual evidence. No production/NAS changes.
 
-
 WEB-006 checkpoint94 update2026-10-23: three raw inputs read-only capture.
 
 Original fixed-three read-only capture passes0/0.576135s: executor3307527/
@@ -5485,7 +4799,6 @@ Native20 stays failed/original browser drainUNKNOWN. Native/rootless installed
 UI/helper and negative/fault/secret/drain acceptance remain pending. Checkpoint94
 `.scratch/web-006-source15-current-state-v94.json` SHA256
 13c7c307d9e98bc5f826b7bc9a66549755422fe928b5428414fd5132d1a2531d retains metadata/provenance only. No production/NAS changes.
-
 
 WEB-006 checkpoint93 update2026-10-23: fresh closure and public inventory.
 
@@ -5529,7 +4842,6 @@ installed acceptance remains pending and native20 failed/drainUNKNOWN unchanged.
 Checkpoint93 `.scratch/web-006-source15-current-state-v93.json` SHA256
 edcbe85722c6c036e6084a824211f7a62879549f073940cffc983c01a3830d22 retains actual receipts. No production/NAS changes.
 
-
 WEB-006 checkpoint92 update2026-10-23: actual gated public CA-read primitive.
 
 Original new CA-read probe passes0/7.196839s, local3295174/start419753678
@@ -5555,7 +4867,6 @@ failed/drainUNKNOWN stays unchanged; the primitive is no application success.
 Checkpoint92 `.scratch/web-006-source15-current-state-v92.json` SHA256
 39715cf9e382442351e6ebd8ca4ee597922313d8fb356b949844d6e987148aeb retains actual receipts. No production/NAS changes.
 
-
 WEB-006 checkpoint91 update2026-10-23: separate public CA publication.
 
 Separate public CA publisher guest-v3/caller-v4 passes0/0.778094s, original
@@ -5576,7 +4887,6 @@ application acceptance remain pending.16 local publisher tests and independent
 first-error preservation and umask077. All1361 source hashes/modes remain exact.
 Checkpoint91 `.scratch/web-006-source15-current-state-v91.json` SHA256
 2290ca106e4a10b75aff03b5a151c65a469cd512f88f866e8efea96691a8da10 retains the actual receipts. No production/NAS changes.
-
 
 WEB-006 checkpoint90 update2026-10-22: exact CA relabel target and isolated correction test.
 
@@ -5609,7 +4919,6 @@ codec pass, source1361 exact, docs207/27 pass. Checkpoint90
 b93fad03828ca0e7d590f9d59a7da56286a4ee4c3408c665dfac798ef0c9e020 retains
 actual evidence. Fresh21 and all installed application acceptance remain pending.
 
-
 WEB-006 checkpoint89 update2026-10-22: bounded private relabel-error projection.
 
 Separate error20-v2 reader passes0/1.434751s (3286188/start419461369), local
@@ -5630,7 +4939,6 @@ Checkpoint89 `.scratch/web-006-source15-current-state-v89.json` SHA256
 a37da608abd5e20bc0c09549d604609eda62ded71f22ef19264683f3250d2094 records
 actual evidence. Original native20 failure/browser drainUNKNOWN remain unchanged;
 all20 successors inert and WEB-006 installed acceptance incomplete.
-
 
 WEB-006 checkpoint88 update2026-10-22: exact original container inspection.
 
@@ -5655,7 +4963,6 @@ pass, source1361 unchanged. Checkpoint88
 e8a9f4ece42da358b9f8a048ac756fbaa2df84f2b2aecb3c195ae55726822cec records
 actual evidence. Original20 native failure and browser unknown remain unchanged;
 all20 success-dependent scopes remain inert and WEB-006 incomplete.
-
 
 WEB-006 checkpoint87 update2026-10-22: saved create success, browser drain unknown.
 
@@ -5683,7 +4990,6 @@ Ruff pass; source1361 remains exact. Checkpoint87
 b811253914ba71002d9b5bfefa59d117241dc686f902f84822980713fcc36037 retains
 full actual evidence. WEB-006 installed acceptance remains incomplete.
 
-
 WEB-006 checkpoint86 update2026-10-22: original native20 failure and strict closure.
 
 Original native20 returns1 after23.335694s, runner99119/start20126227
@@ -5710,7 +5016,6 @@ pass. All20 success-dependent scopes remain inert. Read original saved baseline
 intent/proof/report and credential-free bounded diagnostics next. WEB-006 and
 its installed native/rootless/negative/fault/secret/drain acceptance remain open.
 
-
 WEB-006 checkpoint85 update2026-10-22: genuine fresh20-v2 preparation.
 
 The distinct donor20-v2 transfer and first authority20 invocation pass0 in the
@@ -5732,7 +5037,6 @@ zero skips; these are preparation checks. Next bind/run native20 once and collec
 a separate strict post-run readback, then rootless/negative/fault/secret/drain
 acceptance. WEB-006 remains incomplete; no production/NAS actions occurred.
 
-
 WEB-006 checkpoint84 update2026-10-22: first20 donor f4a8e6c3/12031 fails1
 beforepublication/queries; failed diagnosticv3aaebc243/16942 retained. Separate
 readonlyv4ee7130cc/99023 passes collection0/0.960287s, child3276332/
@@ -5745,7 +5049,6 @@ Distinct20v2 fixes exactoldprefixsizes within inherited128MiB ceiling (newsmall
 inputs4MiB) and excludes2publicmanifestrecords fromprotectedcontrolinputs,
 retainingallprovenance. Originalfailures notpromoted. Fresh20prep/native20/
 rootless/negative/fault/secret/drain remainunperformed; no production/NAS action.
-
 
 WEB-006 checkpoint83 update2026-10-22: actual corrected baseline068ee9a3/61038
 and create-read v3 33be2d1a/67751 pass collection. Saved original create rc125/
@@ -5760,7 +5063,6 @@ all original evidence. Three NEW native19 aliases must be preserved once; old18/
 19 moves never replay. Controller21fdac4740/111918 locally changes two data
 bindings only. No20 publication or app start. Checkpoint83d4416a16/268806;
 installed native/rootless/negative/fault/secret/drain acceptance remains pending.
-
 
 Checkpoint82 phase-name correction2026-10-22: the collector checked `normal`,
 while the actual checker starts with `baseline`. Its missing normal-named files
@@ -5784,8 +5086,6 @@ installed native/rootless/negative/fault/secret/drain acceptance incomplete.
 Checkpoint82 052976b6cdda4504e33898d88652d7d664275b2bc48740a9fb9647266e4b60a9/206135
 retains actual results, root130 checks0skip, actual4/8FD preflights and1361
 unchanged source hashes/modes. No product/production/NAS/remote change/replay.
-
-
 
 WEB-006 checkpoint81 update2026-10-22: first19 donor validation fails before
 publication/queries, localdd72275c/9966, child3262346/start418639278 rc1/
@@ -5938,7 +5238,6 @@ present and preserved. Exact startup/journal diagnosis is next; no credential
 cause or API SID is inferred. Checkpoint7d6c67b0/49420 verifies1361 unchanged
 source hashes/modes. WEB-006 and all installed acceptance remain incomplete.
 
-
 WEB-006 checkpoint72 update2026-10-22: fresh3 donor16 transfer passes0/
 2.852478s, local42e3f608/134652; original failed15 state closes unchanged.
 Original authority16 preparation passes0/17.803688s, local763f6df7/2688715,
@@ -5950,7 +5249,6 @@ Checkpoint4a93c32e/19042 verifies1361 unchanged source hashes/modes. Before
 native16's first run, explicit authority-only4MiB harness reads must replace
 the inherited2MiB call sites to fit the measured evidence; generic bounds stay
 unchanged. Native/rootless/negative/fault/secret/drain acceptance remains pending.
-
 
 WEB-006 checkpoint71 update2026-10-22: exact Node/partial-publication inventory
 passes0/1.590701s, local7c554fd1/255893, child3220095/start417106772 reaped/
@@ -6138,7 +5436,7 @@ WEB-006 update after2026-10-22T18:15:38Z: actual strict source15 gate passes0/
 1227.329073s; resultaa4085c2/816 and log9321f593/100881. All1361 captured hashes/
 modes match; original gate3168832/start416025291 and owned3168829/start416025273
 normally reap/are absent.7749 Python passes/52 opt-in deselections,3 wheel
-profiles,572 Cockpit,135 wire definitions,207human/27helpers,21sandbox/9metadata,
+profiles,572 historical frontend,135 wire definitions,207human/27helpers,21sandbox/9metadata,
 2786webunit/2846combined,2Chromium startup and actual HTTP/API React read pass.
 This gate does not establish installed Caddy/native/rootless feature acceptance.
 Actual local fixture projection also passes0/6.875730s; report7b799c8c/260485,
@@ -6501,18 +5799,6 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     No production deployment, service/timer/mount manipulation or archive operation
     is authorized by implementation of this plan.
 
-17. **API-015 Cockpit deployment acceptance (2026-10-18, decision 122):**
-    repository process/config/browser-independent fixtures do not prove the
-    installed Cockpit PAM/superuser bridge, named API credential delivery or
-    SELinux/NFS behavior. Provision fixed local client TOML/socket and API-only
-    `hfcache.api` without transient Hub authority; confirm closing/stopping an
-    observer leaves accepted work independently observable. Check bounded
-    terminal/progress handling and exact candidate/base/backup/fingerprint
-    confirmation in an authorized disposable/deployment window. Preserve retained
-    config locks and API/scheduled evidence. Actual executor hardening/drain and
-    verify-calendar holds from item 16 remain. No production installation or
-    operation is authorized by this work package.
-
 18. **Optional MCP deployment acceptance (2026-10-18, decision 124):**
     select an actual server+MCP release profile and deliberately provision a
     distinct protected MCP-reader source to the API service, with the named
@@ -6627,33 +5913,6 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     guard based on this implementation. No push, deployment or host action was
     performed or authorized; implementation completion selects no old backlog.
 
-25. **Cockpit repair disposable fixture and installed uncertainty (CPR-004,
-    2026-10-19):** the active repair plan retains original operation identities
-    and failed-stage evidence; source tests never establish the original installed
-    `reconnected` cause. The owned isolated KVM guest now passes actual fixed
-    rootless launcher/authenticated UDS and guarded candidate validation.
-    [Exact runtime handoff](plans/support/cockpit-rest-repair/runtime-004.md)
-    records original lock/masks/NFS-ro, retained failed starts and synthetic
-    credentials. Its immutable artifact is older source92f19b5, so current-source
-    Cockpit/PAM/reconnect acceptance still requires a new pinned fixture artifact.
-    Production installation/configuration/services/NAS were untouched. Preserve
-    the guest's candidate, predecessor expectations and original evidence; no
-    cleanup/reinstall or pending-operation replay follows uncertainty. Existing
-    item23 operation, NAS/workload holds and separate deployment authority remain.
-
-26. **Manual REST jobs and explicit host permission deployment (CPR-005,
-    2026-10-20):** source acceptance does not change the installed profile.
-    A future separately authorized deployment must include the indexed installer
-    required for read-only inspection and independently provision protected
-    source/index-pinned Cockpit permissions after review. The app never writes
-    that policy. Older releases, mixed bindings or unknown facts deny effects;
-    current rootless scheduled-observer/timer proof remains unsupported/denied.
-    Keep all original guard/lock/mask/NAS-ro/credential/pending-operation holds.
-    Source/manual CLI fixtures do not prove Cockpit/PAM or the original installed
-    reconnected trigger. Item25 and [runtime-004](plans/support/cockpit-rest-repair/runtime-004.md)
-    retain the exact disposable handoff. No production or guest change occurred
-    in this package. Next scoped source work is CPR-006; no historical backlog.
-
 27. **REST report client and browser rollout requirements (CPR-006,
     2026-10-20):** source now requires the new fixed runs list/show CLI commands;
     old client images can refuse even though server report routes already exist.
@@ -6666,21 +5925,6 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     earlier holds. No host or guest change occurred in this package. V54 and the
     original installed reconnected symptom remain unproven under item25. Continue
     scoped CPR-007; no unrelated backlog is activated.
-
-28. **Read readiness and browser provenance rollout (CPR-007,2026-10-20):**
-    source now validates read payloads and binds submitted intent/confirmation to
-    its rendered host/session. Passive invalidation preserves newer acknowledged
-    evidence while rejecting stale readiness. Advisory browser source/dirty/input
-    metadata is separate from protected selected release and authenticated client/
-    API facts; a matching package/source or health.ready never proves the running
-    payload or archive writability. A fresh clean production build and exact bundle/
-    image/profile/index identities are needed for later rollout. The accepted
-    precommit gate truthfully reports its parent plus dirty inputs. Next scoped
-    CPR-008 must establish current-source disposable real Cockpit/PAM and installed
-    wheel/private-UDS evidence. Earlier guest/production guards, masks, original
-    locks, credentials, receipts, unknown operations and NAS/workload holds remain.
-    No production or guest change occurred here; item25 retains the original
-    installed-symptom uncertainty. No unrelated historical backlog is activated.
 
 29. **Source/disposable acceptance and retained fixture uncertainty (CPR-008,
     2026-10-20):** source and actual installed-wheel/private-UDS plus native
@@ -6696,29 +5940,12 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     interrupted write; captured cause/draft/profile and original root/domainlocks
     remain. Do not clear storage, discard files, reinstall, roll back, drain,
     power off or remove evidence automatically in response to uncertainty.
-    [Runtime008](plans/support/cockpit-rest-repair/runtime-008.md) and prior runtime
+    [Runtime008](history/removed-interface-records.md) and prior runtime
     records pin all fixture ownership and safe later explicit teardown prerequisites.
     Production installation/NAS/guards/credentials remain untouched. A later
     authorized rollout needs a fresh clean artifact/version and exact browser,
     source, launcher/profile/index/image/running-payload verification; existing
     package0.2.1 alone is not parity. Retain all previous production holds.
-
-30. **Scoped repair closeout and later publication authority (CPR-009,
-    2026-10-20):** all9source/disposable tasks and required extended+explicit
-    frontend gates pass; no mandatory blocker remains and selector is cleared.
-    No historical backlog is activated. [Reviewed handoff](plans/support/cockpit-rest-repair/operator-handoff.md)
-    records exact independent browser/source/helper/index/image/API/wheel identities,
-    future clean release/install/drain/rollback prerequisites and separate original
-    installed-flow verification. Five guests and all original guards/masks/rootlocks,
-    handles/results/backups/unknown or unconfirmed attempts remain preserved;
-    no automatic replay/reinstall/rollback/cleanup/teardown follows uncertainty.
-    Production service/configuration/NAS were not replaced, so no production
-    restoration was required; twelve signed development prerequisite RPM additions
-    are separately recorded. Original installed symptom/parity and NAS/workload
-    holds remain unverified. Later user explicitly requests final completed branch
-    push to both remotes; commit first, push only fix/cockpit-rest-api-alignment
-    without tags/force, verify both refs, report actual outcomes after execution.
-    No merge, tag, registry, production inspection/deployment or live workload.
 
 31. **Authorized merged-source local replacement (REL-015,2026-10-20):**
     new explicit user merge/main-push/deploy instruction supersedes earlier no-host
@@ -6739,7 +5966,7 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     host now selects clean1c68501/appfec39364/indexbc40f9d7, actual installed
     TLS/auth/private-worker/hostCLI acceptance passes; localv0.2.2 objectc69ef761
     targets exactsource1c68501. Protectedbackup/evidence:
-    /opt/hfcache/deployment/20261020-cockpit-0.2.2. Immutable0.2.1 remains; rollback
+    /opt/hfcache/deployment/20261020-historical frontend-0.2.2. Immutable0.2.1 remains; rollback
     needs compatibleconfig/newmetadata observation, real executor drain and
     original-lock guard handoff, never deleting new metadata/receipts or restoring
     NAS writes. Guard1868228/7cf576d8474f4790a6e70feadd27b3f4 holdsoriginal27:2273;
@@ -6749,7 +5976,7 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     only, other5permissionsfalse; no automatic configuration action is authorized.
     Original Timestral op0cb77c1c970e21033a9cab7fb8ea872d remains failedHFMNT010/
     exit20, exactstdout9c0b18f8... before/after; never replay/cancel to test rollout.
-    Separate original-symptom verification: fresh Cockpit reload/login, compare
+    Separate original-symptom verification: fresh historical frontend reload/login, compare
     loadedsource1c68501/selectedindex/API0.2.2, then read-only inspection of the
     existing candidate and originaloperation. Do not install/discard/overwrite
     candidate or submit another job merely to obtain a passing message. Native
@@ -6819,103 +6046,8 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     All95 full feature cases remain pending; next is WEB-005. The UI will ship
     inside the existing pinned UBI10micro API image without runtime Node or a
     second frontend server. Production0.2.2, Caddy, services/timers/credentials/
-    guards, original candidates/backups/locks/stores/handles and live Cockpit
+    guards, original candidates/backups/locks/stores/handles and installed predecessor interface
     remain unchanged. No production rollout, replay, cleanup or publication follows.
-
-    **WEB-006 in-progress fixture checkpoint (2026-10-21):** WEB-001–005 are
-    committed on `feat/web-ui`; WEB-006 remains uncommitted and incomplete.
-    Source6/source7 gates remain historical. Source8 captures1359files and its
-    strict gate passes (7729Python/572Cockpit/2786web-unit/2846component and
-    required builds/read fixture), without source drift. Decision151/policy23,1072focused tests and six kernel
-    queries pass; actual confined prototype15 succeeds with direct RESULT review,
-    all12recorded processes/cgroup closed and unchanged four ordinary locks.
-    Matching source8 wheel/UI and pinned UBI10micro image11 build, public-source
-    transfer, OCI export/transfer/load, image runtime audit and original
-    native/rootless staging pass. Corrected canonical helper publication also
-    passes, and independent installed/backup readback passes. Upload1's
-    execution-provenance HOLD is preserved; a separate captured-byte readonly
-    recovery verifies its two already-created guest files. Authority4 then fails
-    after partial provisioning at the original installed metadata validator;
-    all17 command children are reaped. Preserve its generated key, proposals,
-    bindings, controller, manifest and readonly projection without provisioning
-    replay or reset. Readonly diagnosis identifies the owned test scratch0755
-    prerequisite. A same-inode fchmod0700 correction followed by the unchanged
-    installed validator/controller/source/projection/kernel/quiescence checks
-    passes; the original failed authority receipt remains separate and unchanged.
-    The first unchanged original native functional invocation fails before
-    readiness at helper startup/exit20. Its ten tracked processes are gone;
-    recorded stop evidence does not erase public cleanup_unknown. Readonly
-    invocation/inode metadata joins AVC30064 exactly to the fixed target symlink.
-    Source9 supplies only lnk_file getattr/read, its regression test and six
-    contract amendments; 299 focused tests and strict gate9 pass without source
-    drift. Fresh matching wheel/reproducible UI/pinned UBI10micro build and
-    transferred artifacts/source pass. Independent oldcontrol6 audit, complete
-    release/selector/proposal inode preservation and original native9 staging
-    pass; the original key and108-file readonly projection are unchanged. A
-    metadata audit's old aggregate-Size equality refusal stays recorded; fresh
-    audit2 passes exact image/layer/user/base checks and retains both size
-    observations. Rootless9 original staging also passes, with actual held
-    provenance/stage receipts and a separate refresh-closure after all captured
-    inputs rejoin. The original key metadata and stopped-role state remain
-    unchanged; no image load or app starts occur. Policy24 installation and its
-    separate post-rejoin receipt pass with exact loaded checksum/kernel readback;
-    old CIL/receipt inodes and original key remain preserved, with no label-rule,
-    selector or service action. Stock983 secret baseline is empty; its engine
-    command creates only the recorded metadata lock. Fresh authority5/controller7
-    also passes the original installed manifest validator and exact controller
-    comparison, with held input closure and original key preserved. Its original
-    native functional run subsequently fails before READY: original runner and
-    wrapper are reaped, private failure evidence is retained, and strict post-run
-    quiescence refuses. Read-only diagnosis then proves its new generation never
-    started the helper: started=false/stopped=true, seven tracked processes gone,
-    no recorded cgroups/containers, and the helper's old ec384 invocation remains
-    unchanged with no executor. No new CIL failure follows from the old audit
-    rows. The exact prehelper record confirms the private controller rejected
-    that old failed state before opening credential objects. Controller8 adds
-    only admission of that exact no-process historical invocation; its focused
-    and independent checks pass. Authority6's three donors transfer successfully,
-    but its sole setup invocation fails before WORK publication on a missing
-    fixture-utility attribute (`gone`). Its safe private collection, closed
-    donors and seven reaped read-command children remain recorded; no readiness
-    follows. Read-only traceback/absence confirmation passes, then corrected
-    fresh authority7 passes the original installed validator and all29 recorded
-    command exits/reaps, captured joins, original-key/projection preservation
-    and exact three-leaf selection backups. Native functional v4 subsequently
-    fails before READY; its original runner and outer wrapper are reaped and
-    private failure evidence is retained. Fresh readback proves all eight
-    prehelper source-secret checks passed, all eleven tracked processes are
-    gone, and a new helper invocation exits20 before READY. A confined startup
-    diagnostic locates the failure at the fixed guard-status query returning
-    nonzero after domain/capability/module bootstrap passes. The original failed
-    helper remains unchanged. A fresh confined query proves access denied, while
-    the same root query succeeds with complete not-found guard properties. Exact
-    Fresh five-fixed-unit queries all return the same bounded AccessDenied.
-    Their bounded audit window reports one helper_t to init_t system:status and
-    four helper_t to systemd_unit_file_t service:status denials. PID1 reporting
-    does not supply direct requester-PID/unit-path joins; those limits remain
-    explicit. Source12 adds exactly those two status forms, with255 focused
-    passes and matching human/security/ADR updates; its strict gate passes with all1359 captured inputs unchanged.
-    Application-only source9-to12 compatibility passes for retained wheel/UI/
-    pinned UBI10micro inputs; the changed host policy requires new installed
-    stages and authority. Fresh oldcontrol8 audit passes with1359 source9
-    inputs, exact failed helper9f2,13 quiet roles and six refused endpoints.
-    Protected transfer, same-inode preservation, exact public source12 update and native staging pass; rootless staging and policy25 installation also pass; fresh authority remains pending before
-    another original functional attempt. The API runtime parent has the expected root:983 ownership,0750
-    mode and empty directory; both socket/binding leaves are absent. A separate
-    active-kernel query passes all six known release/unit/
-    interpreter links with unchanged kernel24; its earlier test-tool failures
-    remain retained. Host source11 corrects one operator-guide paragraph;
-    source9-to-source11 compatibility passes for all package/UI/build inputs,
-    and the source11 strict gate passes with unchanged captured inputs. The source10 checks exit0 but
-    their owning wrapper refuses the changed guide; that result is retained.
-    Installed feature acceptance,
-    and supplemental protected-input/binding faults remain pending. The old
-    public cleanup_unknown record remains retained.
-    Original inputs, key, backups and failed-attempt receipts remain retained. Installed
-    authority/peer/credential/inode/attachment and real Caddy/browser/fault/drain
-    acceptance remain pending; [task006](plans/tasks/web-006-guarded-host-adapter.md)
-    owns exact artifacts and failed-attempt history. No live NAS/production
-    action, Cockpit retirement, remote publication or clean release is claimed.
 
     **WEB-006 latest owned checkpoint (2026-10-22):** source12 strict gate,
     same-inode preservation, exact public checkout update, original native/
@@ -6942,7 +6074,7 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     source12 pre-refresh read-only audit refuses an inner input before receipt
     publication; eight queries exit0/reaped and existing guest state is unchanged.
     Preserve v1 and diagnose with closed phase/location evidence in a fresh v2.
-    Source13 passes7732 Python,572 Cockpit,2786 web unit,2846 component and
+    Source13 passes7732 Python,572 historical frontend,2786 web unit,2846 component and
     required build/smoke checks. Fresh bounded metadata measurement confirms
     the selector and both protected configurations are present after the failed
     native run; the earlier absence assumption caused the audit refusal.
@@ -7012,7 +6144,7 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     Full source14 gate then passes0/1246.410743s, resultff7ce988/815 bytes and
     logff2c830a/100799 bytes; inner3083144/start413923635 and outer3083141 are
     reaped/absent, all1359 hashes/modes unchanged. Actual7732Python/52explicit
-    opt-in deselections,3wheels,572Cockpit,2786unit/2846component,2Chromium and
+    opt-in deselections,3wheels,572historical frontend,2786unit/2846component,2Chromium and
     realHTTP/API read fixtures pass. This source gate establishes no installed
     native/rootless acceptance. Next is read-only old-state audit, preservation,
     source14 stages/policy27/authority11 and fresh original functional execution.
@@ -7139,7 +6271,7 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     Rootless execution stays held. Task006 owns exact evidence. Source-only
     retirement-v2 passes85 checks; actual IDs/stop proofs remain unbound.
     No production/NAS,
-    remote publication, Cockpit retirement or completed feature claim follows.
+    remote publication, historical frontend retirement or completed feature claim follows.
 
     **WEB-005 completed scoped handoff (2026-10-21):** original common21
     all-six normal monitor0/audit283e5818 and fresh bridge483ed653 pass against
@@ -7182,7 +6314,7 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     plan/task; WEB-005 remains in progress, uncommitted and acceptance-blocked.
     Host source14 is frozen; the already-running strict gate14 exits0/reaped at
     10:40:34.430894UTC in1202.869seconds,6643Python/3locked wheel profiles,
-    572+110Cockpit,2756unit/2805combined web,2preliminary/14real-API read browser
+    572+110historical frontend,2756unit/2805combined web,2preliminary/14real-API read browser
     checks, no required skips/retries. Log SHA256
     `49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe`;
     independent audit exits0/empty stderr and rechecks1310 hashes/modes plus
@@ -7248,31 +6380,6 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     Bounded evidence is retained; startup diagnosis remains pending. No blanket errno/timeout
     acceptance or replacement isolation is authorized.
 
-    The fifth frozen gate passed6281Python plus retained Cockpit/web/build/read
-    checks. The sixth gate fails six stale mapped-identity test fixtures after
-    6358Python passes; its log and superseded snapshot remain. Corrected source8
-    snapshot `ad444c4834446cd323cffa4e42a7d0fcf4a33b07636081065f386e57a1d49b63`
-    binds runner `aedfe5dc…`. Gate7 exits0 in1172.025s with6401Python/52default
-    deselections, retained572/110Cockpit,2756unit/2805combined web, two startup/
-    14real-API read checks and all3 locked wheel profiles. Independent actual
-    seven-report/seven-closed-process audit rechecks all1306source hashes and
-    documentation; no required skips/retries. Native8's actual-worker packet
-    conjunction independently passes unchanged canonical source8 validation in
-    the private owned guest; original worker exits0. API fails its composite
-    startup assertion before Caddy/browser. Supplemental exact20-process/four-
-    cgroup/MainPID0/endpoint drain passes, while original normal `cleanup_unknown`
-    remains. The earlier host recheck's private-directory refusal is retained;
-    no mode or validator was weakened. Startup diagnosis and the missing
-    shared-Caddy/browser/stream/platform acceptance remain required.
-    Task WEB-005 owns exact evidence and
-    remains blocked on actual application/native/rootless shared-Caddy/browser/
-    stream acceptance. No completion entry or95-case acceptance claim follows.
-    The canonical service recipe remains pinned UBI10micro, with no frontend
-    runtime server; fresh release runtime contents, tool absence, asset ownership
-    and size proof remain WEB-021 work. Production and the five unrelated guests,
-    original candidates/backups/locks/stores/handles and all prior limits remain
-    unchanged. No deployment, replay, cleanup or publication follows.
-
     **Common20 identity diagnosis and supplemental closure (2026-10-21UTC):**
     Original source13 ready validation isolates `role_evidence3151` →
     `detailed_role_evidence2701` → `origin_probe2230`: schema2 worker origin
@@ -7322,7 +6429,7 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     Gate13 exits0/reaped at10:17:17.765626UTC after1321.085seconds; audit SHA256
     `9f4d2f457360f9d274a3604fe79bf9614e23fc83bd1e40a7860199e4f6b85377`
     records6643 Python passed/52 default deselections, three wheel profiles,
-    Cockpit572+110, web2756unit/2805combined, two preliminary+14 real API-read
+    historical frontend572+110, web2756unit/2805combined, two preliminary+14 real API-read
     browser checks, coverage95.61%lines/92.83%branches and unchanged1310 hashes/modes.
     Root applies the approved exact nine-document prose-only availability patch;
     actual host file map matches
@@ -7365,7 +6472,7 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
 
     **Source12 gate12 pass and common19 supplemental closure (2026-10-21UTC):**
     Gate12 exits0/reaped at06:58:57.953317UTC after1255.446seconds:6561 Python
-    passed/52 default deselections, three locked wheel profiles, Cockpit572+110,
+    passed/52 default deselections, three locked wheel profiles, historical frontend572+110,
     web2756unit/2805combined, two preliminary and14 real API-read browser checks.
     Independent audit `.scratch/web-005-twelfth-gate-audit.json` SHA256
     `aed3aa94455b802804357d854950523115f186bf4bc5c497a48c4a9f23828318`
@@ -7613,8 +6720,8 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
 
     **Source11 gate10 completed (2026-10-21UTC; functional acceptance pending):**
     Source11 gate10 completes2026-10-21T04:49:46.332190Z with exit0 in1301.44s.
-    The actual `scripts/check.sh --require-web --require-cockpit` run passes6475Python
-    (52default opt-in deselections), three locked wheel profiles,572Cockpit unit/
+    The actual `historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` run passes6475Python
+    (52default opt-in deselections), three locked wheel profiles,572historical frontend unit/
     110mounted,2756web unit/2805combined,21sandbox/9functional metadata, two
     preliminary browser and14real-API read checks. Required checks have no skips,
     failures, flaky results or retries; web coverage is95.61%lines/92.83%branches.
@@ -7661,7 +6768,7 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     `3358026beaad1aa0db536c1dcf41f5afdc1a20808bea556a80c41342888250f1`,
     snapshot `285ca369f6a72965e0ed189f15cf3cd784ca3ddecc003228f1c81d8283906253`.
     Gate10 starts2026-10-21T04:28:04.892257Z, exact hostPID2442635/start402542673,
-    with `scripts/check.sh --require-web --require-cockpit`; command metadata is
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
     `.scratch/web-005-tenth-gate-command.json`. Its exit/counts and required fresh
     all-six installed execution remain pending. No passing gate or feature result
     is inferred from its start.
@@ -7760,7 +6867,7 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
 
     **Gate9/common14 start (2026-10-21UTC, still in progress):**
     Source10 ninth strict gate exits0 in1208.897s:6434Python/52default marker
-    deselections, all3locked wheel profiles,572Cockpit unit/110mounted,2756web unit/
+    deselections, all3locked wheel profiles,572historical frontend unit/110mounted,2756web unit/
     2805combined, two preliminary startup and14real-API read checks. Required checks
     have no skips/retries; all1310source hashes/modes remain unchanged. Log
     `.scratch/web-005-ninth-strict-gate.log` SHA256
@@ -7850,7 +6957,7 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
     stream acceptance and WEB-005 commit remain blocked; every prior source,
     artifact, failed/refused attempt and unknown
     cleanup record stays preserved. No production rollout, NAS access or live
-    Cockpit retirement follows these prerequisite results.
+    historical frontend retirement follows these prerequisite results.
 
     A separate selected dirty image3 runtime audit exits0: UID981/Caps0/NNP1/
     Seccomp2, read-only rootfs, network none and public gate only;101 package/six
@@ -7882,7 +6989,6 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
    When the list is known, `hfcache plan` reports dry-run sizes for it without
    downloading anything, which is the number the quota decision wants.
 
-
    WEB-006 completion (2026-10-25): the current strict source gate and both
    native/rootless browser and dedicated isolation suites pass. Full current
    artifact identities, commands, honest failed attempts and four completed
@@ -7893,7 +6999,7 @@ Keep instructions exact and copy-pasteable; add acceptance checks.
    The owned guest/disk and five infrastructure processes are retained. Earlier
    source25 fixtures/outcomes remain historical and are not silently retired.
    The pinned UBI10 micro API image contains the UI, with no separate frontend
-   server/Node runtime. WEB-007 is next; production migration and live Cockpit
+   server/Node runtime. WEB-007 is next; production migration and installed predecessor interface
    removal remain separate authorized work. Preserve all production guard,
    read-only NAS, masks, stores, handles, credential and calendar restrictions.
 
@@ -9775,93 +8881,6 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
     weakens no §22.5 hardening; `check-hardening.sh` passed 23/23 on both
     units after the change.
 
-87. **A Cockpit plugin in `cockpit/`, contracted by `docs/cockpit.md`,
-    tracked as the `CPT` family** (2026-07-30, CPT-001). The operator wants
-    browser administration of the deployed writer — sync control and live
-    activity, verification, archive browsing, configuration and schedule
-    editing — and Cockpit already serves this host. Decided: a Cockpit
-    package in this repository under `cockpit/`, a client of the contracts
-    that exist (the CLI's JSON envelope, the configuration schema, and the
-    shipped units are its whole API), with a normative contract of its own
-    and requirement IDs (`CP-01`–`CP-14`) the implementation and tests can
-    cite; the family is tracked outside plan §28's phase set exactly as
-    decision 80 did for `DOC`. **Rejected: a separate repository.** The UI
-    encodes runbook semantics — the `hfcache.target` unmount footgun, the
-    verify-timer reservation, the §8 warning responses — and an encoding
-    that cannot change in the same commit as the contract it encodes will
-    drift; that is the same argument that keeps docs and code in one tree.
-    **Rejected: a plain no-build package** in the style of Cockpit's pinger
-    example — no toolchain, but hand-rolled tables and dialogs instead of
-    PatternFly's, visual drift from the rest of Cockpit, and none of the
-    starter kit's lint and test scaffolding; the toolchain cost is paid
-    once, at build time only.
-
-88. **The starter kit runs under pnpm; node is a build-time toolchain, not a
-    dependency** (2026-07-30, CPT-001). The operator provisioned node LTS
-    (v24) and pnpm 11 under `PNPM_HOME` (`~/.local/share/pnpm`), and pnpm
-    replaces the starter kit's npm throughout: one committed
-    `pnpm-lock.yaml`, frozen installs, the node version pinned in-repo at
-    scaffold time so builds reproduce. `FW-03`/`FW-04` are untouched — the
-    plugin ships static files, the application's runtime set stays three
-    packages, and nothing node produces runs outside the browser. The gate
-    grows a conditional plugin stage (frozen install, lint, production
-    build) that skips loudly when the toolchain is absent, because
-    `scripts/check.sh` must keep meaning the same thing on hosts without
-    node; the discipline that closes the skip's hole is that a `CPT`
-    package lands only from a host where the plugin stage ran, recorded in
-    its tracker evidence. **Rejected: distribution nodejs via dnf** —
-    root-owned and centrally updated, but the pnpm-managed toolchain was
-    already provisioned, and a second node on the host is a version-skew
-    source with no compensating benefit.
-
-89. **The operation surface bends to the CLI, not the reverse** (2026-07-30,
-    CPT-001). Three shapes settled with the operator. **No publish action:**
-    `docs/cli.md` §2 has no publish command — publication is an atomic
-    stage inside `sync`, and `repair` is the only republish — so the UI
-    says "Sync now" and renders published state from `list --revisions`,
-    rather than the CLI growing a command to match a button. **Selector
-    sync as a page-spawned process, in version 1:** a spawn dies with the
-    browser tab, accepted for selector-restricted runs because interruption
-    is a crash shape the application is designed for (`AD-09`,
-    per-repository transactions, `docs/operations.md` §9) and the UI
-    surfaces `recover --dry-run` afterward; the alternative — a templated
-    `hfcache-sync@.service` carrying selectors under the full §22.5
-    hardening — is recorded as the follow-up seam rather than built now,
-    packaging surface ahead of demonstrated need. Full sync and full
-    verification stay behind the shipped units unconditionally (`CP-04`):
-    the units carry the sandbox, `MemoryHigh=`, and the journal identity,
-    and Cockpit's own guidance is not to run long uninterruptible work from
-    a page. **Excluded outright** (`CP-05`–`CP-08`): touching
-    `hfcache.target`, enabling `hfcache-verify.timer` (handoff item 8 owns
-    that calendar), `archive init` in any form, and any credential surface.
-
-90. **`cockpit/` carries LGPL-2.1-or-later beside the repository's MIT**
-    (2026-07-30, CPT-002). The plugin tree is a derivative of
-    cockpit-project/starter-kit @ `a099cb10` and consumes cockpit's `pkg/lib`
-    (fetched at build time, never committed), both LGPL-2.1-or-later. The
-    derived and adapted files keep that license with per-file SPDX headers,
-    and original plugin code added under `cockpit/` uses the same license so
-    the subtree has one answer rather than a file-by-file puzzle. The
-    top-level MIT `LICENSE` is unchanged and continues to cover everything
-    outside `cockpit/`. The alternative — relicensing the derived scaffolding
-    under MIT — is not this project's call to make.
-
-91. **`smol-toml` is bundled for configuration round-tripping** (2026-07-30,
-    CPT-008). Form mode must parse the installed document to populate its
-    controls and serialize a candidate, and TOML is the configuration
-    contract's format. `smol-toml` (MIT, TOML 1.0, parse and stringify, no
-    dependencies of its own) is added as a browser-bundled dependency —
-    build-time resolved, shipped inside `dist/`, nothing in the
-    application's runtime set (`FW-03` untouched, `CP-14`). **Rejected:
-    hand-rolling a parser** — a second TOML implementation in this
-    repository would be a validation-drift source against the `tomllib` the
-    application reads with, for no saving. **Rejected: a JSON side-channel**
-    (teaching the CLI to emit or accept configuration as JSON for the
-    plugin's convenience) — a new CLI surface grown to match a UI inverts
-    decision 89's direction. Comment loss in form mode is stated in the
-    generated header and in the UI; text mode exists precisely so an
-    operator who keeps comments can.
-
 92. **Plugin CLI invocations run in transient units that import the
     deployment's encrypted Hub credential** (2026-07-30, CPT-013). The
     `runuser` shape ran every plugin-spawned command anonymously, because
@@ -9888,7 +8907,7 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
     outlives its page-side waiter (verified: unit stayed `active` after the
     waiter was killed), so closing a tab now detaches the view and loses
     the envelope rather than killing the run — contract §5, the UI copy,
-    and `docs/cockpit-plugin/usage.md` restate it. `CP-08` holds:
+    and `docs/agents/history/removed-interface-records.md` restate it. `CP-08` holds:
     decryption is PID 1's, token bytes never pass through the bridge or
     the page. **Rejected: probing for a credential file and conditionally
     passing `LoadCredentialEncrypted=`** — turns the pure argv builder into
@@ -10023,17 +9042,6 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
 99. **Consumer revision creation and serving promotion have separate ownership boundaries** (2026-08-24, OPS-009). The locked `vllm` identity owns only `<model>/revisions/`, where every `copy-revision.py` invocation receives a new non-existent destination; root owns the model root and therefore the eventual `current` pointer changed only after manifest verification. This makes targeting a live serving path unavailable to the copy identity, which matters because the reference helper deliberately removes an existing destination before promotion. The 100 GiB figure is an existing-model-plus-available capacity check, not a claimed filesystem reservation: deployments needing isolation use a dedicated filesystem or quota. **Rejected:** making the whole model root writable by `vllm`, because a serving process could replace its own promotion pointer; preallocating a 100 GiB reserve file, because it consumes the capacity intended for model copies and requires a second unsafe shrink/replenish protocol.
 
 100. **Serving consumes the verified ordinary-file tree through read-only container mounts** (2026-08-24, OPS-010). The image, model directory, and YAML configuration are explicit inputs because vLLM, CUDA, and model-specific settings belong to the consumer deployment rather than the archive contract. The launcher resolves both host paths, mounts the model and config privately SELinux-labelled and read-only, and supplies the mounted model path positionally to an explicit `vllm serve`; it does not repeat manifest verification already completed by the copy helper. Podman is preferred on this CentOS-family deployment, with Docker selectable for consumer portability, and the wrapper stays foreground so signals and the serving exit status retain their ordinary meanings. **Rejected:** installing or pinning vLLM on the host, which would add deployment-specific runtime dependencies to hfcache; disabling SELinux labelling for bind-mount access, which would weaken the host boundary; and silently taking a model identifier from YAML, which could serve something other than the verified directory the operator named.
-
-101. **Repository names are canonical, type-aware external links** (2026-08-30,
-    CPT-014). A model name links to `https://huggingface.co/<owner>/<name>` and
-    a dataset name to `https://huggingface.co/datasets/<owner>/<name>`; encoding
-    each identifier segment keeps the generated path structural. The page opens
-    the destination in a new tab with `noopener noreferrer`, preserving the
-    Cockpit view and carrying neither an opener relationship, a referrer, nor a
-    Hub credential (`CP-08`). **Rejected:** linking the current commit instead,
-    because the parent row represents the repository and its expansion already
-    presents every retained revision; making one revision the navigation target
-    would misstate that scope.
 
 102. **Retention defaults to three while explicit five remains compatible**
     (2026-09-14, RET-010). The operator requested a smaller default and immediate
@@ -10381,7 +9389,7 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      dependency, MCP or production operation. Actual socket/cgroup/no-IP/credential/
      SELinux/NFS acceptance stays an explicit deployment hold.
 
-122. **Preserve Cockpit authority through the API client and guarded candidates**
+122. **Preserve historical frontend authority through the API client and guarded candidates**
      (2026-10-18, API-015). [ADR](../adr/decision-122.md): transient service-identity
      clients import only named API `hfcache.api`, use fixed local client settings/
      socket and never pass ordinary archive config or Hub/browser bearer authority.
@@ -10409,7 +9417,7 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      headers never manufacture local authority. Derive links/docs prefix per
      request and spelling, without shared mutable prefix or cached-schema changes.
      Public OpenAPI stays deterministic; native `/` view is a response copy.
-     Fixed local scheduled/Cockpit clients need no new prefix field or config
+     Fixed local scheduled/historical frontend clients need no new prefix field or config
      version. Prove the distinction with locked source and actual disposable
      sockets, audit all 29 REST modes/examples/contracts and run fresh build
      acceptance before MCP. No dependency/durable schema or production change;
@@ -10472,31 +9480,6 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      with forbidden checks NOT RUN. Local tag↔deployed artifact identity remains,
      with honest remaining holds; it never certifies skipped storage acceptance.
      OPS-015 owns the actual rootless architecture and proof, not this policy.
-
-127. **Run reviewed rootless containers without forced executor cleanup**
-     (2026-10-18, OPS-015). [ADR](../adr/decision-127.md): explicit rootless user
-     systemd services and a reviewed system-to-user target bridge replace the
-     initial Quadlet proposal. Fixed never-pull/no-replace/no-init/no-auto-remove
-     persistent-role argv, infinite non-killing drain and stopped-only nonforce
-     cleanup preserve unknown executor truth. Finite API-only observers alone may
-     auto-remove their own stateless container; this cannot cancel server work or
-     discard durable receipts/caller handles. One API, separate Network=none/seccomp IP-denied
-     credential-free worker with real FD3/PID1/peer proof, Caddy existing verified
-     TLS8443/Unix upstream and container clients keep shared local lock/state,
-     read-only hot-reloaded policy directories and secret-class separation.
-     No ACME/admin/raw-header logging, rootful/privileged/label-disable/Podman-
-     socket shortcut, NAS relabel/chown/copyup or production switch. Exact hashed
-     wheel/closure and platform image digests identify the runtime; separate
-     protected immutable-manifest installer retains old artifacts/drain guards.
-     Cockpit keeps outer privilege/candidate/observation contracts with only a
-     fixed inner container-client launcher; no bare-host fallback. Necessary
-     root-owned local account/rootless fixture infrastructure is authorized,
-     but OPS-015 proofs bind only owned local fixtures, never NAS. Actual source,
-     lifecycle/secret/SELinux/container and full gate evidence remain task-owned.
-     Exact protected current bindings pin helper/profile/images/config together;
-     missing/copied/drifted links refuse and effective managers still need review.
-     REL-010 owns reviewed 0.2.0 source, REL-012 clean-source artifacts, and
-     OPS-016 production profile enablement under the unchanged NAS-write ban.
 
 128. **Create the rootless verifier listener inside its confinement**
      (2026-10-18, OPS-017). [ADR](../adr/decision-128.md): explicit PID1
@@ -10564,7 +9547,6 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      dormant socket/native FD3, handles/stores and original lock authority.
      [Decision 132](../adr/decision-132.md) records rationale and evidence.
 
-
 133. **Separate curation from publication authority** (2026-10-19, CAT-001).
      [Decision 133](../adr/decision-133.md) records current configuration tags,
      actual historical snapshots, separate curation identity and exact derived
@@ -10581,8 +9563,7 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      constrain rollback without evidence deletion. Original wrappers, policy and
      durable evidence remain unchanged. Offline acceptance grants no deployment.
 
-
-134. **Preserve Cockpit failure evidence and original operation identity**
+134. **Preserve historical frontend failure evidence and original operation identity**
      (2026-10-19, CPR-001). [Decision 134](../adr/decision-134.md) adopts typed
      bridge/process/stage evidence, finite read recovery and scoped original
      handles outside tab lifetimes. Reject generic error replacement, pipeline
@@ -10598,28 +9579,6 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      no-op contract; [ADR119](../adr/decision-119.md) records actual socket proof.
      Existing credentials/guards/holds, full-service/report exceptions and separate
      current-runtime/installed acceptance remain. No production cause is invented.
-
-
-135. **Separate manual REST jobs from guarded host observers** (2026-10-20,
-     CPR-005). [Decision 135](../adr/decision-135.md) amends CP-04: manual full
-     jobs use the keyed fixed REST client; scheduled service state is separate.
-     Effects require fresh root-only indexed-release inspection and protected
-     explicit six-category policy. Unknown/mixed evidence denies; guard absence
-     never grants authority. The existing rootless bindings do not prove a
-     scheduled observation-only system service, so schedule/observer permissions
-     remain effectively denied. No new scheduler, manager, listener, credential,
-     lock authority or workload permission is introduced. Source fixture acceptance
-     remains separate from disposable Cockpit/PAM and installed symptom proof.
-
-136. **Read run reports through authenticated REST** (2026-10-20, CPR-006).
-     [Decision 136](../adr/decision-136.md) retires the CP-01/09 direct archive
-     report exception. Fixed CLI one-page inventory and exact-ID detail retain
-     original server Envelopes, with a separate bounded read-identity/cursor notice.
-     The report view binds archive/run identity and distinguishes historical
-     outcomes from read success. Optional bounded host journal projection is
-     independent diagnostic evidence, never operation truth. No new REST route,
-     filesystem path authority, browser credential, runtime dependency or durable
-     format follows. Real Cockpit/PAM and installed acceptance remain separate.
 
 137. **Validate read presentation and separate deployment identities**
      (2026-10-20, CPR-007). [Decision 137](../adr/decision-137.md) distinguishes
@@ -10682,33 +9641,6 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      Card GET remains adjunct/authoritative-metadata-only, never falls forward,
      captures or fetches. Bound raw/encoded bodies, record/work totals and inert
      rendering; retain unsupported/unknown evidence. Implementation pending.
-
-143. **Keep strict frontend artifacts independent and require real acceptance**
-     (2026-10-20, WEB-001). [Decision 143](../adr/decision-143.md) accepts
-     a frozen strict React toolchain, precise runtime wire validators, separate
-     indexed immutable web assets and provider-neutral required gates. Node stays
-     build-time only; dependency versions/licenses need actual selection and
-     validation. Preserve base/server/MCP installation boundaries and applicable
-     Cockpit checks. Every feature needs continuous human docs and unit/integration/
-     actual Caddy/installed/native/rootless functional coverage; pending planned
-     test identifiers never count as passing scenarios.
-
-     WEB-002 amendment (2026-10-20): select maintained ESLint10 with compatible
-     strict TypeScript/React peers, explicit test-only axe checks, all-lock license
-     auditing and exact production notices. Implement the required local web
-     stage without removing backend/Cockpit checks. Positive test counts,
-     no-skips/retries, strict rejection fixtures and timeout/owned-process drain
-     are executable requirements. The initial shell proves only preliminary
-     local behavior; typed wire, Caddy/Basic and installed functional acceptance
-     remain outstanding under the same decision.
-
-144. **Keep Cockpit retirement conditional on complete replacement proof**
-     (2026-10-20, WEB-001). [Decision 144](../adr/decision-144.md) is proposed,
-     not retirement approval or completion. Parity, compatibility, installed
-     functional acceptance, usable guides and evidence-preserving rollback must
-     pass before source/package removal. Preserve generic helpers, LGPL notices,
-     safety tests and history. Production plugin uninstall/rollout remains a
-     separate authorization; no existing source/package has been retired.
 
 145. **Derive precise browser contracts and preserve numeric source before decoding**
      (2026-10-20, WEB-003). [Decision 145](../adr/decision-145.md) selects pure
@@ -10789,7 +9721,6 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
 
 ## Documentation and script alignment
 
-
 - [x] API-018 Align CLI diagnostics and remove migration remnants (2026-10-18,
   this commit). Current command/option help separates local, REST, writer and
   private-worker effects. Quiet/JSON retain warnings/errors, degraded/gap notices
@@ -10799,7 +9730,7 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
   ledger and history retained. INV-006/decision 120 clarified, no new architecture.
   Focused 343 passed; final diagnostics 23 passed. Full `scripts/check.sh`:
   4,171 passed, 40 deselected; three locked wheel installation profiles; actual
-  Cockpit lint/types, 135 tests and build. No production/live host operations.
+  historical frontend lint/types, 135 tests and build. No production/live host operations.
 
 - [x] OPS-021 Make deployment helpers profile aware (2026-10-18, this commit).
   Positive source/current/target proof, one parsed staging version and fresh-prefix
@@ -10809,7 +9740,7 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
   retained. Decision 132 preserves lifecycle/state/lock authority. Expanded focused
   selection: 342 passed; final help: 9 passed; 3 masked-unit refusal fixtures passed.
   Full `scripts/check.sh`: 4,148 passed, 40 deselected; all three locked wheel
-  installation profiles; actual Cockpit lint/types, 135 tests and build. No host,
+  installation profiles; actual historical frontend lint/types, 135 tests and build. No host,
   production archive or live network workload performed.
 
 - [x] OPS-020 Make hardening probes explicit and fail closed (2026-10-18,
@@ -10817,7 +9748,7 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
   owned health artifacts and qualified evidence replace implicit production
   workloads and exception-as-denial. INV-017/decision 131 record the diagnostic
   boundary. Focused probe suite: 74 passed. Full `scripts/check.sh`: 4,107 passed,
-  40 deselected; wheel and all three locked installation profiles; actual Cockpit
+  40 deselected; wheel and all three locked installation profiles; actual historical frontend
   lint/types, 135 tests and build. No live Hub/NFS/manager/production workload.
 
 150. **Authenticate the protected host reader independently of the online API**
@@ -10825,7 +9756,7 @@ _Settled implementation deviations from `docs/agents/history/plan.md`, with rati
      adopts a direct foreground Unix reader, exact live API process verification,
      peer-pidfd/per-fragment credentials, independent protected policy/deployment
      evidence, bounded read-only status/config-base and fresh Basic admission/
-     dispatch. Legacy Cockpit policy and bearer/MCP remain unchanged. No generic
+     dispatch. Legacy historical frontend policy and bearer/MCP remain unchanged. No generic
      manager/engine/path/credential selector or write opcode is introduced.
      Missing/drifted/unknown authority denies effects while original observation
      remains available. Checks are not a revocation lease across lock waiting;
@@ -10891,7 +9822,7 @@ unchanged. This observation clears only mount-state uncertainty.
 Next is a separate direct mount(2) completion using held source/target directory
 FDs, after fresh empty-target/mountinfo/inode guards. No installation/restaging,
 fresh functional authority or browser acceptance is granted. Source16 gate and
-fixed browser admission remain valid; production/NAS/live Cockpit untouched.
+fixed browser admission remain valid; production/NAS/installed predecessor interface untouched.
 Checkpoint112 `.scratch/web-006-source16-current-state-v112.json` SHA256795cf39dfcf27252d96ae49aeb1bb0d9ffb45d75724da8a14855fd2fe0b4bfca.
 WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted.
 
@@ -10918,7 +9849,7 @@ acceptance occurred. Next: empty prelabelled shared public tool/code inputs,
 new launcher with real same-current-Caddy untrusted/trusted epoch, then a fresh
 native/rootless authority. Old21success-dependent scopes remain inert.
 Checkpoint113 `.scratch/web-006-source16-current-state-v113.json` SHA256ad5c2fea0cd8daf8ecb7981c738033d32d169bd1ef85b0c15c7401d0bb08a4fc.
-WEB-006/AUTH-08/HOST-01–03 incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint114 update2026-10-23: new prelabelled public browser inputs pass.
 
@@ -10949,7 +9880,7 @@ and actual same-current-Caddy CA/leaf epoch checks. Legacy005 forced-stop drain
 must not be imported into the new phase. Old failed/UNKNOWN receipts remain
 unchanged; no fresh functional authority or installed acceptance yet.
 Checkpoint114 `.scratch/web-006-source16-current-state-v114.json` SHA25635674181cfc8d860666029ac3b775cc195d6627c41de80c44b30a3b8d00c2d95.
-WEB-006/AUTH-08/HOST-01–03 incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint115 update2026-10-23: readonly authority inputs pass; launcher draft stays inert.
 
@@ -10985,7 +9916,7 @@ records as an ordered prefix, installed0.2.4/0.2.5/artifact provenance, old nati
 aliases and original key metadata until fresh strict drain and explicit scoped
 preservation. Validate the installed manifest before one fresh native run.
 Checkpoint115 `.scratch/web-006-source16-current-state-v115.json` SHA256ec94700ec96c4df30944ee6ccf0548f1f94ae543890692d68776d136ad03f662.
-WEB-006/AUTH-08/HOST-01–03 incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint116 update2026-10-23: fresh22 public preparation/static validator passes.
 
@@ -11024,7 +9955,7 @@ fresh strict drain and original native21 alias preservation; do not repeat this
 publication. Old native/build/paired-audit/UNKNOWN receipts stay unchanged. Then
 one fresh native run plus strict postrun, followed by required rootless/fault/
 retirement cohorts. Checkpoint116 `.scratch/web-006-source16-current-state-v116.json` SHA2564f737e3d2917f194835fd7e988af57947477a4deeafb244b5e58f54cd090cbe0.
-WEB-006/AUTH-08/HOST-01–03 incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint117 update2026-10-23: fresh22/controller23 preparation passes.
 
@@ -11064,7 +9995,7 @@ native functional invocation using runnera36d43a9 and manifestf8faa1e9, with
 strict postrun/original-handle collection prepared first. Do not repeat this
 selection or publication and do not invoke oldnative21. Rootless/negative/fault/
 retirement acceptance remains pending. Checkpoint117 `.scratch/web-006-source16-current-state-v117.json` SHA2564e86e6688f6a646bdb90889e5f6298e8f4f37511e052ebd1782a8693f11b7d2a.
-WEB-006/AUTH-08/HOST-01–03 incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint118 update2026-10-23: original native22 fails; real TLS/14baseline cases pass.
 
@@ -11104,7 +10035,7 @@ alter source16/native22 or republish existing installed artifacts. Invariant006/
 ADR113/150 review: API/UI production behavior and dependency decisions unchanged;
 only the functional observation mechanism changes. API/UI artifact07bd818e keeps
 original source15/pinned UBI10micro provenance. Checkpoint118 `.scratch/web-006-source16-current-state-v118.json` SHA25609911c6183d123e30bdbb992d52c2ff878af42b3a969274c5fdbb250c60dc62c.
-WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint119 update2026-10-23: source17 browser-page capture fix; strict gate RUNNING.
 
@@ -11131,7 +10062,7 @@ process/locator/artifact, then the observed exact source hash54b83d24 was used.
 Original source16/native22 data are untouched. The new public GET is planned
 observation; failure ends the invocation, with no subsequent failed-read retry.
 
-Actual strict gate17 `scripts/check.sh --require-web --require-cockpit` is RUNNING:
+Actual strict gate17 `historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` is RUNNING:
 outer3461656/start425913683, gate3461657/start425913701, session56166;
 runnerdcb85031/6619bytes, start21:23:15.171660Z, log `.scratch/web-006-gate17.log`.
 No PASS is claimed. Source17 fixture projection template9d6412b8 remains INERT
@@ -11143,12 +10074,12 @@ prepare NEW authority23/control24. Native22 must never be rerun/promoted.
 Current aliases were absent at fresh22 preparation; native22 activation has
 since run. Fresh actual metadata is required before any new preservation.
 Checkpoint119 `.scratch/web-006-source17-current-state-v119.json` SHA2564dbd6fa228925f650095670d522a4524fa05dbd35c04553e4c722d53c7fd4db3.
-WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint120 update2026-10-23: actual source17 strict gate and local preparation PASS.
 
 Original gate17 exits0 after1246.827779s at21:44:01.999420Z:7749Python,
-52opt-in deselections, three locked wheel profiles, preserved Cockpit checks,
+52opt-in deselections, three locked wheel profiles, preserved historical frontend checks,
 2786frontend unit and2846component tests, production build, two sandboxed
 Chromium startup checks and real React/API read fixture all pass. Required
 frontend checks report no skips. Gate3461657/start425913701 and outer3461656/
@@ -11168,7 +10099,7 @@ or real functional acceptance has run. Old source16/native22 failed/UNKNOWN
 records and handles remain unchanged. Next: NEW source17 transfer and protected
 preparation, then NEW authority23/control24 after fresh current-alias metadata.
 Checkpoint120 `.scratch/web-006-source17-current-state-v120.json` SHA256917354a2b1d65cbc874e6d4a9772c504f66017f8cfef386a2a4fea906fb49825.
-WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint121 update2026-10-23: source17 new guest tree copied and verified.
 
@@ -11196,7 +10127,7 @@ failed native22 remains failed. No build/install/restage/new authority/browser o
 functional acceptance is claimed. Next: new readonly package projection and
 prelabelled public browser inputs, then authority23/control24.
 Checkpoint121 `.scratch/web-006-source17-current-state-v121.json` SHA25620209875415c4e2b8f443da7ffb4eee01034dab95ac66530e00ffab12575b728.
-WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint122 update2026-10-23: new source17 environment and separate installed static validation PASS.
 
@@ -11235,7 +10166,7 @@ receipt, not its promotion or a publication replay. No control24/sudoers/selecto
 change or browser/app-service execution yet. Next: locked control24 preparation,
 preserve fresh native22 aliases and prepare native23/strict postrun before run.
 Checkpoint122 `.scratch/web-006-source17-current-state-v122.json` SHA256dfd20b6b49eece268ac03e32ddbe92e9e70c559b2f417cbb7659fe9d8ab730fa.
-WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint123 update2026-10-23: control24 preparation PASS; ORIGINAL native23 RUNNING.
 
@@ -11273,7 +10204,7 @@ fresh actual metadata is required later. Next: wait on THIS session, preserve
 actual outcome, bind prepared strict postrun to its exact receipt. Native/rootless
 isolation, remaining faults/retirement acceptance stay incomplete.
 Checkpoint123 `.scratch/web-006-source17-current-state-v123.json` SHA25681c36c38f4ff31d6d35746033a0bc111535acd52383f1a785a46b0a6b629e258.
-WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint124 update2026-10-23: ORIGINAL native23 and strict postrun PASS.
 
@@ -11312,7 +10243,7 @@ proof, then rootless baseline/live ownership watcher/one original rootless run,
 followed by required isolation/fault/lifecycle cohorts. The shared API/UI image
 keeps original source15/pinned UBI10micro provenance; no rebuild/reinstall/restage.
 Checkpoint124 `.scratch/web-006-source17-current-state-v124.json` SHA256752bfa44bae411bb625927f0fb272aa38b588442d2ffd0933de22b52bd03908e.
-WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint125 update2026-10-23: native23 normal prerequisite and EMPTY stock983 baseline PASS.
 
@@ -11350,7 +10281,7 @@ ownership watcher armed before ONE original rootless generation. Actual six-ID/
 three-CID ownership, rootless browsers, strict postrun, dedicated isolation/fault
 and exact-ID retirement remain unaccepted. Native23 acceptance stays preserved.
 Checkpoint125 `.scratch/web-006-source17-current-state-v125.json` SHA256142c2594df1550c2f4b1acd036a5da43c173aff13eb691f539bf5063cddb0eb3.
-WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint126 update2026-10-23: NEW original paired rootless23 coordinator RUNNING.
 
@@ -11391,7 +10322,7 @@ no rootless functional PASS/result/acceptance claimed. Only this coordinator
 owns the guest lane until all original children close. Next: wait on THIS session,
 preserve outcome and bind its prepared strict postrun; never rerun the cohort.
 Checkpoint126 `.scratch/web-006-source17-current-state-v126.json` SHA2566c0084b36350eb34b1169db85a9bff98dccdfa24ae43a5656c5404a58a3ef021.
-WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint127 update2026-10-23: first coordinator setup FAIL preserved; corrected setup RUNNING.
 
@@ -11428,7 +10359,7 @@ live atomic ARMED handoff. Next: wait on THIS invocation, preserve outcome,
 bind the already prepared strict postrun to its actual result. Required dedicated
 isolation/fault/exact-ID lifecycle evidence remains pending; native23 stays accepted.
 Checkpoint127 `.scratch/web-006-source17-current-state-v127.json` SHA2561f64a73d90d33962a5859905eb3d092248a95ca431e6a782c445c2406deea3d1.
-WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint128 update2026-10-23: corrected coordinator and FIRST rootless run FAIL; closed diagnostics isolate a fixture empty-list parser defect.
 
@@ -11469,7 +10400,7 @@ metadata proof, fresh live ownership watcher, ONE new rootless generation and
 its strict postrun; required dedicated isolation/fault/exact-ID lifecycle proof
 remains pending. Source17 canonical1361files/gate17 and native23 PASS remain
 unchanged. All earlier failures/UNKNOWNs/handles are retained. Shared shipped
-API/UI image remains pinned UBI10micro. No production/NAS/live Cockpit changes.
+API/UI image remains pinned UBI10micro. No production/NAS/installed predecessor interface changes.
 Checkpoint128 `.scratch/web-006-source17-current-state-v128.json` SHA256f2b71a1e9f3476d7ac84e25015d64cdc74e8e19828965ba080d261cefa91b5b5.
 WEB-006/AUTH-08/HOST-01–03 remain incomplete/uncommitted.
 
@@ -11532,7 +10463,7 @@ pins only, no replay of original23 operations, no automatic signals/retirement.
 Next: wait on THIS invocation, preserve outcome and bind/review strict postrun;
 dedicated isolation/fault/exact-ID lifecycle acceptance remains pending.
 Checkpoint129 `.scratch/web-006-source17-current-state-v129.json` SHA256437d8573246b0f6c581e698f95a0ba4dbbe7d9df5399643ff5fa223cea5c5132.
-WEB-006/AUTH-08/HOST-01–03 incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint130 update2026-10-23: rootless24 FAIL; real installed mount prerequisite identified. Checkpoint129 RUNNING wording was already stale when saved; this corrects that bookkeeping error.
 
@@ -11592,7 +10523,7 @@ failed-cohort secret IDs need separate conservative ownership review before any
 retirement. No old run/stop/start is replayed, no service reset silently clears
 failed evidence, and no current rootless normal/negative/lifecycle PASS exists.
 Checkpoint130 `.scratch/web-006-source17-current-state-v130.json` SHA256cf92501042317220218c73335591b43318e0a0819f1b1c53cb565f040d97db50.
-WEB-006/AUTH-08/HOST-01–03 incomplete/uncommitted; source17/native23 PASS retained; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 incomplete/uncommitted; source17/native23 PASS retained; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint131 update2026-10-23: owned loopback NFS prerequisites measured; no server/export/mount/module effect yet.
 
@@ -11634,7 +10565,7 @@ its failed units or retire secrets in that preparation. All external/unknown
 NAS/shared mounts remain refused; no synthetic result establishes production
 NAS acceptance. Record every effect/handle and partial failure without replay.
 Checkpoint131 `.scratch/web-006-source17-current-state-v131.json` SHA256fa697e734e096284e9a0d5c58b837e0925bcbedf113c8faa0cebac8c5b6f761c.
-WEB-006/AUTH-08/HOST-01–03 incomplete; source17/native23 PASS retained; no production/NAS/live Cockpit changes.
+WEB-006/AUTH-08/HOST-01–03 incomplete; source17/native23 PASS retained; no production/NAS/installed predecessor interface changes.
 
 WEB-006 checkpoint132 update2026-10-23: localhost NFS preparation failed with partial owned effects; exact original export independently reconciled, no replay.
 
@@ -11674,7 +10605,7 @@ localhost listener proof; no export replay, app action, client mount or secret
 retirement. Subsequent client/host/pause RO validation and fresh authority,
 rootless browser/isolation/fault/lifecycle acceptance remain necessary.
 Checkpoint132 `.scratch/web-006-source17-current-state-v132.json` SHA2569e83833cc57cdc9921ef3ebcd139ab5d79558715d4e6518b97df48e7ed6203e1.
-WEB-006/AUTH-08/HOST-01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint133 update2026-10-23: first owned mountd is live; separate completion metadata parser FAIL preserved, NFSD/client mount not started.
 
@@ -11703,7 +10634,7 @@ promote the old completion. Then the FIRST NFSD tool start may proceed, with
 exact localhost listener/version/thread proof. Client/host/pause read-only
 NFS validation and rootless real browsers/isolation/lifecycle remain pending.
 Checkpoint133 `.scratch/web-006-source17-current-state-v133.json` SHA256a25aca7f076f2b9a7161652d2246c8ad4e1c3dd9b08290a73c366e278c34353a.
-WEB-006/AUTH-08/HOST-01–03 incomplete; original app failures and6secrets retained; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 incomplete; original app failures and6secrets retained; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint134 update2026-10-23: SAME live mountd/context/security validated; FIRST NFSD tool invocation FAIL on unsupported NFSv2 option.
 
@@ -11740,7 +10671,7 @@ Original modules/control/export/mountd are adopted, not replayed. Only after
 actual localhost listener/vendor security proof may client and host/pause
 read-only NFS validation proceed. Required real rootless acceptance stays pending.
 Checkpoint134 `.scratch/web-006-source17-current-state-v134.json` SHA2566964d1de93adaba17e7ed8a37a7b1524a578b9b43129ccb78fd04721dd322d75.
-WEB-006/AUTH-08/HOST-01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint135 update2026-10-23: owned localhost NFS server readiness PASS; no client/archive/app mount change yet.
 
@@ -11782,7 +10713,7 @@ Then host+original pause archive views require actual NFS-ro proof, followed by
 new authority, conservative exact-ID secret lifecycle and one fresh rootless
 normal cohort/required isolation/fault checks. No rootless feature acceptance.
 Checkpoint135 `.scratch/web-006-source17-current-state-v135.json` SHA2560195f20790fd050b089b88384f3ca7f623f1082358ff6c0f3bcbb70b46c9ced4.
-WEB-006/AUTH-08/HOST-01–03 incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint136 update2026-10-23: actual owned NFS4.2-ro client and UID983 EROFS PASS; archive namespace projection still pending.
 
@@ -11825,7 +10756,7 @@ secret retirement is authorized by this client-readiness result. Every future
 guest tool must admit ONLY the exact proved owned localhost mount(s), refusing
 all external/unknown NAS/shared filesystems; old no-NFS templates remain inert.
 Checkpoint136 `.scratch/web-006-source17-current-state-v136.json` SHA256f960870068e15b13562b4755b672cae457ac9657a48d9bb7a6cf65850620da27.
-WEB-006/AUTH-08/HOST-01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB-006/AUTH-08/HOST-01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint137 update2026-10-23: independent exact archive/namespace read PASS; projection intent bounded before effects.
 
@@ -11875,7 +10806,7 @@ Old no-NFS tools remain inert. Next conservative failed-cohort6secret exact-ID
 ownership review, fresh NFS-aware authority, explicit exact failed-state prep,
 then ONE fresh rootless normal cohort and dedicated required checks.
 Checkpoint138 `.scratch/web-006-source17-current-state-v138.json` SHA25630d2f78bb8f3b2e99d1a86831a232b1dcb775358dc63cf8b3b5f9b09fcda8b8f.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint139 update2026-10-23: conservative failed-cohort secret metadata read PASS; no deletion yet.
 
@@ -11900,7 +10831,7 @@ its own store. This branch NEVER supplies normal6ID/3liveCID secret lifecycle
 acceptance, promotes observer failure, resets a failed unit or replays any app.
 Fresh successful normal+dedicated lifecycle cohorts remain mandatory.
 Checkpoint139 `.scratch/web-006-source17-current-state-v139.json` SHA256d18112f9e7234ac3ecd4ad76a6c86e91371ae77730eb7f190c71b0940c6d3891.
-WEB006/AUTH08/HOST01–03 pending. Production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 pending. Production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint140 update2026-10-23: failed-before-container exact6ID cleanup PASS; normal lifecycle acceptance still pending.
 
@@ -11952,7 +10883,7 @@ before+after unchanged, original pause alive. New acceptance not yet attempted.
 Next fresh NFS-aware private authority/controller, fresh empty baseline/live
 watcher, ONE new rootless normal cohort plus required isolation/fault/lifecycle.
 Checkpoint141 `.scratch/web-006-source17-current-state-v141.json` SHA25697b0f92cd3ed5defe70fb68f8e4e6cde447dac05c315de91e960bdcb94a5ea16.
-WEB006/AUTH08/HOST01–03 pending; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 pending; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint142 update2026-10-23: NFS container policy prerequisites PASS; new authority25 static marker mismatch FAIL preserved before activation.
 
@@ -11985,7 +10916,7 @@ then publish control26/preserve original aliases NOREPLACE/install only scoped
 fixture sudoers. Keep fresh fixture UUID949ea0af-c6fd-40f0-8d3e-b99f0cb6e989,
 source17/runtime/package/image unchanged. No rootless acceptance inferred.
 Checkpoint142 `.scratch/web-006-source17-current-state-v142.json` SHA256062ef390589db318a59f29f6f518ebafc12dbbe0ed633f1ce9fc1b3851339f85.
-WEB006/AUTH08/HOST01–03 pending; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 pending; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint143 update2026-10-23: separate authority25/controller26 completion PASS, no old publication rewrite or application start.
 
@@ -12015,7 +10946,7 @@ observer/runner/coordinator, then ONE new rootless normal functional cohort.
 Old no-NFS templates remain inert. Original native23/gate17 retained; required
 rootless and dedicated isolation/fault/lifecycle acceptance remains pending.
 Checkpoint143 `.scratch/web-006-source17-current-state-v143.json` SHA256f89dfc4266d47bb178e08c8f379a4e6d83731373e3a9fb26b11758f715e3c181.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint144 update2026-10-23: authority25 fresh empty baseline PASS; ONE new normal rootless coordinator prepared, not yet invoked.
 
@@ -12041,7 +10972,7 @@ BEFORE guest call; invalid draft/failure record retained. New caller-v2 prefligh
 PASS held1361source104inputs;47766<120000, original SSH EOF budget2100s, no auto
 signals/retry. Ready to invoke ONCE; no rootless acceptance inferred yet.
 Checkpoint144 `.scratch/web-006-source17-current-state-v144.json` SHA256fbad984929b650f71852b966d6387be60b6019700581e3424b641d28388feba1.
-WEB006/AUTH08/HOST01–03 pending; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 pending; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint145 update2026-10-23: first authority25 coordinator refuses stale embedded-body scalar pins BEFORE children/app; strict closure PASS.
 
@@ -12062,7 +10993,7 @@ and2100s original SSH EOF budget. Ready for FIRST normal app cohort under new
 scope; old setup failure remains failed, never replayed/promoted. Documentation
 alignment PASS207human/27helpers. No rootless acceptance yet.
 Checkpoint145 `.scratch/web-006-source17-current-state-v145.json` SHA2569a5c7ea9af0764079417c511e674bfbc8a7a76f3fd12b4a471beba2e93506043.
-WEB006/AUTH08/HOST01–03 pending; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 pending; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint146 update2026-10-23: actual authority25 normal run FAIL at protected helper startup; original generation/journals retained, no browser acceptance.
 
@@ -12097,7 +11028,7 @@ stay stopped and physical RO NFS client/export never become writable. Require
 all source/security/server/mount IDs and actual983EROFS host+pause before new
 authority/failed-secret cleanup/fresh cohort. Production is outside this scope.
 Checkpoint146 `.scratch/web-006-source17-current-state-v146.json` SHA256f39cffcbcebf01642226109cdb28e87425ab7fffd62a55f6e631eb712eac34b4.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint147 update2026-10-23: actual sole host NFS-ro archive view and unchanged installed inspector PASS; original mounts preserved.
 
@@ -12131,7 +11062,7 @@ removed here), known helper failed-state preparation, fresh authority26/controll
 and ONE fresh normal cohort. Original failed25/observer UNKNOWN remain. Native23
 and gate17 unchanged; full rootless/isolation/fault/lifecycle acceptance pending.
 Checkpoint147 `.scratch/web-006-source17-current-state-v147.json` SHA2569ecead5bb4351ea0cdbbdefcbae1df956f9d1da66c7071eb277e44a0e0a34de3.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint148 update2026-10-23: installed rootless readonly stage/bindings PASS and failed25 six-ID metadata PASS; new NFS receipt/index preparation required.
 
@@ -12172,7 +11103,7 @@ only3known exited0/no-secret image audits; then ONLY exact helper failed reset,
 new receipt/index prep and strict closure before fresh authority26/controller27.
 No normal6ID/3liveCID lifecycle acceptance or app replay inferred.
 Checkpoint148 `.scratch/web-006-source17-current-state-v148.json` SHA256750c263ed2d5ec431d81973f38b5d9643d11f9253bf26a31112334cf53a04678.
-WEB006/AUTH08/HOST01–03 pending; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 pending; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint149 update2026-10-23: failed25 exact6ID fixture cleanup PASS; original observer failure/UNKNOWN not promoted.
 
@@ -12198,7 +11129,7 @@ actual current nfs_t/loaded module checksum/kernel and no source/policy change.
 Then ONLY exact known helper reset and strict closure, fresh authority26/controller27
 and new cohort. No prior app acceptance or operation replay is inferred.
 Checkpoint149 `.scratch/web-006-source17-current-state-v149.json` SHA256ded608f30db07fc3f2f0eca83151f3a6df9e0d1db0ce44032414c85497d755ef.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint150 update2026-10-23: fresh actual-NFS label receipt and NEW descriptor/policy copies PASS, no policy/grant/service change.
 
@@ -12233,7 +11164,7 @@ proof and strict13role/4cgroup/5endpoint closure; fresh authority26/controller27
 uses NEW profiles/receipt and exact NFS guard3. Fresh baseline/live normal cohort
 and required isolation/fault/lifecycle remain pending.
 Checkpoint150 `.scratch/web-006-source17-current-state-v150.json` SHA256da3ec46d5ae98ebe5628466cb2e2f7a25462ff847cd5519be7bb5f3f0794fb38.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint151 update2026-10-23: ONLY known helper failed-state preparation PASS; strict fixture closure restored without startup.
 
@@ -12251,7 +11182,7 @@ Next fresh authority26/controller27 with nfs_t receipt/new protected profile
 indexes; old controls are inert. New baseline/live paired normal cohort and
 required dedicated isolation/fault/lifecycle acceptance remain pending.
 Checkpoint151 `.scratch/web-006-source17-current-state-v151.json` SHA25630f88b960bfc6f23aa1bfc59577ccef5c3ad99bd778ee19b638efcb06d8c91c3.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint152 update2026-10-23: new authority26 preparation stopped before control installation or application startup.
 
@@ -12271,7 +11202,7 @@ original193control inputs preserved.28local regressions PASS3.38s; completion
 held1361source140input preflight PASS57060bytes. Completion is prepared only,
 not yet invoked. No old failure or UNKNOWN result is promoted.
 Checkpoint152 `.scratch/web-006-source17-current-state-v152.json` SHA256b6c494f3ea888f18005f38dd5e2103f845cf0a57910394aaa61b484a965da198.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint153 update2026-10-23: new NFS-aware authority26/controller27 preparation PASS; applications remain unstarted.
 
@@ -12302,7 +11233,7 @@ limits unchanged. Source1361/readonly108package/originalpause/kernel unchanged.
 Next fresh authority26 baseline/live paired rootless normal cohort; dedicated
 isolation/fault/lifecycle still pending. Native23/gate17 unchanged.
 Checkpoint153 `.scratch/web-006-source17-current-state-v153.json` SHA256cd67e4500d59a4f0c17f6e918d5cd35b5f193a6b48d80afa32badc8b7c955952.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint154 update2026-10-23: fresh authority26 stock983 empty baseline PASS; new live paired cohort prepared.
 
@@ -12327,7 +11258,7 @@ PREPARED ONLY. Next invoke once; required normal ownership/live3CID/6ID, built
 UI all3engines/shared Caddy and strict postrun remain unperformed, as do dedicated
 isolation/fault/lifecycle checks. No previous failure/UNKNOWN promoted.
 Checkpoint154 `.scratch/web-006-source17-current-state-v154.json` SHA2564e98cb2b19cc429ee94d472f41dcc77091635e72ebc69354007b233631f8060d.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint155 update2026-10-23: actual rootless26 normal cohort FAIL at missing local container bind sources, before browser cases.
 
@@ -12368,7 +11299,7 @@ Documentation alignment PASS207human/27helpers; git diff --check PASS. Current
 selector condensed to navigation/current state; detailed checkpoint history remains
 in this task, dated plan and progress, with prior selector bytes retained privately.
 Checkpoint155 `.scratch/web-006-source17-current-state-v155.json` SHA256655beccfcc6506e639eeadfdcd16366f76d820a8485898a6f7995518292283f2.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint156 update2026-10-23: failed26 exact secret cleanup and missing fixed bind sources provisioned; strict fixture closure restored.
 
@@ -12412,7 +11343,7 @@ controller/asset publication. A new generation/ARMED/workspace never replays the
 failed original handles. Required rootless normal browser/lifecycle and dedicated
 isolation/fault acceptance remain pending; WEB006 cannot be committed yet.
 Checkpoint156 `.scratch/web-006-source17-current-state-v156.json` SHA2560c37476592aef44c77a4798c526923b7b0b07937c99147db6fca30df9e842939.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint157 update2026-10-23: repaired baseline PASS; fresh rootless27 normal cohort FAIL before browser on missing nested mount placeholders.
 
@@ -12459,7 +11390,7 @@ Next invoke once; reset only exact two known closed failed unit states afterward
 Docs alignment207human/27helpers and git diff --check PASS; source1361/gate17/
 native23 unchanged. Required normal/dedicated acceptance remains incomplete.
 Checkpoint157 `.scratch/web-006-source17-current-state-v157.json` SHA2561fbc189006f548046555cbcfd44f6c8ad7b2ca58cbceb43da205d9735c066ad7.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint158 update2026-10-23: exact retained created-container and six-secret failed27 cleanup PASS; no app restart or acceptance.
 
@@ -12504,7 +11435,7 @@ Caddy63a6976a/status1 failed states reset, fresh metadata/baseline/cohort.
 Installed bytes/control27/source1361/gate17/native23 unchanged. Strict13role
 closure remains NOT accepted until separate known-state prep; no app replay.
 Checkpoint158 `.scratch/web-006-source17-current-state-v158.json` SHA256905e55d9970c5486facf153c3a5b8993193ee8c33aa5de8ee80af4335ce8f43e.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint159 update2026-10-23: ONLY two missing empty root-owned placeholders provisioned; exact failed user-state prep restores strict fixture closure.
 
@@ -12536,7 +11467,7 @@ installed image/package retained. New observer/runner/workspace-v3 and new
 generation, no old handles replay. Required rootless normal browser/lifecycle
 and dedicated isolation/fault checks remain pending. Native23/gate17 unchanged.
 Checkpoint159 `.scratch/web-006-source17-current-state-v159.json` SHA256b8b387f111f794317aeb38e17064db6f0ef100cfe7d3d9f499577b8a6dc74e20.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint160 update2026-10-23: fresh current18path baseline normal-v3 PASS; new rootless28 paired cohort prepared.
 
@@ -12561,7 +11492,7 @@ Next invoke exactly once; built UI through shared Caddy/all3engines,6ID/3liveCID
 normal ownership, strict postrun and dedicated isolation/fault/lifecycle remain
 pending. No old failed generation/observer/operation replay.
 Checkpoint160 `.scratch/web-006-source17-current-state-v160.json` SHA25648eeaabb29f8098fc09c510c8920dcfef2658bb7e8ddf23ff4e5ea60c72dc813.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint161 update2026-10-24: worker actually starts/notifies ready; fresh rootless28 cohort FAIL at API protected credential source. Exact namespace metadata verifies fixture ownership error without payload read.
 
@@ -12606,7 +11537,7 @@ perform only positively owned exact-ID cleanup/known-state prep. Required normal
 and dedicated acceptance remains pending; source1361/gate17/native23 unchanged.
 Docs alignment207human/27helpers and git diff --check PASS.
 Checkpoint161 `.scratch/web-006-source17-current-state-v161.json` SHA256dc083a10fc791f3a84b09f4bd1d8c4f4db93c3270215772c5909ffba581b165f.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint162 update2026-10-24: failed28 exact6ID cleanup and known-state prep PASS; corrected private controller28 remains inert/unpublished.
 
@@ -12649,7 +11580,7 @@ Hold actual owner-probe/cleanup/closure/placeholder proof, then fresh baseline/
 live paired normal cohort. No old failed app/proof replay or required test skip.
 Normal rootless and dedicated isolation/fault/lifecycle acceptance still pending.
 Checkpoint162 `.scratch/web-006-source17-current-state-v162.json` SHA2565dede164aa6c028a9da1b622b7e405aeb77aac535388ba449687a84efa1bbf99.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint163 update2026-10-24: corrected authority27 and fresh baseline PASS; original new rootless29 cohort running.
 
@@ -12687,7 +11618,7 @@ No second guest call until original EOF/reap. Required normal rootless browser,
 strict postrun and dedicated isolation/fault/lifecycle acceptance still pending.
 Source17 gate/native23 and pinned UBI10 micro shared API/UI image unchanged.
 Checkpoint163 `.scratch/web-006-source17-current-state-v163.json` SHA25663196070dbce7ff273abc36907074d5eb3ca4c82031251686292f8617ebe573e.
-WEB006/AUTH08/HOST01–03 incomplete; production/NAS/live Cockpit untouched.
+WEB006/AUTH08/HOST01–03 incomplete; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint164 update2026-10-24: rootless29 prestart failure preserved; strict closure PASS; metadata-only Basic preservation prepared.
 
@@ -12719,7 +11650,7 @@ future fresh credential creation. Current full218input prefix and all history
 remain. This is owned test fixture preparation, not product guard relaxation.
 Source17 strict gate/native23/UBI10 image unchanged. Dedicated acceptance pending.
 Checkpoint164 `.scratch/web-006-source17-current-state-v164.json` SHA256c3805a3fc3f10377a72fb425e90da9dabb52a7019551228d8ba2d8cc40f3e582.
-WEB006 remains incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB006 remains incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint165 update2026-10-24: authority28/controller29 and fresh baseline PASS; original rootless30 running.
 
@@ -12753,7 +11684,7 @@ Source17 strict gate/native23/pinned UBI10 micro shared API/UI image unchanged.
 Required normal rootless browser/6ID3liveCID/delivered gates, strict postrun and
 dedicated isolation/fault/lifecycle acceptance remain pending.
 Checkpoint165 `.scratch/web-006-source17-current-state-v165.json` SHA256fe0b9f23360cb086cc2cb4b02d43f8c5358692e1875acc58d2610b706cfa87a9.
-WEB006 incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB006 incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint166 update2026-10-24: limited real live ownership/delivered gates PASS, rootless30 fails API credentials; exact original cohort drain running.
 
@@ -12805,7 +11736,7 @@ to quoted command literal; all9pass before invoke. No production action.
 Source17 strict gate/native23/UBI10 image unchanged. Normal browser, strict drain,
 secret lifecycle and dedicated isolation/fault acceptance remain incomplete.
 Checkpoint166 `.scratch/web-006-source17-current-state-v166.json` SHA256db6d3f3720ab91d4d2d9b0fec476b2353c05666851d6927aba1f2209367b8b73.
-WEB006 uncommitted; production/NAS/live Cockpit untouched.
+WEB006 uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint167 update2026-10-24: all39original processes drained, exact stopped API CID removed; actual same-image0payload probe isolates credential parent-directory read refusal.
 
@@ -12841,7 +11772,7 @@ reset so old callers close before a new source freeze/gate. Required new source
 native/rootless installed/shared-Caddy acceptance will follow. Native23/gate17/
 UBI10 image evidence stays historical/exact; no false new-source acceptance.
 Checkpoint167 `.scratch/web-006-source17-current-state-v167.json` SHA256d6a14663618f0df621f716de2e02c8af07510fc003ca23f0b54f9e382f9263e5.
-WEB006 incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB006 incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint168 update2026-10-24: exact failed30 opaque backup/six-ID cleanup and sole known API failed-state reset PASS; actual strict closure restored.
 
@@ -12879,7 +11810,7 @@ permission. Add real owned search-only directory and adversarial regressions,
 freeze new source/gate, then fresh installed native/rootless shared-Caddy proof.
 No new SELinux grant/permission/hardening change. Required acceptance open.
 Checkpoint168 `.scratch/web-006-source17-current-state-v168.json` SHA2569b68871176712a576635e1c70fb7a67ca4a1380ffe313445626cc7452824c963.
-WEB006 incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB006 incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint169 update2026-10-24: protected credential O_PATH traversal correction +264 targeted tests PASS; source18 frozen and original strict gate running.
 
@@ -12911,7 +11842,7 @@ checksum was mistyped and refused BEFORE child/output reservation; actual
 captured source69f265f6 executed once on corrected exact hash, no replay.
 
 Strict original gate18 runnerbd0cc794 now runs as3553603/start428727675:
-scripts/check.sh --require-web --require-cockpit. Outcome PENDING;1361source
+historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`). Outcome PENDING;1361source
 bytes frozen throughout. No further canonical edits during this gate; only
 5excluded bookkeeping docs/ignored preparation. Source17 gate/native23/image
 proof remains exact historical evidence, not new-source installed acceptance.
@@ -12920,7 +11851,7 @@ bytes or image have been built/staged/accepted. Next host-only0.2.6 fixture
 metadata projection and owned prep, then actual fresh native/rootless same-Caddy
 and dedicated isolation/fault/lifecycle acceptance after green gate.
 Checkpoint169 `.scratch/web-006-source18-current-state-v169.json` SHA25603bb6fac3ae74e46314123540dc62752496d9f829a32aa7964267a1a921925c2.
-WEB006 incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB006 incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint170 update2026-10-24: gate18 typecheck failure retained/fixed; newsource19 strict gate running, owned host-only two-TOML projection PASS.
 
@@ -12970,7 +11901,7 @@ gate, fresh native/rootless shared-Caddy browsers, then dedicated isolation/
 fault/lifecycle. Guest lane quiescent; original6secret cleanup/strict closure
 stays. No source19 artifact is installed or accepted yet.
 Checkpoint170 `.scratch/web-006-source19-current-state-v170.json` SHA256f97915e3ac43ccd310cb8048515346649885932f6673e56de9e078cd52f94c55.
-WEB006 incomplete/uncommitted; production/NAS/live Cockpit untouched.
+WEB006 incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 WEB-006 checkpoint171 update2026-10-24: actual strict gate19 PASS7750Python/2786unit/2846component; new guest source19 exact transfer PASS, oldsource17/strict closure preserved.
 
@@ -12979,7 +11910,7 @@ Original gate3554231/start428748934 and outer3554230/start428748916 reaped/gone;
 outer1261.795663s. Resultd88fb00f/816bytes, log535af71f/100881bytes.
 All1361frozen source19 hashes/modes unchanged/snapshot586acd13.7750Python
 passes/52opt-in deselections; locked base/server/server+MCP wheel install/import/
-help/version checks, Cockpit checks,2786frontend units/2846components, strict
+help/version checks, historical frontend checks,2786frontend units/2846components, strict
 wire135definitions/lint/types/production build,2real sandboxed Chromium startup
 checks and realHTTP/API React read fixture PASS. No required default skip;
 installed/shared-Caddy/native/rootless/dedicated acceptance remains separate.
@@ -13023,8 +11954,7 @@ sessions closed. Next quiescent original-alias preservation/staging prerequisite
 inspection, native006/new pinned UBI10 micro API+UI/rootless007 artifacts, then
 fresh real same-Caddy browser and dedicated acceptance. No live rollout.
 Checkpoint171 `.scratch/web-006-source19-current-state-v171.json` SHA25674a71affb4b25d4b7229a46e97449fe601d01b3246e1ff49a49092ed75453051.
-WEB006 incomplete/uncommitted; production/NAS/live Cockpit untouched.
-
+WEB006 incomplete/uncommitted; production/NAS/installed predecessor interface untouched.
 
 Checkpoint172 (2026-10-24): SOURCE19 remains frozen at1361files/snapshot586acd13;
 no canonical edit after green gate19. Canonical artifact06496e45 and explicit
@@ -13070,7 +12000,6 @@ checks do not replace installed functional acceptance. WEB006 in progress/
 uncommitted; AUTH-08/HOST-01–03 pending, WEB007–026 not started. Production
 unchanged. Checkpoint172 ignored state records exact current artifact identities.
 
-
 Checkpoint173 (2026-10-24): actual OCI transfer4f374b0c PASS3.35s/all4home
 files full9/hash/SID rejoined; all original copy children reaped/gone. Fresh
 SOURCE19 UI packet837769b1/1,269,760B has8fixed members, bound codecbafa3ddc;
@@ -13103,7 +12032,6 @@ acceptance. No partial proof closes AUTH-08/HOST-01–03; WEB006 remains in
 progress/uncommitted, WEB007–026 pending. All guest lanes idle/closed here;
 production unchanged. Checkpoint173 ignored state owns exact current identities.
 
-
 Checkpoint174 (2026-10-24): NEW source19 image runtime audit original attached
 process122213/start30175964 exits0, actual container outer122237/start30175989
 runsPID1/inner981 mappinghost983, all108package+6UI hashes match,35named tools
@@ -13129,7 +12057,6 @@ in_progress/uncommitted; AUTH-08/HOST-01–03 pending and WEB007–026 not start
 All guest calls closed, app lane quiescent; production untouched. Next source19
 browser/readonly package environment, rootless007 and authority29/controller30.
 
-
 Checkpoint175 (2026-10-24): actual SOURCE19 environment6ab3f878/protected4767d314
 PASS9.55s. Fresh descriptor-anchored bind/remount exposes the installed native006
 package at new source19 provisioning path, statvfs/mountinfo readonly and same
@@ -13148,7 +12075,6 @@ auditeddedf864e, then authority29/controller30, retaining224old rows. WEB006
 in_progress/uncommitted and AUTH-08/HOST-01–03 pending; WEB007–026 pending.
 Production remains unchanged. Checkpoint175 ignored state owns current identities.
 
-
 Checkpoint176 (2026-10-24): actual rootless007 original stage/render03366bda/
 protectedb507acaf PASS5.61s. New /opt/hfcache/releases/0.2.7 has28captured input
 files, complete6helper copies/explicit host-helper opt-in, exact supported Basic/
@@ -13164,7 +12090,6 @@ installer replay, application/Caddy start or policy/credential grant. Independen
 new profile bindings and authority29/controller30 remain required before actual
 application/browser tests. All calls closed. WEB006 in_progress/uncommitted;
 AUTH-08/HOST-01–03 pending, WEB007–026 pending; production untouched.
-
 
 Checkpoint177 (2026-10-24): original protected index preparer actually PASS
 44c9920c/protected072904f1 in3.16s against new native006/rootless007 files.
@@ -13185,7 +12110,6 @@ publication/manifest using actualsource19environment/profiles while preserving
 dedicated isolation/fault/lifecycle acceptance. WEB006 in_progress/uncommitted;
 AUTH-08/HOST-01–03 and WEB007–026 still pending. Checkpoint177 records exact pins.
 
-
 Checkpoint178 (2026-10-24): actual separate readonly source19 authority29
 completion PASS cb644dc5/protectede37b3297 in3.70s.
 Original preparation OSError and subsequent 8MiB tool-size refusal remain failed;
@@ -13203,8 +12127,7 @@ Enforcing preserved. All original executors closed; no application/Caddy/browser
 start or new normal/dedicated acceptance. Next fresh native24/rootless31 through
 real shared Caddy, then required dedicated isolation/fault/secret-lifecycle tests.
 WEB006 in_progress/uncommitted; AUTH-08/HOST-01–03 and WEB007–026 pending.
-Production untouched; no Cockpit retirement. Ignored checkpoint178 owns full pins.
-
+Production untouched; no historical frontend retirement. Ignored checkpoint178 owns full pins.
 
 Checkpoint179 (2026-10-24): actual native24 original checker122866/start30584912
 returns1 after168.49s; wrapper3596590 closed170.69s. Original failed protected
@@ -13225,7 +12148,6 @@ specific requirement/no response/no auth/no retry, then fresh source gate/fixtur
 Native24 failure remains historical; new native/rootless and dedicated/lifecycle
 acceptance are still mandatory. WEB006 in_progress/uncommitted; WEB007–026 pending.
 
-
 Checkpoint180 (2026-10-24): narrowed native24 failure to real WebKit untrusted
 navigation cancellation after baseline/helper-down pass; no ambiguity accepted.
 Source20 changes ONLY functional driver, its guard tests and human troubleshooting.
@@ -13239,8 +12161,7 @@ contract retained. Frozen1361source20 snapshot3c50c138/capture55a41976, only the
 3changes from19; all108runtime package source and UI build inputs unchanged.
 Explicit two-field006fixture projection11a82a1a/snapshot5c3c8e44 PASS, canonical
 version002 unchanged. Actual strict gate20 started outer3598949/start429776482,
-runnerc847585e, original retained command scripts/check.sh --require-web
---require-cockpit; still RUNNING/no outcome inferred. No source changes after20
+runnerc847585e, original retained command historical gate invocation (original command SHA-256 `6a22211ef273d05d08c501759e7aa72d87f00c2f820395dfa51c01e1364b67fd`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`); still RUNNING/no outcome inferred. No source changes after20
 freeze. Gate19 remains historical PASS. No source20 guest transfer or application
 acceptance yet; source19 native24 FAIL remains unchanged. Next actual gate20
 closure, new source20 disposable source/browser bindings, native25/rootless31
@@ -13248,41 +12169,6 @@ shared-Caddy and dedicated isolation/fault/secret-lifecycle acceptance. Basic
 native root:983/0640 must be preserved metadata-only before rootless owner change.
 WEB006 in_progress/uncommitted, AUTH-08/HOST-01–03/WEB007–026 pending; production
 untouched. Full ignored checkpoint180 owns current receipts and execution handles.
-
-
-Checkpoint181 (2026-10-24): source20 strict gate still RUNNING; actual backend
-7750PASS/52opt-in deselections,3locked wheel profiles and Cockpit572PASS/0skips.
-Do not infer the complete frontend/build/realAPI gate outcome yet. Source20
-canonical1361snapshot3c50c138 remains unchanged. Actual local artifact comparison
-3d5097bd/17110B verifies all108runtime package leaves,46actual consumed UI build
-inputs (inventory33271a75), self-version metadata and existing006UI0144a394 are
-unchanged from source19-built artifacts. Reuse original installed006/rootless007/
-shared UBI10microdedf864e artifacts with their GENUINE source19 build provenance
-9daf2d5a, preserving original profilesf1774770/bf09c14d and policy bytes. Source20
-5c3c8e44 identifies the changed test fixture, not a fabricated new artifact build.
-New source20 source transfer/private scratch/readiness/environment and authority30
-are INERT/UNBOUND preparations only. Existing native24 failed Basic root:983/0640
-inode118619972 and native aliases must be NOREPLACE preserved after transfer,
-without reading/hash of payload or changing old-owner guards.22actual local
-NOREPLACE/collision/metadata/controller31/guard4 tests PASS7.36s/0skips; controller31
-f8e9fbfc changes only repository/control/generation bindings, all function/class
-ASTs match30. No source20 guest call/application start, no new browser/dedicated
-acceptance. Next close gate20, bind/execute new transfer once, preserve originals,
-stage source20 environment, publish authority30 keeping all240old control inputs,
-then fresh native25/rootless31 and dedicated isolation/fault/secret lifecycle tests.
-WEB006 in_progress/uncommitted; AUTH-08/HOST-01–03 and WEB007–026 pending;
-production unchanged. Checkpoint181 records actual pins and next execution handles.
-
-
-Checkpoint182 (2026-10-24): actual strict source20 gate PASS
-c8fd9d01/log0aecaa96 in1257.58s, original child3598952/start429776501
-and outer3598949/start429776482 reaped/gone.7750Python/52opt-in deselections,
-3locked wheel profiles, Cockpit572/0skips,2786frontend units/2846components,
-10functional-driver metadata tests, lint/types/wire135definitions/build,
-sandboxed Chromium startup and realHTTP/API React read fixture PASS.1361source20
-snapshot3c50c138 unchanged; no required default skip or installed acceptance
-inferred. Bound packet492aed15/36,321,280B, codec5a0fb397 and19actual archive/
-corruption/foreign-scope/pin guard tests PASS4.32s.
 
 Actual new guest transfer 26f57ab1/protected122f7832 PASS19.77s:
 all1361new source20 files/hash/full9/SIDs verified, oldsource17 and oldsource19
@@ -13307,8 +12193,7 @@ controller31 preserving all240old control rows and exact old source19-built prof
 bytes. Then fresh native25/rootless31 through real shared Caddy and dedicated
 isolation/fault/secret-lifecycle acceptance. Native24 remains FAIL/no SUMMARY;
 AUTH-08/HOST-01–03 pending, WEB006 in_progress/uncommitted and WEB007–026 pending.
-Checkpoint182 owns full pins; no Cockpit retirement or production rollout accepted.
-
+Checkpoint182 owns full pins; no historical frontend retirement or production rollout accepted.
 
 Checkpoint183 (2026-10-24): actual source20 authority30 publication PASS
 69ff8293 in4.03s, original3619589/start429963632 reaped/gone. Controller31f8e9fbfc,
@@ -13331,7 +12216,6 @@ then actual postrun/normal-readiness and metadata-only preservation of its new
 Basic inode before rootless31. Rootless and dedicated isolation/fault/secret-
 lifecycle acceptance remains mandatory and pending. WEB006 in_progress/uncommitted;
 AUTH-08/HOST-01–03 and WEB007–026 pending. Production unchanged.
-
 
 Checkpoint184 (2026-10-24): source20 native25 actually PASS local0a22f1e8/
 protected78d91d68; checker126591/start30864451 returns0 in325.75s, original outer
@@ -13359,7 +12243,6 @@ CID ownership/delivery/drain, opaque prelabelled backup and exact-ID retirement.
 Dedicated native/rootless isolation/fault/secret-lifecycle proof still required.
 WEB006 in_progress/uncommitted; AUTH-08/HOST-01–03 and WEB007–026 pending.
 Production untouched; native24 failed run remains unchanged, no replay/promotion.
-
 
 Checkpoint185 (2026-10-24): rootless31 actually FAIL de897ddd after75.04s;
 original checker132293/start31942550 returns1/72.89s. API/worker/Caddy readiness,
@@ -13402,13 +12285,6 @@ acceptance. WEB006 remains in_progress/uncommitted; AUTH-08/HOST-01–03 and
 WEB007–026 pending. Guest app lane quiescent/secretstoreempty; production
 unchanged. Full original handles/pins and blockers are in ignored checkpoint185.
 
-
-Checkpoint186 (2026-10-24): source21 strict gate actually PASS1248.50s,
-outer3655978 reaped/gone1248.71s; source827c1047/1361files unchanged. Actual
-7752Python/52opt-in deselections,572Cockpit/0skips,2786unit/2846component,
-21sandbox/10driver metadata,135wire/types/lint/build,207human-doc/27helper and
-realAPI/browser smoke pass. Gate log889a4381; no installed acceptance inferred.
-
 New canonical artifact710d9e07 and explicit008 fixtureda8738eb built; shared
 API/UI image92c09797 retains both pinned UBI10micro FROM stages. Source21
 transfer950426db and original rootless31 Basic/3alias preservation54c4c33f PASS.
@@ -13436,9 +12312,8 @@ new genuine profiles/authority31/controller32, fresh native26/rootless32 normal
 and dedicated isolation/fault/secret-lifecycle tests. WEB006 in_progress and
 uncommitted; AUTH-08/HOST-01–03 and WEB007–026 pending. Source20native25 PASS
 remains historical; rootless31FAIL/stoppedfalse and all original failures remain.
-Production/NAS/liveCockpit untouched. Full actual pins and original handles:
+Production/NAS/livehistorical frontend untouched. Full actual pins and original handles:
 `.scratch/web-006-source21-current-state-v186.json` SHA256 833acc11e33a3f42176916ee1a371fae33059cfabbb660330f07d9a3de1f9271.
-
 
 Checkpoint187 (2026-10-24): new source21 environment actual PASSa7e06dc0/
 17.13s, original3681622 reaped/gone. Same-inode readonly108package projection,
@@ -13462,7 +12337,6 @@ secrets empty; native26/rootless32 and dedicated isolation/fault/lifecycle proof
 still required before WEB006 commit. Source21 gate remains green/frozen, all
 required cases pending; production untouched. Full actual pins/handles:
 `.scratch/web-006-source21-current-state-v187.json` SHA256 2e1e1d21cf48779b012652d1ca394849027c3be9ae4f264f5c5f6cb2cb9f4de0.
-
 
 Checkpoint188 (2026-10-24): reviewed controller32v2 8adfaaa7/117990B is
 actually published and loaded. Six real local child/pipe tests PASS0.607s,
@@ -13492,10 +12366,9 @@ preserve its actual Basic/aliases, then rootless32 with actual armed ownership
 watcher. Dedicated isolation/fault/secret-lifecycle proof is still mandatory.
 WEB006 in_progress/uncommitted, AUTH-08/HOST-01–03 and WEB007–026 pending;
 source21 strictgate remains green/frozen. All old failures and rootless31
-startedtrue/stoppedfalse stay. Production/NAS/liveCockpit untouched.
+startedtrue/stoppedfalse stay. Production/NAS/livehistorical frontend untouched.
 Exact current pins/handles: `.scratch/web-006-source21-current-state-v188.json`
 SHA256 d0b683736c81dff62a0e5f9863ab1eef99b650044b93e8b4455d83b51a804042.
-
 
 Checkpoint189 (2026-10-24): fresh source21 native26 ACTUAL PASS95167582/
 338.50s; original3686310/start431533207 reaped/gone. Checker136100/
@@ -13535,10 +12408,9 @@ No successful-normal proof fabricated, no current Basic/alias switch or service
 replay. Next a new helper-only sameimage metadata/client-stage probe to identify
 remaining refusal; not started, no authpayload or host-status acceptance implied.
 Source21 strictgate remains green/frozen. WEB006 and AUTH-08/HOST-01–03 remain
-pending/uncommitted, WEB007–026 pending. Production/NAS/liveCockpit untouched.
+pending/uncommitted, WEB007–026 pending. Production/NAS/livehistorical frontend untouched.
 Full current pins/handles: `.scratch/web-006-source21-current-state-v189.json`
 SHA256 ffb40d7d5d09838ca183784c151c4a44c87ca6bd6e8755d3fb3bf5fa9f6cb5e6.
-
 
 Checkpoint190 (2026-10-24): first helper-only diagnostic FAIL5275cc64/
 3.196s, outer3692658 reaped/gone: missing outer select import atline641,
@@ -13566,9 +12438,8 @@ No productcode change or policygrant byguess; source21 remainsfrozen/strictgate
 green. Native26PASS retained; rootless32FAIL/0acceptedcases remains unchanged,
 its genuine3wait0/3exists1/drain and6IDretirement are partialproofs only.
 WEB006 and requiredAUTH/HOST cases remain pending/uncommitted. Production,
-NAS/liveCockpit untouched. Full exactpins/handles:
+NAS/livehistorical frontend untouched. Full exactpins/handles:
 `.scratch/web-006-source21-current-state-v190.json` SHA256 e7c61dc1dc4dc7df8fc0cb11f84dc339e15c22f7abcb62fcdb90eb4e3fb9acff.
-
 
 Checkpoint191 (2026-10-24): rootless32 retained original API PID141854/exact
 CID402337246bc1602c61488f1d8c93756a2b22606c34f842ca33ae10c95fed3865
@@ -13600,15 +12471,14 @@ Source21 native26 PASS remains genuine historical evidence, not source22
 acceptance. Rootless32 FAIL/0cases and original69handle/3wait0/3exists1 drain,
 6IDcleanup/emptysecrets/transportprobePASS remain preserved separately. All app
 rolesinactive; no guest executoractive. WEB006 in_progress/uncommitted,
-AUTH-08/HOST-01–03 and WEB007–026 pending. Production/NAS/liveCockpit unchanged.
+AUTH-08/HOST-01–03 and WEB007–026 pending. Production/NAS/livehistorical frontend unchanged.
 Exact current pins/handles: `.scratch/web-006-source22-current-state-v191.json`
 SHA256 535692f8b8b44b8c354a064607428dbabe0da3dd2d07daa5bc46d2474f18248d.
 
-
 Checkpoint192 (2026-10-24): source22 strict gate ACTUALLY PASSED, original
 outer3696772/start431918922 reaped and gone, rc0,1254.87s. Command:
-`scripts/check.sh --require-web --require-cockpit`. All1361 frozen inputs
-unchanged;7782 Python tests passed (52 explicit opt-in deselections),572 Cockpit,
+`historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)`. All1361 frozen inputs
+unchanged;7782 Python tests passed (52 explicit opt-in deselections),572 historical frontend,
 2786 web unit,2846 component,21 sandbox/10 driver checks, locked base/server/MCP
 wheel profiles, strict wire/lint/types/build and real HTTP/API React fixture
 passed. Required selected tests had no skips; installed Caddy/host acceptance is
@@ -13631,10 +12501,9 @@ for that fixture-only correction. WEB006 remains in_progress/uncommitted;
 AUTH-08/HOST-01–03 remain pending. New010/011 installed native/rootless browser,
 dedicated isolation/fault and secret lifecycle acceptance are still required.
 Previous source21 native26 PASS/rootless32 FAIL and all original evidence remain
-distinct. Production/NAS/live Cockpit remain untouched.
+distinct. Production/NAS/installed predecessor interface remain untouched.
 Current pins: `.scratch/web-006-source22-current-state-v192.json`
 SHA256ad616f7c24a8242f4c3c2ce7864d7bbcffd77ac5e73b4ce67f69f16ce452128d.
-
 
 Checkpoint193 (2026-10-24): canonical and explicit010 fixture artifacts,
 shared API/UI image, transfer, readiness, native010 first installation/UI,
@@ -13672,10 +12541,9 @@ Native27 must be followed by native isolation/fault acceptance while its Basic
 file still has native ownership, before preservation and rootless33 acceptance.
 All this remains pending. Source21 native26 PASS and rootless32 FAIL remain
 historical, distinct evidence. WEB006 in_progress/uncommitted; AUTH-08/HOST-01–03
-pending; WEB007–026 pending. Production/NAS/live Cockpit remain untouched.
+pending; WEB007–026 pending. Production/NAS/installed predecessor interface remain untouched.
 Exact current pins: `.scratch/web-006-source22-current-state-v193.json`
 SHA2569348617f94f10fad55af9771422da3602751733cfbd34d899d1f8799daafbff9.
-
 
 Checkpoint194 (2026-10-24): source22 staging is complete through ACTUAL successful
 authority32 publication. Independent compact evidence indexv5,
@@ -13706,9 +12574,8 @@ positive postrun, native isolation/fault checks must run BEFORE preserving its
 Basic file and crossing to rootless33. Rootless normal, dedicated isolation/fault
 and exact-ID secret lifecycle acceptance still remain required. WEB006 remains
 in_progress/uncommitted; AUTH-08/HOST-01–03 and WEB007–026 remain pending.
-Production/NAS/live Cockpit are untouched. Current original handles/pins:
+Production/NAS/installed predecessor interface are untouched. Current original handles/pins:
 `.scratch/web-006-source22-current-state-v194.json` SHA2569d1bb43de1b4e555e1b8c13db6643659109beac3accfb68fb0da39bcb1edef6a.
-
 
 Checkpoint195 (2026-10-24): source22 native27 ACTUALLY PASSED333.16s, original
 outer3726922/start432298258 reaped/gone, checker145762/start33181217 rc0/reaped
@@ -13735,9 +12602,8 @@ is being drafted without changing frozen source22; it must land with validated
 final documentation before this work-package commit. Runtime fixtures will
 retain their actual source22 identity. WEB006 is still in_progress/uncommitted;
 AUTH-08/HOST-01–03/rootless33/dedicated/lifecycle acceptance remain pending.
-Production/NAS/live Cockpit remain untouched. Exact pins/original handles:
+Production/NAS/installed predecessor interface remain untouched. Exact pins/original handles:
 `.scratch/web-006-source22-current-state-v195.json` SHA25697f0a1868759021d727249677640524bc878b1adab2897d2c37a3080dd6876e6.
-
 
 Checkpoint196 (2026-10-24): native isolation-input metadata ACTUALLY PASSED3.96s,
 outer3729611/start432392172 reaped/gone. One helper151199/start33275101 started,
@@ -13765,10 +12631,9 @@ An inter-native preservation and final-native adapter will retain later actual
 cohort credentials; rootless transition still requires BOTH native dedicated
 passes. Frozen source22/gate22/native27 normal/postrun remain valid. Required
 AUTH-08/HOST-01–03, rootless33, dedicated/lifecycle and human doc corrections
-remain pending; WEB006 is uncommitted. Production/NAS/live Cockpit untouched.
+remain pending; WEB006 is uncommitted. Production/NAS/installed predecessor interface untouched.
 Current pins: `.scratch/web-006-source22-current-state-v196.json`
 SHA2564a565bc9106ccae450b599cbd1f419538e746c3e2fb55bdbc71716045aaa4941.
-
 
 Checkpoint197 (2026-10-24): corrected bounded-FD preload actually verified108
 leaves/11 shared directory handles with137 open FDs, unchanged soft1024/hard524288,
@@ -13796,7 +12661,7 @@ native dedicated, rootless33 and lifecycle acceptance remain pending; WEB006
 is in_progress/uncommitted. Revised scratch-only human operator patch5a3e51ff/
 8005B passes apply-check and clarifies preserve-before-replace, upgrade permission/
 key retention and helper-aware rollback. It remains unapplied while source22 is
-frozen; final human docs/gates remain required. Production/NAS/live Cockpit
+frozen; final human docs/gates remain required. Production/NAS/installed predecessor interface
 untouched. Exact current pins:
 `.scratch/web-006-source22-current-state-v197.json` SHA256d38db3f9218f872c5f59cff69cab6b2cefbbc153aa0cb32b045878e47bcc28fb.
 
@@ -13827,7 +12692,7 @@ Native27 normal/postrun remain passed. Native fault/isolation, rootless33,
 lifecycle and AUTH-08/HOST-01–03 acceptance remain pending; WEB006 is
 in_progress/uncommitted and WEB007–026 remain pending. Human operator patch v2
 is scratch-only and unapplied. Source22 remains frozen/green; production, NAS
-and live Cockpit are untouched. Task006 records the actual receipt pins.
+and installed predecessor interface are untouched. Task006 records the actual receipt pins.
 
 Checkpoint199 (2026-10-24): native fault5 ACTUALLY PASSED in 99.9186s,
 original 3758671 / start 433603274, rc0/reaped/gone. Its original fault runner
@@ -13849,7 +12714,7 @@ isolation/lifecycle and final human docs/gates remain required; the new native
 isolation coordinator-v2 has not been published or executed at this checkpoint.
 Human operator patch v2 remains scratch-only and unapplied. WEB006 remains
 in_progress/uncommitted; WEB007–026 stay pending. The shared API/UI runtime keeps
-pinned UBI10 micro. Production/NAS/live Cockpit remain untouched. Actual pins
+pinned UBI10 micro. Production/NAS/installed predecessor interface remain untouched. Actual pins
 and original handles are recorded in task006.
 
 Checkpoint200 (2026-10-24): native isolation ACTUALLY FAILED in 9.2523s,
@@ -13875,7 +12740,7 @@ Native fault5 and native27 normal/postrun passes remain unchanged. Native
 isolation, rootless33, dedicated/lifecycle, human docs and final gates remain
 required; AUTH-08/HOST-01–03 stay pending. WEB006 remains in_progress/uncommitted,
 WEB007–026 pending, source22 frozen/green and human patch v2 unapplied. Shared
-API/UI runtime remains pinned UBI10 micro. Production/NAS/live Cockpit untouched.
+API/UI runtime remains pinned UBI10 micro. Production/NAS/installed predecessor interface untouched.
 Task006 holds all actual original receipts and the diagnostic limitations.
 
 Checkpoint201 (2026-10-24): original start-failure collection ACTUALLY PASSED
@@ -13902,7 +12767,7 @@ Source22 remains frozen/green; native27 normal/postrun and fault5 passes stand.
 Native isolation, rootless33, dedicated/lifecycle, human docs and final gates
 remain required; AUTH-08/HOST-01–03 remain pending. Human patch v2 is unapplied;
 WEB006 remains in_progress/uncommitted. Pinned UBI10 micro and production/NAS/live
-Cockpit boundaries remain unchanged. Task006 holds actual evidence pins.
+historical frontend boundaries remain unchanged. Task006 holds actual evidence pins.
 
 Checkpoint202 (2026-10-24): native isolation2 ACTUALLY FAILED in 17.7940s,
 original 3766361 / start 433867300, rc1/reaped/gone; original coordinator
@@ -13928,7 +12793,7 @@ Source22/gate22, native27 normal/postrun and fault5 passes remain unchanged.
 AUTH-08/HOST-01–03 stay pending, as do native isolation, rootless33,
 dedicated/lifecycle, human docs and final strict gates. Human patch v2 is
 unapplied; WEB006 is in_progress/uncommitted. Shared API/UI remains pinned
-UBI10 micro. No production/NAS/live Cockpit effects. Task006 holds actual pins.
+UBI10 micro. No production/NAS/installed predecessor interface effects. Task006 holds actual pins.
 
 Checkpoint203 (2026-10-24): private lifecycle collection ACTUALLY PASSED in
 0.8090s, original 3769347 / start 433976374, rc0/reaped/gone. The owned custom
@@ -13953,7 +12818,7 @@ acceptance; private publication2/coordinator4 remain preparation at this
 checkpoint. Source22/gate22 and native27/fault5 passes stand. Required cases,
 isolation/rootless/lifecycle and human docs/final gates stay pending; human
 patch v2 unapplied, WEB006 in_progress/uncommitted. Pinned UBI10 micro and
-production/NAS/live Cockpit limits remain unchanged. Task006 holds actual pins.
+production/NAS/installed predecessor interface limits remain unchanged. Task006 holds actual pins.
 
 Checkpoint204 (2026-10-24): private publication2 ACTUALLY PASSED in2.1123s,
 original3772060/start434079367 rc0/reaped/gone. Isolation3 ACTUALLY FAILED
@@ -13979,7 +12844,7 @@ No application, policy, permission or hardening change is proposed. Source22/
 gate22 and native27/fault5 passes stand; required cases, native isolation,
 rootless/lifecycle, human docs/final gates remain pending. Human patch v2 remains
 unapplied, WEB006 in_progress/uncommitted. Pinned UBI10 micro and production/NAS/
-live Cockpit boundaries remain unchanged. Task006 holds actual evidence pins.
+installed predecessor interface boundaries remain unchanged. Task006 holds actual evidence pins.
 
 Checkpoint205 (2026-10-24): private publication3 ACTUALLY PASSED in2.2663s,
 original3779837/start434398029 rc0/reaped/gone, with no application/isolation
@@ -14002,7 +12867,7 @@ errno separately, with no retries, monkeypatching, permission or runtime-source
 changes. No adapter execution or cause inference is claimed. Source22/gate22,
 native27 and fault5 passes remain stable; required cases, isolation/rootless/
 lifecycle and human docs/final gates pending. Human patch v2 is unapplied,
-WEB006 in_progress/uncommitted, UBI10 micro and production/NAS/live Cockpit
+WEB006 in_progress/uncommitted, UBI10 micro and production/NAS/installed predecessor interface
 boundaries unchanged. Task006 holds exact original receipts.
 
 Checkpoint206 (2026-10-24): failed4 preservation, fixed observer publication
@@ -14028,7 +12893,7 @@ unaccepted; native6 has no observed outcome at this checkpoint.
 Source22/gate22, native27 and fault5 passes stand; required cases, native
 isolation/rootless/lifecycle, human docs and final gates remain pending. Human
 patch v2 unapplied, WEB006 in_progress/uncommitted; pinned UBI10 micro and
-production/NAS/live Cockpit boundaries unchanged. Task006 holds actual pins.
+production/NAS/installed predecessor interface boundaries unchanged. Task006 holds actual pins.
 
 Checkpoint207 (2026-10-24): native isolation6 ACTUALLY FAILED in18.4707s,
 original3788112/start434691704 rc1/reaped/gone; coordinator156844/
@@ -14057,7 +12922,7 @@ preparation; no new publication, cohort, denial or acceptance is inferred.
 Source22/gate22 and native27/fault5 passes stand. Required cases, native
 isolation/rootless/lifecycle, human docs and final strict gates remain pending.
 Human patch v2 is unapplied; WEB006 in_progress/uncommitted. Pinned UBI10 micro
-behind existing Caddy and production/NAS/live Cockpit boundaries are unchanged.
+behind existing Caddy and production/NAS/installed predecessor interface boundaries are unchanged.
 Task006 holds actual receipts; diagnosis/preservation are not functional runs.
 
 Checkpoint208 (2026-10-24): detached-kernel prototype2 ACTUALLY PASSED
@@ -14095,7 +12960,7 @@ Native8 is running3797028/start434994051; no outcome or acceptance is inferred.
 Source22/gate22 and native27/fault5 passes stand. Required cases, native
 isolation/rootless/lifecycle, human documentation and final strict gates remain
 pending; human patch v2 is unapplied and WEB006 in_progress/uncommitted. Actual
-pinned UBI10 micro/shared-Caddy audit and production/NAS/live Cockpit boundaries
+pinned UBI10 micro/shared-Caddy audit and production/NAS/installed predecessor interface boundaries
 are unchanged. Task006 holds exact receipts; prototype/publication/diagnosis/
 preservation results are not functional ledger runs.
 
@@ -14125,12 +12990,6 @@ Basic118788084/three aliases retained metadata-only/NOREPLACE, current four path
 absent. This preservation starts no app and is not a new functional run.
 Rootless33 baseline is next; no rootless outcome is inferred.
 
-AUTH-08/HOST-01–03 remain globally pending for required rootless/lifecycle,
-human documentation and final strict gates. WEB006 is in_progress/uncommitted;
-source22/gate22/native27/fault5 and actual pinned UBI10 micro/shared-Caddy audit
-stand. Human patch v2 remains unapplied. Production/NAS/live Cockpit are untouched;
-rollout, merge, push and tag remain unauthorized. Task006 holds exact receipts.
-
 WEB-006 checkpoint210 update2026-10-24: rootless33 normal failed after startup.
 
 Checkpoint210: rootless33 normal FAILED after successful startup/TLS/Basic UI.
@@ -14159,7 +13018,7 @@ are in task006. No additional functional cohort or completed package is inferred
 
 WEB-006 checkpoint212 update2026-10-24: gate23 and artifact/image builds pass.
 
-Checkpoint212: source23 strict gate PASSED (7784 Python,572 Cockpit,
+Checkpoint212: source23 strict gate PASSED (7784 Python,572 historical frontend,
 2786 web unit,2846 component); all1361 source hashes/modes unchanged.
 Fresh canonical/fixture wheels and shared UBI10 micro API/UI image built; both
 artifact builds reproduced UI assets twice. Source23 guest installation and
@@ -14261,8 +13120,6 @@ Task006 distinguishes readonly/pilot proof from pending artifact/install/functio
 
 WEB-006 checkpoint225 update2026-10-24: source24 full gate/builds pass; installed acceptance pending.
 
-Checkpoint225: source24 strict gate ACTUALLY PASSED1270.412292s with1361hashes/modes unchanged: Python7785/52 documented opt-in deselections,Cockpit572/0skip,web2786unit/2846component,sandbox21/startup2 and builds. Canonical+fixture wheel/UI and shared pinned UBI10 micro image40a751be builds/export pass; source/UI packets validate before publication. Runtime ancestry/absence audit and installed policy/native/rootless/dedicated acceptance remain pending. WEB006 uncommitted,all4cases pending; WEB007–026 pending.
-
 Task006 retains exact original gate/artifact identities and pending boundaries. No source/runtime build is substituted for installed host acceptance.
 
 WEB-006 checkpoint226 update2026-10-24: source transfer passes; fixture-only readiness correction.
@@ -14345,59 +13202,31 @@ Task006 retains exact observed7journal denials, reviewed/applied singleton sourc
 
 WEB-006 checkpoint239 update (2026-10-25): strict gate and measured preservation pilot pass.
 
-Checkpoint239: source25 strict gate ACTUALLY PASSES1279.972094s (outer3903965/start437194105 rc0/reaped/gone, all1361 hashes/modes unchanged). Assessment3 PASSES8.631138s with156 user-only relabel rows across retained .11/.13/.15, none native/outside. Private-MNT pilot PASSES10.615112s with installer disabled/.16 absent and old five trees/control326/mounts/key/kernel unchanged. Canonical artifacts pass; fixture build active and sealed source packet published locally. Fresh installed .16/.17/policy/native/rootless/dedicated acceptance remains pending. Source25 frozen, WEB006 uncommitted/all4cases pending; WEB007–026 pending. No production/NAS/live Cockpit/rollout/merge/push/tag.
-
 WEB-006 checkpoint240 update (2026-10-25): source25 artifacts/source transfer pass; readiness-v1 path refusal preserved.
-
-Checkpoint240: source25 canonical/fixture wheel/UI and shared pinned UBI10 micro image builds ACTUALLY PASS; image04725627d282cc67c500243f3d778640f8212399bd2b608ad5980422a14f7b81. OCI export and sealed source guest transfer PASS. Readiness-v1 FAILS1.428380s on obsolete retained ENV24 protected pathname before application/installer/policy effects; final fixed-role closure true and original outer3927939/start437371024 rc1/reaped/gone. Fresh readiness-v2 correction/full actual-path preflight pending; failedv1 retained. Source25 gate/preservation pilot valid; installed .16/.17/newpolicy/normal/dedicated acceptance remains pending. WEB006 uncommitted/all4cases pending; WEB007–026 pending. No production/NAS/live Cockpit/rollout/merge/push/tag.
 
 WEB-006 checkpoint241 update (2026-10-25): native/UI staging and genuine image runtime audit pass.
 
-Checkpoint241: fresh source25 readiness-v2 PASSES3.976259s with326 retained inputs and failedv1 preserved. First native016 installation PASSES41.645655s, UI staging PASSES5.608731s; all108 package/6UI inputs and retained native216/rootless trees/mounts preserved. OCI/full-build transfers and image load pass. Actual shared UBI10 micro image runtime/ancestry/absence/confinement audit PASSES57.477612s; exact audit CID retired, original handles/cgroup gone, secret0/current paths absent and oldkernel2416 unchanged. Reviewed policy25 installation is now running; no newpolicy or installed browser acceptance inferred. Source25 frozen/gate valid, WEB006 uncommitted/all4cases pending, WEB007–026 pending. No production/NAS/live Cockpit/rollout/merge/push/tag.
-
 WEB-006 checkpoint242 update (2026-10-25): new policy and both-profile staging pass.
-
-Checkpoint242: owned policy25 installation PASSES15.336598s with actual newkernel fdd75280 and currentreceipt0d2bdb1d/CILa051; othermodules/booleans/labels/credentials/oldfive/global evidence unchanged. ENV PASSES29.831424s, rootless017 original stage/render PASSES5.513632s and both-profile proposals PASSES5.392127s. Native.16/rootless.17 and newpolicy actual receipts align; services remain quiescent/current aliases absent, no installed functional acceptance yet. Authority37/controller38 preparation is next, then native31/rootless37 real browser and dedicated isolation/fault/MAC/lifecycle. Source25 frozen/gate valid, WEB006 uncommitted/all4cases pending; WEB007–026 pending. No production/NAS/live Cockpit/rollout/merge/push/tag.
 
 WEB-006 checkpoint243 update (2026-10-25): authority37 fixture failure retained before application start.
 
-Checkpoint243: source25 authority37 original execution FAILS2.431101s (3931416/start437479197 rc1/reaped/gone). OSError at publication of rootless/policy.json; exact errno unrecorded. Four original queries rc0/reaped and final strict closure true; no application/global policy/credential action. Fourteen published files/seven directories and failed37 receipt retained. Native31/rootless37 have not started. New authority38/controller39 preparation must diagnose/bound the fixture resource/path failure and preserve partial37, without replay or raising limits. Source25 gate/build/runtime/install/policy/ENV/profiles remain valid; all4cases pending/WEB006 uncommitted, WEB007–026 pending. No production/NAS/live Cockpit/rollout/merge/push/tag.
-
 WEB-006 checkpoint244 update (2026-10-25): fresh authority38 passes; native31 browser run active.
-
-Checkpoint244: fresh authority38/controller39 ACTUALLY PASSES4.162723s (original3933783/start437573181 rc0/reaped/gone). Actual control39f7a10616 has349 inputs preserving original326 prefix; current fdd/a051/0d2 and both .16/.17 bindings pass. Historical snapshots now sequentially rejoin under originalflock after current inputs close; original37/14partial files retained, no RLIMIT/hardening change. Actual FD862+reserve64<soft1024; real local2048-file/flock15checks pass, not guest acceptance. Native31 real Caddy/installed API/browser execution is RUNNING (original3934078/start437580447), outcome pending. Rootless37 and both-profile dedicated fault/isolation/MAC/helper-filter/lifecycle remain required. Source25 frozen/gate valid, WEB006 uncommitted/all4cases pending, WEB007–026 pending. No production/NAS/live Cockpit/rollout/merge/push/tag.
 
 WEB-006 checkpoint245 update (2026-10-25): native31 actual normal accepted; rootless37 real run active.
 
-Checkpoint245: source25 native31 real shared-Caddy/built-UI/installed API/helper normal acceptance ACTUALLY PASSES350.399653s, original3934078/start437580447 rc0/reaped/gone; runner182455/start38463236 rc0/reaped347.303334s. Four modes/3engines/33assertions/0requiredskip-or-retry pass; original SUMMARYe2716cf7/379447. Actual postrun PASSES1.764232s and ordinary Basic/three-alias preservation PASSES1.822340s. Fresh rootless37 empty-secret baseline PASSES1.543812s; rootless37 original real coordinator3935832/start437626116 is RUNNING. Outcome pending; no rootless/dedicated acceptance inferred. All4cases remain pending, WEB006 uncommitted/WEB007–026 pending; source25 frozen/gate valid/pinned shared UBI10 micro retained. No production/NAS/live Cockpit/rollout/merge/push/tag.
-
 WEB-006 checkpoint246 update (2026-10-25): failed rootless37 retained; original diagnosis/cleanup pending.
-
-Checkpoint246: source25 rootless37 ORIGINAL FAILS86.239234s (3935832/start437626116 rc1/reaped/gone). Runner187915/start38508897 rc1/reaped84.499810s and watcher187914/start38508867 rc0/reaped84.806543s are numerically absent; ownership/all-source closure true, final fixed-role closure true/heldfail[]. Functional/all-input flags remain false; exact cause unproved. Six credentials/current Basic+aliases retained pending bounded original browser/gen/CID/Basic diagnosis and failure-only backup/retirement/preservation. No replay or policy change selected. Native31 normal/postrun/preservation valid; all4cases pending,WEB006 uncommitted/WEB007–026 pending, source25 frozen/gate valid. No production/NAS/live Cockpit/rollout/merge/push/tag.
 
 WEB-006 checkpoint247 update (2026-10-25): failed37 fully cleaned; original cause unproved, fixed bus diagnostic preparation.
 
-Checkpoint247: failed37 original metadata diagnosis PASSES0.957949s: all69 pairs/3CIDs/6stop observers drained, all3baseline browsers unavailable vs supported/0cases but browsers exit0/closed, startup eventually200 and peer-otherTGID refusal true. Exact6ID failure-only opaque backup/retirement PASSES5.604971s; Basic/3aliases NOREPLACE preservation PASSES1.864468s, secrets known/unknown0/four current paths absent. Broker-v1 diagnostic read obsolete literal window and failedprojection before causal output; freshv2 actualoriginalwindow PASSES0.859487s with0entries, not permission proof. AVC+USER originalwindow reader PASSES0.910696s:38 paired ioctl/cert events,0USER_AVC,0fixed systemctl/Podman executable attribution. Cause remains unproved; no grant/source change selected. Fresh bus-only read-only diagnostic is being prepared under original hardening; no normal replay/acceptance. Native31 valid/all4cases pending/WEB006 uncommitted, WEB007–026 pending, source25 frozen/gate valid. No production/NAS/live Cockpit/rollout/merge/push/tag.
-
 WEB-006 checkpoint248 update (2026-10-25): real confined fixed query returns AccessDenied; manager journal diagnosis next.
-
-Checkpoint248: NEW owned fixed bus-only diagnostic executes the real five-property systemctl query under helper_t/UID983 with original hardening, then returns AccessDenied (rc1/stdout0/stderr40B). Outer3941691/start437822806 rc1/reaped/gone2.093795s; query190343/start38705582 rc1/reaped/gone0.012896s, no timeout/overflow. Root/child/worker/unit normal-stop/reset/cgroup closure pass, global fdd/a051/0d2/key/credentials unchanged. Diagnostic false flags retained; no permission or original-method cause inferred. Preparing two-window original USER-MANAGER70491 journal metadata reader; brokerzero doesnotexplainthisrefusal. Native31 valid/rootless37failed and fullycleaned; all4cases pending, WEB006 uncommitted/WEB007–026 pending, source25 frozen/gate valid. No production/NAS/live Cockpit/rollout/merge/push/tag.
 
 WEB-006 checkpoint249 update (2026-10-25): unit-label provisioning defect confirmed; fresh18 repair preparation.
 
-Checkpoint249: original user-manager journal reader ACTUALLY PASSES0.944871s. Failed37 window contains7 enforcing helper_t→usr_t SERVICE(status) refusals; separate stopped-API bus diagnostic has1 helper_t→unconfined_t SYSTEM(status) refusal. No reporter→client attribution. Fixed fragment reader PASSES0.884499s: original indexed .17 rendered/packaged API bytes3196/565 are usr_t, fixed/current binding is etc_t, all predating original failure. Existing deployment contract requires systemd_unit_file_t for target+binding; no usr_t/etc_t/newSYSTEM grant selected. Preserve17/allold7 and original binding inodes/SIDs; prepare fresh rootless18 with narrow persistent label provisioning before profiles/activation. Original installer permits genuineimage047/software16 reuse; dd590 build metadata17 stays byte-exact, no built18 claim. Source25 frozen/gate valid/native31 valid; newauthority39/control40 andnative32/rootless38 are preparation only. All4cases pending,WEB006 uncommitted/WEB007–026 pending. No production/NAS/live Cockpit/rollout/merge/push/tag.
-
 WEB-006 checkpoint250 update (2026-10-25): fresh18 labels/profiles/authority proved; native32 real run active.
-
-Checkpoint250: fresh owned rootless18 staging ACTUALLY PASSES8.071190s using the existing genuine software16/image047 build; no built18 image claim. Passive unit-label readiness PASSES3.647956s. Original provision-v1 remains FALSE/ValueError after preserving7 original binding inodes/SIDs and adding13 exact new-candidate regular-file rules; its first system-link rule is rejected by the existing vendor equivalence. No restorecon or new global binding publication ran in that failed attempt. Recovery readiness PASSES3.428643s and verifies the exact partial state. Fresh completion PASSES10.837278s without replaying13 additions or7 preservations:5 exact user-link rules,13 new18 file labels,7 first NOREPLACE publications and7 link labels;18 owned local rules plus2 unchanged vendor defaults satisfy20 objects. Allold7 releases/control349/original backups/key/CIL/receipt and compiled kernel fdd remain unchanged; no new SELinux grant. Authenticated native16/rootless18 profiles PASSES6.007334s, temporary selectors preserved/absent and permission bits unchanged. Authority39/controller40 publication PASSES5.152946s,21 files/control40c7cf53f0/363 inputs with original349 ordered prefix, current label/SELinux/deployment/visudo checks and fixed-role closure. Actual FD876+reserve64<soft1024, limits unchanged. Native32 original3957799/start438399552 is RUNNING; no outcome inferred. Source25/gate25 remain frozen/valid; native31 evidence stands, required fresh native32/rootless38 and both-profile dedicated fault/isolation/MAC/helper-filter/lifecycle acceptance remain pending. AUTH-08/HOST-01–03 pending; WEB006 in_progress/uncommitted and WEB007–026 pending. No production/NAS/live Cockpit/rollout/merge/push/tag.
 
 WEB-006 checkpoint251 update (2026-10-25): native32 ordinary normal proved; original rootless38 failed, cause unproved.
 
-Checkpoint251: source25 native32 real shared-Caddy/built-UI/installed native16 API/helper ordinary normal ACTUALLY PASSES340.545725s (original3957799/start438399552 rc0/reaped/gone), all4modes/3engines/33host assertions and12 same-Caddy untrusted-TLS negatives,0required retry/skip. SUMMARY0413b309/383165 and generation0023b5159a374ff1900ae793b4806a72 close; original checker191070/start39282313 rc0/reaped337.692983s. Native postrun PASSES1.833743s and metadata-only Basic inode118921755/3alias NOREPLACE preservation PASSES1.921970s. Fresh rootless38 empty-secret baseline PASSES1.661575s. Original rootless38 real run then FAILS90.248917s (3959326/start438448331 rc1/reaped/gone); runner196469/start39331073 rc1/reaped88.624725s, watcher196468/start39331045 rc0/reaped88.921147s. Ownership/all-source closure and final strict role closure are true, heldfail[]; functional/all-input flags remain false. Exact cause is unproved; bounded original metadata/journal diagnosis and failure-only six-ID retirement/Basic+aliases preservation remain pending, with no replay or new permission selected. Native32 ordinary evidence stands; rootless38 and both-profile dedicated fault/isolation/MAC/helper-filter/lifecycle clauses remain required. Source25/gate25 frozen/valid/current fdd/a051/0d2 unchanged. AUTH-08/HOST-01–03 remain pending,WEB006 in_progress/uncommitted/WEB007–026 pending. No production/NAS/live Cockpit/rollout/merge/push/tag.
-
 WEB-006 checkpoint252 update (2026-10-25): failed38 cleanup and original boundary metadata close; fatal path unproved.
-
-Checkpoint252: failed rootless38 original metadata ACTUALLY PASSES0.895367s (3960590/start438486148): startup ready, all3baseline engines unavailable versus supported/0cases, original reason absent,69original pairs/3CIDs/6stop observers drained. Exact-six-ID failure-only backup/retirement PASSES5.415156s (3960950/start438496162); metadata-only Basic inode118921888/three-alias NOREPLACE preservation PASSES1.964831s (3961157/start438502325), known/unknown secrets0 and current4paths absent. Original rootless38 remains false; no lifecycle acceptance is promoted. Manager70491 original-window read PASSES0.884887s (3961443/start438510324):88journal entries,26enforcing helper_t→unconfined_t SYSTEM denials,13start+13status; no service/usr_t refusal remains. Kernel/USER read PASSES0.962106s (3961676/start438517515):153exact paired AVC/SYSCALL records plus13USER_AVC. Fixed Podman executable is attributed to13 syslogd_var_run_t directory-search/openat,13 user_tmp_t directory-write/faccessat269 and13 container_ro_file_t directory-ioctl16 refusals;13userspace records show helper_t→systemd_logind_t dbus send_msg denial. Manager/broker reporters are not client PID/method attribution. These are observed boundary refusals; exact original fatal path/cause remains unproved and no start/status/logind/ioctl/search/write grant or source change is selected. Native32 ordinary evidence stands; rootless and both-profile dedicated fault/isolation/MAC/helper-filter/lifecycle acceptance remain required. Source25/gate25 frozen/valid, compiled fdd/CILa051/receipt0d2/key unchanged. AUTH-08/HOST-01–03 remain pending,WEB006 uncommitted/WEB007–026 pending. No production/NAS/live Cockpit/rollout/merge/push/tag.
 
 ### Application development continuation (2026-10-25)
 
@@ -14455,7 +13284,6 @@ endpoint, runtime dependency, global authentication gate or authority is added.
      operation state after actual WebKit selector diagnostics; no event is
      filtered and no CSP exception is introduced. See task014 and handoff.
 
-
 2026-10-26 WEB-015 implementation refinement of decisions133/145/153/154:
 structured forms retain one RAM-only complete managed draft/full-byte base and
 reviewed intent; original-key host-outcome GET is separate from the immutable API
@@ -14468,7 +13296,6 @@ GET no-referrer and no-retry rules remain strict. Bounded CSP-compatible choices
 replace native selects without changing Library semantics or introducing a package.
 Dated ADR133/145/153/154 and INV001/018/019/020/021/living contracts record these
 implementation details; no new endpoint, dependency, grant or architecture decision.
-
 
 2026-10-26 WEB-016 implementation refinement of decisions
 109/115/116/118/120/121/135/136/137/145/148: existing typed jobs and original-key
@@ -14484,7 +13311,6 @@ regressions and preserved causal and failed evidence. No endpoint, runtime
 dependency, durable format, privilege or new architectural decision is introduced.
 Actual production, NAS and platform holds remain independent.
 
-
 2026-10-27 WEB-017 implementation refinement of decisions117/134/137/145:
 maintenance previews and one-use browser confirmations retain reviewed intent;
 the backend rederives authority and exact scope under its existing locks.
@@ -14496,7 +13322,6 @@ and INV021 amendments record this composition. The final test collector's
 full-metadata assumption is separately qualified for exactly three provider-cache
 hardlink releases, preserving all original failed flags and required byte/inode
 evidence. No endpoint, dependency, privilege or new architectural decision is added.
-
 
 156. **Bind fixed host effects to original intent and independently observable outcomes**
      (2026-10-27, WEB-018, this commit; implemented and validated).
@@ -14596,12 +13421,15 @@ conformance-pending notes describe their decision-time state; task021 now owns
 completed source/isolated packaging evidence. This does not authorize a production
 rollout or establish WEB-022's full functional matrix.
 
-160. **Focus completion on the new web UI; legacy Cockpit validation is opt-in**
-   (2026-11-01, WEB-023, this commit). The user's latest instruction excludes
-   further plugin work and selects deprecation when the web UI is complete.
-   Default validation retains strict web/backend/docs/build checks and all95
-   new-web behaviors/layers. Legacy source/history/licenses, shared helpers and
-   the live installation remain preserved; no retirement/porting project or
-   uninstall follows. [Decision160](../adr/decision-160.md) amends088/143/144;
-   WEB-025 becomes proportional deprecation/handoff. This changes development
-   gate orchestration, with no runtime authority or production effect.
+161. **Remove the superseded interface source and documentation**
+   (2026-11-01, WEB-027, this commit). The user explicitly requests complete
+   repository removal, including dedicated tests and all documentation mentions,
+   after replacement acceptance. This supersedes the preceding retain-as-deprecated
+   policy. [Decision 161](../adr/decision-161.md) retires obsolete interface-only
+   constraints while preserving shared current host/client safeguards and required
+   attribution. Original historical snapshots and exact execution invocations
+   remain in Git at `c692d7ae4b866fefd8a743a21afdb729da0f39c4`; current documents
+   omit obsolete material without inventing new historical commands or hashes.
+   The same instruction permits a normal commit and branch-only push to both
+   `github` and `forgejo` after validation. No production service or archive
+   change, tag, main-branch push or history rewrite follows.

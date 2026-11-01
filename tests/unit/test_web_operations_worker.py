@@ -20,10 +20,18 @@ from hfcache.publication import read_reference
 from hfcache.server_config import InstalledPolicy
 from hfcache.verification_executor import VerificationWorker
 from tests.unit.test_api_commands import configured as configured  # noqa: PLC0414 - shared fixture
-from tests.unit.test_api_commands import result, submit
+from tests.unit.test_api_commands import result as command_result
+from tests.unit.test_api_commands import submit
 from tests.unit.test_api_operations import READER_HEADERS, WRITER_HEADERS
 from tests.unit.test_synchronize import CONTENT, MODEL, SHA_A
 from tests.unit.test_verification_executor import listening
+
+
+async def result(client, accepted):
+    # These real publication/Unix-worker checks assert domain outcomes and
+    # original-handle preservation, not a ten-second completion SLI. Bound
+    # observation under shared-host scheduling without resubmitting the job.
+    return await command_result(client, accepted, timeout=60)
 
 
 @pytest.fixture

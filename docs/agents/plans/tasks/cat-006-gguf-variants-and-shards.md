@@ -1,5 +1,11 @@
 # CAT-006: Detect GGUF formats, quantization schemes and complete variant sets
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `80bfdbf509659e74701bd7c522960d151ac72e7c4fdd0c82e87a065f22f502fe`,
+original content SHA-256 `4a69a2a036a43d7cd438bd838c167b39cef2db75ecc272360d3c8387644deeb2`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -119,7 +125,7 @@ tests/unit/test_catalog_gguf.py tests/unit/test_catalog_extractors.py
 tests/unit/test_catalog_storage.py`: 194 passed in 5.14s. Final lint/types and
 human docs alignment pass. Full `rtk proxy scripts/check.sh` exited 0:
 4551 passed, 40 opt-in deselected in 486.30s; format/lint/types/docs,
-build, all three locked installation profiles and actual Cockpit lint/types/
+build, all three locked installation profiles and actual historical frontend lint/types/
 169 tests/build passed. Complete local log `.git/cat-006-check.log` is ignored.
 An initial pre-test lint refusal was fixed and the complete required gate reran;
 it is not claimed as green. Final docs/whitespace checks passed.

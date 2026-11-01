@@ -1,5 +1,11 @@
 # OPS-015: Package and test Caddy and the rootless runtime
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `dccf95d92ff9c0ba40dbe532371a024c86628325f0a2d892a25f5458dd8c8f19`,
+original content SHA-256 `7c2d8677fe69b719adb6e1a949a7dc5a64665c4dc01f868909c73d8fa26dd8d7`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `OPS-015` |
@@ -9,12 +15,6 @@
 | Scope | Local host only; no NAS content/metadata writes or other-host changes |
 
 ## Scope and acceptance
-
-1. Settle and record the rootless architecture before source changes: explicit rootless user-manager systemd units plus a reviewed system target bridge, Caddy Unix upstream, one API app and a separate Network=none verifier with real inherited-FD activation.
-2. Containerize runtime clients as well as executors; explicitly migrate or safely disable incompatible bare-host Cockpit/client paths. Reuse appropriate local TLS/Hub sources, keep API/MCP class separation and deliver no secrets or host credential stores to the worker.
-3. Preserve peer UID/namespace mapping, common local flock and separate private durable stores; prove activation, concurrency, shutdown/drain, exact outcomes and retained-state compatibility with actual disposable containers where available.
-4. Bind NAS only read-only, without chown/relabel/copyup options; keep graphroot, images, Caddy state and all writable paths local. Preserve SELinux enforcement and deny privileged/label-disable/host-Podman-socket shortcuts.
-5. Package deterministic Caddy/config/image/rendered-unit validation and meaningful hermetic tests, current docs/examples and actual tool-version evidence. No production switch or release tag in this task.
 
 ## Contracts, invariants, and ADRs
 
@@ -36,12 +36,6 @@ Only root performs privileged host mutations and never prints secret values.
 
 ## Execution notes and handoff
 
-Activated 2026-10-18 after OPS-014 committed as 28f9934. Git/current/dependency
-records agreed; OPS-015 was the sole task in progress. Root owned units, runtime/
-security helpers and protected installer; collaborators own image/closure/real
-activation proof and Cockpit container bridge/tests. Markdown has one owner.
-Source started after decision 127's contract-ready notice.
-
 The initial Quadlet proposal is amended to explicit rootless USER systemd service
 units. Generated forced cleanup/default short stop timeouts and replacement make
 unknown surviving executors unsafe; explicit reviewed argv, non-killing drain and
@@ -54,27 +48,6 @@ linger and disposable container proof infrastructure in this package. Actual
 OPS-015 container proofs use owned local fixtures with no NAS bind, never a
 production runtime switch. The OPS-014 host read-only mount, masks and held
 original lock remain. Release version/artifact selection stays REL-010.
-
-Decision 127 and affected server/security/Cockpit/deployment/release/invariant
-amendments were published before source work; explicit contract-ready notice
-released collaborators. Host ImportCredential is removed in the selected profile:
-the fixed launcher mounts API-only Podman authority inside its client container.
-Actual source/profile schemas and runtime evidence are synchronized below.
-
-### Released Cockpit adapter evidence
-
-The source owner released command.ts with fixed /usr/local/libexec/hfcache-client
-and /run/hfcache/api/api.sock, outer systemd-run identity/UMask/MemoryHigh retained
-and host ImportCredential removed. Candidate config flock and system-bus controls
-remain unchanged. New container-client.test.ts has eight actual Node child-process
-cases: exact terminal JSON at exit 0/10/20/30/40/50, progress/handles, option-shaped
-data and missing-result/no retry. Updated command tests pass seven cases and
-candidate guard nineteen; `rtk pnpm test` from cockpit/ passes the complete suite
-of 135 in 3.08 seconds,
-with types/ESLint/whitespace green. This is adapter/fixture evidence, not actual
-container/secret/directory-bind or browser/production acceptance. Runtime/image
-owners supplied that proof separately; at this stage the full --with-build gate
-was still pending.
 
 ### Image and worker-proof development history
 
@@ -242,7 +215,7 @@ INVOCATION_ID/SYSTEMD_EXEC_PID as in OPS-014. The payload
 `rtk proxy bash scripts/check.sh --with-build` passes lock/both-extra sync,
 404 formatted files, Ruff, whole Pyrefly 0 errors (11 suppressed, 59 warnings
 not shown), 3,761 Python tests/40 deselected in 447.22 seconds, 0.1.10 sdist/wheel
-and three actual locked base/server/server+MCP installation profiles. Cockpit
+and three actual locked base/server/server+MCP installation profiles. historical frontend
 lint/style/types, 135 tests in 2.383 seconds and production build 1,172 ms pass;
 the extra wheel subset passes 4 with 3,797 deselected in 5.12 seconds. Service
 runtime is 8 minutes 18.000 seconds.
@@ -301,7 +274,7 @@ All source owners and semantic Markdown stayed frozen through this final run.
 Lock/both-extra sync, 404 formatted files, Ruff and whole Pyrefly 0 pass;
 3,792 Python tests pass with 40 deselected in 453.62 seconds. The 0.1.10 sdist/
 wheel and three actual locked base/server/server+MCP installation/import/help/
-version profiles pass. Cockpit lint/style/types, 135 tests in 2.213 seconds and
+version profiles pass. historical frontend lint/style/types, 135 tests in 2.213 seconds and
 production build 1,178 ms pass; the extra wheel subset passes 4 with 3,828
 deselected in 5.15 seconds. Service runtime is 8 minutes 24.015 seconds, success.
 Final log SHA-256:
@@ -319,7 +292,7 @@ task chain were checked; no pending task is activated here.
 
 Completed 2026-10-18 in this work-package commit. Actual local worker/stack/
 selected-overlay proofs, 106 installer/28 helper/34 build-probe focused cases,
-rendered-unit verification, 135 Cockpit cases and the corrected required full
+rendered-unit verification, 135 historical frontend cases and the corrected required full
 --with-build gate pass. Earlier real seccomp/activation/Caddy/fixture findings,
 stopped gate and passing pre-selector gate remain recorded with their fixes and
 scope; none is relabeled final acceptance. No new runtime dependency or archive/

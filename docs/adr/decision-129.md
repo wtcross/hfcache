@@ -5,7 +5,6 @@
 - Status: Accepted; current profile is qualified by the recorded deployment scope.
 - Date: 2026-10-18.
 
-
 ## Context, decision and rationale
 
 Every application/Caddy FROM stage uses pinned UBI10 micro. Actual micro has the

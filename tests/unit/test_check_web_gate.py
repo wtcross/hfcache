@@ -41,7 +41,7 @@ WEB_FILES = (
 WEB_HELPERS = ("export-web-contracts.py", "check-web-read-fixture.py")
 
 
-def web_gate_fixture(tmp_path, *, missing=None, cockpit=False):
+def web_gate_fixture(tmp_path, *, missing=None):
     repository = tmp_path / "repository"
     scripts = repository / "scripts"
     scripts.mkdir(parents=True)
@@ -58,13 +58,11 @@ def web_gate_fixture(tmp_path, *, missing=None, cockpit=False):
             if missing != name:
                 (web / name).parent.mkdir(parents=True, exist_ok=True)
                 (web / name).write_text("fixture\n")
-    if cockpit:
-        (repository / "cockpit").mkdir()
     tool_directory = tmp_path / "tools"
     tool_directory.mkdir()
     (tool_directory / "dirname").symlink_to(shutil.which("dirname"))
     calls = tmp_path / "calls"
-    for name in ("uv", "node", "pnpm", "make"):
+    for name in ("uv", "node", "pnpm"):
         if name == missing:
             continue
         tool = tool_directory / name
@@ -132,29 +130,28 @@ def test_required_web_missing_prerequisite_refuses_before_backend(tmp_path, miss
     assert not calls.exists()
 
 
-def test_required_web_preserves_backend_cockpit_and_extended_build_order(tmp_path):
-    script, environment, calls = web_gate_fixture(tmp_path, cockpit=True)
-    result = invoke(script, environment, "--require-web", "--require-cockpit", "--with-build")
+def test_required_web_preserves_backend_and_extended_build_order(tmp_path):
+    script, environment, calls = web_gate_fixture(tmp_path)
+    result = invoke(script, environment, "--require-web", "--with-build")
     assert result.returncode == 0, result.stderr
     invocations = calls.read_text().splitlines()
     frontend = [call for call in invocations if call.startswith("pnpm|")]
     assert frontend == ["pnpm|--dir|web|install|--frozen-lockfile"] + [
         f"pnpm|--dir|web|run|{check}" for check in WEB_CHECKS
     ]
-    cockpit_index = next(i for i, call in enumerate(invocations) if call.startswith("make|"))
     first_web_index = invocations.index(frontend[0])
     assert invocations[0] == "uv|lock|--check"
     assert any(
-        call.endswith("|python|scripts/check-docs.py") for call in invocations[:cockpit_index]
+        call.endswith("|python|scripts/check-docs.py") for call in invocations[:first_web_index]
     )
     assert any(
         call.endswith("|python|scripts/check-installations.py")
-        for call in invocations[:cockpit_index]
+        for call in invocations[:first_web_index]
     )
-    assert cockpit_index < first_web_index < len(invocations) - 1
+    assert first_web_index < len(invocations) - 1
     export = next(i for i, call in enumerate(invocations) if "export-web-contracts.py" in call)
     assert invocations[export].endswith("|python|scripts/export-web-contracts.py|--check")
-    assert export < cockpit_index
+    assert export < first_web_index
     assert invocations[-2].endswith("|python|scripts/check-web-read-fixture.py")
     assert invocations[-1].endswith("|pytest|-m|build")
     assert "OMITTED" not in result.stderr + result.stdout

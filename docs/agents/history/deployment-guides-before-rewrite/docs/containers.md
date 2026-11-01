@@ -1,5 +1,11 @@
 > Historical deployment/UI reference preserved before rewrite; the living guide owns current behavior.
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `49fe395db84b9c348410370a62279c0e4126183b1ae977bb56fb6ac7c607f1cd`,
+original content SHA-256 `f10a8e8c30064d31b47ee8046f8bc8ea172afa89d92d32bbc99756290bdd2036`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 # Rootless container runtime
 
 This is the selected local profile defined by [decision 127](../../../../adr/decision-127.md)
@@ -99,16 +105,6 @@ XDG_RUNTIME_DIR must match /run/user/<service_uid>. Profile fields cannot supply
 arbitrary paths/executables/engine options: role paths, names and secret references
 are fixed in [the helper](../../../../../scripts/container-service.py). The protected release
 artifact manifest is separate. Unknown schema/image/identity/state fails closed.
-
-The helper is exposed as /usr/local/libexec/hfcache-container-service through
-the selected immutable release. It resolves its physical release root once,
-then pins that root's rendered/runtime.json and host seccomp/Caddy sources. The fixed
-[client launcher](../../../../../scripts/hfcache-client) installs as
-/usr/local/libexec/hfcache-client, using explicit client settings and
-/run/hfcache/api/api.sock. Cockpit retains outer identity/UMask/MemoryHigh and
-candidate guards, without host ImportCredential; Podman delivers the API-only
-secret inside the client. No generic engine/executable authority or bare-host
-fallback is exposed. See [Cockpit](../../../../cockpit.md).
 
 For API/worker, the helper explicitly forwards only a canonical non-secret
 32-lowercase-hex systemd INVOCATION_ID when present; Podman does not inherit it
@@ -250,7 +246,6 @@ hardening/full verification acceptance remains forbidden and NOT RUN; see
 [deployment](../../../../deployment-centos-stream-10.md#rootless-preparation-and-staging)
 and [release](../../../release.md).
 
-
 ## Staging and selection
 
 [The protected installer](../../../../../scripts/install-container-release.py) has separate
@@ -286,7 +281,6 @@ Network=none alone also does not deny socket creation. No AF_NETLINK allow rule.
 Explicit --remote=false selects the local engine for build/probe/runtime actions.
 Before API/worker startup the runtime guard checks kernel mount metadata only and
 requires actual NFS read-only; it never opens the archive to test this boundary.
-
 
 The worker's recognized architecture map is native-only, matching prior
 SystemCallArchitectures=native. Preserve all other baseline restrictions and

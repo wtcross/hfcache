@@ -1,5 +1,11 @@
 # DOC-013: Rewrite the MCP guide for users and administrators
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `009cd397f21fa9214914fc48e8f133e8b330461a8d71b3140b63e6211861f64e`,
+original content SHA-256 `30fed6df2918a47be868c7b354d0ab8998cc8cea1b26607ef4a98c25f0c169a2`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -78,7 +84,7 @@ Focused mounted transport/tools/client/security/acceptance/links/migration:
 223 passed in 41.19s. Tool-table equality and actual disposable HTTP/TLS example
 output now supplement independent registry/schema/bounds checks. Ruff/Pyrefly
 (0 errors) passed. Full `scripts/check.sh` exited 0: 4173 passed/40 opt-in
-deselected in 482.75s, build, three locked installation profiles, actual Cockpit
+deselected in 482.75s, build, three locked installation profiles, actual historical frontend
 lint/135 tests (0 skipped)/production build. Log `/tmp/hfcache-doc013-gate.log`.
 Independent read-only review found no material omissions. Reviewed INV-002/003/
 007/010/016 and ADR124/125: no technical invariant, schema, dependency or runtime

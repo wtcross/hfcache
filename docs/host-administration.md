@@ -15,9 +15,9 @@ archive or executable. Caddy and the verifier have neither its mount nor peer
 permission. Host scheduling remains the system manager. Rootless scheduling
 and observer changes remain denied while their fixed bindings are unproved.
 
-The new root-owned policy is independent of legacy Cockpit policy. There is no
-automatic migration or grant. Legacy inspection request/response and profile
-schemas remain unchanged. An unavailable helper never supplies a local fallback
+The root-owned web policy is independent of historical interface policy. There
+is no automatic migration or grant. Existing fixed inspection response and
+profile schemas remain unchanged. An unavailable helper never supplies a local fallback
 or a bearer administrative grant. Login, static assets, bootstrap, ordinary
 metadata and original operation observations do not call the helper.
 
@@ -671,7 +671,7 @@ boolean versions refuse:
 | Additional version2 role | Required type | Fixed objects |
 | --- | --- | --- |
 | `schedule_directory` | `hfcache_host_helper_schedule_dir_t` | `/etc/systemd/system/hfcache-sync.timer.d`, root:root0755 |
-| `schedule_file` | `hfcache_host_helper_schedule_file_t` | Only managed `50-cockpit.conf`, its staged replacement and retained original schedule inodes |
+| `schedule_file` | `hfcache_host_helper_schedule_file_t` | Only the fixed managed sync-timer override, its staged replacement and retained original schedule inodes |
 | `host_action_state` | `hfcache_host_helper_host_action_state_t` | Root0700 `/etc/hfcache/.host-actions` and same-bind `.hfcache-actions` schedule history; root0600 private records |
 | `sync_timer_unit` | `hfcache_host_helper_sync_timer_unit_t` | Selected immutable `packaging/systemd/hfcache-sync.timer` ordinary file, root:root0644 |
 
@@ -920,9 +920,9 @@ unavailable state, fixed reasons, authenticated release/policy binding, six
 explicit effective booleans/reasons, fixed service/timer facts and bounded sync
 schedule view/revision. Its exact state/reason/revision/source/on_calendar/
 randomized_delay_sec fields distinguish unavailable from observed fixed-source
-values. Source is default or managed; use the original fixed
-/etc/systemd/system/hfcache-sync.timer.d/50-cockpit.conf with clear-then-last-value
-semantics and reject ambiguous extra drop-ins. This source view does not validate
+values. Source is default or managed; use the fixed managed sync-timer drop-in
+selected by the [host action module](../src/hfcache/host_actions.py), preserving
+its original path and clear-then-last-value semantics and reject ambiguous extra drop-ins. This source view does not validate
 a newly entered calendar or establish rootless scheduling authority. The verification timer is display-only. Unknown or
 unavailable authority has no partial true grants. A held original guard denies
 archive. Known absent/inactive guard is reported distinctly and grants nothing
@@ -1025,9 +1025,9 @@ mode/ownership. The helper cannot perform this provisioning action. Creation
 transitions assign application-config files, private directories/files and the
 two named guards their separate types. The legacy root `unconfined_t` publisher
 has the same file/guard creation transitions under that exact labelled directory;
-this assigns types without adding an allow rule. Verify the actual Cockpit launch
-domain and inherited labels before accepting legacy coexistence. Container roles cannot traverse/read private
-state or read guards. The system manager separately has directory `mounton` on
+this assigns types without adding an allow rule. Verify the actual legacy
+publisher launch domain and inherited labels before accepting coexistence.
+Container roles cannot traverse/read private state or read guards. The system manager separately has directory `mounton` on
 the configuration-directory type to establish that fixed writable bind.
 
 Private same-device root0700 `.configuration-applications/<operation-id>` holds
@@ -1067,13 +1067,14 @@ root0600 authenticated `.host-actions.pending` and root0700 `.host-actions` unde
 history records/8MiB refuses new effects without eviction. Schedule predecessors
 are retained under the same-bind private `.hfcache-actions` directory inside the
 fixed timer drop-in parent. Unknown entries, marker-only history and mismatched
-ID/digest remain blocking and cannot be adopted. The supported legacy inspector already refuses schedule/observer effects; its
-historical separate file/D-Bus operations do not share this new guard. Require
-safe absence or a strict protected `/etc/hfcache/cockpit-policy.json` with both
-legacy schedule and observer permissions false before new native host grants.
-Capture/revalidate its bytes or absence before effects. Unsafe, malformed or
+ID/digest remain blocking and cannot be adopted. Older installed privileged calls
+may use separate file/D-Bus paths without this guard. Require safe absence or a
+strict protected policy at the fixed historical compatibility path retained by
+[host label validation](../src/hfcache/host_selinux.py), with both legacy schedule
+and observer permissions false before new native host grants. Capture/revalidate
+its bytes or absence before effects. Unsafe, malformed or
 enabled legacy policy refuses new activation, without rewriting that policy.
-Drain older already-authorized Cockpit privileged calls before provisioning;
+Drain older already-authorized privileged calls before provisioning;
 this operator prerequisite is not proved by a disabled policy. Legacy read and
 configuration behavior is unchanged.
 

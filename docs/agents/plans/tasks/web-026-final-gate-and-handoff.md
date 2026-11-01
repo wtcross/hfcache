@@ -1,11 +1,17 @@
 # WEB-026: Close the implementation with complete evidence and an operator handoff
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `3ac3b3fb0576f5ab61b340902d64b087b1c70ff6566b36e6998f4ae8832baf24`,
+original content SHA-256 `688b72054569cba2e1629a71ffcb548288ccaeeb531bc4c3c76bb576ef2e2300`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
 | Plan | [Web UI replacement](../2026-10-20-plan-web-ui.md) |
 | Phase | P6 |
-| Depends on | [WEB-025](web-025-retire-cockpit-plugin.md) |
+| Depends on | [WEB-025](web-025-independent-web-handoff.md) |
 | Branch | `feat/web-ui` |
 | Work-package commit | `WEB-026: complete final validation and operator handoff` |
 | Model / effort | `gpt-6.1-sol` / medium |
@@ -25,8 +31,6 @@ Also read the relevant sections of [architecture](../support/web-ui/architecture
 ## Scope and implementation requirements
 
 Audit every acceptance case and task dependency against actual passing test node IDs and artifacts. No unresolved blocker, silent skip, mocked-only host parity, placeholder endpoint, unsupported browser or deferred human documentation may be relabelled complete. Reconcile current plan/task/progress/ADR/invariant state with git. If needed split additional bounded tasks, allocate fresh work-package IDs and keep this task blocked until their evidence exists.
-
-Run the strict web/backend gate and final clean installed functional/compatibility smoke using the final source/artifacts. Per the user's2026-11-01 instruction to ignore and deprecate Cockpit, preserve its legacy source/history/licenses/live installation; no plugin removal or further plugin validation is a prerequisite. Record source, build/runtime hashes, dependency/license inventory, browser/profile matrix, unit/integration/functional counts, docs gate and honest residual production/NAS limitations. Keep raw secret-free evidence locators outside normal source as appropriate.
 
 Provide a human operator handoff with how to build/install/validate through the existing Caddy, configure the one Basic user, preserve original handles/candidates, understand restricted profile controls, and perform a compatible rollback only when separately authorized. Set plan completed and clear current selector only when all scoped acceptance is met. Commit this work package on feat/web-ui; leave merge/push/tag/deploy for explicit later instruction.
 
@@ -53,12 +57,6 @@ documentation and legacy deprecation handoff are complete and evidenced on a
 clean feature branch. All95 new-web behaviors and minimum layers remain;
 production rollout/remote publication and live plugin uninstall are unperformed.
 
-The task also requires the existing strict web/backend `scripts/check.sh` gate
-and functional checks described above. The latest user amendment requires no
-further legacy Cockpit checks. New capabilities are not completed solely by
-adding test descriptions. Update actual test-to-case mappings and run them.
-Documentation and relevant contract/invariant/ADR updates land with the behavior.
-
 ## Execution notes and blockers
 
 2026-11-01: Activated after WEB-025/6fdc7e0. All 93 predecessor cases retain
@@ -70,7 +68,6 @@ metadata and test/dev-gate differences remain explicitly separate from fixture 0
 No new release build/install, browser matrix, job/Plan/Apply, PKI, service drain,
 credential change or mutation replay is indicated. Root alone executes reviewed
 owned guest effects after the final gate. No plugin maintenance/validation.
-
 
 ## Completion evidence
 

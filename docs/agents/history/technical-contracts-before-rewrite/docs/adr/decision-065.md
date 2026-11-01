@@ -93,7 +93,6 @@ the new independent handle's actual old/current binary drill. Disposable two-tre
 switch/drain/rollback fixtures do not constitute production deployment or real
 systemd/cgroup/SELinux/NFS acceptance.
 
-
 ## 2026-10-18 data-preserving local rollout amendment (OPS-014)
 
 [Decision 126](../../../../../adr/decision-126.md) records new local-host release/rollout authority

@@ -1,5 +1,11 @@
 # WEB-013: Build rich exact-publication model and dataset detail pages
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `230df191d70caadfeb25820f7682f57139785501112a3da8f6c82f80f556e942`,
+original content SHA-256 `6208bbe9a1ef8485ed8ab344e74ebb87fb792aa7d5fd983d00bd394e5ac4a113`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -43,23 +49,9 @@ Create repository-details.md explaining all identity/evidence classes and datase
 
 Each detail page surfaces the available evidence without fabricating metadata or mixing publications, supports models/datasets correctly, and remains useful when supplemental metadata is unavailable.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution notes and blockers
-
-Started2026-10-26 from clean WEB-012 `dfb706c`, after its strict and installed
-three-browser gates. Reuse the current typed client/session query ownership,
-shared Caddy and existing owned fixture. Stable type-aware repository paths and
-bounded exact-pair/tab fragments remain presentation only; current resolution
-precedes every derived publication read. Root owns composition, narrow recognized
-shell routing and real functional acceptance; pure routes/joins, bounded read
-state and human/living contracts are collaborative scopes. REST manifests remain
-whole artifacts with explicit read limits and locally paged tables. Manifest-file
-digest comes from the existing exact card boundary, never reserialized HTTP JSON.
-README rendering, configuration/tag edits and job forms retain WEB014–016.
-No new endpoint, runtime dependency, frontend server or engine work is planned.
-Only owned local/disposable fixtures are authorized; production/NAS/live Cockpit,
-rollout, merge, push and tag remain excluded.
 
 ## Completion evidence
 
@@ -67,9 +59,9 @@ Completed2026-10-26, WEB-013, this commit, from parent `dfb706c`. Exact source:
 1431 frozen regular inputs, snapshot
 `0331b88281ef1fe7a61848062bbbdcfbe4787b6d05ba44abe8a0f01efdfe9e0d`.
 
-- `scripts/check.sh --require-web --require-cockpit` PASS1608.747s/exit0.
+- `historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` PASS1608.747s/exit0.
   All8591 backend tests pass;52 unrelated live/NFS/build opt-in tests are
-  deselected, with no required skip. Cockpit581 unit and110 mounted Firefox
+  deselected, with no required skip. historical frontend581 unit and110 mounted Firefox
   tests, web3372 unit and3496 combined component tests, frozen dependencies,
   lint/format/types/contracts, locked base/server/MCP wheel profiles, build,
   two Chromium startup checks and real HTTP/API React read fixture all pass.
@@ -131,13 +123,6 @@ Completed2026-10-26, WEB-013, this commit, from parent `dfb706c`. Exact source:
   and amended for exact reference membership, bounded composition, labelled
   locator bases and narrow authenticated routes. No new endpoint, durable format,
   runtime dependency, architectural authority or Caddy authentication gate.
-
-[Progress and operator handoff](../../progress.md#operator-handoff) record
-completion. WEB-014 is next; final plan-wide/native/rootless/parity/compatibility
-acceptance remains later scoped work. No production/NAS/live Cockpit, rollout,
-merge, push or tag action occurred. Standalone test prefix
-`/opt/hfcache-web013-runtime` remains selected by neither production nor the
-fixture release selector; its roles are stopped and evidence is retained.
 
 Final bookkeeping/acceptance/human-link regressions:78PASS9.27s; documentation
 alignment214 human documents/27helpers PASS. Precommit source preservation

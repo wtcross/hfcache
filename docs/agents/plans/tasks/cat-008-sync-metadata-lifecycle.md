@@ -1,5 +1,11 @@
 # CAT-008: Integrate supplemental metadata capture with existing sync and repair
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `a640dec72775cf67d1f3419c5dc015647672b4cad9d0b7f4329c1c111537fc47`,
+original content SHA-256 `3af3157a48b4feb32f31c27e7d350a786de411f25ec1d61f04700cfdb487c351`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -110,7 +116,7 @@ expectations: `rtk uv run --locked --extra server --extra mcp pytest -q
 tests/unit/test_logging.py tests/unit/test_mcp_acceptance.py`: 73 passed in 4.47s.
 Full `rtk proxy scripts/check.sh` exited 0: 4628 passed/40 opt-in deselected in
 494.66s, format/lint/types/docs, build, three locked installation profiles and
-actual Cockpit lint/types/169 tests/build. Ignored log: `.git/cat-008-check.log`.
+actual historical frontend lint/types/169 tests/build. Ignored log: `.git/cat-008-check.log`.
 
 Reviewed INV-018, AD-12/13/14/17/18/19, TX-01/02/07, FS-06/07/09/17/19 and
 decision 133. Discovery, CLI event/warning and report schema semantics plus

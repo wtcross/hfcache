@@ -1,5 +1,11 @@
 # API-017: Close the plan with integrated evidence and an operator rollout handoff
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `d1aba31a48bf345dce51d217b654003fd9440548336833190b858d6b5d6c727e`,
+original content SHA-256 `f6f3c8ae34e5183b23e10b3f140a18a388daa40f8fd32d4d18cdf9d3db497946`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `API-017` |
@@ -11,11 +17,6 @@
 | Suggested commit | `API-017: complete REST and MCP integration and operator handoff` |
 
 ## Scope and acceptance
-
-1. Review the complete feature-branch diff and incremental commit history. Verify every scoped task is complete or explicitly dispositioned, every behavior change has same-package docs/evidence, and no unintended direct CLI backend, public file server, generic MCP dispatch, secret leak, or unrelated RET-011 fix slipped in.
-2. Run full integration across REST writer/read credentials, writer-local and remote-style CLI, systemd wrapper protocols, Cockpit, read-only MCP, interrupted jobs, verification worker isolation, and large results. Re-run the durable/config compatibility drill and document rollback constraints for service-state records.
-3. Produce a concrete operator rollout checklist: credentials/permissions, TLS/proxy/firewall, frozen dependencies, server/worker socket units, no-IP worker probe, real NFS/hardening acceptance, drain and rollback, existing client-unit monitoring, and verification timer still disabled. Do not perform these production changes under draft/implementation authority alone.
-4. Record all actual gate results and explicitly pending host checks. Close the dated plan and clear only its current active selection. Preserve task/ADR/progress evidence and deliver the local work-package commit series. Do not merge, squash, push, tag, or deploy without separate instruction.
 
 ## Contracts, invariants, and ADRs
 
@@ -33,7 +34,7 @@ Final consistency sweep across newly created and affected docs, with no deferral
 
 Planned checks, not execution evidence:
 
-`scripts/check.sh --with-build` with all implemented extras and the Cockpit toolchain; all real throwaway transport/integration tests; docs/OpenAPI/tool-schema/examples/link checks; no secret artifacts; branch/history/status audit. Explicitly state which opt-in live/NFS/host probes were not run and why.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution and completion rules
 
@@ -56,7 +57,7 @@ Activated 2026-10-18 under Tyler's authorized sequential plan after MCP-004
 committed clean as `f9a96dd`. Git history, clean branch, current selector and
 completed dependency agree; API-017 is the sole task in progress. MCP-004's first
 required --with-build gate passed 3,616 Python tests, three locked wheel profiles,
-127 Cockpit tests and four additional wheel smokes. Root owns the fresh actual
+127 historical frontend tests and four additional wheel smokes. Root owns the fresh actual
 compatibility drill/history/security review; collaborators own integrated/full
 acceptance and independent artifacts/docs/invariant audit. Final Markdown has
 one owner. Existing environment/release/whole-archive/transport/worker/state and
@@ -97,7 +98,7 @@ Unix/TCP Ã— one-row/one-retained-event caps, exact successful sync and full veri
 reader metadata/history/writer refusal and no extra operation/leak. Direct helper
 cases prove final-empty page budgets and bounded default event responses. Broader
 15-file integration passed 375 in 78.05 seconds before the final small-page
-regressions. Standalone complete `rtk make -C cockpit check` exited 0; exact test/
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 build evidence will also be supplied by the required full gate. All source/test
 owners are released with format/lint/whole types/whitespace green.
 
@@ -140,7 +141,6 @@ Retain both operation stores and scheduled handles through guarded rollback;
 unsupported observers/unknown history never prove nonexecution. Disable MCP
 before server-only/pre-MCP startup. Final full-gate and closure evidence follows.
 
-
 ## Completion evidence
 
 Completed 2026-10-18, this commit. Final branch/history, current/task/dependency,
@@ -159,7 +159,7 @@ The final empty response consumes that drain's page budget. Four real Unix/TCP Ã
 small-page/retained-event cases cover reader roles, exact sync/full verification,
 private-worker execution and no duplicate operation. The final focused command
 above passed 176 tests in 24.54 seconds; the earlier broad integration selection
-passed 375 in 78.05 seconds. Standalone Cockpit check also exited 0. These tests
+passed 375 in 78.05 seconds. Standalone historical frontend check also exited 0. These tests
 use disposable fixtures, not installed systemd/cgroup/NFS acceptance.
 
 The final-source installed-reader drill above exited 0 across 42 cases. Preserve
@@ -179,7 +179,7 @@ files, Ruff clean, whole Pyrefly 0 errors (11 suppressed, 59 warnings not shown)
 3,624 Python tests passed, 40 deselected in 442.05 seconds. Source distribution
 and wheel 0.1.10 built; all three actual locked isolated base/server/server+MCP
 installation/import/help/version profiles passed, including the exact-nine
-optional registry and no resources/templates/prompts. Cockpit ESLint/Stylelint/
+optional registry and no resources/templates/prompts. historical frontend ESLint/Stylelint/
 TypeScript passed, 127 tests passed with no failures in 2.110 seconds, and the
 production build passed in 1,291 ms. Required additional wheel smoke subset:
 4 passed, 3,660 deselected in 5.33 seconds. No full-gate failure, correction or

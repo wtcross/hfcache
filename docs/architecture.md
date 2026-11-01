@@ -1334,7 +1334,7 @@ provenance still establishes ownership of that staging transaction.
 
 **bounded runner and private verifier clarification (2026-10-17, decision 115).** With API-backed execution,
 The CLI or its scheduled service is an observer, while the daemon lane or private
-verifier owns the work. Stopping that client, closing Cockpit or losing HTTP does
+verifier owns the work. Stopping that client, closing a browser or losing HTTP does
 not establish writer termination. Identify the exact operation/domain run and
 the real executor, prove it has ended, then acquire the common archive flock and
 apply the same narrow evidence checks above. A released lock or PID alone is

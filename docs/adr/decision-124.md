@@ -6,7 +6,6 @@
 - Status: Accepted; current scope includes the amendments referenced below.
 - Date: 2026-10-18.
 
-
 ## Context, decision and rationale
 
 Use optional standalone FastMCP in the server+MCP profile for maintained

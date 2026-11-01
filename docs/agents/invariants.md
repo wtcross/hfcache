@@ -12,13 +12,11 @@
   progress log retains completed work packages, Decisions, Operator handoff,
   and unmigrated backlog, without duplicating the active queue.
 
-
 Planning evidence: [current selector](plans/current.md),
 [retained setup plan](plans/2026-10-17-plan-planning-workflow.md), and
 [DOC-010 task](plans/tasks/doc-010-planning-workflow.md).
 `INV-011` is a repository workflow requirement reviewed through these records
 and git; the application test suite does not enforce planning lifecycle.
-
 
 INV-011 moved intact from the technical register on 2026-10-18 under
 DOC-011 and decision 130. Its identity is reserved and never reused.

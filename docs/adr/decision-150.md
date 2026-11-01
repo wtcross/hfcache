@@ -1,5 +1,9 @@
 # Authenticate a fixed host reader independently of the online API
 
+The superseded browser interface has been removed under
+[decision 161](decision-161.md). Shared backend, host-helper and web rules below
+remain governed by their current contracts.
+
 - Decision identity: 150.
 - Status: Amended; [decision151](decision-151.md) supersedes only the
   SYS_ADMIN-only engine capability-retention rule. [Decision159](decision-159.md)
@@ -25,17 +29,6 @@ alone grants nothing. Retain a kernel peer pidfd and validate credentials on
 every data-bearing fragment, including connected-descriptor handoff attacks.
 Rootless projected root credentials require separately established address and
 read-only mount provenance; overflow UID alone cannot authenticate an endpoint.
-
-Only Basic human archive/Hub/control admissions gain a fresh helper-policy
-requirement, using the former Cockpit category map and an explicit closed map
-for previously unexposed maintenance routes. The original bearer and read-only
-MCP boundaries remain unchanged. Recheck Basic authority at queue dispatch,
-before domain locks or verifier handoff. Keep all helper I/O outside metadata,
-operation-store, runner-condition and archive/configuration locks. Fresh checks
-are not a lease across later lock waiting; final domain guards remain decisive.
-A known pre-handoff denial records a failed original receipt without invoking
-worker reconciliation; after possible handoff original uncertainty rules apply.
-Original-key/status/result observation remains available when the helper is down.
 
 ## Rationale and alternatives
 
@@ -208,22 +201,6 @@ O_CLOEXEC` for directory traversal. Preserve every owner/group/mode, inode,
 attestation, binding-leaf and peer check. This grants no directory-read, listing,
 socket or policy authority and adds no dependency. Retain the original failed
 rootless run, require search-only regression tests and fresh installed acceptance.
-
-A direct foreground listener avoids confusing manager-created listener peers
-with the accepting helper. A protected API-only directory mount supports exact
-parent pinning and normal leaf replacement on helper restart. Independent policy
-provisioning avoids automatic expansion of legacy Cockpit grants. Kernel peer
-objects and per-fragment credentials resist PID reuse and descriptor transfer;
-UID-only checks or browser-supplied process identities do not provide that proof.
-No generic manager, engine, shell, filesystem or credential selector is added.
-
-The helper uses only captured trusted standard-library modules. It cannot open
-archive payloads or Hub credentials and cannot create IP sockets. Account-switch
-capabilities, if required for the fixed rootless read-only observer, are confined
-to that measured purpose; initial-USER SYS_PTRACE, process attachment and broader
-engine/API mounts are excluded. The namespace-owner read mediation amendment
-below does not add a process capability bit or attachment permission.
-The existing Cockpit inspection and policy schema remain backward compatible.
 
 A fixed internal guard observer may temporarily use the verified service
 account's effective UID/GID to inspect its private lock directory. Its real and
@@ -709,7 +686,6 @@ remain unchanged. See [security](../security.md), [server](../server.md),
 legacy guard, durable private outcomes and original-handle read-only observation.
 It supersedes earlier assumptions of a wholly read-only helper for this fixed
 operation; all unrelated authority and original reasoning remain.
-
 
 ## Fixed host-effect amendment (2026-10-27)
 

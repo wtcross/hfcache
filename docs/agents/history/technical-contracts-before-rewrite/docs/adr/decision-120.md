@@ -1,15 +1,12 @@
 > Historical technical reference preserved before consolidation. Current authority is the living contract.
 
-# Decision 120 — Separate command execution from resumable CLI observation
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `2455fe0e7356b0b76404fb64423105bb0609771407642483e8886700a379ca8e`,
+original content SHA-256 `55e404955c18c8f5ac34a6cc34d860b8bfef1f056c6e7f30ceed3b88012c5cda`.
+Historical proof hashes identify the original artifacts, not this edited record.
 
-- Status: Accepted; implemented by API-013 on 2026-10-18; scheduled observation
-  lifecycle refined by [decision 121](../../../../../adr/decision-121.md).
-- Date: 2026-10-18.
-- Work package: API-013, this commit.
-- Source: [progress decision 120](../../../../progress.md#decisions),
-  [active plan](../../../../plans/2026-10-17-plan-rest-api-and-mcp.md),
-  [task](../../../../plans/tasks/api-013-migrate-write-cli-and-operation-waiting.md).
-API-backed Cockpit mechanisms are amended by [decision 122](../../../../../adr/decision-122.md).
+# Decision 120 — Separate command execution from resumable CLI observation
 
 ## Context and decision
 
@@ -77,14 +74,6 @@ Missing history and interrupted waiting remain uncertainty, not replay authority
 
 ## Consequences and relationships
 
-Implements the public CLI integration of [118](../../../../../adr/decision-118.md) and
-[119](../../../../../adr/decision-119.md), preserving the non-resuming receipt/execution rules of
-[114](../../../../../adr/decision-114.md)/[115](../../../../../adr/decision-115.md) and explicit maintenance authority
-in [117](../../../../../adr/decision-117.md). Clarifies INV-006/012–014, AD-16/17 and TX-07 without
-changing archive algorithms, durable formats, whole-archive roles, dependency
-versions, isolated-verification requirements or MCP gates. Installed systemd/
-Cockpit integration and host acceptance remain later work.
-
 [CLI](../../../../../cli.md), [client](../../../../../api-client.md), [API](../../../../../api.md),
 [operations](../../../../../operations.md), [recovery](../../../../../recovery.md) and
 [invariants](../../../../../invariants.md) define the current boundary. The task records
@@ -110,15 +99,6 @@ crashes. Exact terminal evidence alone permits handle removal. This is observer
 continuity, not replay, cancellation or a request queue; no credentials/digests/
 bodies/results are stored. Ordinary detach/wait output and domain authority stand.
 
-
-## 2026-10-18 Cockpit API integration amendment (API-015)
-
-Cockpit consumes the same exact terminal results and separately validates
-bounded CLI progress/recovery notices. Unknown/lost/unfinished history and observer
-stop remain uncertainty, never cancellation/replay/recovery proof. API-only
-transient credential delivery leaves execution on the server. See
-[decision 122](../../../../../adr/decision-122.md).
-
 ## 2026-10-18 bounded small-page observation correction (API-017)
 
 A final real CLI-to-socket integration with max_page_size=1 exposed a fixed
@@ -133,7 +113,6 @@ admitted operation identity stay explicit; no extra capabilities request, new ro
 cancellation authority is introduced. This is an existing-contract correction,
 not a new architectural decision. [Final integration task](../../../../plans/tasks/api-017-final-integration-and-handoff.md)
 owns exact subprocess/direct-client proof and required fresh gate evidence.
-
 
 Correction accepted 2026-10-18: [actual CLI socket integration](../../../../../../tests/unit/test_interface_integration.py)
 and [observer budget tests](../../../../../../tests/unit/test_cli_operation_helpers.py) pass;

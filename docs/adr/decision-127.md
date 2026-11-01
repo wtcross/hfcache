@@ -14,7 +14,6 @@ receive neither mount nor attestation; no generic volume/engine selector, defaul
 grant or runtime-schema widening follows. Original nine rootless stage/execution
 bindings, keep-id confinement, actual drain and historical acceptance stand.
 
-
 ## Context, decision and rationale
 
 Use the service account’s USER systemd manager for a fixed rootless
@@ -59,37 +58,7 @@ than general NAS/isolation/other-host acceptance.
 
 ## Relationships and technical evidence
 
-- [Decision 126](decision-126.md)
-- [decision 111](decision-111.md)
-- [121](decision-121.md)
-- [122](decision-122.md)
-- [115](decision-115.md)
-- [120](decision-120.md)
-- [123](decision-123.md)
-- [124](decision-124.md)
-- [server](../server.md)
-- [security](../security.md)
-- [Cockpit](../cockpit.md)
-- [deployment](../deployment-centos-stream-10.md)
-- [invariants](../invariants.md)
-- [Podman run](https://docs.podman.io/en/latest/markdown/podman-run.1.html)
-- [rootless/systemd distinctions](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html)
-- [Caddy Unix upstreams](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy)
-- [TLS automation/trust](https://caddyserver.com/docs/automatic-https)
-- [image recipe](../../packaging/containers/Containerfile)
-- [build/authenticated input evidence](../../scripts/build-container.py)
-- [fixed runtime helper](../../scripts/container-service.py)
-- [client launcher](../../scripts/hfcache-client)
-- [rendered unit templates](../../packaging/containers)
-- [actual worker probe](../../scripts/check-container-worker.py)
-- [boundary unit tests](../../tests/unit/test_container_service.py)
-- [build/probe tests](../../tests/unit/test_container_runtime.py)
-- [decision 126's permanent guard](decision-126.md#context-decision-and-rationale)
-- [Decision 128](decision-128.md)
-- [Decision 129](decision-129.md)
-
 See [deployment status](../deployment-status.md) for recorded scope and remaining acceptance.
-
 
 ## Replacement UI design amendment (2026-10-20)
 

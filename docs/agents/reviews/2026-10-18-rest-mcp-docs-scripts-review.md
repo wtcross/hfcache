@@ -1,5 +1,11 @@
 # REST/MCP documentation and script review
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `75a08cbaa3d01b7be2b2b57f0674ef62d52577821fb3beef93197503e7bd05b0`,
+original content SHA-256 `3342f53597e8fb47d89ae3f158260d2a78720aa11dba0454e143163a9ca822be`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Review date | 2026-10-18 |
@@ -297,28 +303,6 @@ Sources: [docs/server.md](https://github.com/wtcross/hfcache/blob/65b65714b29e83
 [src/hfcache/cli_client.py](https://github.com/wtcross/hfcache/blob/65b65714b29e835498138ec3122b5669571850cf/src/hfcache/cli_client.py) `_collect`, `_inventory`;
 [src/hfcache/cli.py](https://github.com/wtcross/hfcache/blob/65b65714b29e835498138ec3122b5669571850cf/src/hfcache/cli.py) `status`, `list_repositories`.
 Owners: API-018, DOC-012, DOC-014, DOC-017.
-
-### F12 — Cockpit and consumer tools are not interchangeable API readers
-
-**Type:** intentional boundaries that need clearer human presentation.
-
-Cockpit's `archive.ts` still lists/reads run reports using service-identity
-`runuser` with `ls`/`cat` on `/srv/hfcache/runs`; it calls this the documented
-host-local exception. Its journal reader is likewise host-side. The rootless
-profile preserves fixed CLI launch and blocks legacy manager controls; it does
-not make every existing Cockpit action a remote REST client. Separately, NFS
-copy/verification and serving promotion remain a consumer data path, not obsolete
-code displaced by MCP metadata.
-
-**Correction:** document the supported/blocked/host-local operation matrix. Do not
-remove report browsing, journal access or consumer helpers as dead, and do not
-claim the browser plugin runs on a mountless remote reader. A future migration of
-the report browser requires a scoped replacement, not an accidental deletion.
-
-Sources: [cockpit/src/api/archive.ts](https://github.com/wtcross/hfcache/blob/65b65714b29e835498138ec3122b5669571850cf/cockpit/src/api/archive.ts);
-[cockpit/src/api/journal.ts](https://github.com/wtcross/hfcache/blob/65b65714b29e835498138ec3122b5669571850cf/cockpit/src/api/journal.ts); [docs/containers.md](https://github.com/wtcross/hfcache/blob/65b65714b29e835498138ec3122b5669571850cf/docs/containers.md);
-[README.md](https://github.com/wtcross/hfcache/blob/65b65714b29e835498138ec3122b5669571850cf/README.md) browser/consumer descriptions.
-Owners: DOC-014, DOC-015, DOC-017.
 
 ### F13 — Script discoverability and deletion classification are incomplete
 

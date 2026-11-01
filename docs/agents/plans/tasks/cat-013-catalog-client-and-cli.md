@@ -1,5 +1,11 @@
 # CAT-013: Add typed API client and CLI discovery and refresh commands
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `6a1300758ffc22f699f03eefdaf4ed191568041407a3a65d0e05376edb93b515`,
+original content SHA-256 `da4fa598609e36b8f0bcb503cd17e7efb907ce98ca25b8edb658e3653b690503`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | complete |
@@ -91,7 +97,7 @@ dependency, script, durable format, production/live/credential/host/push action.
 
 Completed 2026-10-19 (CAT-013, this commit). Full `scripts/check.sh` exited 0:
 4956 passed/40 deselected in 552.27s; wheel/sdist, all three locked isolated
-installation profiles, actual Cockpit lint/types/169 tests/build passed. Focused
+installation profiles, actual historical frontend lint/types/169 tests/build passed. Focused
 post-fix selection: 326 passed in 17.94s; direct cold/client selection: 33 passed
 in 5.31s. V41-V43 have actual client/CLI, complete collection, human/JSON, exact
 refresh observation and uncertain-admission evidence. INV-006/012/014/015/018 and

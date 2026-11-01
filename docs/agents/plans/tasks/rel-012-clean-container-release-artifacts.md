@@ -1,5 +1,11 @@
 # REL-012: Build immutable artifacts from clean committed source
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `f4d42e60c1dec1c366a78c19b9867ff9986bc7cac4ed7a7d127f64d1af347b76`,
+original content SHA-256 `bfaf92fc4280351b156e98beb0074b8dd608eafb9b3bd90bb84e640d568d3bf3`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `REL-012` |
@@ -9,30 +15,6 @@
 | Scope | Local host only; no NAS content/metadata writes or other-host changes |
 
 ## Scope and acceptance
-
-1. Start from REL-010's actual clean committed 0.2.0 source. Record commit,
-   clean-state check, tools, lock and exact package/build inputs. Any necessary
-   source correction receives its own completed package before a new clean build;
-   do not relabel a dirty preview as the final artifact.
-   Use an isolated clean detached worktree outside the repository and ignored
-   parents: /var/tmp/hfcache-rel-012-source at the actual committed REL-010 source.
-   Run the wheel/image builder and full gate there; final production wheel/sdist,
-   image contexts, provenance and retained logs stay outside that checkout.
-   Ordinary ignored .venv, cockpit/node_modules and dist outputs may exist inside
-   without changing tracked Git cleanliness. Main-workspace evidence edits must not contaminate
-   the clean source's source_dirty provenance.
-2. Build exact wheel/sdist and locked hashed server+MCP runtime images, including
-   the pinned Caddy derivative. Record hashes, platform/base/build/runtime image
-   identities and provenance. No runtime resolution, automatic pulls or remote
-   publication; source versions/tags alone are not artifact identity.
-3. Run actual installed/image compatibility against retained targets for archive,
-   service, scheduled and new deployment records. Preserve bytes and distinguish
-   unavailable old readers from schema-aware refusal. Complete meaningful actual
-   local container/TLS/credential/peer/activation/drain proofs without a NAS bind.
-4. Stage immutable identified local artifacts with retained rollback trees/state;
-   do not select or activate production. Run the required full --with-build gate
-   in the NAS-masked test environment. Commit only execution records/evidence,
-   leaving package/build inputs identical to the clean source identified above.
 
 ## Contracts, invariants, and ADRs
 
@@ -133,7 +115,7 @@ c730ddcfdc464b8c98cd3ea162d1072e, session 89643, in .scratch/rel-012-gate.log.
 Its actual exit is 0: 405-file format/Ruff and whole Pyrefly 0 errors
 (11 suppressed, 59 warnings), without the earlier ignored-test warning;
 3,792 Python passed/40 deselected in 507.85 seconds; 0.2.0 wheel/sdist and all
-three locked installation profiles; Cockpit lint/style/types, 135 tests in
+three locked installation profiles; historical frontend lint/style/types, 135 tests in
 2.276 seconds/build 1,200 ms; four extra wheel smokes in 5.31 seconds. Unit runtime
 is 9 minutes 21.707 seconds. Log SHA-256:
 e94fe63dc82cf183d0fd5e7e034512cca9a56ce545a78a78218f46139cde0ea5.
@@ -148,7 +130,7 @@ bytes, service UID/GID 981, SHA-256
 e55adc61d88bc97c8b562074a4fa0498218ea85dbd429fb5f838cf6d27ef9bca.
 The 43 authenticated source files total 1,526,182 bytes (44 files including the
 manifest), all nonempty regular/bounded files with hashes re-read and verified.
-They include wheel/sdist/Cockpit bundle and seven reviewed proof JSON records,
+They include wheel/sdist/historical frontend bundle and seven reviewed proof JSON records,
 without image archives. This assembly is user-owned/unprotected, not an installed
 stage or selector. Root owns protected copying/staging; clean source remains
 Git-clean and no production selection or service start has occurred.

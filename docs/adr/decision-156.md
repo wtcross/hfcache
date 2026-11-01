@@ -1,5 +1,9 @@
 # Bind fixed host effects to original intent and independently observable outcomes
 
+The superseded browser interface has been removed under
+[decision 161](decision-161.md). Shared backend, host-helper and web rules below
+remain governed by their current contracts.
+
 - Decision identity: 156.
 - Status: Amended; the original implementation in `84221bf` has scoped installed
   native and guarded-rootless API-contract acceptance. The credential-mount
@@ -15,7 +19,7 @@ native observer Stop and independently observed completion of its accepted
 backend work. Guarded rootless controls retain their denials. The original
 failed outer aggregates remain failed; qualification did not replay Stop or
 clear unknown original handles. The
-[migration guide](../web-ui/migration-from-cockpit.md#compatibility-and-backups)
+[migration guide](../web-ui/migration-and-rollback.md#compatibility-and-backups)
 retains the separate installed rollback and unresolved-outcome limits. Earlier
 implementation-status text remains historical; other-platform and production
 acceptance remain separate.
@@ -92,15 +96,6 @@ printable-ASCII, length and control/backslash checks, with a closed environment,
 finite output and child deadline. Return bounded actual normalized values and
 next-elapse description; no shell or caller executable/unit/path is accepted.
 
-The only managed file remains
-`/etc/systemd/system/hfcache-sync.timer.d/50-cockpit.conf`. Replacement clears
-OnCalendar before setting it. Pause/resume stop/start only the sync timer and
-never change enablement. Replace/reset reload the manager and restart only a
-previously active sync timer; an inactive timer remains inactive. Resume or a
-restart may trigger Persistent catch-up. Verification scheduling and target/API/
-worker actions remain absent. Exact opaque full-byte schedule revision is checked
-under a separately provisioned original host-action lock before effect.
-
 Root0700 `/etc/hfcache/.host-actions` holds independently HMAC-authenticated,
 versioned outcomes; `.host-actions.lock` and `.host-actions.pending` are separate
 from configuration guards. An authenticated original-ID/digest pending marker is
@@ -110,25 +105,6 @@ removed for space. Repeated original ID/digest observes existing state only.
 Public original-subject/key outcome GETs never send effects, repair records,
 remove markers or infer nonexecution from missing history. API receipt certainty
 and private helper certainty remain distinct.
-
-Preserve old managed schedule inodes inside root0700
-`/etc/systemd/system/hfcache-sync.timer.d/.hfcache-actions/<operation-id>` before
-replacement/removal. This is inside the same writable bind, avoiding cross-mount
-rename assumptions. Only that explicitly validated private directory and the
-fixed managed file are accepted; other drop-ins refuse. Record exact old/new
-content and stored-file outcome separately from reload/timer acknowledgement.
-Participating web publishers share the host-action guard. The supported legacy
-Cockpit inspector already denies schedule/observer actions; its old shell and
-D-Bus operations do not participate in that guard. Native host-effect activation
-therefore requires safely absent legacy policy or strict protected
-`/etc/hfcache/cockpit-policy.json` with both legacy schedule/observer bits false.
-Capture and revalidate that absence/content before grants and effects; never
-rewrite or migrate it. Older already-authorized privileged calls must drain
-before provisioning; policy bytes alone cannot prove that drainage. Keep legacy
-read/configuration profiles unchanged. Independent root
-administrative edits remain trusted external changes; bracketed revision/inode
-checks detect observed drift, without claiming a filesystem compare-and-swap
-against an uncooperative root writer. No automatic rollback follows uncertainty.
 
 Post-effect validation rebases only the exact independently verified managed
 schedule leaf and fixed timer/observer observations changed by that original
@@ -205,16 +181,6 @@ solves concurrency without changing archive serialization. Same-bind predecessor
 retention avoids a false same-device rename guarantee. A dedicated observer
 projection preserves old closed wire schemas while describing real oneshot state.
 
-This record amends decisions109/115/121/135/136/141/145/150/154 only for these fixed
-host functions. INV003/013/014/020/021 and new INV022 apply; AD17 archive authority
-is unchanged. Exact public models and routes are in [schemas](../schemas.md) and
-[API](../api.md); helper paths, budgets and lock rules are in
-[host administration](../host-administration.md). Unit/component, real helper/
-filesystem/process integration, actual native positive and guarded-rootless denied
-acceptance are required. Source design is not installed conformance or production
-rollout permission. Original handles, unknown records, NAS and live Cockpit remain
-protected.
-
 ## Implementation and presentation status (2026-10-27)
 
 The implementation in `84221bf` supplies these fixed routes, private outcomes and
@@ -227,9 +193,3 @@ no admitted effect or user-manager substitution. The canonical client/controller
 probe ran inside the authenticated built application; it did not establish
 rendered Administration-form acceptance. Original failed collectors and startup
 records remain retained, with separate explicitly qualified read-only closure.
-
-This is owned `LOCAL_STORAGE_SIMULATION` evidence, not NAS, production rollout,
-Cockpit retirement or the later full platform matrix. It does not change the
-installed production release. The subsequent Administration composition uses the
-existing ports under the same authority, outcome and no-replay rules; rendered
-controls require their own source and actual user-workflow acceptance.

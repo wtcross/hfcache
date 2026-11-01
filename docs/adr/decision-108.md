@@ -6,7 +6,6 @@
 - Status: Accepted; current scope includes the amendments referenced below.
 - Date: 2026-10-17.
 
-
 ## Context, decision and rationale
 
 Authenticated REST and optional read-only MCP need maintained HTTP/TLS/ASGI and

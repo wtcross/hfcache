@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "original_git": "c692d7ae4b866fefd8a743a21afdb729da0f39c4",
+  "retired_cases": [
+    "V05",
+    "V06"
+  ],
+  "reason": "Dedicated predecessor tag-editor behavior retired with removal of that interface; no current test execution or replacement acceptance is claimed.",
+  "tasks": [
+    {
+      "id": "CAT-003",
+      "status": "retired",
+      "reason": "The package implemented only the removed predecessor tag editor. Its task instructions and dedicated tests are removed from the current tree; shared tag/backend behavior remains active.",
+      "original_commit": "a1546a94cfa8b01ec95a3cfe22c861253dcf1517",
+      "original_task_path_sha256": "3f844ab8ea675b8284190a73d1118ead0b50547031db975ee9d989ffe4ace7bf",
+      "original_task_sha256": "2d49a82b0f34b3907053943d07c723b3185e1ecd9bb93621ce2cd795abbb47fd"
+    }
+  ]
+}

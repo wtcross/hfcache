@@ -1,5 +1,11 @@
 # WEB-002: Create the strict React workspace and mandatory local gates
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `7327520fa7f53167acc509a28cca9f8d477cc78dafa05a6c92be92b130140690`,
+original content SHA-256 `354011792775057d35604df5000b3fbea40ea7cd4656d3a273466c6fb0696b46`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -11,15 +17,13 @@
 
 ## Read before implementation
 
-cockpit/package.json and reusable license notices; scripts/check.sh; docs/development.md; architecture.md sections 3 and 5; testing-strategy.md.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 Also read the relevant sections of [architecture](../support/web-ui/architecture.md), [API contracts](../support/web-ui/api-contracts.md), [testing strategy](../support/web-ui/testing-strategy.md), [acceptance matrix](../support/web-ui/acceptance-matrix.md), and [human documentation map](../support/web-ui/documentation-map.md). Load only affected living contracts and ADRs through their indexes. Refer to the [source review](../support/web-ui/source-review.md) for pinned baseline evidence; current git wins over it.
 
 ## Scope and implementation requirements
 
-Create web/ with React, Vite, strict TypeScript, pinned compatible Node/pnpm and frozen lockfile. Add type-aware linting, no unsafe any propagation, no unchecked casts at network boundaries, accessible UI primitives and a minimal route shell. Select React tooling deliberately; reuse licensed pure components/helpers only after removing Cockpit transport assumptions. Audit bundled/transitive licenses. Keep production dependencies in the browser bundle or optional server closure, never Node in runtime.
-
-Implement documented lint/typecheck/test:unit/test:component/build scripts. Use a maintained component-testing stack, deterministic fixture network mocks only at component level, and coverage reporting for new code. Add --require-web to the provider-neutral scripts/check.sh, without removing existing Python, docs, build/install or Cockpit checks. Strict mode must fail if prerequisites are missing; default backend-only mode may have an explicit loud frontend omission, but it cannot satisfy this plan's gate. Add safe help and script inventory entries. Establish ignored artifact locations.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Unit and component validation
 
@@ -41,7 +45,7 @@ Update docs/development.md and docs/scripts.md with exact new commands, versions
 
 Reproducible locked React workspace exists; strict checks are enforced, not merely configured; production bundle is buildable; no new CI-provider dependency or runtime Node requirement; baseline gates remain intact.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution notes and blockers
 
@@ -92,11 +96,11 @@ proofs. Source: WEB-002, this commit, parent `c4dd806`; local date 2026-10-20.
 
 ### Required final gate
 
-`rtk proxy scripts/check.sh --require-web --require-cockpit` exits 0.
+`historical gate invocation (original command SHA-256 `b9d97947112e6e5c5005002b465c3dd68f8bd158ca8c41cb5966f57422999103`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` exits 0.
 `.scratch/web-002-amended-gate.log` SHA256:
 `795a5efc9cb35c5b4affbe41953452ebbd12e802ba32f86b71cfeac2df22f3cc`.
 All 5337 Python tests pass, 52 opt-in tests deselected, 708.97 s; three locked
-base/server/server+MCP wheel installation profiles pass. Existing Cockpit:
+base/server/server+MCP wheel installation profiles pass. Existing historical frontend:
 572 unit tests, zero skips/cancellations, 110 mounted Firefox tests and production
 build pass. Web frozen install, lint, types, actual negative strictness fixtures,
 45 unit/50 combined component tests, build and 2 sandboxed Chromium tests pass;
@@ -148,7 +152,7 @@ unchanged. Final license-script SHA256:
   `bd02ee8b5bbbe553188f57389511fa8c8f3214455cadb854a2317122d8f8ba39`;
   notices SHA256:
   `be8cd5da0eee660b6b7eb7a8bfee0c014f287543041f53f1d97f005b5398f927`.
-  No Cockpit implementation is reused or relicensed.
+  No historical frontend implementation is reused or relicensed.
 - Two consecutive production builds have identical manifests at
   `web/.artifacts/build-{first,second}.json`, each SHA256
   `5226fdaebe7bf02070dabe64b6bdc64d4935cba00a5eefae4208c58aae59bd28`.
@@ -214,13 +218,6 @@ unchanged. Final license-script SHA256:
 
 ### Contracts, documentation and scope
 
-Reviewed INV-003/010/019, FW-01–04, AD-01/15, retained CP-01–14 and decisions
-88/113/138/143. Decision 143's tooling/conformance amendment records the maintained
-tool choice and strict preliminary gate; no new runtime Python dependency,
-archive/durable format, permission, service, Caddy or MCP behavior changes.
-Existing Cockpit remains shipped and required. The source preview is disconnected
-and contains no fictional repository facts.
-
 Human changes: `docs/development.md`, `docs/scripts.md`, `docs/web-ui/README.md`;
 source metadata and ADR links align. Documentation discovery excludes only exact
 generated web roots while checking source guides. Full documentation alignment:
@@ -229,7 +226,7 @@ pass. Logs: `.scratch/web-002-docs-{focused,alignment,suite}.log`.
 
 All 95 feature scenarios remain pending; WEB-002 owns none. This package proves
 the local workspace/gate and preliminary shell only. No Caddy/API/Basic/installed
-native/rootless/NAS/production acceptance or Cockpit retirement is claimed.
+native/rootless/NAS/production acceptance or historical frontend retirement is claimed.
 The initial overwritten contrast evidence remains an explicit historical gap,
 not reconstructed proof. Existing production holds, original files/stores/handles,
 five prior guests and unknown attempts remain untouched. Completed evidence is

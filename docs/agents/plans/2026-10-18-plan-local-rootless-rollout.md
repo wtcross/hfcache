@@ -1,5 +1,11 @@
 # Roll out the local rootless runtime without changing NAS data
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `de12c915a4baebeed5d0ce55c31072abaa2ce354b172e87277edb93e6a3c35a8`,
+original content SHA-256 `a7eccea7a827bde8cd00d7180cf8c372b437ab69f5c8cb17d64e92d953e42ef5`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Plan ID | `2026-10-18-plan-local-rootless-rollout` |
@@ -51,14 +57,6 @@ access-time policy. Do not issue an unreviewed archive read as a substitute.
 
 ## Reviewed facts and contracts
 
-Root's local inventory reports Podman 6.0.2 installed and Caddy absent; service
-UID/GID 981 (`hfcache`), home `/nonexistent`, nologin, no subordinate IDs or linger;
-deployed bare-host application 0.1.10; sync inactive/MainPID 0, sync timer active
-with next event 2026-10-19 02:01 EDT; verify timer disabled; NAS at `/srv/hfcache`
-is currently read-write NFS 4.2; SELinux enforcing. Existing encrypted `hf-token`
-and Cockpit self-signed TLS material exist, but API/MCP sources do not. These
-are initial inventory facts, not implementation or acceptance claims.
-
 Review [invariants](../../invariants.md) INV-002/003/005–007/010–016 and AD-16/17/21,
 [environment](../environment.md), [release](../release.md),
 [deployment](../../deployment-centos-stream-10.md), [server](../../server.md),
@@ -98,16 +96,6 @@ Use actual target readers for retained archive/service/scheduled state; missing
 old support is not schema refusal or proof of nonexecution. Preserve rollback
 artifacts, both operation stores, scheduled handles and persistent lock inodes.
 
-The local rollout must prove rootless ownership/user namespaces, target starts
-Caddy/API, private worker no-IP/no-credentials, protected Unix access and verified
-TLS/proxy routing using the actual containers. Keep all writes on reviewed local
-filesystems. Do not expose an alternative bare-host operational runtime or an
-unrestricted Podman socket to containers. Review Cockpit/client invocation and
-system-versus-user manager boundaries explicitly. Real NAS write acceptance and
-other-host/NAS/calendar work remain open in final release notes. A local tag may
-identify the actually deployed artifact with this partial acceptance stated; it
-does not certify forbidden tests. Never push the tag or branch remotely.
-
 ## Lifecycle
 
 - 2026-10-18: REL-011 activated after OPS-016 committed as 11ddd55. Exact
@@ -132,7 +120,7 @@ does not certify forbidden tests. Never push the tag or branch remotely.
 
 - 2026-10-18T14:25:55Z: OPS-014 completed with actual corrected NAS-masked gate
   exit 0: 3,624 Python tests (40 deselected, 455.10 seconds), format/lint/whole
-  types, 0.1.10 builds/three locked installation profiles and 127 Cockpit tests/
+  types, 0.1.10 builds/three locked installation profiles and 127 historical frontend tests/
   production build. First launch refusal and inherited-environment failed gate
   remain recorded in the task; no production/test source changed. Root rechecked
   read-only NAS, four masked inactive units and retained guard after acceptance.
@@ -159,7 +147,7 @@ does not certify forbidden tests. Never push the tag or branch remotely.
   API/MCP/client and selected-overlay proofs, rendered-unit syntax, exact
   protected selection/rollback tests and corrected NAS-masked --with-build
   pipeline exit 0: 3,792 Python tests (40 deselected, 453.62 seconds), three
-  locked installation profiles, 135 Cockpit tests/build and four extra wheel
+  locked installation profiles, 135 historical frontend tests/build and four extra wheel
   smokes. Failed real policy/fixture findings, the manually stopped metadata-
   review gate and passing pre-selector gate remain separate task evidence.
   Runtime source version remains 0.1.10; no production switch/release/tag or NAS
@@ -175,7 +163,7 @@ does not certify forbidden tests. Never push the tag or branch remotely.
 - 2026-10-18: REL-010 completed local review and project-only 0.2.0 preparation;
   all 93 nonproject lock records are unchanged. The actual NAS-masked --with-build
   gate exits 0: 3,792 Python tests/40 deselected in 461.15 seconds, three locked
-  installation profiles, 135 Cockpit tests/build and four extra wheel smokes.
+  installation profiles, 135 historical frontend tests/build and four extra wheel smokes.
   README/CHANGELOG remain preparing/not deployed/tagged. Preview hashes are task
   evidence, not deployable artifacts; current selects REL-012 pending until this
   source/version commit exists. All host/NAS guards and acceptance holds remain.
@@ -193,7 +181,7 @@ does not certify forbidden tests. Never push the tag or branch remotely.
   UID-981 controls and local OCI exports. The ignored-parent stopped gate and
   preserved umask-077 stage/readability failure are separate from corrected
   acceptance. Final --with-build exits 0: 3,792 Python tests/40 deselected in
-  507.85 seconds, three locked installation profiles, 135 Cockpit tests/build and
+  507.85 seconds, three locked installation profiles, 135 historical frontend tests/build and
   four extra wheel smokes. Package inputs/source stay unchanged and Git-clean;
   source/evidence commits remain distinct. Current selects OPS-016 pending until
   this evidence commit exists. No production switch, service-engine image load,
@@ -212,14 +200,14 @@ does not certify forbidden tests. Never push the tag or branch remotely.
   API-to-worker SELinux connectto is refused and remains a release hold; host
   FD3 peer proof is not end-to-end verification. No hardening bypass is used.
   Final NAS-masked --with-build exits 0: 3,827 Python tests/40 deselected in
-  471.22 seconds, three locked installation profiles, 135 Cockpit tests/build
+  471.22 seconds, three locked installation profiles, 135 historical frontend tests/build
   and four extra wheel smokes. NFS-ro, four legacy writer masks, Enforcing policy
   and forbidden NAS/other-host/calendar acceptance holds remain. REL-011 is next
   pending until this package commits; no tag or remote publication occurs here.
 
 - 2026-10-18: REL-011 completed the evidence-only local release. The final
   NAS-masked --with-build pipeline exits 0: 3,827 Python tests/40 deselected in
-  455.86 seconds, three locked installation profiles, 135 Cockpit tests/build
+  455.86 seconds, three locked installation profiles, 135 historical frontend tests/build
   and four extra wheel smokes. Root creates local annotated v0.2.0 from the clean
   reviewed 11ddd55 deployment tree; app artifacts remain clean-source 481fcc4.
   All six tasks are complete with explicit partial acceptance, and only this

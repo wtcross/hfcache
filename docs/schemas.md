@@ -1320,7 +1320,7 @@ source implementation is not installed compatibility or release acceptance.
 The card GET uses an independent read projection below; the unreleased browser
 also renders that projection. Recorded installed fixture checks and old-reader
 compatibility limits are in the
-[migration guide](web-ui/migration-from-cockpit.md#compatibility-and-backups).
+[migration guide](web-ui/migration-and-rollback.md#compatibility-and-backups).
 The independent card/helper/static/bootstrap
 families below must each validate their own strict integer version, reject
 unknown fields/duplicate JSON keys/coercions, enforce bounds before allocation
@@ -1797,19 +1797,22 @@ Each record has exactly these fields:
 | --- | --- |
 | `schemaVersion`, `recordId` | Integer1 and the browser-local record identity; this is not a server operation ID. |
 | `handles` | Either `kind:"basic-key"` with `key` and nullable `operationId`, or `kind:"imported"` with nullable `operationId` and nullable `legacyKey:{value,credentialClass}`. |
-| `originalAuthority` | A tagged `web` scope, historical `cockpit` authority, or `unknown`; original authority is separate from the current observer. |
+| `originalAuthority` | A tagged `web` scope, retained historical interface authority, or `unknown`; original authority is separate from the current observer. |
 | `observationTarget` | The validated current target scope. It cannot silently rewrite original authority. |
-| `source`, `action`, `route` | Source is `web`, `cockpit` or `manual`; nullable action/route use the closed supported-action mapping. Imported unknown actions are not submission authority. |
+| `source`, `action`, `route` | Source identifies the web UI, a retained historical interface or manual import; nullable action/route use the closed supported-action mapping. Imported unknown actions are not submission authority. |
 | `receiptIdentity` | Null or the exact safe original receipt fields: `operation_id`, `principal`, `route`, `archive_id`, `config_fingerprint`, `created_at`. |
 | `createdAt`, `updatedAt` | Bounded browser metadata timestamps, not server execution evidence. |
 | `state`, `terminal` | A local recovery classification and nullable safe terminal summary. Saved summaries remain unverified after restore. |
 
 Scope fields are `origin`, `publicPrefix`, `authorityEpoch`, `subject`,
 `credentialClass`, nullable `instanceId`, nullable `archiveId` and nullable
-`configFingerprint`. Historical Cockpit authority retains its `host`, `profile`,
+`configFingerprint`. Historical interface authority retains its `host`, `profile`,
 `endpoint`, `credentialClass`, nullable `archiveId` and `authorityFingerprint`.
-Local authentication generation is an in-memory invalidation boundary, never a
-persisted proof that saved evidence is current.
+Retained historical tags remain schema1 compatibility aliases under the closed
+[recovery decoder](../web/src/state/operation-registry.ts); removal of the earlier
+interface does not rewrite saved records or grant them current submission
+authority. Local authentication generation is an in-memory invalidation boundary,
+never a persisted proof that saved evidence is current.
 
 Recovery states are `prepared`, `uncertain`, `accepted`, `observing`, `missing`,
 `unavailable`, `conflict`, `unverified`, `terminal` and `reference`. The terminal

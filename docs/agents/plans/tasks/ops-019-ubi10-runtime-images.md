@@ -1,5 +1,11 @@
 # OPS-019: Build service images on minimal viable UBI 10 bases
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `94af419d74f051fc3852356b5c53b205f980979f398f1372dbb2e59063e62654`,
+original content SHA-256 `83f8656804b9bfe5917834a7c929fc63df034fb7fdd5bce76145e460ac1f781d`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `OPS-019` |
@@ -263,7 +269,7 @@ Fresh full NAS-masked `scripts/check.sh --with-build` actually exits 0, invocati
 - 423 files formatted; Ruff/lint and whole-project types 0 errors;
 - 4,057 Python passed, 40 deselected in 469.08 seconds;
 - 0.2.1 wheel/sdist and actual locked base/server/server+MCP installation profiles;
-- Cockpit lint/style/types, 135 tests in 2,222.516944ms and build 1,168ms;
+- historical frontend lint/style/types, 135 tests in 2,222.516944ms and build 1,168ms;
 - four additional wheel smokes in 5.47 seconds.
 
 Log .scratch/ops-019-gate.log SHA256

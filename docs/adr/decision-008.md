@@ -11,11 +11,10 @@ Current contracts and later qualifications below govern.
 ## Context, decision and consequences
 
 A shell script gives workstation, hook and pipeline callers the same lock,
-format/lint/type/test/build checks without coupling the project to a CI provider.
-Bash is an explicit host prerequisite; making the Python gate depend on make was
-rejected. The conditional Cockpit stage separately needs its actual build toolchain;
-a loud skip cannot count as plugin validation. The gate remains `scripts/check.sh`,
-with an explicit isolated wheel-install smoke option.
+format, lint, type, test and build checks without coupling the project to a CI
+provider. Bash is an explicit host prerequisite; requiring make for the Python
+gate was rejected. The gate remains `scripts/check.sh`, with strict web
+validation and an explicit isolated wheel-install smoke option.
 
 ## Provenance and governing evidence
 
@@ -24,8 +23,6 @@ The source entry first appears in
 (2026-07-24, `project bootstrap: add provider-neutral quality script and build smoke
 test`). The decision text above preserves the complete reasoning in the current
 historical log, including its recorded alternatives and consequences.
-
-
 
 Implementation or shipped-artifact evidence:
 [scripts/check.sh](../../scripts/check.sh).

@@ -31,11 +31,6 @@ INTERFACE_DOCS = (
     "docs/configuration.md",
     "docs/security.md",
     "docs/invariants.md",
-    "docs/cockpit.md",
-    "docs/cockpit-plugin/README.md",
-    "docs/cockpit-plugin/installation.md",
-    "docs/cockpit-plugin/usage.md",
-    "docs/cockpit-plugin/troubleshooting.md",
 )
 
 
@@ -46,12 +41,9 @@ INTERFACE_DOCS = (
         ("packaging/server.toml", load_server_config),
         ("packaging/client.example.toml", resolve_client_config),
         ("packaging/scheduled-client.example.toml", resolve_client_config),
-        ("packaging/cockpit-client.toml", resolve_client_config),
     ],
 )
-def test_all_five_current_configuration_examples_use_their_strict_independent_loader(
-    relative, loader
-):
+def test_current_configuration_examples_use_their_strict_independent_loader(relative, loader):
     # Parse only. Loading settings neither resolves a credential nor opens the
     # configured archive, starts a daemon or contacts the Hub/API.
     path = ROOT / relative

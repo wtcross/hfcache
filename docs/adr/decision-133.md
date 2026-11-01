@@ -140,7 +140,6 @@ preserve completed results and old runner startup interrupts queued work without
 replay. These are separate surfaces, not universal old-startup failure. Preserve
 new state and validate a reviewed rollback target under actual executor drain.
 
-
 ## Replacement UI design amendment (2026-10-20)
 
 [Decision 142](decision-142.md) amends this record for the accepted

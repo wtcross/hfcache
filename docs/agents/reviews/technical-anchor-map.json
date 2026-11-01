@@ -83,7 +83,6 @@
     "configuration-and-security": "configuration-and-security",
     "durable-formats-and-reporting": "durable-formats-and-reporting",
     "consumer-boundary": "consumer-boundary",
-    "cockpit-boundary": "cockpit-boundary",
     "framework-and-engineering": "framework-and-engineering",
     "remote-management-incremental-enforcement": "remote-management-incremental-enforcement",
     "ubi-10-image-foundation-qualification-ops-019": "ubi-10-image-foundation-qualification"
@@ -739,44 +738,22 @@
     "later-history-and-current-interpretation": "later-history-and-current-interpretation",
     "provenance-and-governing-evidence": "provenance-and-governing-evidence"
   },
-  "docs/adr/decision-087.md": {
-    "decision-087-a-cockpit-plugin-in-cockpit-contracted-by-docscockpitmd-tracked-as-the-cpt-family": "a-cockpit-plugin-in-cockpit-contracted-by-docscockpitmd-tracked-as-the-cpt-family",
+  "docs/agents/history/removed-interface-records.md": {
+    "decision-101-repository-names-are-canonical-type-aware-external-links": "repository-names-are-canonical-type-aware-external-links",
     "decision-context-and-consequences": "decision-context-and-consequences",
-    "provenance-and-governing-evidence": "provenance-and-governing-evidence",
-    "2026-10-18-candidate-pipeline-amendment-api-012": "2026-10-18-candidate-pipeline-amendment",
-    "2026-10-18-cockpit-api-integration-amendment-api-015": "2026-10-18-cockpit-api-integration-amendment"
-  },
-  "docs/adr/decision-088.md": {
-    "decision-088-the-starter-kit-runs-under-pnpm-node-is-a-build-time-toolchain-not-a-dependency": "the-starter-kit-runs-under-pnpm-node-is-a-build-time-toolchain-not-a-dependency",
-    "decision-context-and-consequences": "decision-context-and-consequences",
-    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
     "provenance-and-governing-evidence": "provenance-and-governing-evidence"
   },
   "docs/adr/decision-089.md": {
     "decision-089-the-operation-surface-bends-to-the-cli-not-the-reverse": "the-operation-surface-bends-to-the-cli-not-the-reverse",
     "decision-context-and-consequences": "decision-context-and-consequences",
     "later-history-and-current-interpretation": "later-history-and-current-interpretation",
-    "provenance-and-governing-evidence": "provenance-and-governing-evidence",
-    "2026-10-18-cockpit-api-integration-amendment-api-015": "2026-10-18-cockpit-api-integration-amendment"
-  },
-  "docs/adr/decision-090.md": {
-    "decision-090-cockpit-carries-lgpl-21-or-later-beside-the-repositorys-mit": "cockpit-carries-lgpl-21-or-later-beside-the-repositorys-mit",
-    "decision-context-and-consequences": "decision-context-and-consequences",
-    "later-history-and-current-interpretation": "later-history-and-current-interpretation",
     "provenance-and-governing-evidence": "provenance-and-governing-evidence"
-  },
-  "docs/adr/decision-091.md": {
-    "decision-091-smol-toml-is-bundled-for-configuration-round-tripping": "smol-toml-is-bundled-for-configuration-round-tripping",
-    "decision-context-and-consequences": "decision-context-and-consequences",
-    "provenance-and-governing-evidence": "provenance-and-governing-evidence",
-    "2026-10-18-cockpit-api-integration-amendment-api-015": "2026-10-18-cockpit-api-integration-amendment"
   },
   "docs/adr/decision-092.md": {
     "decision-092-plugin-cli-invocations-run-in-transient-units-that-import-the-deployments-encrypted-hub-credential": "plugin-cli-invocations-run-in-transient-units-that-import-the-deployments-encrypted-hub-credential",
     "decision-context-and-consequences": "decision-context-and-consequences",
     "later-history-and-current-interpretation": "later-history-and-current-interpretation",
-    "provenance-and-governing-evidence": "provenance-and-governing-evidence",
-    "2026-10-18-cockpit-api-integration-amendment-api-015": "2026-10-18-cockpit-api-integration-amendment"
+    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
   },
   "docs/adr/decision-093.md": {
     "decision-093-a-hardlink-carries-same-operation-content-evidence-only-with-exact-object-identity": "a-hardlink-carries-same-operation-content-evidence-only-with-exact-object-identity",
@@ -821,11 +798,6 @@
   },
   "docs/adr/decision-100.md": {
     "decision-100-serving-consumes-the-verified-ordinary-file-tree-through-read-only-container-mounts": "serving-consumes-the-verified-ordinary-file-tree-through-read-only-container-mounts",
-    "decision-context-and-consequences": "decision-context-and-consequences",
-    "provenance-and-governing-evidence": "provenance-and-governing-evidence"
-  },
-  "docs/adr/decision-101.md": {
-    "decision-101-repository-names-are-canonical-type-aware-external-links": "repository-names-are-canonical-type-aware-external-links",
     "decision-context-and-consequences": "decision-context-and-consequences",
     "provenance-and-governing-evidence": "provenance-and-governing-evidence"
   },
@@ -1080,8 +1052,7 @@
     "rationale-and-alternatives": "rationale-and-alternatives",
     "uds-descriptor-ownership-and-fw-04": "context-decision-and-rationale",
     "consequences-and-relationships": "consequences-and-relationships",
-    "api-013-operational-observation-amendment-2026-10-18": "cli-operation-observation-operational-observation-amendment-2026-10-18",
-    "2026-10-18-cockpit-api-integration-amendment-api-015": "2026-10-18-cockpit-api-integration-amendment"
+    "api-013-operational-observation-amendment-2026-10-18": "cli-operation-observation-operational-observation-amendment-2026-10-18"
   },
   "docs/adr/decision-120.md": {
     "decision-120--separate-command-execution-from-resumable-cli-observation": "separate-command-execution-from-resumable-cli-observation",
@@ -1089,7 +1060,6 @@
     "rationale-and-alternatives": "rationale-and-alternatives",
     "consequences-and-relationships": "consequences-and-relationships",
     "api-014-scheduled-observer-refinement-2026-10-18": "scheduled-observation-scheduled-observer-refinement-2026-10-18",
-    "2026-10-18-cockpit-api-integration-amendment-api-015": "2026-10-18-cockpit-api-integration-amendment",
     "2026-10-18-bounded-small-page-observation-correction-api-017": "2026-10-18-bounded-small-page-observation-correction",
     "cli-presentation-clarification": "cli-presentation-clarification"
   },
@@ -1098,7 +1068,6 @@
     "context-and-decision": "context-and-decision",
     "rationale-and-alternatives": "rationale-and-alternatives",
     "consequences-and-relationships": "consequences-and-relationships",
-    "2026-10-18-cockpit-api-integration-amendment-api-015": "2026-10-18-cockpit-api-integration-amendment",
     "2026-10-18-native-unix-prefix-and-rest-acceptance-amendment-api-016": "2026-10-18-native-unix-prefix-and-rest-acceptance-amendment",
     "2026-10-18-data-preserving-local-rollout-amendment-ops-014": "2026-10-18-data-preserving-local-rollout-amendment",
     "2026-10-18-explicit-rootless-runtime-amendment-ops-015": "2026-10-18-explicit-rootless-runtime-amendment",
@@ -1106,7 +1075,6 @@
     "native-release-classification": "native-release-classification"
   },
   "docs/adr/decision-122.md": {
-    "decision-122--preserve-cockpit-authority-through-the-api-client-and-guarded-candidates": "preserve-cockpit-authority-through-the-api-client-and-guarded-candidates",
     "context-and-decision": "context-and-decision",
     "rationale-and-alternatives": "rationale-and-alternatives",
     "consequences-and-relationships": "consequences-and-relationships",
@@ -1162,7 +1130,6 @@
     "context-and-decision": "context-and-decision",
     "images-identity-and-activation": "images-identity-and-activation",
     "network-tls-secrets-and-filesystem-isolation": "network-tls-secrets-and-filesystem-isolation",
-    "clients-cockpit-and-protected-installation": "clients-cockpit-and-protected-installation",
     "rationale-and-relationships": "rationale-and-relationships",
     "seccomp-implementation-correction-from-actual-proof": "seccomp-implementation-correction-from-actual-proof",
     "host-boot-policy-refinement-ops-016-2026-10-18": "host-boot-policy-refinement-2026-10-18",

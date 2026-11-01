@@ -16,7 +16,7 @@ import sys
 import time
 import tomllib
 import uuid
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from typing import Any
 
 RELEASE_ROOT = Path(__file__).resolve().parents[1]
@@ -43,11 +43,9 @@ HOST_HELPER_ARCHIVE_LOCK = Path("/run/hfcache/hfcache.lock")
 HOST_HELPER_ARCHIVE_LOCK_TYPE = "hfcache_host_helper_archive_lock_t"
 HOST_HELPER_MAX_CONTEXT = 4096
 
-# ADR135: this inspection is separate from every container/service role. These
-# paths are fixed host policy/accounting, never caller-selected routing.
+# Shared protected-host inspection primitives. These fixed paths and bounded
+# readers are captured by host_policy; no command exposes inspection authority.
 INSPECTION_PREFIX = Path("/opt/hfcache")
-INSPECTION_POLICY = Path("/etc/hfcache/cockpit-policy.json")
-INSPECTION_MOUNTS = Path("/proc/1/mountinfo")
 INSPECTION_LOCKS = Path("/proc/locks")
 INSPECTION_LOCK = Path("/run/hfcache/hfcache.lock")
 INSPECTION_OWNER = 0
@@ -74,12 +72,9 @@ INSPECTION_UNITS = (
     "hfcache-verify.timer",
 )
 INSPECTION_GUARD = "hfcache-readonly-guard.service"
-INSPECTION_ACTIONS = {"archive", "hub", "control", "schedule", "configuration", "observer"}
 _INSPECTION_MAX_ACCOUNTING = 1048576
-_INSPECTION_MAX_POLICY = 4096
 _INSPECTION_MAX_ARTIFACT = 16777216
 _INSPECTION_MAX_COMMAND = 16384
-_INSPECTION_MAX_FILES = 1000
 _INSPECTION_LOCK_MODE = 0o600
 _INSPECTION_METADATA = (
     "st_dev",
@@ -107,7 +102,7 @@ _INSPECTION_UNIT_FILES = {
 
 
 def _inspection_refuse():
-    message = "read-only Cockpit inspection refused"
+    message = "read-only host inspection refused"
     raise ValueError(message)
 
 
@@ -130,23 +125,6 @@ def _inspection_accounting(path):
         _inspection_refuse()
     finally:
         os.close(descriptor)
-
-
-def _inspection_mounts():
-    rows = []
-    for line in _inspection_accounting(INSPECTION_MOUNTS).splitlines():
-        left, separator, right = line.partition(" - ")
-        before, after = left.split(), right.split()
-        if not separator or len(before) < 6 or len(after) < 3:  # noqa: PLR2004 - mountinfo grammar
-            _inspection_refuse()
-        raw = re.sub(r"\\([0-7]{3})", lambda match: chr(int(match[1], 8)), before[4])
-        path = Path(raw)
-        if not path.is_absolute() or str(path) != raw or ".." in path.parts:
-            _inspection_refuse()
-        rows.append((path, after[0], set(before[5].split(",")), set(after[2].split(","))))
-    if not rows:
-        _inspection_refuse()
-    return rows
 
 
 def _inspection_local(path, rows):
@@ -216,22 +194,6 @@ def _inspection_read(path, rows, *, maximum):
     finally:
         if descriptor >= 0:
             os.close(descriptor)
-        os.close(parent)
-
-
-def _inspection_selector(rows):
-    parent = _inspection_parent(INSPECTION_PREFIX / "current", rows)
-    try:
-        info = os.stat("current", dir_fd=parent, follow_symlinks=False)
-        target = os.readlink("current", dir_fd=parent)
-        if (
-            not stat.S_ISLNK(info.st_mode)
-            or info.st_uid != INSPECTION_OWNER
-            or not re.fullmatch(r"releases/[0-9]+\.[0-9]+\.[0-9]+", target)
-        ):
-            _inspection_refuse()
-        return target, tuple(getattr(info, key) for key in _INSPECTION_METADATA)
-    finally:
         os.close(parent)
 
 
@@ -409,116 +371,6 @@ def _inspection_archive_mount(rows):
     if kind in _INSPECTION_LOCAL_FS:
         return "local-ro" if "ro" in flags else "local-rw"
     return _inspection_refuse()
-
-
-def inspect_cockpit():  # noqa: PLR0911, PLR0912 - retain distinct failure stages without partial authority
-    """ADR135: permission to submit is distinct from archive writability."""
-
-    def unknown(reason):
-        return {"schema_version": 1, "state": "unknown", "reason": reason}
-
-    if os.geteuid() != 0:
-        return unknown("privilege-required")
-    try:
-        rows = _inspection_mounts()
-    except Exception:  # noqa: BLE001 - inspection failure never grants authority
-        return unknown("facts-unavailable")
-    try:
-        policy_body = _inspection_read(INSPECTION_POLICY, rows, maximum=_INSPECTION_MAX_POLICY)
-        policy = _inspection_json(policy_body)
-        if (
-            not isinstance(policy, dict)
-            or set(policy) != {"schema_version", "source_commit", "index_sha256", "permissions"}
-            or type(policy["schema_version"]) is not int
-            or policy["schema_version"] != 1
-            or not isinstance(policy["source_commit"], str)
-            or not re.fullmatch(r"[0-9a-f]{40}", policy["source_commit"])
-            or not isinstance(policy["index_sha256"], str)
-            or not re.fullmatch(r"[0-9a-f]{64}", policy["index_sha256"])
-            or not isinstance(policy["permissions"], dict)
-            or set(policy["permissions"]) != INSPECTION_ACTIONS
-            or any(type(value) is not bool for value in policy["permissions"].values())
-        ):
-            _inspection_refuse()
-    except FileNotFoundError:
-        return unknown("policy-missing")
-    except Exception:  # noqa: BLE001 - untrusted policy gets no partial permissions
-        return unknown("policy-invalid")
-    try:
-        selector = _inspection_selector(rows)
-        selected = INSPECTION_PREFIX / selector[0]
-        if selected != RELEASE_ROOT or any(
-            where.is_relative_to(selected) and kind not in _INSPECTION_LOCAL_FS
-            for where, kind, _, _ in rows
-        ):
-            _inspection_refuse()
-        index_body = _inspection_read(
-            selected / "artifact-index.json", rows, maximum=_INSPECTION_MAX_ACCOUNTING
-        )
-        index = _inspection_json(index_body)
-        if (
-            hashlib.sha256(index_body).hexdigest() != policy["index_sha256"]
-            or not isinstance(index, dict)
-            or set(index) != {"schema_version", "files"}
-            or type(index["schema_version"]) is not int
-            or index["schema_version"] != 1
-            or not isinstance(index["files"], dict)
-            or not 0 < len(index["files"]) <= _INSPECTION_MAX_FILES
-        ):
-            _inspection_refuse()
-        verifier = _inspection_verifier(selected, rows, index)
-        release = verifier["_verify_stage"](selected)
-        if (
-            release["source_commit"] != policy["source_commit"]
-            or release["version"] != PurePosixPath(selector[0]).name
-        ):
-            _inspection_refuse()
-        verifier["_verify_bindings"]()
-    except Exception:  # noqa: BLE001 - absent/old/mixed/drifted deployments fail closed
-        return unknown("deployment-unverified")
-    try:
-        guard = _inspection_guard(rows, release)
-        mount = _inspection_archive_mount(rows)
-        units = {}
-        for unit in INSPECTION_UNITS:
-            facts = _inspection_system_show(unit)
-            units[unit] = {
-                "load": facts["LoadState"],
-                "active": facts["ActiveState"],
-                "unit_file": facts["UnitFileState"],
-            }
-        if (
-            _inspection_selector(rows) != selector
-            or _inspection_guard(rows, release) != guard
-            or _inspection_mounts() != rows
-            or _inspection_read(INSPECTION_POLICY, rows, maximum=_INSPECTION_MAX_POLICY)
-            != policy_body
-            or _inspection_read(
-                selected / "artifact-index.json", rows, maximum=_INSPECTION_MAX_ACCOUNTING
-            )
-            != index_body
-        ):
-            _inspection_refuse()
-    except Exception:  # noqa: BLE001 - stale/unknown facts cannot enable a mutation
-        return unknown("facts-unavailable")
-    permissions = {**policy["permissions"]}
-    if guard == "held":
-        permissions["archive"] = False
-    # The nine rootless bindings do not select system scheduled observers. The
-    # native .venv scheduled-client unit is not proof for this profile. No new
-    # scheduler or substitute client is installed to manufacture that authority.
-    permissions["schedule"] = permissions["observer"] = False
-    return {
-        "schema_version": 1,
-        "state": "guarded" if guard == "held" else "permitted",
-        "deployment": "rootless",
-        "source_commit": release["source_commit"],
-        "index_sha256": policy["index_sha256"],
-        "image": release["app_image"],
-        "policy_sha256": hashlib.sha256(policy_body).hexdigest(),
-        "permissions": permissions,
-        "facts": {"guard": guard, "archive_mount": mount, "units": units},
-    }
 
 
 def profile_pairs(items):
@@ -1225,18 +1077,13 @@ def main():
     if any(argument in {"--help", "-h"} for argument in help_arguments):
         print(
             "Usage: /usr/local/libexec/hfcache-container-service "
-            "api|worker|caddy|client CLI_ARGS...|stop api|worker|caddy|inspect-cockpit\n"
+            "api|worker|caddy|client CLI_ARGS...|stop api|worker|caddy\n"
             "Rootless user-manager launcher; fixed local /usr/bin/podman. "
             "Reads protected rendered/runtime.json from its physical release. "
             "Podman mounts role-specific secrets; worker receives none. "
             "Starts role containers or drains an owned executor without killing. "
-            "Root-only inspect-cockpit reports read-only pinned host permission facts; "
-            "it starts no container and reads no archive contents or credentials. "
             "No engine/executable override; no dry-run. Help reads no profile."
         )
-        return 0
-    if sys.argv[1:] == ["inspect-cockpit"]:
-        print(json.dumps(inspect_cockpit(), sort_keys=True, separators=(",", ":")))
         return 0
     stopping = len(sys.argv) == 3 and sys.argv[1] == "stop" and sys.argv[2] in NAMES  # noqa: PLR2004 - fixed stop grammar
     if not stopping and (

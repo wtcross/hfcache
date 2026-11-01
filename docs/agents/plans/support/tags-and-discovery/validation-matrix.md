@@ -1,5 +1,10 @@
 # Acceptance and validation matrix
 
+WEB-027 archival projection: superseded interface references are summarized
+neutrally; exact original text, paths and invocations remain in Git
+`c692d7ae4b866fefd8a743a21afdb729da0f39c4`. Recorded proof hashes still identify
+the original artifacts. See [historical provenance](../../../history/removed-interface-records.md).
+
 The rows below are acceptance requirements, not independent execution claims.
 [Concrete evidence references](acceptance-evidence.json) resolve to real tests;
 final commands/results are recorded in the task completion evidence. IDs are test-scenario
@@ -12,9 +17,9 @@ small constructed headers are required; never download real weights for tests.
 | V02 | CAT-002 | Tag normalization | Case/outer-space variants deduplicate and sort; a second normalization is unchanged. |
 | V03 | CAT-002 | Bad tag inputs | Nonstring/coercive/empty/control/non-ASCII/oversized values and >64 raw elements refuse without echoing secrets. |
 | V04 | CAT-002 | Tag-only edit | Curation identity changes; operational policy/publication/integrity identity does not. |
-| V05 | CAT-003 | Full candidate comparison | Concurrent tag-only edits cannot be accepted as an unchanged candidate/base; no lost update. |
-| V06 | CAT-003 | All Cockpit edit paths | Add/edit/disable/form-text round trip, validation, backup and installation preserve canonical tags. |
-| V07 | CAT-003 | UI suggestions and backend authority | Existing local tags are suggested without a registry; backend rejects a malicious/invalid bypass. |
+| V05 | CAT-003 | Retired predecessor candidate editor | Retired with the removed interface; no current execution claimed. See retirement metadata. |
+| V06 | CAT-003 | Retired predecessor edit paths | Retired with the removed interface; no current execution claimed. See retirement metadata. |
+| V07 | CAT-003 | Backend tag authority | Invalid tags are refused at their exact location without disclosing rejected secret values; predecessor suggestion behavior is retired. |
 | V08 | CAT-004 | Record schema/path identity | Round-trip goldens preserve fields/order; wrong archive/repo/SHA/publication/manifest identity refuses. |
 | V09 | CAT-004 | Unknown existing record | Unsupported version, malformed canonical JSON or symlink is preserved and refuses replacement. |
 | V10 | CAT-004 | Atomic-write failure points | Before temp fsync/replace/parent fsync and between records: only whole old/new records visible; no multi-file atomicity claim. |
@@ -54,7 +59,7 @@ small constructed headers are required; never download real weights for tests.
 | V44 | CAT-014 | Exact MCP tool set | Nine original plus five new names at baseline; aliases and refresh/write tools absent; existing calls unchanged. |
 | V45 | CAT-014 | MCP capability injection | Tools/adapters cannot reach commands, app/request, Hub credentials or writable storage; annotations alone are not accepted proof. |
 | V46 | CAT-014 | REST/MCP semantic parity | Equivalent normalized queries yield same identities/tags/variant predicates/facets/coverage and consistent pagination. |
-| V47 | CAT-015 | Prompt injection and display safety | Malicious card text, filenames and labels remain data; safe terminal/browser rendering; no code, shell or URL execution. |
+| V47 | CAT-015 | Prompt injection and terminal display safety | Malicious source values and filenames remain inert data; terminal controls are escaped. Predecessor browser-label evidence is retired. |
 | V48 | CAT-015 | No read side effects | Filesystem/lock/network/import spies show searches cannot open model payloads, rebuild observations, write records or contact Hub. |
 | V49 | CAT-015 | Shared work/wire ceilings | Queue saturation, canceled readers, tiny page/full scan, huge single variant and response encoding all stay bounded and honest. |
 | V50 | CAT-015 | Registered-secret side channels | Filtering, facets, diagnostics and cursor hashes cannot reveal a sanitized secret value or distinguish hidden substitutions. |
@@ -69,7 +74,7 @@ small constructed headers are required; never download real weights for tests.
 Run the affected focused offline tests during development, then `scripts/check.sh`
 and record its exit status and reported results. The gate already selects locked
 server and MCP extras; do not use a base-only environment that silently omits tests.
-Run `make -C cockpit check` with the installed toolchain for every Cockpit change;
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 a skip in the overarching script is not success for that task. At final acceptance
 run `scripts/check.sh --with-build` and confirm the frontend stage actually ran.
 
@@ -93,3 +98,7 @@ versus repository unions, tag identity versus policy identity, and last observed
 versus current configuration. Use file/network/import spies and fault injection to
 prove read-only and bounded behavior. A small `limit` never justifies skipping a
 large underlying validation budget.
+
+The55original case identifiers remain;53have active concrete evidence. V05 and
+V06 are explicitly retired in [retirement metadata](retirements.json), without
+loading or executing their removed tests.

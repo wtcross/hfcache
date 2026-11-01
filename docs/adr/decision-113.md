@@ -13,7 +13,6 @@
 - Date: 2026-10-17.
 Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
-
 ## Context, decision and rationale
 
 One application/lifespan owns authenticated Unix/TCP listeners, startup policy,
@@ -61,7 +60,6 @@ retains the same transport trust boundary with its separate read-only capability
 
 Recorded installed scope and remaining acceptance are described in
 [deployment status](../deployment-status.md).
-
 
 ## Replacement UI design amendment (2026-10-20)
 

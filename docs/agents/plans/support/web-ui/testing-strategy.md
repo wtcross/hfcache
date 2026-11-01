@@ -1,18 +1,14 @@
 # Testing strategy and required gates
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `8d5d44ace8851f765db49061d0681d8f353c859fe4000617fb52073edbcba560`,
+original content SHA-256 `6516d150180d8308957acadbcc2b1209853c259e14e73af57caa1dd14c4986aa`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 Testing is part of every work package, not an end-of-project phase. A screen backed only by mocked HTTP responses is not functional acceptance. A green test count does not prove host/NAS safety or deployment. Requirements and planned checks are not passing evidence; completion records must identify what actually ran.
 
 ## WEB-023–026: bounded product testing and effort
-
-Applied after WEB-022/9d11738 and before WEB-023 on2026-11-01. This is execution
-policy, not new acceptance evidence. Retain all95 underlying new-web behaviors
-and minimum layers; apply the latest explicit amendment below to legacy scope.
-The adopted product-focused criteria govern: actual installed
-native/rootless Chromium/Firefox/WebKit at root and `/management`, with deeper
-fault/domain/privilege checks at the relevant boundary. The mandatory85×18/95×18
-normal-runner cross-product is superseded; optional runner protocols remain
-strict when explicitly invoked. Required web/backend source/build gates stay
-mandatory. Legacy Cockpit checks are superseded by the user amendment below.
 
 Test the actual product workflow first. Add no new harness, proof schema,
 framework or binder. Reuse retained artifacts, fixtures and passing evidence only
@@ -30,22 +26,6 @@ unresolved safety, compatibility or implementation contradiction. Consider
 xhigh/max only after naming the unresolved issue and expected benefit; neither
 is a default or permission to expand infrastructure/repeat accepted effects.
 
-### Latest user amendment: deprecate Cockpit, preserve legacy material
-
-On2026-11-01 the user explicitly instructed us to “ignore the cockpit plugin
-moving forward” and deprecate it once the new web UI is complete. This supersedes
-pending requirements for further plugin validation, exhaustive retirement/caller
-inventories, harness ports, dependency cleanup, source removal and live uninstall.
-Preserve legacy source, history, licenses, old evidence and the live installation,
-including generic clients/runtime helpers and shared policy/lock identities.
-
-WEB-025 is a proportional deprecation and handoff package. RELEASE-08 still
-requires evidence that the new web UI operates independently, reusing matching
-actual web/release results at its existing minimum layers; physically removing
-or testing the legacy plugin is no longer a prerequisite. All95 underlying
-new-web behaviors and minimum layers, remaining WEB-023/024/026 work and required
-web/backend gates remain. This amendment records scope, not a pass or execution.
-
 ## 1. Layers and ownership
 
 | Layer | What runs | What it proves and does not prove |
@@ -57,14 +37,9 @@ web/backend gates remain. This amendment records scope, not a pass or execution.
 | Platform functional | Disposable, isolated CentOS-compatible guests with actual systemd/rootless runtime/helper/Caddy, private test PKI and owned local fixture state | Effective manager/peer/mount-policy/cgroup/permission behavior, supported native positive paths and guarded rootless denials. Never uses the production writer's managers or archive. |
 | Human workflow acceptance | The same built test deployment, following published operator/user guides | Discoverability, explanations, safe task completion and screenshot accuracy; manual records supplement, not replace, automated tests. |
 
-Preserve existing backend/CLI/MCP/worker regressions and all required new-web coverage. Preserve legacy Cockpit source/tests as historical material without further validation or ports under the latest user amendment. Do not delete difficult new-web tests to obtain a green gate. New host/config/card behavior must have unit **and** integration **and** functional coverage where observable. Pure utility cases may use unit coverage, while their callers still need functional proof.
-
 ## 2. Provider-neutral execution interface
 
 The existing contract intentionally avoids CI-provider-specific configuration. Extend `scripts/check.sh`; do not introduce GitHub Actions or another CI platform merely for this feature.
-
-Earlier baseline gates included Cockpit. Their recorded commands/results remain
-historical evidence; the latest user amendment requires no further plugin gate.
 
 WEB-002 introduces the strict web gate and a documented `web/package.json` script contract:
 
@@ -138,19 +113,6 @@ for direct installed acceptance, and direct evidence must not be reported as a
 passing runner invocation. All private fixture/proof requirements below apply
 only when that optional instrumented runner is used.
 
-Historical 2026-10-29 optional-runner sequencing, superseded as the mandatory
-acceptance path: WEB-022's complete installed
-application acceptance precedes rollback, human walkthrough and conditional
-Cockpit retirement. The existing runner's `--require-through WEB-022` requires
-all 85 cases owned through that task in all 18 application/native/rootless ×
-root/prefix × browser cells and reports the ten later-owner cases pending.
-Subsequent packages extend that strict required set in task order. This avoids
-requiring WEB-025's Cockpit-absence case before its prerequisites without
-waiving any case. `--final` and `scripts/check.sh --with-web-functional` remain
-the optional runner's all 95×18 final gate and cannot be combined with a through-task selector.
-Its historical Cockpit-absence wording is superseded for remaining acceptance by
-the latest user amendment; do not invoke legacy plugin diagnostics to satisfy it.
-
 Historical 2026-10-31 optional-runner execution correction: run canonical native/application and rootless
 profiles on their explicitly owned, boot-bound guests without moving or mixing
 `/opt/hfcache/current` layouts. Application may use canonical native confinement,
@@ -197,7 +159,6 @@ require_cells/through/final:85×18 through WEB-022,95×18 final. An explicitly
 requested final instrumented-runner invocation must use this same strict path.
 These historical private protocol corrections do not require that optional path
 for current acceptance and grant no runtime or invariant change.
-
 
 Where the execution host cannot provision isolated guests safely, retain the task as blocked and run independent source work that is genuinely ready. Do not weaken new-web acceptance, run production host operations or claim installed independence from component fixtures alone. Legacy deprecation follows the explicit user amendment, with no plugin removal or further plugin validation.
 

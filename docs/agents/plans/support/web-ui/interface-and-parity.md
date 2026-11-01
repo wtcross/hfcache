@@ -1,4 +1,10 @@
-# Interface behavior and Cockpit replacement checklist
+# Interface behavior and historical frontend replacement checklist
+
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `25f1a1955d6dfa0a7347b9c786bee918b4c28998d9e42ebb2aa2e8c0295f1824`,
+original content SHA-256 `58cc9366fe75467ec0f5f699ca69b3000b2d1502bfeb98806b100a87eb53bf39`.
+Historical proof hashes identify the original artifacts, not this edited record.
 
 ## Navigation and repository detail
 
@@ -30,8 +36,6 @@ Host panel reports effective permissions, profile/release identity, read-only/un
 
 ## Parity register to complete before retirement
 
-The implementation creates executable coverage references for every row below. No 'replaced by a link to Cockpit' counts as replacement. A denied control with its real reason is correct parity on a restricted profile; a universally missing supported control is not.
-
 | Existing capability | Replacement source/workspace | Owner |
 | --- | --- | --- |
 | Archive health six fields, free capacity/reserve, repository states and warnings | Existing status/health; Library summary and Administration | WEB-012, WEB-019 |
@@ -50,8 +54,6 @@ The implementation creates executable coverage references for every row below. N
 | Safe version/build/profile presentation | Existing version plus independent UI build/bootstrap and host status | WEB-005, WEB-019, WEB-021 |
 | Administrative locks and forbidden actions explained | Internal permission policy plus guarded adapter | WEB-004, WEB-006, WEB-019 |
 | No credential editor or browser API/Hub bearer | Native Basic authentication and separate server-provisioned sources | WEB-004, WEB-005 |
-
-Explicitly out of UI scope: archive initialization/reinitialization, arbitrary host administration, terminal execution, live model inference, enabling verification scheduling, and general payload serving. Keep CLI/MCP and native/base installation support. Do not remove generic client/runtime helpers because Cockpit uses them; classify all call sites before retirement.
 
 WEB-019 composes these existing authorities in the actual Administration route.
 The [operator guide](../../../../web-ui/administration.md) identifies the rendered

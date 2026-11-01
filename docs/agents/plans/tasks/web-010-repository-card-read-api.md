@@ -1,5 +1,11 @@
 # WEB-010: Expose a bounded exact-publication card read
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `9f5e40ff90e46110503ffa235bf8da05d70768e455a6c32d8788938ca33b71cd`,
+original content SHA-256 `8f05d236f59a4d979ac851a753bf073327e4ca2d8ac543c2cdbf0840765e0469`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -41,11 +47,9 @@ Update API matrix and schema with mode/authority/effects/status/bounds, plus hum
 
 An authenticated browser can obtain only the bounded sanitized card for the requested retained publication, without changing archive state or reaching the Hub; all unavailable/error cases are distinguishable.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution notes and blockers
-
-Started2026-10-25 after WEB-009 commit `c51cc5b` and a clean checkout. Implement ADR142 exact metadata-only card read through existing bounded metadata leases and strict wire projection. No current fallback, payload, Hub, archive lock or capture from GET. Source/backend, browser decoder and human-contract scopes collaborate within this package; root owns acceptance/guest actions/commit. Reuse the owned application environment with clearly labelled external storage seam; no production/NAS/live Cockpit or rollout authority.
 
 Retained source1 validation checkpoint: backend79 card tests pass, query coverage100% and
 model96% (combined98%); surrounding156 regressions and71 wire/corpus checks pass.
@@ -83,9 +87,9 @@ state transitions pass without a listener. All earlier evidence remains retained
 
 2026-10-26, WEB-010, this commit; parent `c51cc5b`. CARD07–09 are complete.
 
-- `scripts/check.sh --require-web --require-cockpit` exits0 in1406.731s.
+- `historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` exits0 in1406.731s.
   8581 Python tests pass (1125.13s);52 unrelated opt-in cases are deselected.
-  581 Cockpit unit/110 mounted Firefox,2879 frontend unit/2939 combined component,
+  581 historical frontend unit/110 mounted Firefox,2879 frontend unit/2939 combined component,
   strict lint/types/schema export, three locked wheel profiles, both built-shell
   browser checks and14 real API browser cases pass. No required skip/retry.
   Human docs211/helpers27 pass. Source1388 hashes/modes remain unchanged at
@@ -156,7 +160,7 @@ state transitions pass without a listener. All earlier evidence remains retained
   every actual typed card read awaits native digest verification and exact binding
   before exposure, including abort races. Relevant existing contracts remain.
   See completed progress entry and Operator handoff. Next: WEB-011. No production,
-  NAS, live Cockpit, rollout, merge, push or tag action follows this completion.
+  NAS, installed predecessor interface, rollout, merge, push or tag action follows this completion.
 
 ## Retained validation checkpoints
 
@@ -172,7 +176,7 @@ The original source tar retains its original inventories and is a disclosed
 throwaway fixture, never a release candidate. Strict gate2 remains required.
 
 Gate2 result: exit1 in1400.39s, all1388 inputs unchanged.8581 backend tests,
-581 Cockpit unit,2879 web unit/2939 combined component, three wheel profiles,
+581 historical frontend unit,2879 web unit/2939 combined component, three wheel profiles,
 strict checks and built-shell browsers pass. The final real-API browser fixture
 stops on its independent old expected count347 while all350 original serialized
 models validate and all4 negative wires refuse. Six other root-prefix cases

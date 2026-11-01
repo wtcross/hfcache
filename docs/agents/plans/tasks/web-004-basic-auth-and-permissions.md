@@ -1,5 +1,11 @@
 # WEB-004: Add one Basic administrator through a replaceable principal boundary
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `5014fde960263f9ecd64f5f5b337e4f929beacaa90fffd73a0e7d34496cd772c`,
+original content SHA-256 `c71b8be5de4429838415d6148b0ce1a211a71033960c1ddf476c296a1496dbdd`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -43,7 +49,7 @@ Create human deployment/login/security/troubleshooting sections with protected p
 
 One configured Basic administrator works without exposing a bearer; existing CLI/MCP authentication remains compatible; server-side admin/CSRF policies are enforced; missing or unsafe credential sources fail closed.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution notes and blockers
 
@@ -233,7 +239,7 @@ per-profile browser/API/container artifact hashes, dependency and tool identitie
 are retained in the postverify log. All earlier failed attempts stay failed.
 
 After this independent verification the fourth strict source gate runs with
-exact command `scripts/check.sh --require-web --require-cockpit` on the same
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 source snapshot and exits0; complete results are recorded below. Preserve
 `.scratch/web-004-fourth-gate-command.json`,
 `.scratch/web-004-fourth-source-before-gate.json` and
@@ -282,11 +288,11 @@ unchanged source/wheel/tools, sandbox and complete cleanup are recorded above
 and independently verified in postcheck SHA256
 `53756288095aa0be93ac2c9632f5fd07288c44d1ebe0c0886110108092c30619`.
 
-Actual final source gate `scripts/check.sh --require-web --require-cockpit`
+Actual final source gate `historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)`
 exits0 in1107.599s. All1278 inventoried files remain unchanged, with the same
 `efbae890cd84358374875f84eb7c6250c0965b745e71dd352c17f4fc24179ae5`
 snapshot used by the real guest. Python:5940pass/52default marker deselections,
-858.43s; base/server/server+MCP clean wheel installations pass. Cockpit572unit
+858.43s; base/server/server+MCP clean wheel installations pass. historical frontend572unit
 and110mountedFirefox pass. Web21sandbox/process,2722unit/2748combined component,
 two built-shell and14real-API React read checks pass with no required skip,
 retry or omitted execution. Combined component repeats units; counts are not
@@ -320,7 +326,7 @@ unit/real TLS/Unix integration mappings for AUTH-01–07 in the
 All95 feature-case completion statuses and required built-UI/shared-Caddy layers
 remain pending. Neither the direct-TLS guest nor temporary read fixture proves
 Caddy/static serving, installed native/rootless application-role confinement,
-host controls, production/NAS acceptance or Cockpit retirement.
+host controls, production/NAS acceptance or historical frontend retirement.
 
 Human deployment/provisioning/login/rotation/TLS/logout/troubleshooting guides,
 navigation, server examples, API/server/security/schema/CLI/development/script

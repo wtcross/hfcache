@@ -123,7 +123,7 @@ type PackageLicense = {
 };
 function noticesFor(packages: PackageLicense[]): string {
     let notices =
-        "hfcache web assets: third-party notices\n\nThe production dependency closure contains the following packages under MIT or ISC licenses; some modules may be optimized out of the static bundle.\nBuild/test dependencies and all optional-platform packages are inventoried separately in dependencies/licenses.json.\nA local operation-recovery module is adapted from the hfcache Cockpit implementation under LGPL-2.1-or-later; its notice and full license follow. No Cockpit runtime or bridge is used.\n";
+        "hfcache web assets: third-party notices\n\nThe production dependency closure contains the following packages under MIT or ISC licenses; some modules may be optimized out of the static bundle.\nBuild/test dependencies and all optional-platform packages are inventoried separately in dependencies/licenses.json.\nA local operation-recovery module is adapted from an earlier hfcache implementation under LGPL-2.1-or-later; its immutable source identity, notice and full license follow. No process bridge is used.\n";
     for (const dependency of packages.filter(
         (item) => item.use === "production-dependency-closure",
     )) {
@@ -201,10 +201,10 @@ function noticesFor(packages: PackageLicense[]): string {
     if (
         !record(port) ||
         Object.keys(port).sort().join(",") !==
-            "license,license_file,license_sha256,original_commit,original_path,original_sha256,paths" ||
+            "license,license_file,license_sha256,original_blob,original_commit,original_sha256,paths" ||
         JSON.stringify(port.paths) !== JSON.stringify(localPaths) ||
         port.license !== "LGPL-2.1-or-later" ||
-        port.original_path !== "cockpit/src/lib/operation-registry.ts" ||
+        port.original_blob !== "4f45ac71d44a96cb2b43b8ef8c3b4e0673e2223f" ||
         typeof port.original_commit !== "string" ||
         !/^[0-9a-f]{40}$/u.test(port.original_commit) ||
         typeof port.original_sha256 !== "string" ||
@@ -214,7 +214,7 @@ function noticesFor(packages: PackageLicense[]): string {
             "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551"
     )
         throw new Error("Unreviewed local operation recovery source.");
-    const originalPath = port.original_path;
+    const originalBlob = port.original_blob;
     const localLicense = readFileSync(join(root, port.license_file));
     const localSources = localPaths.map((path) =>
         readFileSync(join(root, path), "utf8"),
@@ -225,12 +225,12 @@ function noticesFor(packages: PackageLicense[]): string {
         !localSources.every((source) =>
             source.includes("SPDX-License-Identifier: LGPL-2.1-or-later"),
         ) ||
-        !localSources.some((source) => source.includes(originalPath))
+        !localSources.some((source) => source.includes(originalBlob))
     )
         throw new Error(
             "Local operation recovery license/provenance is missing.",
         );
-    notices += `\n--- hfcache operation recovery port (LGPL-2.1-or-later) ---\nOriginal source: ${port.original_path} at ${port.original_commit}\nOriginal source SHA256: ${port.original_sha256}\nAdapted sources: ${localPaths.map((path) => "web/" + path).join(", ")} in the hfcache source distribution.\nRebuild instructions: docs/development.md.\n\n${localLicense.toString("utf8")}\n`;
+    notices += `\n--- hfcache operation recovery port (LGPL-2.1-or-later) ---\nOriginal source Git blob: ${port.original_blob} at ${port.original_commit}\nOriginal source SHA256: ${port.original_sha256}\nAdapted sources: ${localPaths.map((path) => "web/" + path).join(", ")} in the hfcache source distribution.\nRebuild instructions: docs/development.md.\n\n${localLicense.toString("utf8")}\n`;
     // Remove our final separator when the upstream license already ends in LF.
     return notices.endsWith("\n\n") ? notices.slice(0, -1) : notices;
 }

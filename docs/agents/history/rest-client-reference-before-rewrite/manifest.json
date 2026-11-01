@@ -4,27 +4,27 @@
     "git": "5503e3b",
     "sha256": "2157e87084ecc226c2c86a4baf950358ec5bd89e235b013c5b7fa9ab140b8952",
     "snapshot": "docs/agents/history/rest-client-reference-before-rewrite/api.md",
-    "snapshot_sha256": "fc1a725d2589a9baf156e03df761e419f0b0e6f2c9707bac66e10a9eb7c874f8"
+    "snapshot_sha256": "f739317da2b421f0fed3d31183461a953db228d39496772c706fe7d65722aebf"
   },
   {
     "source": "docs/api-client.md",
     "git": "5503e3b",
     "sha256": "ebcf784abbe110a3e08eb64f6ce1156a4200c02c73595392360607af4cd8ba1c",
     "snapshot": "docs/agents/history/rest-client-reference-before-rewrite/api-client.md",
-    "snapshot_sha256": "d46dd0b2e92ff37e65a1f4c860f4158299a37c74932cd2a6d775d1d1347496dd"
+    "snapshot_sha256": "cb6c3fd8390d0eeb850f4dfa2179ec27a08bc3a3ffd62dc9442b4b52a48b978c"
   },
   {
     "source": "docs/server.md",
     "git": "5503e3b",
     "sha256": "c60a9d7adf9d608b28d81d4b257521ca5f013ce9f5765d64574692c79e2f84df",
     "snapshot": "docs/agents/history/rest-client-reference-before-rewrite/server.md",
-    "snapshot_sha256": "d7d85ad6b306e73c3a6f848bc9c3d5b4ad74192e1f8ba0f5177f60b6c59efeac"
+    "snapshot_sha256": "cd2c0429868e50d1fccea26f7b2820c66a3e6334c866e8264c74c3b3748db0b3"
   },
   {
     "source": "docs/cli.md",
     "git": "5503e3b",
     "sha256": "ff2682195ba9b605eb043c0da6933c15f6a6b269d0ba0df62444cd05306a2bb3",
     "snapshot": "docs/agents/history/rest-client-reference-before-rewrite/cli.md",
-    "snapshot_sha256": "f2b5a095157278ccd8ecbc1a87662a62293817c66e701ce60b95ea4830b9fd67"
+    "snapshot_sha256": "814fb2467a70e86bc504e43bee5bb66c1ced68ce22925424efccaeae452546c9"
   }
 ]

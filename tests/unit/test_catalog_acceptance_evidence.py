@@ -1,6 +1,7 @@
 """V55: acceptance references resolve and serial package evidence remains auditable."""
 
 import ast
+import hashlib
 import json
 import re
 import subprocess
@@ -11,7 +12,31 @@ PLAN_ROOT = ROOT / "docs/agents/plans"
 SUPPORT = PLAN_ROOT / "support/tags-and-discovery"
 
 
-def test_acceptance_matrix_has_live_concrete_evidence_for_every_case():
+def _assert_retired_task_provenance(retired_task, files, commit):
+    assert retired_task["status"] == "retired"
+    assert retired_task["reason"].strip()
+    assert commit == retired_task["original_commit"]
+    originals = [
+        path
+        for path in files
+        if hashlib.sha256(path.encode()).hexdigest() == retired_task["original_task_path_sha256"]
+    ]
+    assert len(originals) == 1
+    original = subprocess.run(
+        ["git", "show", f"{commit}:{originals[0]}"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    ).stdout
+    assert hashlib.sha256(original).hexdigest() == retired_task["original_task_sha256"]
+    text = original.decode()
+    assert re.search(r"\| Status \| complete(?:d)? \|", text)
+    assert "scripts/check.sh" in text
+    assert "docs/agents/progress.md" in files
+    assert "docs/agents/plans/current.md" in files
+
+
+def test_active_acceptance_cases_have_live_evidence_and_two_explicit_retirements():
     record = json.loads((SUPPORT / "acceptance-evidence.json").read_text())
     assert record["schema_version"] == 1
     planned = re.findall(
@@ -19,7 +44,15 @@ def test_acceptance_matrix_has_live_concrete_evidence_for_every_case():
     )
     assert [row["case"] for row in record["cases"]] == planned == [f"V{i:02}" for i in range(1, 56)]
     assert record["required_final_gate"] == "scripts/check.sh --with-build"
+    retired = {row["case"] for row in record["cases"] if row.get("status") == "retired"}
+    assert retired == {"V05", "V06"}
+    assert len(record["cases"]) - len(retired) == 53
     for row in record["cases"]:
+        if row["case"] in retired:
+            assert row["evidence"] == []
+            assert row["retirement_reason"].strip()
+            continue
+        assert row.get("status", "active") == "active"
         assert row["evidence"], row["case"]
         for reference in row["evidence"]:
             filename, name = reference.split("::", 1)
@@ -40,30 +73,44 @@ def test_acceptance_matrix_has_live_concrete_evidence_for_every_case():
 
 def test_predecessor_commits_and_plan_selector_preserve_the_execution_record():
     completed = subprocess.run(
-        ["git", "log", "--format=%s", "--name-only", "75d93a5..HEAD"],
+        ["git", "log", "--format=%H %s", "--name-only", "75d93a5..HEAD"],
         cwd=ROOT,
         check=True,
         capture_output=True,
         text=True,
     )
     packages = {}
+    package_commits = {}
     current = None
     for line in completed.stdout.splitlines():
-        match = re.match(r"^CAT-([0-9]{3}): ", line)
-        if match:
-            current = int(match[1])
-            assert current not in packages
-            packages[current] = set()
+        header = re.match(r"^([0-9a-f]{40}) (.*)$", line)
+        if header:
+            current = None
+            match = re.match(r"^CAT-([0-9]{3}): ", header[2])
+            if match:
+                current = int(match[1])
+                assert current not in packages
+                packages[current] = set()
+                package_commits[current] = header[1]
         elif line and current is not None:
             packages[current].add(line)
+    retirements = json.loads((SUPPORT / "retirements.json").read_text())
+    assert retirements["schema_version"] == 1
+    assert retirements["retired_cases"] == ["V05", "V06"]
+    assert [row["id"] for row in retirements["tasks"]] == ["CAT-003"]
+    retired_task = retirements["tasks"][0]
     for number in range(1, 16):
         tasks = list((PLAN_ROOT / "tasks").glob(f"cat-{number:03}-*.md"))
+        assert number in packages
+        files = packages[number]
+        if number == 3:
+            assert tasks == []
+            _assert_retired_task_provenance(retired_task, files, package_commits[number])
+            continue
         assert len(tasks) == 1
         text = tasks[0].read_text()
         assert re.search(r"\| Status \| complete(?:d)? \|", text)
         assert "scripts/check.sh" in text
-        assert number in packages
-        files = packages[number]
         assert str(tasks[0].relative_to(ROOT)) in files
         assert "docs/agents/progress.md" in files
         assert "docs/agents/plans/current.md" in files

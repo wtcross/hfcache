@@ -1,5 +1,11 @@
 # Configuration tags and evidence-backed model/dataset discovery
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `8bf3a7ba09a42c0e28c6b313b81994e44045da277a05cddbfbbe1a281a5e75c1`,
+original content SHA-256 `396c1e437bc70f7ace575db27fae7bd0c08e42e84fa1feba45205cb39646cba0`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | complete |
@@ -26,23 +32,6 @@ authority. Explicit implementation authorization activated it; linked tasks own
 actual execution evidence. Production, host and publication restrictions remain.
 
 ### Required user-facing results
-
-- One optional direct `[[repositories]].tags` field; no categories, groups,
-  curated use_cases, expected_variants, hierarchy or parallel annotation system.
-- Config-time authoring through current TOML/Cockpit flows, normalized labels and
-  existing-value suggestions. Tags are labels, not auth, retention or file filters.
-- Fresh configured-tag search without syncing; disabled repositories retain tags;
-  unmanaged retained repositories show only honestly recorded historical labels.
-- Structured exact-publication model variants with format/scheme/method/bit-width,
-  member completeness, size and provenance. Technical filters match one variant,
-  not a repository-wide union of unrelated facts. Dataset facts remain static,
-  attributed observations, never loader execution or inferred physical splits.
-- One bounded transport-neutral query service, stable ALL/ANY tag predicates,
-  current/retained and configured/archived scopes, paged variant detail and facets.
-- Writer-only offline refresh/backfill for metadata, using existing REST keyed
-  operations. Reads never refresh, touch model payloads, contact Hub or write.
-- REST and client/CLI completion before the five explicit MCP discovery tools.
-  Preserve the existing nine tools and the actual narrow read-only capability.
 
 ### Explicitly out of scope
 
@@ -74,7 +63,7 @@ No supplied assertion is evidence that an implementation test has passed.
 Read only the relevant sections of `docs/configuration.md`, `docs/discovery.md`
 (new), `docs/architecture.md`, `docs/schemas.md`, `docs/invariants.md`,
 `docs/security.md`, `docs/api.md`, `docs/server.md`, `docs/api-client.md`,
-`docs/cli.md`, `docs/mcp.md`, `docs/cockpit.md`, `docs/consumers.md`,
+`docs/cli.md`, `docs/mcp.md`, `docs/agents/history/removed-interface-records.md`, `docs/consumers.md`,
 `docs/operations.md` and the current ADR index. Agent workflow authority is
 `AGENTS.md`, `docs/agents/planning.md`, `workflow.md`, `invariants.md`, environment,
 release and technical-record policy under `docs/agents/`.
@@ -138,7 +127,7 @@ final acceptance still requires an actually executed frontend gate.
 | --- | --- | --- | --- |
 | 1 | 1 — Foundation | [CAT-001 — Activate the feature plan and establish technical contracts](tasks/cat-001-contracts-and-activation.md) | None |
 | 2 | 1 — Foundation | [CAT-002 — Add strict configuration tags and separate curation identity](tasks/cat-002-configuration-tags-and-identities.md) | CAT-001 |
-| 3 | 1 — Foundation | [CAT-003 — Add tag authoring to the existing repository configuration workflow](tasks/cat-003-cockpit-tag-authoring.md) | CAT-002 |
+| 3 | 1 — Foundation | [CAT-003 — Retired predecessor tag editor](support/tags-and-discovery/retirements.json) | CAT-002 |
 | 4 | 2 — Metadata foundation | [CAT-004 — Implement bounded versioned tag snapshots and publication observations](tasks/cat-004-metadata-records-and-storage.md) | CAT-002 |
 | 5 | 2 — Metadata foundation | [CAT-005 — Extract bounded static model and dataset declarations](tasks/cat-005-bounded-static-metadata-extraction.md) | CAT-004 |
 | 6 | 2 — Metadata foundation | [CAT-006 — Detect GGUF formats, quantization schemes and complete variant sets](tasks/cat-006-gguf-variants-and-shards.md) | CAT-005 |
@@ -157,7 +146,6 @@ final acceptance still requires an actually executed frontend gate.
 
 | Area | Guides/contracts to create or update with behavior |
 | --- | --- |
-| Tags and authoring | `docs/configuration.md`, `docs/discovery.md`, examples, `docs/cockpit.md`, `docs/cockpit-plugin/` |
 | Artifacts and provenance | `docs/schemas.md`, `docs/architecture.md`, `docs/invariants.md`, relevant technical ADRs, `docs/security.md` |
 | Search and operations | `docs/api.md`, `docs/server.md`, `docs/operations.md`, `docs/discovery.md` |
 | Reader workflows | `docs/api-client.md`, `docs/cli.md`, `docs/quickstart.md`, `docs/consumers.md` |
@@ -207,8 +195,13 @@ compatibility barriers and any separate operator prerequisites.
 - 2026-10-19: Completed all sixteen serial packages on feat/tags-and-discovery,
   each with its own passing gate and incremental commit. Final extended gate:
   5008 offline tests, 6 build/actual compatibility tests, three isolated profiles
-  and actual Cockpit 170 tests/build passed. Concrete V01-V55 references and
+  and actual historical frontend 170 tests/build passed. Concrete V01-V55 references and
   actual installed target hashes/results are linked above. Historical records
   and unsupported state are preserved; current selector is inactive. No live,
   production/credential/host, deployment, push/merge/tag or registry action ran.
   Operator handoff 24 retains separate authorization and real acceptance needs.
+
+The original CAT-003 package remains auditable through the
+[retirement metadata](support/tags-and-discovery/retirements.json). Its dedicated
+interface task and V05/V06 tests are retired; the other53catalog cases remain
+active, with V07/V47 retaining only their concrete backend evidence.

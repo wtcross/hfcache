@@ -1,5 +1,12 @@
 # Technical contract maintenance
 
+WEB-027 is a narrow explicit removal exception: obsolete interface-only records
+leave the current tree, while shared records are labeled sanitized projections.
+Original text, exact invocations and original hashes remain in pre-removal Git.
+See [decision 161](../adr/decision-161.md) and the
+[provenance record](history/removed-interface-records.md). This does not authorize
+history rewriting or removal of unrelated reasoning.
+
 ## Maintenance rules
 
 For every change or new plan being implemented:
@@ -42,7 +49,6 @@ Each new record must identify:
 
 The human ADR index retains the legacy AD/decision namespaces and named records.
 Do not create a third sequence for new decisions; use the progress number.
-
 
 ## Audience and migration evidence
 

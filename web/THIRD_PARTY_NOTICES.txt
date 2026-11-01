@@ -2,7 +2,7 @@ hfcache web assets: third-party notices
 
 The production dependency closure contains the following packages under MIT or ISC licenses; some modules may be optimized out of the static bundle.
 Build/test dependencies and all optional-platform packages are inventoried separately in dependencies/licenses.json.
-A local operation-recovery module is adapted from the hfcache Cockpit implementation under LGPL-2.1-or-later; its notice and full license follow. No Cockpit runtime or bridge is used.
+A local operation-recovery module is adapted from an earlier hfcache implementation under LGPL-2.1-or-later; its immutable source identity, notice and full license follow. No process bridge is used.
 
 --- @types/debug@4.1.13 (MIT) ---
 Source: https://registry.npmjs.org/%40types%2Fdebug/4.1.13
@@ -2898,7 +2898,7 @@ authorization of the copyright holder.
 
 
 --- hfcache operation recovery port (LGPL-2.1-or-later) ---
-Original source: cockpit/src/lib/operation-registry.ts at beebb7a4bec01aa538a938c4b39641e6b3d4d8c7
+Original source Git blob: 4f45ac71d44a96cb2b43b8ef8c3b4e0673e2223f at beebb7a4bec01aa538a938c4b39641e6b3d4d8c7
 Original source SHA256: 3d4d2cb4c648e46bdf08026bbd878ee22a59bcaf80b5ce2de3423e04f91a8d52
 Adapted sources: web/src/state/authority.ts, web/src/state/operation-registry.ts in the hfcache source distribution.
 Rebuild instructions: docs/development.md.

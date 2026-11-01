@@ -1,5 +1,11 @@
 > Historical transcript preserved before the API runbook rewrite. Current authority is the living guide.
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `9aac9398e61ebd9118351281f597c5495a3ca82e10c95634062203801518f9c8`,
+original content SHA-256 `13e69253e255f681aa588fd2d7e4e9473e0ff4ec639123196991247995b561f2`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 # Operating hfcache
 
 | Field | Value |
@@ -442,7 +448,7 @@ a rotation that a previous run left incomplete or applies a reduced limit.
 
 To adopt three revisions from an existing explicit five-revision policy, edit
 `storage.maximum_revisions = 3` through the validated configuration pipeline
-(`docs/cockpit.md` §6). The key is `maximum_revisions`, not `max_revisions`. Changing it alone
+(`docs/agents/history/removed-interface-records.md` §6). The key is `maximum_revisions`, not `max_revisions`. Changing it alone
 does not delete anything. Review `prune --dry-run` with explicit repository
 selectors and run `prune --apply` with the same selectors. Each invocation
 removes at most one eligible revision per repository, ordered by immutable
@@ -835,11 +841,6 @@ sudo journalctl _SYSTEMD_INVOCATION_ID=<id>            # exactly one run
 
 Not covered here: corruption and repair (`OPS-003`), snapshot and replica restore
 (`OPS-004`), and the consumer-side copy, which happens on a different host.
-
-The Cockpit plugin (`docs/cockpit.md`) is a browser front-end for exactly this
-runbook — the same commands, the same units, and this document's guidance
-carried inline. Nothing it can do is anything this runbook does not describe.
-
 
 Current authenticated setup starts with the [API-client quickstart](../../../quickstart.md).
 For source-to-host rollout use the [API-017 operator checklist](../../../deployment-centos-stream-10.md#acceptance-checklist),

@@ -631,7 +631,7 @@ test("manual legacy reference remains nonblocking while stop-observing sends no 
     const { value } = controller(fetcher);
     const reference = value.importHandle({
         kind: "legacy-key",
-        key: "old-cockpit-original",
+        key: "old-bearer-original",
         credentialClass: "rest-writer",
     });
     expect(value.snapshot().canSubmit).toBe(true);

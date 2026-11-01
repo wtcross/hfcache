@@ -46,7 +46,7 @@ missing or changed enabled artifacts refuse startup. Replacement requires a
 drained restart. See the [shared-Caddy/prefix procedure](web-ui/deployment.md#keep-the-existing-caddy-boundary)
 and [startup troubleshooting](web-ui/troubleshooting.md#interface-startup-and-release-changes).
 An owned fixture result binds its exact source/wheel/assets/profile. Clean release
-packaging, migration, Cockpit retirement and production rollout remain separate.
+packaging, migration and production rollout remain separate.
 
 Provision the NAS dataset, exact-host writer export, disjoint read-only consumer
 export, quota, snapshots/replication/scrub and service identities first; see
@@ -170,15 +170,11 @@ API gets Hub/REST/MCP sources, client REST writer only, Caddy TLS only, worker n
 API/Caddy use pasta; worker/client use network none, and the worker additionally
 permits only native AF_UNIX socket creation under baseline-preserving seccomp.
 
-Cockpit effect controls additionally require a separately reviewed root-owned
-`/etc/hfcache/cockpit-policy.json`, pinned to the selected source commit and
-artifact-index SHA256. The application never provisions or updates this policy.
-The exact `inspect-cockpit` role of the existing fixed container helper checks
-it without running Podman, changing units, acquiring locks, or reading archive
-contents/credential values. New release manifests must include the indexed
-installer script needed for its read-only stage/binding verification. An old
-release without that proof, a missing policy or any drift denies effects.
-See the [policy and output schema](containers.md#read-only-cockpit-host-permission-inspection).
+Protected web host controls use an independently provisioned fixed policy,
+authenticated selected-release facts and the confined helper; the application
+never creates its own grants. Missing policy, unsupported target or drift denies
+effects. See [web provisioning](web-ui/deployment.md) and the
+[host administration contract](host-administration.md).
 
 The selected guarded profile retains archive denial. Explicit permissions in a
 disposable fixture permit only submission; existing read-only mounts and API
@@ -475,7 +471,7 @@ that result is not attributed to the card extension. Exact commands/results:
 This is an isolated read/format drill, not production, NFS workload or old-writer
 effect acceptance. The [card guide](web-ui/readme-cards.md) describes preservation.
 
-The [Cockpit migration guide](web-ui/migration-from-cockpit.md#compatibility-and-backups)
+The [interface migration guide](web-ui/migration-and-rollback.md#compatibility-and-backups)
 records the later retained-wheel copied-state results, actual old-client TLS
 successes/refusals and disposable indexed77/78 rollback scope. Old generic receipt
 readability does not supply missing private helper readers or establish safe
@@ -502,7 +498,6 @@ installed profile is accepted, collect actual evidence for its applicable rows:
 | State/drain | Original lock inodes, both receipt stores and handles preserved; real executor shutdown/result handoff and restart reconciliation |
 | NAS/domain | Separately approved mount/sentinel/probe/sync/report/catalog/full-verification and interruption/reconnect workloads |
 | Consumer/host | Disjoint export/write refusal, complete copy on another host, reboot/NAS-down behavior, snapshot restore and memory reclamation |
-| Cockpit | Actual PAM/privileged bridge, fixed launcher, bounded output and candidate/base/confirmation behavior; blocked controls remain blocked |
 | Scheduling | Calendar approved against NAS maintenance and long-run costs; verification remains disabled until that approval |
 
 Start hardening diagnostics with static help/dry-run or selected-property inventory,
@@ -514,5 +509,5 @@ not certify installed PID1, peer, SELinux, NFS or workload behavior. See
 
 The [dated deployment status](deployment-status.md) records the narrower local
 0.2.1 evidence and outstanding acceptance. No repository gate substitutes for
-those host checks. [Cockpit installation](cockpit-plugin/installation.md) and
+those host checks. [Web deployment](web-ui/deployment.md) and
 [operations](operations.md) use the same profile distinctions and safety rules.

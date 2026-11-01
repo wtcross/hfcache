@@ -1,5 +1,11 @@
 # WEB-016: Expose existing jobs, verification, diagnostics and reports
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `4174c708c5826ab8774f27106726bc7142a8beb2e16ea1138802aad61611cf7e`,
+original content SHA-256 `5f4cc640c137f6937181c34f71d73bdf419a707d0a9bcea6b496b9373a4b9a71`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -10,8 +16,6 @@
 | Work-package commit | `WEB-016: expose jobs and exact operation reports` (this commit) |
 
 ## Read before implementation
-
-Operation controller; existing sync/plans/verification/diagnostics/refresh/runs contracts; Cockpit activity/report behaviors.
 
 Also read the relevant sections of [architecture](../support/web-ui/architecture.md), [API contracts](../support/web-ui/api-contracts.md), [testing strategy](../support/web-ui/testing-strategy.md), [acceptance matrix](../support/web-ui/acceptance-matrix.md), and [human documentation map](../support/web-ui/documentation-map.md). Load only affected living contracts and ADRs through their indexes. Refer to the [source review](../support/web-ui/source-review.md) for pinned baseline evidence; current git wins over it.
 
@@ -43,7 +47,7 @@ Complete operations.md and relevant troubleshooting/runbook links; update actual
 
 Existing operational capabilities are reachable and observable from the SPA with exact results, safe original-handle recovery, bounded reports and no fabricated progress/outcome.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution notes and blockers
 
@@ -153,7 +157,7 @@ functional executions; final strict-gate acceptance remains required before
 row/task completion.
 
 Strict gate1 actually failed1652.720s with no source drift:8599 backend tests,
-3556 web unit tests and Cockpit checks passed, but one existing native-fetch
+3556 web unit tests and historical frontend checks passed, but one existing native-fetch
 component assertion expected a globally unique operation ID after the new result
 view intentionally repeats the original receipt ID. Its original log/result
 remain retained, not promoted. The correction scopes assertions separately to
@@ -223,7 +227,7 @@ These new build/functional/gate results remain pending until actually observed.
 
 Source3 gate3 actually passes1494.761s with1473 inputs/drift[]:8608 backend tests,
 52 unrelated opt-in deselections,3556 web unit/3798 combined React tests,95.55%
-line/90.36% branch coverage,581 Cockpit unit/110 mounted checks, strict
+line/90.36% branch coverage,581 historical frontend unit/110 mounted checks, strict
 format/lint/types/contracts/docs/build/browser/read-fixture and all locked wheel
 profiles; no required skips. Result SHA256
 `7aeea2cf1ba2b3a9101d651d84c40f92850a49cd2c259f406d6788fed5ae51bc`.
@@ -304,7 +308,6 @@ The current response wrapper remains bound to current policy; only the nested
 durable report may carry its historical fingerprint, covered by five strict
 client regressions. There is no client authority exception for old reports.
 
-
 ## Completion evidence
 
 Completed 2026-10-26, WEB-016, this commit. Earlier execution notes above are
@@ -314,10 +317,10 @@ acceptance. The executable test nodes and executions for OPS06–09 are recorded
 
 **Current source and strict gate.** Source
 `7fa3bb9fc999132736df13f7faac9e73033efcb80a4214e40bf2b6d5e4a51f8b` (1473 regular
-inputs) passes `scripts/check.sh --require-web --require-cockpit` with exit 0 in 1781.806 seconds.
+inputs) passes `historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` with exit 0 in 1781.806 seconds.
 There is no source drift and no required skips. Results include 8608 backend tests
 with 52 unrelated opt-in deselections, 3557 web unit tests, 3799 combined frontend
-tests, 95.55% line and 90.37% branch coverage, 581 Cockpit unit tests and 110 mounted
+tests, 95.55% line and 90.37% branch coverage, 581 historical frontend unit tests and 110 mounted
 checks. Formatting, lint, types, contracts, locked wheel profiles, builds, browser
 and read-API checks pass, as do documentation checks for 215 documents and 27 helpers. Evidence
 root `E=/var/tmp/web-016-validation-2_9zjimp`; `E/gate4/strict-gate-result.json`
@@ -405,9 +408,3 @@ queue/conflict/large/event/expiry tests mapped in OPS06–09. Review covers
 INV006/007/013/014/018/020/021 and ADR109/115/116/118/120/121/135/136/137/145/148;
 Amendments to ADR121/136/137/145 record cooperative stop and bounded composition.
 No endpoint, dependency, durable format, privilege or architecture decision is added.
-
-[Progress/handoff](../../progress.md#operator-handoff) records completion.
-[WEB-017](web-017-maintenance-ui.md) remains pending through the
-[current selector](../current.md), for activation after this commit. Later
-WEB022 platform, compatibility, parity and final acceptance and production rollout remain
-separate. No production, NAS, live Cockpit, merge, push, tag or rollout action occurs.

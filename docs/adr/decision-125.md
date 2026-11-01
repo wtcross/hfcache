@@ -5,7 +5,6 @@
 - Status: Amended; see decision 133 and the amendments referenced below.
 - Date: 2026-10-18.
 
-
 ## Context, decision and rationale
 
 Expose exactly nine explicit typed metadata tools through a narrow async read

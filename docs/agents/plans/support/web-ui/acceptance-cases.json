@@ -1013,8 +1013,8 @@
     {
       "id": "RELEASE-08",
       "owner": "WEB-025",
-      "requirement": "Independent web UI and legacy deprecation",
-      "required_assertions": "Built/staged release and browser workflows operate independently of Cockpit; new-web safety coverage, generic helpers, history and licenses remain. The legacy plugin is deprecated without further maintenance or validation.",
+      "requirement": "Independent indexed web interface",
+      "required_assertions": "Built/staged release and browser workflows use indexed application assets independently; current web safety coverage, generic host/client helpers and required attribution remain.",
       "minimum_layers": [
         "unit",
         "integration",
@@ -1026,7 +1026,7 @@
       "id": "RELEASE-09",
       "owner": "WEB-026",
       "requirement": "No production or remote publication claims",
-      "required_assertions": "Final evidence separates source/fixture acceptance from unperformed live deployment, Caddy reload, NAS, push, tag and production Cockpit removal.",
+      "required_assertions": "Final evidence separates source/fixture acceptance from unperformed live deployment, Caddy reload, NAS, push, tag and production historical frontend removal.",
       "minimum_layers": [
         "unit",
         "integration",

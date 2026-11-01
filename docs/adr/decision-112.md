@@ -10,7 +10,6 @@
 - Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-17.
 
-
 ## Context, decision and rationale
 
 Archive TOML expresses storage/repository intent; daemon listeners, trust,
@@ -92,7 +91,6 @@ Recorded installed scope and remaining acceptance are described in
 - [constant-time comparison](https://docs.python.org/3.14/library/hmac.html)
 
 - [RFC 6750 bearer token alphabet and header use](https://www.rfc-editor.org/rfc/rfc6750#section-2.1)
-
 
 ## Replacement UI design amendment (2026-10-20)
 

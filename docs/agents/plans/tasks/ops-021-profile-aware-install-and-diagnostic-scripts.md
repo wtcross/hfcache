@@ -1,5 +1,11 @@
 # OPS-021: Align installer and diagnostic entrypoints with deployment profiles
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `1fea3d435d2005104af854f91761a8b485f56d64342930d92ccbaac6963c5ba6`,
+original content SHA-256 `7b594a9319b74cb0bebe098477e5813733d8b936eb100d056e46f2ddd1121ad0`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -93,7 +99,7 @@ sync timer/API/verification service) passed: refusal, unchanged selector and
 original lock inode/content. No real manager was invoked.
 
 `scripts/check.sh` exited 0: 4,148 passed, 40 deselected in 475.21s; wheel/sdist
-build; all three locked isolated installation profiles; actual Cockpit lint,
+build; all three locked isolated installation profiles; actual historical frontend lint,
 types, 135 tests and production build. Ruff/types, shell syntax and link checks
 passed. Log: `/tmp/hfcache-ops021-gate.log`. Review caught and corrected bootstrap
 syntax, split version parsing and fresh-ancestor checks before the final gate.

@@ -1,5 +1,11 @@
 Historical onboarding reference before DOC-017; source identity and hash are in the sibling manifest.
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `f5d770840cb8084daa6ad5c975c4981b3cc5216c6bad6a484688e0d52271a7d6`,
+original content SHA-256 `b4f68031b27c0e17d3ae95469c644c7cd892f67faf41bfa7a9c8d889c49ddb03`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 # Changelog
 
 Releases are deployed first and tagged for what is deployed
@@ -177,16 +183,6 @@ local bootstrap smoke support disposable upgrade/rollback. Actual socket/cgroup/
 credential/SELinux/NFS and executor-aware hardening remain deployment holds. No
 archive/receipt format, runtime dependency, MCP or production deployment changes.
 
-Cockpit transient commands now use named API-only credentials and fixed client
-settings/socket instead of Hub authority. Strict bounded terminal Envelopes and
-separate validated progress/recovery handles preserve failure and reconnect
-semantics; stopping observation never claims cancellation or triggers recovery.
-Configuration assessment/preview/install uses exact candidate/base guards under
-a retained root config flock, preserves atomic backup/mode and confirms the
-expected installed fingerprint. Incompatible/unknown authority blocks plugin
-installation with manual guidance. No archive schema, dependency, browser bearer
-backend, MCP or production deployment change.
-
 Native Unix REST now works alongside a configured public TCP prefix, with matching
 operation/docs links and an independent native OpenAPI view. Only corroborated
 trusted Unix scope selects the exception; missing peers or malformed local
@@ -247,18 +243,12 @@ and unknown content, and removes only empty directories or files freshly
 verified against a retained current publication. Anchored filesystem operations
 protect the deletion boundary; interrupted cleanup can be safely retried.
 Original journals, published models, and durable JSON formats remain unchanged.
-Cockpit recognizes the cleanup event in its activity feed.
+historical frontend recognizes the cleanup event in its activity feed.
 
 Rollback to 0.1.7 preserves the three-revision policy and existing archive
 formats; it simply lacks the new cleanup command.
 
 ## v0.1.7 — 2026-09-14
-
-`storage.maximum_revisions` now defaults to three. Explicit five-revision
-policies remain valid; the Cockpit form offers both supported values. Adopting
-three on an existing archive requires validated configuration and repeated
-reviewed prune rounds, preserving the current revision and manifest audit
-evidence. Retention ordering and durable JSON formats are unchanged.
 
 Before rolling back to an older binary, restore an explicit
 `maximum_revisions = 5`. That restores the older policy, not deleted revisions.
@@ -269,7 +259,7 @@ Private and gated Hub repositories can now be archived through the explicit
 `hub.token_mode = "required"` policy. Required mode fails before Hub access
 when its credential is unavailable, verifies the configured account identity,
 and distinguishes an unaccepted gate from the public-only scope refusal that
-remains in `disabled` and `optional` modes. The Cockpit configuration form and
+remains in `disabled` and `optional` modes. The historical frontend configuration form and
 operator runbooks cover the same restricted-repository workflow.
 
 ## v0.1.5 — 2026-08-15
@@ -307,8 +297,8 @@ carries proven same-inode digest evidence instead of rereading every byte.
   mutation, deferred retention, and ordinary publication journals preserve the
   single-writer and recovery contracts while downloads overlap hashing.
 - New `repository.queued`, `hash.started`, and `hash.completed` events make the
-  WAN-idle hashing phase and its progress explicit in journald and Cockpit.
-- The new Cockpit package supplies archive and run-report views, sync and
+  WAN-idle hashing phase and its progress explicit in journald and historical frontend.
+- The new historical frontend package supplies archive and run-report views, sync and
   verification controls, dry-run-first maintenance, configuration and schedule
   editors, and authenticated transient-unit invocations that import the same
   encrypted Hub credential as the scheduled service.

@@ -1,5 +1,11 @@
 # WEB-018: Preserve fixed schedule, observer and diagnostic host functions
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `eb263f122f2024ebe23d1f7b89f7ba4d0395c7f32197e438f2ad0d59b793a587`,
+original content SHA-256 `5810adf2de1eb665ca6e9aafba326d415f01ab367b7a25cfb446acc0203ee3ec`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -10,8 +16,6 @@
 | Work-package commit | `WEB-018: implement guarded schedule, observer and journal actions` |
 
 ## Read before implementation
-
-Existing Cockpit systemd/schedule/journal code; CP-05/06/12 and host-policy bindings; helper transport; host API definitions.
 
 Also read the relevant sections of [architecture](../support/web-ui/architecture.md), [API contracts](../support/web-ui/api-contracts.md), [testing strategy](../support/web-ui/testing-strategy.md), [acceptance matrix](../support/web-ui/acceptance-matrix.md), and [human documentation map](../support/web-ui/documentation-map.md). Load only affected living contracts and ADRs through their indexes. Refer to the [source review](../support/web-ui/source-review.md) for pinned baseline evidence; current git wins over it.
 
@@ -41,9 +45,7 @@ Update administration/deployment/troubleshooting guides, host API effects, fixed
 
 ## Acceptance
 
-All retained Cockpit host functions have narrow typed replacements, positive supported-profile proof and denied-profile proof; no general command authority, unsafe cleanup or false cancellation is introduced.
-
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution notes and blockers
 
@@ -271,9 +273,9 @@ inputs/modes are identical; no artifact rebuild is represented as performed.
 The full card module passes61 cases/12.77s; the corrected actual API browser
 fixture passes14 cases across both prefixes.
 
-`rtk proxy scripts/check.sh --require-web --require-cockpit` gate6 passes0 in
+`historical gate invocation (original command SHA-256 `b9d97947112e6e5c5005002b465c3dd68f8bd158ca8c41cb5966f57422999103`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` gate6 passes0 in
 1813.441s with zero source drift:8927 backend tests/52 unrelated opt-in
-deselections,3649 web unit/3908 combined frontend tests,581 Cockpit unit/110 mounted
+deselections,3649 web unit/3908 combined frontend tests,581 historical frontend unit/110 mounted
 checks,175 generated transport definitions, all three installed wheel profiles,
 required build/browser/API-read/documentation checks and zero required skips.
 Line/branch coverage is94.90%/90.11%;217 human documents and27 helpers align.
@@ -320,8 +322,3 @@ owned LOCAL_STORAGE_SIMULATION, not live NAS or production/platform acceptance.
 Administration/deployment/troubleshooting human guides and the API/server/
 security/schema/host/script/container/operator contracts are updated with the
 feature. Final bookkeeping checks pass: documentation alignment217/27, nine plan/ledger checks(0.88s), whitespace checks and all1500 frozen hashes/modes unchanged.
-
-The [progress entry and operator handoff](../../progress.md#operator-handoff)
-retain exact state and limitations. Continue [WEB-019](web-019-administration-and-diagnostics-ui.md)
-after this commit. Production, live NAS/Cockpit, rollout, merge, push, Git tags,
-full platform/compatibility/retirement and final plan gates remain separate.

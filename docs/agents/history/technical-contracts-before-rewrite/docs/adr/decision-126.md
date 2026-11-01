@@ -1,5 +1,11 @@
 > Historical technical reference preserved before consolidation. Current authority is the living contract.
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `54e0968982ea6af3e7f699fb8d0ea14c8944df5c1e1535f7e8daf0886111977d`,
+original content SHA-256 `bf7b1e8bc5bba2f1db195e48ab1b57dcacc7dcb93c865e2145f67959d4aaa3a6`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 # Decision 126 — Guard a local rollout without NAS writes or false acceptance
 
 - Status: Accepted; host guard implemented and NAS-isolated repository gate
@@ -92,30 +98,19 @@ planned controls until that evidence is recorded; there is no fabricated host
 pass. OPS-015 owns actual rootless packaging/architecture and tests, later tasks
 own release artifacts, local rollout and final partial-acceptance handoff.
 
-
 ## OPS-014 implementation evidence
 
 The [task](../../../../plans/tasks/ops-014-local-rollout-guardrails.md) records the actual
 protected backup, original-inode flock, blocked legacy activation, persistent
 client read-only remount, active target/Enforcing SELinux and post-gate recheck.
 The corrected gate ran behind an empty read-only tmpfs covering NAS and exited 0
-with 3,624 Python tests and 127 Cockpit tests/build. Preserve the initial launch
+with 3,624 Python tests and 127 historical frontend tests/build. Preserve the initial launch
 refusal and inherited-systemd-prefix failed run separately; no production/test
 source or security policy was changed to make assertions pass. NAS/full-domain
 write acceptance remains forbidden, not achieved. OPS-015 is next pending until
 the guard package commits; no container architecture or release is claimed here.
 
-
 ## 2026-10-18 explicit rootless runtime amendment (OPS-015)
-
-[Decision 127](../../../../../adr/decision-127.md) selects explicit rootless USER services and a
-system-to-user target bridge, fixed immutable runtime/container-client commands,
-non-killing drain and actual container peer/FD/secret/isolation proof. It replaces
-the initial Quadlet proposal to avoid generated replacement/forced cleanup/timeouts.
-Selected-profile Cockpit retains outer privilege/candidate guards but API secret
-delivery moves to the fixed Podman client launcher, without host ImportCredential.
-NAS/other-host restrictions, exact operation truth and previous evidence remain;
-OPS-015 fixtures bind no NAS and perform no production switch or release.
 
 ## Permanent host boot guard (OPS-016, 2026-10-18)
 

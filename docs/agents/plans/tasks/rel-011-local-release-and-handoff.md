@@ -1,5 +1,11 @@
 # REL-011: Record the local release and preserve acceptance holds
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `25bf6f1ae55cda878a4d55c5f0cc9cfabbd584eabc0694564eed485968263bd8`,
+original content SHA-256 `630cbd8b5f66829b66bccae925805cfa0164dc988b1e9a258a7c59036b7d648e`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `REL-011` |
@@ -90,7 +96,7 @@ Completed 2026-10-18. The actual NAS-masked `scripts/check.sh --with-build`
 pipeline exits 0: 407 formatted files, Ruff clean, whole Pyrefly 0 (11 suppressed,
 59 warnings not shown); 3,827 Python passed/40 deselected in 455.86 seconds;
 0.2.0 wheel/sdist and all three locked isolated installation profiles;
-Cockpit lint/style/types, 135 tests in 2,274.672993 ms/build 1,126 ms; four extra
+historical frontend lint/style/types, 135 tests in 2,274.672993 ms/build 1,126 ms; four extra
 wheel smokes in 6.99 seconds. Unit elapsed time is 8m28.285s. Gate log SHA256:
 7cd3e0f7bb2eed7ec3c85df8013ecca671e7eb2257af58b8876b0177a29fb0ba.
 

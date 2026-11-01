@@ -1,5 +1,11 @@
 # WEB-015: Implement repository configuration and tag management workflows
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `33ff134da658814174531723725051845ff3ab10a6db2589ba51a2e97fd4875f`,
+original content SHA-256 `36fafeff72aa48560e8363679f2b980c958776ce9b5bf0af81a1b974d6de459a`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -43,7 +49,7 @@ Complete configuration-and-tags.md with step-by-step flows, conflict examples, e
 
 Tags and configuration are genuinely manageable through the SPA with the same guarded apply pipeline, correct provenance and no lost protected data or false install success.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Completion evidence
 
@@ -71,8 +77,8 @@ canonical software remains0.2.2. Rootless0.2.31 is unexecuted in this package.
 | Proof | Actual result / locator |
 | --- | --- |
 | Frozen source |1457 inputs, `bc1d0602cbba4dbd9e3720607680f85ae0817aa34d6c0caf19e93ba678013c83`; parent`1ca6287` |
-| Full strict gate | `scripts/check.sh --require-web --require-cockpit`, exit0/1645.369s, no hash/mode drift; `E/gate3/strict-gate-result.json`, SHAd8ab3c63fec427a884ee4c405826ad270d1f3e062d070c2ef35c0f0bf08b2e41 |
-| Gate coverage |8597 backend/52 unrelated opt-in deselections;581 Cockpit unit/110 mounted Firefox;3496 web unit/3697 combined;95.84% line/91.04% branch. All required lint/types/wire/docs/build/wheel/startup/read-API stages pass; zero required skips. Log SHAabe54a798178e677545d3b03b1a84ba10574dfc5551c94bcf282cd251d1965ba |
+| Full strict gate | `historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)`, exit0/1645.369s, no hash/mode drift; `E/gate3/strict-gate-result.json`, SHAd8ab3c63fec427a884ee4c405826ad270d1f3e062d070c2ef35c0f0bf08b2e41 |
+| Gate coverage |8597 backend/52 unrelated opt-in deselections;581 historical frontend unit/110 mounted Firefox;3496 web unit/3697 combined;95.84% line/91.04% branch. All required lint/types/wire/docs/build/wheel/startup/read-API stages pass; zero required skips. Log SHAabe54a798178e677545d3b03b1a84ba10574dfc5551c94bcf282cd251d1965ba |
 | Current artifacts | `/var/tmp/web-015-artifacts-source3-a_bndq7a/stock.json`, SHA1e3319c4ec6abfb3c22fafdc32b62f69f4836d2c7caf0f94b67ec9c0a6958953; wheel535669B SHA2383881d7234150b351854b78be2c01334c3f928b36790b6142dd27f42bdec55 |
 | UI / image | UI1ed82384a44231572e2e8004192df256553ffcb8998383814820d23705a4383f; image`sha256:e6193e0be8b4407590f3b4f3ff694a837ec6e01c64f14b0b89cf0103014f9d51` |
 | Source / foundation / runtime | `E/artifact-source-proof-source3.json` SHAb9623cab628621e85b0d9e50448eaaa99152b3a63ea41002cb1a814509010d61 rejoins1457 frozen/1463 projected inputs and pinned UBI10micro ancestry. `E/image-no-node-proof-source3.json` SHA95ea1aaf766121d3f1c86698e24247f0b547c984064e85b493a8e0bcd5cdb863 exits0 under UID981/read-only root/network-none, no runtime Node/package managers. |
@@ -168,15 +174,6 @@ After all roles drained, root normally stopped the original owned Hub process
 (`E/owned-hub-stop.log`/`.result.json`). Its counters, API store, configuration,
 pending/candidate and original lock/key are preserved. The final known
 installed-unconfirmed/pending fixture is quiescent and deliberately uncleared.
-
-These are genuine installed native/Caddy/helper workflows over the owned read-only
-loopback NFS export with strict synthetic publication inputs, not production/NAS
-ingestion/verification, new rootless UI or full platform acceptance. Earlier core
-rootless evidence stands; WEB022 and final compatibility/parity/acceptance remain.
-No production/NAS/live Cockpit, rollout, merge, push or tag action occurred.
-[Progress/handoff](../../progress.md#operator-handoff) records completion;
-[WEB-016](web-016-operations-and-reports-ui.md) is next through the
-[current selector](../current.md).
 
 ## Browser-control compatibility input
 

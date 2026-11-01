@@ -1,5 +1,11 @@
 # Architecture and security specification
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `7771d98954c76d9edaa85a852dfdd09d336ed76b5c8c79a7e0b5cefdf34c0f08`,
+original content SHA-256 `4977d5917c7464d61e686215c2206b22af848f93d96a6d7897474432e2d4196b`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 This is proposed behavior for implementation. Amend the living contracts and allocate new ADR numbers at execution; do not treat this document as an already accepted invariant. Baseline findings and primary references are in [source review](source-review.md).
 
 ## 1. Scope and interface
@@ -34,8 +40,6 @@ Let `P` be the validated configured public prefix, empty by default. Public rout
 SPA fallback applies only to recognized UI navigation routes and GET/HEAD. Missing `/ui/assets/...` files, API typos, unsupported methods, and MCP errors must not return index HTML. Authenticate before route disclosure consistent with the existing API contract. An absent/disabled UI has an explicit authenticated unavailable/not-found result. A configured enabled UI with missing or mismatched release assets must fail its startup validation, not quietly serve another directory.
 
 ## 3. Build and release separation
-
-Keep `web/` source and locked pnpm dependencies separate from Python runtime. Pin the selected compatible React/TypeScript/Vite/test tool versions during WEB-002; start from the repository's known Node/pnpm constraints rather than assuming a current version from memory. Document every new dependency, license, and runtime/build-time classification. Reused Cockpit code retains its LGPL notices; do not silently relicense it under the root project license.
 
 Produce a separate, immutable **web asset artifact** alongside the wheel, with source commit, UI contract version, toolchain/lock digest, per-file hashes, and license notices. This deliberately avoids making base `uv build` or base reader installation invoke Node. The full release builder requires the UI artifact; a backend-only wheel still builds with the Python toolchain alone. Never commit `node_modules`, `dist`, browser profiles, or generated screenshots with credentials.
 

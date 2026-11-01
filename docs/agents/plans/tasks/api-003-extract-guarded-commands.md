@@ -1,5 +1,11 @@
 # API-003: Extract guarded command services and close verification lock gaps
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `af08cce97a6ec4d2ecbcbc06e10fde7e88c1f0ee88982921ea754db4bf0152a6`,
+original content SHA-256 `855b9ef619106bd974a67d06c884f7371835c6a00f6fff9e42cd4aa33ae4d404`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `API-003` |
@@ -125,7 +131,7 @@ Validation:
 - `rtk uv run ruff check` on affected source/tests, `ruff format`, and
   `rtk uv run pyrefly check`: passed; Pyrefly 0 errors (10 existing suppressions).
 - `rtk proxy bash scripts/check.sh > .scratch/api-003-gate.log 2>&1`: exits 0,
-  lock check, format, lint, types, 1,816 Python tests, 45 Cockpit tests,
+  lock check, format, lint, types, 1,816 Python tests, 45 historical frontend tests,
   wheel/sdist builds and production plugin build pass.
 - `rtk proxy python .scratch/audit_records.py` and `rtk proxy git diff --check`: local links,
   task dependencies/current pointer, API parity matrix and whitespace pass.

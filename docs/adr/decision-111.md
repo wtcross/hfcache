@@ -5,7 +5,6 @@
 - Status: Accepted; current scope includes the amendments referenced below.
 - Date: 2026-10-17.
 
-
 ## Context, decision and rationale
 
 A concurrent API process cannot safely use mutable process-global run identity,

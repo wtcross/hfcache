@@ -308,46 +308,6 @@ durable transaction: pre-commit recovery restores it completely; post-commit
 recovery never silently republishes it and retains byte-for-byte manifests plus
 reason records under `audit/pruned/` (`AD-20`).
 
-### T-13 — The management plugin widens the operator surface
-
-**Capability.** The Cockpit plugin (`docs/cockpit.md`) exposes operator
-actions — sync control, configuration editing, schedule changes, repair — in
-a browser behind cockpit-ws.
-
-**Controls.** Authentication is the host's own (PAM through cockpit-ws), and
-every mutating path requires the superuser bridge, which only an
-administrative session obtains — the same boundary as a shell, and §6 already
-places root and the operator out of scope as adversaries. The plugin is
-static files under `/usr/share/cockpit/hfcache` with no listener or daemon;
-fixed privileged config/candidate/backup/lock paths are documented separately.
-CLI work drops to the service identity in a
-transient systemd unit and never runs as root (`CP-03`); it never reads
-`$CREDENTIALS_DIRECTORY`, offers token entry, or renders a credential — the
-fixed rootless launcher mounts named Podman API-only `hfcache.api` as a
-protected file inside the finite client (`CP-08`, upholding T-07). Native systemd
-credential delivery remains a separate supported profile; the shipped plugin
-has no host ImportCredential path. Hub authority
-stays on the daemon; no browser/environment/argument bearer is introduced;
-the archive is reached only through authenticated CLI Envelopes, including
-bounded run-report reads (`CP-01`, `CP-09`). Optional host journal diagnostics
-project only closed validated event/level/run identity, with strict resource
-bounds and no arbitrary message prose. `archive init`, `hfcache.target`,
-and `hfcache-verify.timer` are refused structurally in its API layer
-(`CP-05`–`CP-07`).
-
-Strict bounded terminal Envelopes govern outcomes. Separately validated bounded
-progress/handles support reconnection, never outcome/checkpoint authority. Client
-stop/page closure and uncertain HFAPI013/015/019/020 retain handles without
-automatic recovery/replay. Config operations compare exact candidate and installed
-base under the retained root configuration flock; compatible assessment, required
-preview and exact installed fingerprint confirmation precede reported success.
-Incompatible/unknown authority blocks plugin installation and requires manual
-operator review/install/restart. See [decision 122](adr/decision-122.md).
-
-**Residual risk.** cockpit-ws itself, patched with the distribution like
-`sshd`. An administrative browser session is as powerful as an administrative
-shell, which is this deployment's existing posture, not a new one.
-
 ### T-14 — A management caller gains unintended authority
 
 **Capability.** A caller presents a malformed, leaked or wrong-interface bearer,
@@ -624,7 +584,6 @@ No-confirm init is inspection/refusal only, not a privileged submission. See
 | 15 | Explicit configuration required for any dependency archiving | `AD-07` |
 | 16 | Unknown state reported, never deleted or guessed | `AD-16`, `TX-06` |
 | 17 | Fail-closed preflight before any download | Exit `20` |
-| 18 | Management UI confined to operator surfaces, with the limits structural | `docs/cockpit.md` `CP-01`–`CP-14` |
 | 19 | Fixed capabilities, restart-only auth and bounded typed command/metadata routes | `T-14`, `docs/server.md`, server registry, metadata boundary and typed command routes |
 | 20 | Protected single administrator, bounded independent password work and unsafe-request origin checks | `T-14`, decision146, optional Basic provider and outer application boundary |
 
@@ -851,7 +810,7 @@ on another host in this scope.
 and other-host changes. Every NAS bind is read-only without chown/relabel/copyup;
 rootless runtime fixtures bind no NAS at all. Source masks, read-only roots and local state
 are actual proof obligations, not claims that containers alone establish isolation.
-The fixed Cockpit client launcher retains admin/candidate/observation boundaries
+The fixed container client launcher retains service-identity/observation boundaries
 without a browser bearer, generic executable input or bare-host fallback.
 
 host read-only guard adds fixed root-protected host boot policy independently of current.
@@ -1020,7 +979,7 @@ implemented in unreleased source under the boundaries below. Actual installed
 conformance remains separately required; source availability does not enable a
 running release. Host/configuration and card controls retain their separate
 implementation/acceptance requirements. Preserve bearer REST, separate read-only
-MCP, Cockpit confinement and recorded deployment limits. Do not enable unsupported
+MCP, helper confinement and recorded deployment limits. Do not enable unsupported
 settings or host effects based on design or a Basic grant alone. See decisions
 [140](adr/decision-140.md), [141](adr/decision-141.md),
 [142](adr/decision-142.md), [143](adr/decision-143.md),
@@ -1464,7 +1423,7 @@ Conformance requires adversarial unit/integration cases and built-UI tests throu
 actual Caddy/TLS plus installed isolated native/rootless profiles in Chromium,
 Firefox and WebKit. Mocks, skipped required tests or source-only namespace claims
 cannot establish the replaced host/authentication boundary. Production deployment,
-live archive/guard changes and Cockpit uninstall remain separate operator actions.
+live archive/guard changes and installed service removal remain separate operator actions.
 
 ## Managed configuration confidentiality and concurrency
 

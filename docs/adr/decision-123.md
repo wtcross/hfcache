@@ -8,7 +8,6 @@
 - Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-18.
 
-
 ## Context, decision and rationale
 
 Public TCP requests retain configured prefix, verified TLS/proxy and Host/Origin
@@ -52,7 +51,6 @@ proxy/Unix acceptance remains profile-specific rather than implied by source tes
 
 Recorded installed scope and remaining acceptance are described in
 [deployment status](../deployment-status.md).
-
 
 ## Replacement UI design amendment (2026-10-20)
 

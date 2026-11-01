@@ -1,18 +1,24 @@
 # API-016: Prove complete REST and CLI parity before beginning MCP
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `9d65f48131dcc09e0f099b7ab122139ecebddba2cd6985c3d2be6a70a190a46e`,
+original content SHA-256 `d6ea9f722e4044ad9cd9359255b92db31626b7fce08ce64649860c1b29323bad`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `API-016` |
 | Status | completed |
 | Plan | [2026-10-17-plan-rest-api-and-mcp.md](../2026-10-17-plan-rest-api-and-mcp.md) |
-| Depends on | [API-015](api-015-cockpit-api-client-compatibility.md) |
+| Depends on | [API-015](../../history/removed-interface-records.md) |
 | Phase | 3 — CLI and REST integration |
 | Feature branch | `feat/rest-api-and-mcp` |
 | Suggested commit | `API-016: pass REST parity security and client acceptance gate` |
 
 ## Scope and acceptance
 
-1. Audit every baseline command/mode against the API/service/role/effect/test matrix. Close missing routes, invalid-mode checks, selector coverage, legacy output mismatches, and candidate/systemd/Cockpit integration gaps with fresh task splits if needed; do not declare parity based only on sync/status tests.
+1. Audit every baseline command/mode against the API/service/role/effect/test matrix. Close missing routes, invalid-mode checks, selector coverage, legacy output mismatches, and candidate/systemd/historical frontend integration gaps with fresh task splits if needed; do not declare parity based only on sync/status tests.
 2. Add/review a full adversarial suite covering credentials on every endpoint, read/write capability separation, traversal and unauthorized authority selection, stale destructive scopes, verification persistence races, queue saturation, API responsiveness, idempotency/crash boundaries, restart/no-replay, and client disconnect behavior.
 3. Prove ordinary reader execution without archive config/mount/Hub token, writer-local Unix transport, base/server wheel isolation, large result streaming/page completeness, and stable API/envelope negotiation. Check legacy failure aggregation and report identity. No FastMCP dependency/import/route may yet be required.
 4. Validate all current REST/server/client examples, OpenAPI determinism, documentation links, contracts, invariants, and ADR amendments. Separate implemented/tested repository behavior from pending operator installation/hardening/NFS acceptance. Record a deployment hold for any unperformed required host check.
@@ -33,7 +39,7 @@ Complete REST/CLI/server/consumer migration documentation and the traceability m
 
 Planned checks, not execution evidence:
 
-`scripts/check.sh --with-build` with implemented server extras, complete Cockpit gate, full default Python suite, real throwaway Unix/TCP transport integration, documented compatibility drill, and docs/OpenAPI/example checks. Record actual versions/counts/outputs and any operator-only pending checks; no inherited prior test counts.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution and completion rules
 
@@ -74,7 +80,6 @@ effective prefix, with no shared mutable prefix or forwarded-header authority.
 Public OpenAPI remains deterministic. The local client/schema need no new
 prefix setting or durable/config format. Verify the pinned Uvicorn implementation
 and actual throwaway Unix/TCP sockets before accepting this distinction.
-
 
 Fresh focused acceptance preceded the full `--with-build` gate. The final eight-file transport/read/command/client/bootstrap
 sweep in `.scratch/api-016-transport-tests.log` passed 130 tests in 47.31 seconds;
@@ -136,7 +141,7 @@ exited 0: lock/sync, 368 formatted Python files, Ruff clean, Pyrefly 0 errors
 (11 suppressed, 57 warnings not shown); 3,324 default Python tests passed,
 40 deselected, in 358.69 seconds. Built source distribution and wheel 0.1.10;
 actual locked isolated base/server installation/import/help/version checks passed.
-Complete Cockpit ESLint/Stylelint/TypeScript, 127 tests in 2.134 seconds and
+Complete historical frontend ESLint/Stylelint/TypeScript, 127 tests in 2.134 seconds and
 production build in 1,224 ms passed. Required extra wheel smoke passed 4 tests,
 3,360 deselected, in 4.48 seconds. No full-gate correction, restart or post-gate
 source change. Final parsed matrix/current-interface anchor selection additionally

@@ -7,7 +7,6 @@
 - Activated-service/observer packaging: [decision 121](decision-121.md), scheduled observation.
 - Date: 2026-10-17.
 
-
 ## Context, decision and rationale
 
 Use one bounded in-process heavy lane and a separately confined verification
@@ -65,7 +64,6 @@ outstanding NAS/domain/isolation acceptance; 0.2.0 rollback retains its limitati
 
 Recorded installed scope and remaining acceptance are described in
 [deployment status](../deployment-status.md).
-
 
 ## Fixed host-effect amendment (2026-10-27)
 

@@ -1,5 +1,11 @@
 # DOC-014: Replace historical command transcripts with current runbooks
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `df4c2ef40597c5556a0ecfdbb76b83f1ba7c366ab9f3bd0a8642af00f9f231e2`,
+original content SHA-256 `43fba81dfe54238bfea333915717f13fccbdb21b1c65665f2d80fc50065430b1`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -87,7 +93,7 @@ No runtime application behavior changed.
 Focused suites: 180 passed in 22.16s; final parsing/links/fixture regression:
 50 passed in 2.93s. Ruff/format/Pyrefly (0 errors) passed. `scripts/check.sh`
 exited 0: 4209 passed/40 opt-in deselected in 476.05s, build, all three locked
-profiles and actual Cockpit lint/135 tests (0 skipped)/production build. Log:
+profiles and actual historical frontend lint/135 tests (0 skipped)/production build. Log:
 `/tmp/hfcache-doc014-gate.log`. Initial focused failures (broken storage link and
 fixture patch lifetime) were corrected, not counted as acceptance.
 

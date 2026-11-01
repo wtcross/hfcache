@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later
- * Browser authority helpers accompanying the Cockpit recovery-registry port.
+ * Browser authority helpers accompanying the local recovery-registry port.
  * Epochs describe observation sessions; they never replace original authority.
  */
 

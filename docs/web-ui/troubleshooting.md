@@ -38,8 +38,8 @@ An administrator record's stable subject owns its original operation keys.
 Keeping the subject during password rotation preserves that namespace. Changing
 it separates the new identity; it never proves an old operation did not execute.
 Do not delete receipts or resend a lost action to regain visibility.
-Old Cockpit bearer keys use a separate namespace from Basic-subject keys. A
-manual legacy key remains an unbound reference; a missing Basic lookup cannot
+Previously retained bearer keys use a separate namespace from Basic-subject
+keys. A manual legacy key remains an unbound reference; a missing Basic lookup cannot
 prove its nonexecution. ID-only observation does not prove the current reader
 created the operation or owns its key.
 
@@ -293,7 +293,7 @@ backend work.
 | Session storage unavailable, corrupt or full | Before transmission, submission is refused. After possible transmission, copy retained in-memory handles and keep the mutation block. Never clear unresolved records as a workaround. |
 | Observation cycle, byte or time limit reached | Retain the original handle. Explicitly resume bounded reads when appropriate; reaching a limit says nothing about execution completion. |
 | Event sequence gap | Preserve the reported gap and observed sequence. Missing retained progress is not an empty event history or a complete execution trace. |
-| Old Cockpit key cannot be looked up as Basic | Keep it as an unbound legacy reference, or observe a known original operation ID. Current Basic lookup is a different namespace and proves no association. |
+| Legacy bearer key cannot be looked up as Basic | Keep it as an unbound legacy reference, or observe a known original operation ID. Current Basic lookup is a different namespace and proves no association. |
 | Another tab reports activity | Treat the notice as advisory. It neither owns execution nor authorizes another submission, cancellation or automatic handle import. |
 
 Only a provable fresh refusal before fetch can remove its own prepared record,

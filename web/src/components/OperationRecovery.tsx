@@ -155,7 +155,7 @@ function RecoveryEntry({
                     {record.originalAuthority.kind === "web"
                         ? `${record.originalAuthority.scope.origin}${record.originalAuthority.scope.publicPrefix} · ${record.originalAuthority.scope.subject}`
                         : record.originalAuthority.kind === "cockpit"
-                          ? "Imported Cockpit authority; key namespace remains separate"
+                          ? "Imported predecessor authority; key namespace remains separate"
                           : "Creator unknown; ID observation does not prove key ownership"}
                 </dd>
                 <dt>Saved locally</dt>
@@ -424,7 +424,7 @@ export function OperationRecovery({
                                         setKind("legacy-key");
                                     }}
                                 />
-                                Legacy Cockpit key reference
+                                Legacy bearer key reference
                             </label>
                         </div>
                     </fieldset>
@@ -477,7 +477,7 @@ export function OperationRecovery({
                             ? "An imported ID is observation-only; its original creator is unknown."
                             : kind === "basic-key"
                               ? "Use only a key originally submitted by this signed-in Basic user against this archive. An authenticated key lookup must establish its operation ID."
-                              : "A Cockpit bearer key has a different namespace. Keep the original profile and use its original lookup; this Basic session cannot convert it."}
+                              : "A legacy bearer key has a different namespace. Keep the original profile and use its original lookup; this Basic session cannot convert it."}
                     </p>
                     <button
                         type="submit"

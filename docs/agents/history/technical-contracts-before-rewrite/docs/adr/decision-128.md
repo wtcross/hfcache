@@ -1,5 +1,11 @@
 > Historical technical reference preserved before consolidation. Current authority is the living contract.
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `80efaca3189ec34b6cdf040bad771b221e26ef23bb3f6f7ad4be198dbe1fe1bc`,
+original content SHA-256 `9d1c1938ee1c3894f0467f0f78a0162ff5ae47f6650b6dc5b930bf6ec7ec40c4`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 # Decision 128 — Create the rootless verifier listener inside its confinement
 
 - Status: Accepted; implemented by OPS-017, with clean UBI artifacts in REL-013
@@ -133,7 +139,7 @@ Evidence: [listener/kernel/cleanup tests](../../../../../../tests/unit/test_veri
 [proof/readiness refusal tests](../../../../../../tests/unit/test_container_runtime.py).
 OPS-017 records 162 focused app and 197 runtime/unit/installer cases, actual
 explicitly dirty preview container-origin PROBE/notify/isolation/drain and the
-full --with-build exit 0 (3,912 Python tests, 135 Cockpit tests and four wheel
+full --with-build exit 0 (3,912 Python tests, 135 historical frontend tests and four wheel
 smokes). Clean release-artifact and installed acceptance belong to dependent
 tasks; the actual dirty preview is not a deployed release or closure of hold 22.
 

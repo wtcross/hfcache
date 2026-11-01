@@ -1,5 +1,11 @@
 # The writer VM and the live archive
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `88d28c85bdae71f0da504a78d01a64961edb7415e444841833395426250c8b37`,
+original content SHA-256 `08495d9c4304ac16f25c3120b4a10b4a74cec13569e91687076d53c4971308b6`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 `hfcache` is deployed on the host that usually holds this working copy. That
 is unusual enough to say plainly: **a session editing this repository may be
 sitting on the production writer**, one `sudo` away from a live archive. This
@@ -20,7 +26,7 @@ apply wherever the archive mount exists.
 The selected recorded deployment is guarded rootless 0.2.2 from clean source
 `1c685018803a365bbb8b0c1aad4b94709f60e7d7`. Actual host TLS/authentication,
 API-origin worker PROBE and confinement checks passed; the
-[rollout evidence](plans/support/cockpit-rest-rollout/acceptance-record.md) records
+[rollout evidence](plans/support/host-rollout/acceptance-record.md) records
 the exact artifacts and remaining closeout checks. See also
 [deployment status](../deployment-status.md) and [script inventory](../scripts.md).
 These facts do not authorize another rollout or production archive access.
@@ -40,7 +46,7 @@ These facts do not authorize another rollout or production archive access.
 - Preserve NAS read-only, independent original-inode host guard, writer masks,
   disabled calendars, both operation stores and all scheduled handles. Neither
   wrapper exit nor free lock proves executor termination. No schedule is enabled here.
-- The protected Cockpit policy grants configuration permission only; archive,
+- The protected historical frontend policy grants configuration permission only; archive,
   Hub, control, schedule and observer permissions remain false. Existing candidate,
   backup and configuration lock evidence remains. Production PAM/browser candidate
   validation or installation has not been proved by the host checks.
@@ -101,7 +107,6 @@ Carried from plan §36.4–§36.5 and not relaxed by §36's supersession
   configuration steps. Rehearsals that need a mutable archive use the
   throwaway loopback archive of `docs/recovery.md` §6, never `/srv/hfcache`.
 
-
 API-017 consolidates these unchanged limits in the
 [operator rollout checklist](../deployment-centos-stream-10.md#acceptance-checklist).
 The API/MCP feature branch and throwaway installed wheels are repository evidence,
@@ -109,7 +114,6 @@ not a production release or permission to manipulate host services/state. Keep
 both operation stores and scheduled observation handles through approved drain/
 rollback, and preserve the disabled verification calendar. No repository plan
 closure clears the actual no-IP/credential/NFS/SELinux/TLS/firewall holds.
-
 
 ## Historical scoped local rollout authority (OPS-014, 2026-10-18)
 
@@ -175,7 +179,7 @@ it does not renew NAS workload or other-host authority. The completed repair is
 merged/published at cdc35a4; REL-015 prepared clean immutable 0.2.2 source 1c68501.
 The reviewed guarded switch now selects that release, with actual host acceptance
 and remaining closeout evidence in the
-[rollout record](plans/support/cockpit-rest-rollout/acceptance-record.md).
+[rollout record](plans/support/host-rollout/acceptance-record.md).
 Keep NASro, original independent guard/locks, masks, disabled calendars, stores,
 handles, candidate/backup and secret separation. Back up required configuration
 locally/private before effects; no automatic replay/rollback/cleanup after uncertainty.

@@ -1,5 +1,11 @@
 # Resume the accepted product-focused Web UI plan
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `98f696cc0ae28a4dc4f55c9cb0fd2b06e22738642be174c27378d1a44f40ec87`,
+original content SHA-256 `4328440b8d1aa1aa704df590cb81498be495d8226417900c5536ebb364dffe01`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 Resume implementation in `/home/tyler/Projects/hfcache` on `feat/web-ui`.
 This prompt authorizes resuming the deliberately paused plan and completing
 WEB-022 through WEB-026 in dependency order. WEB-021 is already complete at
@@ -55,7 +61,7 @@ rtk proxy scripts/check.sh --require-web --with-build
 ```
 
 Later2026-11-01 user direction supersedes legacy requirements in this historical
-resume prompt: ignore the Cockpit plugin moving forward, deprecate it when the
+resume prompt: ignore the historical frontend plugin moving forward, deprecate it when the
 new web UI is complete, and do no further plugin maintenance or validation.
 WEB-025 is proportional deprecation/handoff; preserve legacy source/history,
 licenses, shared helpers and the live installation. Reuse actual passing
@@ -92,7 +98,7 @@ Useful evidence and findings already identified:
   version. The full last green source gate is Gate20:
   `.scratch/web-022-validation/gate20-result.json` (`fa2b6d86…`) and
   `gate20-shadow1-result.json`. It passed 9,645 backend, 4,051 frontend,
-  581 Cockpit and 16 wheel checks, with 1,543 frozen files unchanged.
+  581 historical frontend and 16 wheel checks, with 1,543 frozen files unchanged.
 - The last installed execution checkpoint is
   `.scratch/web-022-validation/root-source16-installed78-checkpoint12.json`.
   It records current README, dataset, Administration, worker/MCP, client overlap
@@ -178,31 +184,10 @@ before any guest reuse; old PIDs and ports are locators, not authority.
 - Root has about1.5GB free and home about250MB at pause. Recheck before builds.
   No new VM/image/model download is needed for ledger reconciliation. Never
   delete uncertain evidence to create space.
-- No production/NAS workload or change, live Cockpit uninstall, security
+- No production/NAS workload or change, installed predecessor interface uninstall, security
   weakening, archive initialization, force kill, merge, push or tags.
 
 ## Continue through completion
-
-1. Finish WEB-022's actual behavior coverage, required gate, human summary and
-   work-package records. Commit locally as one WEB-022 package only when its
-   accepted criteria are satisfied. Do not claim completion from this handoff.
-2. AFTER WEB-022 and BEFORE WEB-023, update every related WEB-023–026 plan
-   document to bound testing machinery. Refresh the prepared13-file patch
-   `.scratch/web-022-validation/web023-026-bounded-product-testing2.prepared.patch`
-   and its application note against current adopted criteria before applying;
-   do not restore superseded85×18/95×18 requirements from its old hunks.
-   Set GPT-6.1-sol effort appropriately: WEB-023 high, WEB-024 medium,
-   WEB-025 high, WEB-026 medium; low for routine work, escalation only for a
-   concrete unresolved issue. No default xhigh/max.
-3. Complete real old-client/durable-state compatibility and evidence-preserving
-   disposable rollback; then human guide walkthroughs/screenshots; then
-   conditional Cockpit source retirement; then final accepted source/installed
-   validation, operator handoff and plan closure. Keep one task active and one
-   finalized local work-package commit per task.
-4. Continue autonomously across tasks and compactions. Use existing tests and
-   actual installed UI checks; build new machinery only when necessary for a
-   specific uncovered behavior. Do not spend repeated turns auditing a runner
-   or testing test code without a concrete product reason.
 
 Finish only when WEB-022–026 are completed and committed, the plan is completed
 and its active selector cleared, with all95 behaviors accounted for and all

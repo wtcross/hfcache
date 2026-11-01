@@ -577,29 +577,14 @@ absent optional field is omitted from plan canonical bodies, preserving existing
 installed-plan key digests.
 Candidate exact text binds a new request; no raw candidate body is durable control
 state. Literal-candidate REST calls cannot install policy or backups; only the
-separate managed application endpoint has a fixed guarded helper write. Cockpit's
-CP-11 pipeline guards
-exact candidate/base bytes under the retained root config flock, requires valid
-compatible assessment and any required successful preview, then preserves atomic
-backup/install and confirms the exact expected installed fingerprint and document
-before and after API validation. Preview releases the same flock over network
-work, captures bounded stdout and reacquires/rechecks exact base/candidate before
-returning it. Legacy write/install/remove refuse a pending helper application
-marker under that original flock. A valid failed request Envelope does not need an
-assessment payload: its original code/message remains failure evidence. Exact
-draft/base bytes and acknowledged stages stay in application memory across tab
-changes, never in browser storage. Interrupted writes/installations disable repeat
-writes, installation and discard. Read-only inspection under the existing lock
-creates no comparison/lock/backup files; only exact staged/base matches permit
-explicit revalidation without rewriting. An interrupted install additionally
-requires exact installed/backup comparison, successful explicit API confirmation
-and user acknowledgement. Missing/changed/unknown files or a fresh editor load
-cannot establish nonexecution or candidate ownership. Edits
-invalidate readiness; incompatible/unknown authority blocks plugin install with
-manual operator guidance. API-only clients never receive Hub authority. See
-[decision 122](adr/decision-122.md), [Cockpit pipeline](cockpit.md#6-configuration-editing)
-and [decision 119](adr/decision-119.md)
-and [candidate wire contract](api.md#candidate-content-and-installed-authority).
+separate managed application endpoint has a fixed guarded helper write. All
+participating guarded writers honor the original configuration flock and
+pending application marker. Unknown candidates, backups or interrupted private
+outcomes remain blocking; reads never repair or adopt them. Candidate validation
+and preview do not install policy or grant Hub authority. The current managed
+protocol below specifies exact-base capture, explicit guarded application and
+original-outcome observation. See the
+[candidate wire contract](api.md#candidate-content-and-installed-authority).
 
 ### Managed configuration reads, previews and application
 

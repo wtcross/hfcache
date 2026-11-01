@@ -1,5 +1,11 @@
 # Preserved reference before human rewrite
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `ddfbecd8f58efdde76c023d264b5299d4456b66e4d35bd537ac13116bdc577bf`,
+original content SHA-256 `d46dd0b2e92ff37e65a1f4c860f4158299a37c74932cd2a6d775d1d1347496dd`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 Source: `5503e3b:docs/api-client.md`. Historical text and requirements are retained;
 relative links repaired. Current technical authority remains `docs/api-client.md`.
 
@@ -295,13 +301,6 @@ hfcache --client-config /etc/hfcache/client.toml version --server
 hfcache --client-config /etc/hfcache/client.toml archive init --inspect
 ```
 
-Candidate validate/plan requires the writer API source; `--config` names a file on
-the CLI host, never a server file to open. Installation/backups remain privileged
-host work. API-014 packages scheduled callers and API-015 integrates Cockpit's
-API-only client/candidate pipeline; actual host acceptance stays
-an explicit hold and browser code never receives the API bearer. See
-[decision 119](../../../adr/decision-119.md) and [candidate contract](../../../configuration.md#12-candidate-authority-validation-and-planning).
-
 ## Submit, detach and resume (API-013)
 
 All operational modes use the API without a direct local mutation backend.
@@ -371,14 +370,6 @@ hfcache --client-config /etc/hfcache/client.toml --json operations show <operati
 hfcache --client-config /etc/hfcache/client.toml --json --wait-timeout 300 operations wait --after 12 -- '<operation-id>'
 ```
 
-Use the same configured authority and credential class for key lookup. A stopped
-client or sync/verify client service stops observation, not the server executor;
-use [server drain](../../../server.md#restart-and-drain) and
-[recovery](../../../recovery.md#preserve-four-kinds-of-authority) for execution
-ownership. [Decision 120](../../../adr/decision-120.md) records this boundary. Shipped
-systemd integration is packaged by API-014 with deployment holds; Cockpit uses
-the API-only client integration described below.
-
 ## Native Unix and public prefixes (API-016)
 
 API-016's native Unix refinement keeps fixed unprefixed local API paths usable
@@ -390,27 +381,6 @@ their configured URL prefix and strict link checks. No new client setting or
 schema is added; see [decision 123](../../../adr/decision-123.md). Native Unix also accepts
 the configured-prefixed spelling and emits matching operation/docs links; its
 unprefixed OpenAPI view uses `/` without mutating the public cached schema.
-
-## Cockpit client integration (API-015)
-
-The root bridge starts a service-identity transient CLI unit with fixed
-`--client-config /etc/hfcache/client.toml --api-socket /run/hfcache/api.sock --json`
-and systemd `ImportCredential=hfcache.api`. Provision that name for the REST
-writer class, separately from daemon Hub `hf-token`; no bearer reaches the page,
-argv or ambient environment. Ordinary runtime calls omit archive `--config`.
-Candidate validate/plan alone uploads the fixed protected candidate file, guarded
-with exact candidate and installed-base content under the privileged config flock.
-
-The plugin requires a strict terminal schema-1 Envelope up to 16 MiB, independently
-collecting bounded progress (8 KiB line, 64 KiB retained diagnostics) and validated
-key/operation handles. Lost/uncertain observation, client stop and page closure
-never cancel accepted execution or justify recovery/replay. Reconnect using the
-same authenticated lookup/wait authority. Candidate syntax, installed compatibility,
-required preview and exact installed confirmation are distinct gates; unknown or
-incompatible authority blocks plugin installation. See
-[Cockpit](../../../cockpit.md), [configuration pipeline](../../../cockpit.md#6-configuration-editing)
-and [decision 122](../../../adr/decision-122.md). Real installed credential/hardening proof
-remains operator acceptance.
 
 ## Scheduled service observation (API-014)
 

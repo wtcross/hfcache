@@ -1,5 +1,11 @@
 > Historical technical reference preserved before consolidation. Current authority is the living contract.
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `286c95a4cf8df1ec0e5512c43bcab91a7afcb3acbe056e26c895c7b0ce2b7ad4`,
+original content SHA-256 `930bbe7320b808ee5f35eceb66d66197bc4879af92504d49cea4f9d78cf1f67e`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 # Decision 086: Guest memory is bounded in the units, not trusted to the host
 
 Status: accepted when recorded; retained as historical evidence. Dated
@@ -43,10 +49,6 @@ weakens no §22.5 hardening; `check-hardening.sh` passed 23/23 on both
 units after the change.
 
 ## Later history and current interpretation
-
-[Decision 92](../../../../../adr/decision-092.md) extends the same memory bound to Cockpit-spawned
-transient commands. [Decision 94](../../../../../adr/decision-094.md) preserves that working-set
-model with one bounded download producer.
 
 ## Provenance and governing evidence
 

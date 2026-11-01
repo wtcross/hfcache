@@ -138,7 +138,7 @@ Pre-send validation remains a config/protocol refusal. Missing/expired history o
 observation timeout preserves uncertainty and the original key/ID;
 never generate a new key to replay uncertain mutation. Authenticated key lookup
 observes without submitting and remains within the credential-class namespace
-and, for Basic, the same stable administrator subject. A legacy Cockpit bearer
+and, for Basic, the same stable administrator subject. A legacy bearer
 key is not a current Basic key. Ordinary ID observation does not establish
 ownership of the operation's key or original creator.
 
@@ -263,11 +263,10 @@ copy and complete local verification against exact publication identity.
 Terminal JSON rendering preserves a valid original Envelope before human-output
 formatting inspects optional command payloads. Failed read payloads need no
 success-only fields; human diagnostics retain only structurally valid partial
-check rows, with registered credential redaction. Cockpit further validates each
-read payload and treats partial results as informational, never submission
-authority. Its diagnostics show the effective authenticated client profile and
-endpoint; native defaults and local executables do not describe the selected
-rootless client overlay.
+check rows, with registered credential redaction. Partial results are
+informational and never submission authority. Diagnostics identify the effective
+authenticated client profile and endpoint; native defaults and local executables
+do not describe a selected rootless client overlay.
 
 The modes below report writer truth through the API. Reader setup needs
 only this client configuration/credential, not `/etc/hfcache/config.toml`, archive
@@ -317,8 +316,8 @@ tokens, token paths/names, whole settings, timing and workload options. The JSON
 does not expose settings/CA paths. Canonical endpoint representation retains the
 supported verified HTTPS or loopback HTTP URL, or `unix:` plus the selected
 absolute socket. It adds no routing selector. Unknown archive identity stays
-null. A Cockpit registry must additionally bind its fixed launcher and target
-host; this client does not discover host/container deployment identity.
+null. A host-integrated registry must additionally bind its fixed launcher and
+target host; this client does not discover host/container deployment identity.
 
 `authority_fingerprint` hashes canonical sorted compact JSON of metadata schema
 version, profile fingerprint, endpoint, REST credential class and archive UUID.
@@ -442,7 +441,7 @@ the same stable subject for Basic. A stopped
 client or sync/verify client service stops observation, not the server executor;
 use [server drain](server.md#restart-and-drain) and
 [recovery](recovery.md#preserve-four-kinds-of-authority) for execution
-ownership. [Decision 120](adr/decision-120.md) records this boundary. Scheduled clients and Cockpit use the profile-specific boundaries below.
+ownership. [Decision 120](adr/decision-120.md) records this boundary. Scheduled clients use the profile-specific boundaries below.
 
 ### Browser observation sessions
 
@@ -477,37 +476,21 @@ schema is added; see [decision 123](adr/decision-123.md). Native Unix also accep
 the configured-prefixed spelling and emits matching operation/docs links; its
 unprefixed OpenAPI view uses `/` without mutating the public cached schema.
 
-## Cockpit client integration
+## Fixed rootless client integration
 
-The selected guarded rootless profile uses the fixed host client
-`/usr/local/libexec/hfcache-client`, which launches the API-only image client
-through fixed local Podman and a file-mounted `hfcache.api` secret. It does not use
-host `ImportCredential`. API/worker sockets are `/run/hfcache/api/api.sock` and
-`/run/hfcache/verification/verification.sock`; their services use the user manager.
-Legacy system-bus writer controls remain blocked on this profile; never redirect
-identically named units to another manager. The independent host guard and all
-read-only restrictions remain.
+The guarded rootless profile uses `/usr/local/libexec/hfcache-client`, which
+launches the API-only image client through fixed local Podman and a file-mounted
+REST credential. It uses no host `ImportCredential`. API/worker sockets and user
+manager selection remain fixed by the indexed release. No bearer reaches browser
+code, argv or ambient environment, and no generic executable or bare-host fallback
+is exposed. Preserve the independent host guard, read-only archive and writer
+masks. See [container profiles](containers.md#bind-selection-to-actual-execution).
 
-A native Cockpit integration would require a service-identity transient host
-CLI with fixed client configuration, `/run/hfcache/api.sock`, JSON and systemd
-`ImportCredential=hfcache.api`. That credential is REST-writer only, separate from
-daemon Hub `hf-token`. The shipped plugin has no native launcher selector; it
-uses the fixed rootless wrapper above. No bearer reaches browser code, argv or
-ambient environment.
-Ordinary runtime calls omit archive `--config`; candidate validate/plan alone
-uploads protected candidate content under exact candidate/base checks and the
-privileged configuration flock.
-
-The plugin requires a strict terminal schema-1 Envelope up to 16 MiB and separately
-bounded diagnostics (8 KiB line, 64 KiB retained) and validated recovery handles.
-Client stop, page closure or uncertainty never cancels accepted work or grants
-recovery/replay authority. Candidate syntax, installed compatibility, required
-preview and exact installed confirmation are distinct gates. Unknown/incompatible
-authority blocks installation. Run inventory and reports use the authenticated
-REST CLI above; the plugin never lists or reads archive report files through host
-commands. An independently bounded host journal remains an optional diagnostic
-and cannot establish a run outcome. See [Cockpit](cockpit.md) and
-[configuration editing](cockpit.md#6-configuration-editing).
+Client stop, page closure and uncertain acknowledgements never cancel accepted
+work or authorize replay. Retain original keys/IDs and use explicit original
+observation. [Managed configuration](web-ui/configuration-and-tags.md) separately
+requires exact-base assessment, a matching successful preview, guarded Apply and
+original private-outcome observation.
 
 ## Scheduled service observation
 

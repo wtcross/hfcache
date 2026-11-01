@@ -1,5 +1,11 @@
 # DOC-010 — Establish plan and task tracking
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `5b568472be0d289efa847ad3633be24ce739fd21ebdc1d86d052b86f351f1856`,
+original content SHA-256 `b6c8e50e5ee7ad51c4bfce4f6ba72af4ffcb889c256d11d860218a3595876e23`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `DOC-010` |
@@ -46,7 +52,7 @@ Completed 2026-10-17, `DOC-010`, this commit.
   the current selector has no active plan or next task. Existing backlog,
   including `RET-011`, and Operator handoff were not migrated or activated.
 - `scripts/check.sh` exited `0`: lock, format, lint, types, 1,750 Python tests
-  passed (40 opt-in tests deselected), 45 Cockpit tests passed, wheel/sdist
+  passed (40 opt-in tests deselected), 45 historical frontend tests passed, wheel/sdist
   and production plugin builds passed.
 - Documentation link/anchor, plan filename/backlink, task identity, active-plan
   consistency, ADR index/decision coverage, and whitespace checks pass.

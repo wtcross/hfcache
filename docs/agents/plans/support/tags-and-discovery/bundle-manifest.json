@@ -25,10 +25,11 @@
     },
     {
       "id": "CAT-003",
-      "path": "docs/agents/plans/tasks/cat-003-cockpit-tag-authoring.md",
       "depends_on": [
         "CAT-002"
-      ]
+      ],
+      "retired": true,
+      "retirement_record": "docs/agents/plans/support/tags-and-discovery/retirements.json"
     },
     {
       "id": "CAT-004",
@@ -191,9 +192,11 @@
       "bytes": 4729
     },
     {
-      "path": "docs/agents/plans/tasks/cat-003-cockpit-tag-authoring.md",
       "sha256": "57d3b809f930494ded13cca629254c24bacd83ec909fa46133da26ad74bfe0e5",
-      "bytes": 4601
+      "bytes": 4601,
+      "original_path_sha256": "3f844ab8ea675b8284190a73d1118ead0b50547031db975ee9d989ffe4ace7bf",
+      "retired": true,
+      "current_retirement_record": "docs/agents/plans/support/tags-and-discovery/retirements.json"
     },
     {
       "path": "docs/agents/plans/tasks/cat-004-metadata-records-and-storage.md",
@@ -260,5 +263,10 @@
       "sha256": "11f79e2adc770e2d88fb97008554af8b32076af52859d1b2793815322de8e4a9",
       "bytes": 5484
     }
-  ]
+  ],
+  "historical_manifest_provenance": {
+    "original_git": "c692d7ae4b866fefd8a743a21afdb729da0f39c4",
+    "scope": "Outside reference assets, bytes/sha256 retain original supplied-record identities, not current-content hashes. Path is the current locator; original_path_sha256 identifies any renamed original path. Original exact manifest remains in Git."
+  },
+  "current_retirement_scope": "CAT-003 dedicated task and V05/V06 retired; original supplied manifest identities remain historical.55case IDs retained,53active."
 }

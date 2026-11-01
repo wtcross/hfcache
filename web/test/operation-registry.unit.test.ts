@@ -507,7 +507,7 @@ test("legacy key-only import is an unbound reference, never a Basic namespace lo
     const imported = value.importHandle(
         {
             kind: "legacy-key",
-            key: "old-cockpit-key",
+            key: "old-bearer-key",
             credentialClass: "rest-writer",
         },
         session,
@@ -841,7 +841,7 @@ test.each([
     },
 );
 
-const cockpitAuthority = {
+const legacyAuthority = {
     kind: "cockpit" as const,
     host: "owned-host",
     profile: "b".repeat(64),
@@ -856,7 +856,7 @@ test.each([
     "http://127.0.0.1:8000/api",
     "http://[::1]:8000/api",
 ])(
-    "original Cockpit authority %s is retained separately from browser observation",
+    "original predecessor authority %s is retained separately from browser observation",
     (endpoint) => {
         const { value, storage } = registry();
         const record = value.importHandle(
@@ -864,12 +864,12 @@ test.each([
                 kind: "id",
                 operationId: id,
                 source: "cockpit",
-                originalAuthority: { ...cockpitAuthority, endpoint },
+                originalAuthority: { ...legacyAuthority, endpoint },
             },
             session,
         );
         expect(record.originalAuthority).toEqual({
-            ...cockpitAuthority,
+            ...legacyAuthority,
             endpoint,
         });
         expect(record.observationTarget).toEqual(scope);
@@ -887,7 +887,7 @@ test.each([
     { profile: "unknown" },
     { archiveId: "invalid" },
 ])(
-    "unsafe Cockpit authority never becomes persisted browser authority",
+    "unsafe predecessor authority never becomes persisted browser authority",
     (change) => {
         const { value, storage } = registry();
         expect(() =>
@@ -895,7 +895,7 @@ test.each([
                 {
                     kind: "id",
                     operationId: id,
-                    originalAuthority: { ...cockpitAuthority, ...change },
+                    originalAuthority: { ...legacyAuthority, ...change },
                 },
                 session,
             ),

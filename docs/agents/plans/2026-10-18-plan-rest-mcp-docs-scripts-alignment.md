@@ -1,5 +1,11 @@
 # Align hfcache documentation and scripts with REST and read-only MCP
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `09c752e348df19a9221eaffca7b5ba272dd3a5c24bf87bd59cf9cac9e1d3f7b5`,
+original content SHA-256 `bb6ae8ac472addded7507e57bdea9d15f636aae9491ef933f0084d849884cdca`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -39,11 +45,6 @@ recorded evidence, not fresh observations by this reviewer.
 ## 1. Required documentation boundary
 
 ### Human-facing surface
-
-All documentation outside `docs/agents/` is for people: README, changelog,
-quickstart, operations/recovery, API/client/MCP/server references, configuration,
-schemas, architecture, invariants, technical ADRs, consumers, deployment,
-container/Cockpit guides, and human developer/script instructions.
 
 Human documents must not contain work-package IDs, task or implementation-plan
 links, progress-record ownership, active-plan pointers, agent workflow instructions,
@@ -103,13 +104,6 @@ history; improve examples; and add automated contract/documentation checks.
 
 ### Not in scope
 
-Do not redesign the API, add MCP write tools, add a workflow engine, implement a
-new scheduler, introduce arbitrary file download/upload, retire native activation,
-replace NFS consumer copying, broaden credentials, or change durable formats merely
-for editorial convenience. Do not migrate Cockpit's host-local report browser to a
-new API client without a separate scoped design. Document its existing exception
-accurately. No dependency upgrade is required to make prose match upstream examples.
-
 Preserve single-writer/local-lock authority, mount/sentinel checks, immutable
 publication/manifests, guarded maintenance/recovery, bounded receipts and metadata,
 exact-key/no-automatic-replay semantics, all observer handles, the private verifier's
@@ -138,7 +132,7 @@ to another host.
 | F09 | Medium | Preserve quiet errors/warnings, implement actual no-color behavior and align verbosity/non-TTY progress semantics. |
 | F10 | High | Separate API/MCP/Hub credential sources and profile-specific delivery, rather than universal native setup recipes. |
 | F11 | Medium | Remove the false promise of an unbounded local operational CLI; document complete-or-explicit-failure collection. |
-| F12 | Medium | Explain Cockpit's actual host-only/blocked controls and direct-report-read exception; retain independent consumers. |
+| F12 | Medium | Explain historical frontend's actual host-only/blocked controls and direct-report-read exception; retain independent consumers. |
 | F13 | Medium | Maintain a complete supported-script inventory, not the obsolete README list; do not delete supported tools as "dead". |
 | F14 | High | Add executable audience/link/interface checks and preserve normative coverage during historical-document migration. |
 
@@ -169,7 +163,6 @@ Create only missing audience/navigation/acceptance surfaces.
 | `docs/development.md` | Human contribution/build/test instructions and documentation checks, without agent execution process |
 | `docs/architecture.md`, `docs/invariants.md`, `docs/security.md`, `docs/schemas.md` | Current technical guarantees, threat controls, identities and compatibility |
 | `docs/adr/` | Human architectural rationale, not task provenance or agent process |
-| `docs/cockpit.md`, `docs/cockpit-plugin/`, `cockpit/README.md` | Actual launcher, candidate flow, host-local boundaries and profile limitations |
 | `docs/consumers.md`, consumer examples/helpers | NFS data path, exact publication identity, local verification and promotion |
 | `CHANGELOG.md` | Versioned user-facing changes and rollback notes, not work-package completion evidence |
 
@@ -245,7 +238,7 @@ Do not hold completed work for a single final commit.
 | 5 | 2 | [DOC-012 — Rewrite REST and client documentation as current references](tasks/doc-012-human-rest-and-client-reference.md) | API-018 |
 | 6 | 2 | [DOC-013 — Rewrite the MCP guide for users and administrators](tasks/doc-013-human-mcp-guide-and-tool-contract.md) | DOC-012 |
 | 7 | 2 | [DOC-014 — Replace historical command transcripts with current runbooks](tasks/doc-014-current-operations-and-recovery-runbooks.md) | DOC-013 |
-| 8 | 2 | [DOC-015 — Unify deployment, runtime and Cockpit guidance](tasks/doc-015-deployment-runtime-and-cockpit-guide-alignment.md) | DOC-014 |
+| 8 | 2 | [DOC-015 — Unify deployment, runtime and historical frontend guidance](../history/removed-interface-records.md) | DOC-014 |
 | 9 | 2 | [DOC-016 — Consolidate living technical contracts and architectural rationale](tasks/doc-016-human-architecture-config-schemas-and-adrs.md) | DOC-015 |
 | 10 | 2 | [DOC-017 — Make onboarding, examples and navigation reader-first](tasks/doc-017-reader-first-onboarding-and-human-navigation.md) | DOC-016 |
 | 11 | 3 | [DOC-018 — Add executable documentation and script-alignment checks](tasks/doc-018-automated-docs-and-interface-alignment-gate.md) | DOC-017 |
@@ -275,7 +268,7 @@ regression protection and closes the plan only after integrated validation.
    relevant tests. Correct contract and code disagreements explicitly in the
    same package. Preserve technical requirements when deleting historical prose.
 5. Implement, update human docs for that body of work, then run its focused checks
-   and `scripts/check.sh`. Use all required server/MCP extras. Required Cockpit
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
    checks must actually run for changes to that area; a skipped stage is not
    passing evidence. Do not use live Hub/NFS/installed-host tests under this plan.
 6. Record actual evidence, invariant/ADR review and any remaining restriction in
@@ -312,7 +305,7 @@ The final repository must satisfy all of the following:
   exceptions successful enforcement.
 - CLI quiet/error/warning/color/progress behavior matches its human contract;
   JSON and no-replay/retained-handle semantics are unchanged.
-- `scripts/check.sh --with-build`, documentation checks and required Cockpit checks
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
   pass, with exact results recorded. No assertion is made that offline fixtures
   prove live NAS, cgroup, SELinux or installed-image acceptance.
 - Current guards, locks, credential isolation, receipt stores, immutable archive
@@ -355,7 +348,7 @@ checks and record the decision.
   Human checker covers 180 documents with no tracking baseline; current authority
   retains historical normative requirements and known conformance limitations.
   Final `scripts/check.sh --with-build` passes 4315 offline tests, three locked
-  installation profiles, actual Cockpit lint/types/135 tests/build and four wheel
+  installation profiles, actual historical frontend lint/types/135 tests/build and four wheel
   smoke tests. Selector cleared. No version/tag/deployment/production action.
   User-authorized normal github/forgejo feature-branch pushes follow this commit;
   no tags or merges. See [final acceptance](../reviews/2026-10-18-alignment-acceptance.md).

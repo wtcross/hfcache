@@ -1,5 +1,11 @@
 # API-001: Activate the feature branch and specify the transport boundary
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `5a9bed7bac88e2c4452c56b5b391fab27794fbda0aceb5cf1fb0ddd5c62415c3`,
+original content SHA-256 `541c0b14bff9662d40b0daf3d67e64f26acbe50b7199fd4689c7e4542c3791ab`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `API-001` |
@@ -11,11 +17,6 @@
 | Suggested commit | `API-001: activate REST and MCP plan and define interface contracts` |
 
 ## Scope and acceptance
-
-1. Reconcile the reviewed SHA with current git history, current-plan selection, task IDs, and operator handoff. Recognize the imported draft records as intended input; preserve unrelated work. Create or resume `feat/rest-api-and-mcp` safely and record its actual base SHA. Activate only after an implementation instruction.
-2. Establish the initial `docs/api.md` operation/role/effect matrix for every command and mode in plan §4, plus service/server architecture contracts. Mark future features as planned, not deployed. Preserve the CLI-only historical text with dated amendments where required.
-3. Record numbered decisions for the transport/service boundary, incremental dependency additions, and the narrow bounded submission registry. Explicitly amend the closed-runtime/framework boundary rather than hiding a new home-built workflow system beneath HTTP.
-4. Review FS/TX, credential, output, consumer, Cockpit, and planning invariants. Identify new constraints and their later enforcing packages; do not label an unimplemented constraint as proven. Import all pending task records and select this task before implementing subsequent packages.
 
 ## Contracts, invariants, and ADRs
 
@@ -57,7 +58,7 @@ Activated on the requested feature branch at base
 `github/main` matches that base. Only the intended draft records were untracked.
 No conflicting IDs or other active plan. All later tasks remain pending.
 
-Reviewed FS/TX, INV-001–011, FW and AD-17/21, consumer and Cockpit boundaries.
+Reviewed FS/TX, INV-001–011, FW and AD-17/21, consumer and historical frontend boundaries.
 Decisions 108/109 amend the transport/dependency and narrow receipt boundary;
 INV-012–016 label target constraints with their later enforcement owners.
 The parity table covers all 14 legacy families/modes, explicitly adding sync
@@ -72,8 +73,8 @@ contract complete, all 14 command families covered. New API/server docs and
 decisions 108/109 label future implementation explicitly; invariant and ADR
 review described above complete. All 27 new plan/task/contract local-link
 checks pass; git diff whitespace check passes. Baseline `scripts/check.sh`
-exited 0 (1,750 Python, 45 Cockpit tests). Post-change `scripts/check.sh`
-exited 0: lock, format, lint, types, 1,750 Python tests, 45 Cockpit tests,
+exited 0 (1,750 Python, 45 historical frontend tests). Post-change `scripts/check.sh`
+exited 0: lock, format, lint, types, 1,750 Python tests, 45 historical frontend tests,
 wheel/sdist and production plugin builds. No optional host/live tests run;
 no implementation files, dependencies, production state or unrelated backlog
 changed. [Progress audit](../../progress.md#rest-api-and-read-only-mcp-api-2026-10-17).

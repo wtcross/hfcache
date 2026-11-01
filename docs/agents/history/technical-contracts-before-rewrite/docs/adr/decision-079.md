@@ -65,7 +65,6 @@ Implementation or shipped-artifact evidence:
 Verification or recorded operational evidence:
 [docs/agents/progress.md](../../../../progress.md).
 
-
 ## 2026-10-18 data-preserving local rollout amendment (OPS-014)
 
 [Decision 126](../../../../../adr/decision-126.md) records new local-host release/rollout authority

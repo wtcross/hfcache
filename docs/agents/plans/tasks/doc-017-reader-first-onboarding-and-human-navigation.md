@@ -1,5 +1,11 @@
 # DOC-017: Make onboarding, examples and navigation reader-first
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `af3a2a692eb636fc471a4aa50641b0943d0795220ac3de2ebf2254444a551ff1`,
+original content SHA-256 `3acd19fb8cff70b06a645cff91d1975dcbbff89becdcc1d44168ffd8899986c7`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -84,7 +90,7 @@ in 2.07s. Human link/anchor scan zero broken; Ruff and Pyrefly passed. The first
 gate stopped at lint because the preserved source snapshot used a Python suffix;
 it is now a byte-preserved `.py.txt` historical artifact, not duplicate code.
 Full rerun `scripts/check.sh` exited 0: 4228 passed/40 opt-in deselected in
-476.18s, distributions and all three locked profiles passed, actual Cockpit
+476.18s, distributions and all three locked profiles passed, actual historical frontend
 lint/typecheck/135 tests/build passed. FS-12, INV-008/009/010, AD-05/13/21 and
 consumer/dependency decisions reviewed; no invariant, runtime, format, dependency
 or architectural change. No live/NFS/host operation ran.

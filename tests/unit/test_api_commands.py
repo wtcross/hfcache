@@ -87,8 +87,8 @@ async def submit(client, path, body, key, *, headers=WRITER_HEADERS):
     return accepted
 
 
-async def result(client, accepted):
-    deadline = time.monotonic() + 10
+async def result(client, accepted, *, timeout=10):
+    deadline = time.monotonic() + timeout
     while True:
         response = await client.get(accepted["links"]["status"], headers=READER_HEADERS)
         assert response.status_code == 200

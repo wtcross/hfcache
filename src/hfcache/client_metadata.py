@@ -1,4 +1,4 @@
-"""Narrow authenticated client-authority presentation for Cockpit recovery (CP-08)."""
+"""Narrow authenticated client-authority presentation for original recovery."""
 
 import hashlib
 import json

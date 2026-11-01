@@ -1,5 +1,11 @@
 # DOC-011: Separate human documentation from implementation records
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `9021d409b870b507116ab18540efe97453d07021c1d2308e73c8cf512f5ed052`,
+original content SHA-256 `309221bc532688d4ccd8214506698918c376ffb1040052cab4030920b8b0498f`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -60,7 +66,7 @@ Validate the migration manifest against git-tracked source paths/hashes, parent/
 - `uv run --locked --extra server --extra mcp pytest tests/unit/test_docs_migration.py tests/unit/test_failure_matrix.py tests/unit/test_logging.py tests/unit/test_retention.py --no-cov`: 120 passed.
 - `scripts/check.sh`: lock, full-extra sync, 446 formatted Python files, lint,
   Pyrefly (0 errors), 4062 passed/40 opt-in deselected in 469.25s, build, locked
-  base/server/server+MCP installation smoke, and actual Cockpit frozen install,
+  base/server/server+MCP installation smoke, and actual historical frontend frozen install,
   lint, 135 passed/0 skipped, production build. Full log retained locally at
   `/tmp/hfcache-doc011-gate.log`; no live/NFS/installed-host workload ran.
 - Independent original-hash/47-record audit, Markdown destination/anchor scan

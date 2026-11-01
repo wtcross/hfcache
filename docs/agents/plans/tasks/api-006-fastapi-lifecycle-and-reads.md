@@ -1,5 +1,11 @@
 # API-006: Serve authenticated REST resources with a controlled lifespan
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `1088dcea843746004033f397b9e84908e51ba3da2ace31c65da7bc09f56cf48e`,
+original content SHA-256 `9494256c636110af0fb5bc220344e59e7be45ea83f6d5468be45170c15c194b0`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `API-006` |
@@ -130,7 +136,7 @@ state while retaining a truly running worker after disconnect. Deterministic
 delayed-callback and cancelled-observer regressions pass; the final focused
 HTTP/bootstrap selection passed 96 tests in 5.82s, with whole-project formatting,
 lint and Pyrefly green. The fourth full gate passed completely. No build/install/
-Cockpit success is claimed from either failed Python-suite attempt; final evidence
+historical frontend success is claimed from either failed Python-suite attempt; final evidence
 below records the successful complete run.
 
 ## Completion evidence
@@ -190,7 +196,7 @@ Validation:
   final fourth attempt exits `0`. Lock/server-extra sync, 301 Python files
   formatted, lint and Pyrefly (0 errors), 2,133 Python tests (40 deselected,
   114.37s), wheel/sdist 0.1.10, real isolated locked base/server installation/
-  import/help/version, Cockpit lint/styles/types, 45 tests and production build
+  import/help/version, historical frontend lint/styles/types, 45 tests and production build
   all pass. Three earlier stops are retained above: formatting only; damaged-ref
   estimate parity; and a real worker-completion/capacity race. Each was corrected
   and regression-tested before the successful complete run.

@@ -14,10 +14,6 @@
       "current": "README.md"
     },
     {
-      "original": "cockpit/README.md",
-      "current": "cockpit/README.md"
-    },
-    {
       "original": "docs/adr/README.md",
       "current": "docs/adr/README.md"
     },
@@ -450,24 +446,8 @@
       "current": "docs/adr/decision-086.md"
     },
     {
-      "original": "docs/adr/decision-087.md",
-      "current": "docs/adr/decision-087.md"
-    },
-    {
-      "original": "docs/adr/decision-088.md",
-      "current": "docs/adr/decision-088.md"
-    },
-    {
       "original": "docs/adr/decision-089.md",
       "current": "docs/adr/decision-089.md"
-    },
-    {
-      "original": "docs/adr/decision-090.md",
-      "current": "docs/adr/decision-090.md"
-    },
-    {
-      "original": "docs/adr/decision-091.md",
-      "current": "docs/adr/decision-091.md"
     },
     {
       "original": "docs/adr/decision-092.md",
@@ -504,10 +484,6 @@
     {
       "original": "docs/adr/decision-100.md",
       "current": "docs/adr/decision-100.md"
-    },
-    {
-      "original": "docs/adr/decision-101.md",
-      "current": "docs/adr/decision-101.md"
     },
     {
       "original": "docs/adr/decision-102.md",
@@ -670,26 +646,6 @@
       "current": "docs/cli.md"
     },
     {
-      "original": "docs/cockpit-plugin/README.md",
-      "current": "docs/cockpit-plugin/README.md"
-    },
-    {
-      "original": "docs/cockpit-plugin/installation.md",
-      "current": "docs/cockpit-plugin/installation.md"
-    },
-    {
-      "original": "docs/cockpit-plugin/troubleshooting.md",
-      "current": "docs/cockpit-plugin/troubleshooting.md"
-    },
-    {
-      "original": "docs/cockpit-plugin/usage.md",
-      "current": "docs/cockpit-plugin/usage.md"
-    },
-    {
-      "original": "docs/cockpit.md",
-      "current": "docs/cockpit.md"
-    },
-    {
       "original": "docs/configuration.md",
       "current": "docs/configuration.md"
     },
@@ -806,10 +762,6 @@
       "current": "docs/agents/plans/tasks/api-014-systemd-and-deployment-integration.md"
     },
     {
-      "original": "docs/plans/tasks/api-015-cockpit-api-client-compatibility.md",
-      "current": "docs/agents/plans/tasks/api-015-cockpit-api-client-compatibility.md"
-    },
-    {
       "original": "docs/plans/tasks/api-016-rest-acceptance-gate.md",
       "current": "docs/agents/plans/tasks/api-016-rest-acceptance-gate.md"
     },
@@ -911,12 +863,10 @@
     }
   ],
   "executable_and_help_surfaces": [
-    "cockpit/build.js",
     "examples/config.toml",
     "examples/copy-revision.py",
     "examples/mcp-client.py",
     "packaging/client.example.toml",
-    "packaging/cockpit-client.toml",
     "packaging/containers/Caddyfile.in",
     "packaging/containers/Containerfile",
     "packaging/containers/Containerfile.caddy",
@@ -1002,13 +952,14 @@
       ]
     },
     {
-      "path": "cockpit/src/lib/events.ts",
       "citations": [
         {
           "line": 4,
           "text": " * The journal's structured event lines (docs/plan.md \u00a724;"
         }
-      ]
+      ],
+      "original_path_sha256": "1f4c11cc450c90271a73ed80389bdb15fca3a7fd017cba23851117fa3d9220bd",
+      "original_content_sha256": "c8a622bed8ab43c2d747f0339383240e0a733c25ca9ba3eee05b848f4fccbc51"
     },
     {
       "path": "docs/adr/README.md",
@@ -1673,13 +1624,14 @@
       ]
     },
     {
-      "path": "docs/cockpit.md",
       "citations": [
         {
           "line": 90,
           "text": "| `CP-13` | The plugin never weakens systemd hardening or SELinux and never advises doing so; a denial is fixed per `docs/plan.md` \u00a723 or reported |"
         }
-      ]
+      ],
+      "original_path_sha256": "4f60061bf6977c43d79aa355524aabadadf18d0cb2a0b9ad6339894b05863941",
+      "original_content_sha256": "aeb342b81afeed7e0977f9c2afddef8b372ff5ff08524a6917ae4afccde952df"
     },
     {
       "path": "docs/configuration.md",
@@ -1988,13 +1940,14 @@
       ]
     },
     {
-      "path": "docs/plans/tasks/api-015-cockpit-api-client-compatibility.md",
       "citations": [
         {
           "line": 22,
           "text": "`CP-01`\u2013`CP-14`, `INV-002`/`INV-003`/`INV-006`; plan \u00a7\u00a76\u20137."
         }
-      ]
+      ],
+      "original_path_sha256": "20b6a51a97180128896815bf25664a5d24e1f0924bf78bf7e386a32a696e5fc2",
+      "original_content_sha256": "d459bd573972e16dce99798205e9d39a85b297c820d55966ddc9a6b4a8696d90"
     },
     {
       "path": "docs/plans/tasks/api-016-rest-acceptance-gate.md",
@@ -3676,6 +3629,66 @@
           "text": "# Persistence and health (plan \u00a716.2 items 8 and 9)"
         }
       ]
+    }
+  ],
+  "retired_documents": [
+    {
+      "original_path_sha256": "c082f5f847702721e2a8350bd3b86c0b7ca2ed0bbebfa48c13055685e09ec05d",
+      "reason": "Superseded interface-only document removed by WEB-027; original retained in baseline Git."
+    },
+    {
+      "original_path_sha256": "8a95db916ce4d67f8779f6554d486c212e8d9d7b40afa07202bec9b908daee7d",
+      "reason": "Superseded interface-only document removed by WEB-027; original retained in baseline Git."
+    },
+    {
+      "original_path_sha256": "464e966dd2b2ac74129389568bcee67eb09e5bf95f43ed45607ae3bf83c4e23e",
+      "reason": "Superseded interface-only document removed by WEB-027; original retained in baseline Git."
+    },
+    {
+      "original_path_sha256": "d174f08a7fdbb7eef5245b93899e548d0f0f4049f4f1a389c052d5115637bcca",
+      "reason": "Superseded interface-only document removed by WEB-027; original retained in baseline Git."
+    },
+    {
+      "original_path_sha256": "9beb554e28af92a79b48409d8991c96003f8be00f0d8d73a77a3df970f95baa7",
+      "reason": "Superseded interface-only document removed by WEB-027; original retained in baseline Git."
+    },
+    {
+      "original_path_sha256": "aea6343df819b1bf09ff83a15ea023c218897b16889ab49a868c78fbe9cf91c0",
+      "reason": "Superseded interface-only document removed by WEB-027; original retained in baseline Git."
+    },
+    {
+      "original_path_sha256": "c236e81d5ba3435820c6bc936df0c3ad798be4d3e01013c376764e6724859877",
+      "reason": "Superseded interface-only document removed by WEB-027; original retained in baseline Git."
+    },
+    {
+      "original_path_sha256": "0fd4b4bb3c96ae015d0120e991ed48122df41b79d6c178fa9903228cccb215a0",
+      "reason": "Superseded interface-only document removed by WEB-027; original retained in baseline Git."
+    },
+    {
+      "original_path_sha256": "a8ea222206b119e68cfc9e53aed3cd4e561ee1c98743275fbc877b0b233887b5",
+      "reason": "Superseded interface-only document removed by WEB-027; original retained in baseline Git."
+    },
+    {
+      "original_path_sha256": "4f60061bf6977c43d79aa355524aabadadf18d0cb2a0b9ad6339894b05863941",
+      "reason": "Superseded interface-only document removed by WEB-027; original retained in baseline Git."
+    },
+    {
+      "original_path_sha256": "20b6a51a97180128896815bf25664a5d24e1f0924bf78bf7e386a32a696e5fc2",
+      "reason": "Superseded interface-only document removed by WEB-027; original retained in baseline Git."
+    },
+    {
+      "original_path_sha256": "84949b66d459d9536502bb75fb781a4c4fa0b3273d2c3a057d364da363ef7855",
+      "reason": "Superseded interface-only document removed; original retained in baseline Git."
+    }
+  ],
+  "retired_executable_and_help_surfaces": [
+    {
+      "original_path_sha256": "0497ac069b5506d79600000fb842e00ca25cbd6060f49b6f146cbadf0d62d0ca",
+      "reason": "Removed interface-only executable/help surface; original baseline Git retains the path."
+    },
+    {
+      "original_path_sha256": "d8b6100370777220fd4e34625c84e189396ea08c8dd961b39355662f30cc01a7",
+      "reason": "Removed interface-only executable/help surface; original baseline Git retains the path."
     }
   ]
 }

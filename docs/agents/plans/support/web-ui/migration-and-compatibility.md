@@ -1,5 +1,11 @@
 # Migration, compatibility and retirement requirements
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `cef766abdfd7ff51defe28cca67c8204505811518a08432f4b35afce8b7d3a48`,
+original content SHA-256 `a583a5122af767e4d0493d8b7f68de6cd214ad5557b3c76a5d0fedd723a0904a`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 ## Source work versus deployment
 
 This plan authorizes source implementation and disposable test execution only after the kickoff prompt is issued. It does not authorize another production rollout. The reviewed repository records guarded rootless 0.2.2 from application source `1c68501`; original configuration/candidate/backup/locks/stores/handles/secrets, NAS read-only, writer masks and disabled calendars remain. Do not revive any historical broad host permissions from prior progress entries.
@@ -28,25 +34,12 @@ Run old supported binaries against fixture copies containing new card adjunct/pr
 
 Password/provider changes do not change the stable human subject or silently rebind operation ownership. Existing credential-class receipts remain class-scoped historical evidence; no retroactive human attribution. Future account/repository authorization is out of scope. Keep browser-operation registry schemas independently versioned and reject malformed/cross-authority restored entries.
 
-## Existing Cockpit evidence and handoff
-
-Before a real migration, the operator inventories unfinished operations, candidate/base/predecessor configuration, fixed client profile, effective host permissions, actual executor state and original locks. The future UI must offer lookup/observation by an operator-supplied original safe key/ID against the same verified authority. It cannot directly read Cockpit's browser session storage from another origin. Do not promise automatic migration of that browser state, invent handles, treat missing history as nonexecution, or replay work to recreate a result.
-
-Keep configuration candidate/backup lock paths and ownership semantics stable, or design an explicitly tested, non-destructive adapter. A new helper must refuse conflicting/incompatible candidate state, not adopt/delete it silently. Its ownership of mutations and journals cannot overlap with still-active Cockpit writes without the original common lock and exact-byte guards. Retain the existing common-lock and exact-byte conflict protections. Further
-legacy-client testing is excluded by the2026-11-01 user direction.
-
 ## Legacy deprecation and independent web operation
 
 After compatibility, new-web workflows and usable documentation pass, WEB-025
 records proportional deprecation and handoff. The new UI works independently
-without opening Cockpit or forwarding to old plugin pages. New-web safety
+without opening historical frontend or forwarding to old plugin pages. New-web safety
 coverage and supported native controls/rootless denials remain required.
-
-The2026-11-01 user direction supersedes the former removal, per-file inventory,
-test-porting and dependency-cleanup project. Preserve legacy source/tests,
-licenses/history, rollback artifacts, generic clients and shared runtime helpers.
-Do not maintain or validate the plugin, alter its live installation or remove
-shared Cockpit packages/services as part of this goal.
 
 ## Rollback runbook requirements
 

@@ -749,11 +749,12 @@ refreshing a read panel submits no operation. Basic grants, protected host
 permissions and each action's fresh execution proof remain independent; a Basic
 grant alone authorizes no host effect. These source capabilities do not change
 an installed release or permit adding unsupported
-settings to its server. The shipped Cockpit plugin remains supported.
+settings to its server. Browser clients use the independent web interface.
 [UI status](web-ui/README.md) and
 decisions [140](adr/decision-140.md), [141](adr/decision-141.md),
 [142](adr/decision-142.md), [143](adr/decision-143.md) describe the replacement
-boundary; [144](adr/decision-144.md) keeps retirement conditional on actual proof.
+boundary. [Decision161](adr/decision-161.md) records repository removal of the
+superseded interface while preserving shared runtime safety and installed state.
 
 ### Authenticated application assets
 
@@ -920,9 +921,9 @@ The helper owns only labelled fixed configuration paths under `/etc/hfcache`.
 It uses the original flock inode and same-filesystem private operation directory,
 stages0640 root:hfcache, preserves original predecessor/backup inodes and confirms
 installed bytes/fingerprint before acknowledging. A durable pending marker
-precedes effects; legacy writers check it under the same flock. Cockpit previews
-release that flock over network work, capture bounded output and reacquire/recheck
-original base/candidate before returning the result.
+precedes effects; participating guarded writers check it under the same flock.
+Any preview that releases the flock over network work must reacquire it and
+recheck the original exact base/candidate before claiming current readiness.
 
 On startup unfinished application receipts become interrupted without helper
 transmission. Once ready, the original configuration outcome route permits a
@@ -953,7 +954,7 @@ in the host outcome. Private pending/history and original API handles are retain
 for read-only reconciliation. See [decision156](adr/decision-156.md) and the
 [fixed host contract](host-administration.md#fixed-schedule-observer-and-journal-operations).
 
-New native grants/effects also require a safely absent fixed legacy Cockpit policy
+New native grants/effects also require a safely absent fixed historical interface policy
 or its strict protected schedule/observer bits both false. Capture and revalidate
 that file or absence; its old source/index identity is not replaced by the new
 release. This read-only exclusion does not establish that an earlier privileged

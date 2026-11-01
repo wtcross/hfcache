@@ -1,4 +1,8 @@
-# Preserve Cockpit failure evidence and original operation identity
+# Preserve failure evidence and original operation identity
+
+The superseded browser interface has been removed under
+[decision 161](decision-161.md). Shared backend, host-helper and web rules below
+remain governed by their current contracts.
 
 - Decision identity: 134.
 - Status: Amended; boundary, candidate reconciliation and scoped recovery implemented; [decision 135](decision-135.md) replaces manual service starts, [decision 136](decision-136.md) replaces direct report reads, [decision 137](decision-137.md) validates read presentation and separate deployment identities, and [decision 138](decision-138.md) repairs guarded stdin framing; [decision 139](decision-139.md) preserves confinement during exact installed confirmation. Disposable and installed acceptance remain separate.
@@ -25,39 +29,9 @@ only bounded validated nonsecret session metadata may support lookup/observation
 
 ## Consequences
 
-Source tests, actual disposable Cockpit/rootless tests and installed acceptance
-remain distinct. Unknown authority or history fails closed. Manual full REST jobs
-and retiring direct report reads require their own explicit contract amendments
-and tested adapters; the current documented exceptions remain until then. No
-endpoint for install, schedules or cancellation is added. Existing rootless holds,
-credentials, exact candidate bytes, lock/backup authority and MCP reads remain.
-No new runtime dependency, release, production inspection or deployment is approved.
-
 ## Evidence and relationships
 
-- Amends [decision 122](decision-122.md); preserves [127](decision-127.md),
-  [118](decision-118.md), [119](decision-119.md), [120](decision-120.md).
-- [Cockpit contract](../cockpit.md#integration-repair-requirements),
-  [invariants](../invariants.md#cockpit-boundary), [deployment status](../deployment-status.md).
-- Current [runner](../../cockpit/src/lib/runner.ts),
-  [candidate pipeline](../../cockpit/src/lib/config-pipeline.ts),
-  [polling and handles](../../cockpit/src/hooks.ts) establish the source boundaries.
-  Regression evidence must accompany the corresponding implementations.
-
 ## Implemented boundary and connection behavior
-
-The [failure model](../../cockpit/src/lib/failure.ts) retains only known bounded
-problem/process/stage fields, preserving original classifications through safe
-rewrapping. Unknown values and raw diagnostic prose are withheld, including from
-activity feeds. Exact terminal Envelopes remain independent and authoritative.
-The [owned connection](../../cockpit/src/lib/connection.ts) and
-[application session](../../cockpit/src/api/connection.ts) dispose close/privilege
-listeners, bound read reconnection and reject stale results without mutation replay.
-[Mounted component tests](../../cockpit/test/browser.fixture.tsx) fail against the
-reviewed source and exercise actual hooks/adapters in an isolated Firefox profile.
-This implements the boundary/lifecycle portion of the contract and proves no
-installed PAM or launcher cause. The scoped recovery implementation below extends
-this boundary without a new runtime dependency or host restriction change.
 
 ## Implemented candidate reconciliation
 
@@ -140,29 +114,6 @@ when it becomes stale. Copied recovery commands use the fixed service-identity
 launcher/settings/socket, expected scope and quoted positional handles after
 `--`, including safe option-like keys.
 
-Evidence: [registry](../../cockpit/src/lib/operation-registry.ts),
-[authority parser](../../cockpit/src/lib/operation-authority.ts),
-[application adapter](../../cockpit/src/api/operations.ts),
-[metadata command](../../src/hfcache/client_metadata.py),
-[registry tests](../../cockpit/test/operation-registry.test.ts),
-[authority tests](../../cockpit/test/operation-authority.test.ts),
-[CLI/socket tests](../../tests/unit/test_cli_client_describe.py),
-[credential collision regressions](../../tests/unit/test_client_metadata_redaction.py)
-and [mounted application tests](../../cockpit/test/browser.fixture.tsx).
-These source tests are distinct from actual disposable Cockpit/PAM acceptance.
-An isolated older-artifact launcher/candidate test does not validate this new
-registry/metadata implementation or establish the original installed symptom.
-The historical CP-04 full-service and CP-01/09 direct-report exceptions, production workload
-holds, root locks/guards/masks and deployment restrictions remain unchanged.
-
-The required repository gate also reproduced a real owned Unix transport defect:
-an empty HTTP end-of-message write could close an already-responded socket before
-the response read, replacing it with EBADF/ReadError. The adapter now matches the
-locked backend's empty-write no-op. [Decision119's amendment](decision-119.md#empty-unix-writes-amendment-2026-10-20)
-records deterministic actual-socket red/green and repeated original-case proof.
-This changes neither dependency versions nor replay policy and establishes no
-causal claim about the original installed Cockpit bridge interruption.
-
 ## Manual full-job amendment (2026-10-20)
 
 [Decision 135](decision-135.md) now replaces the CP-04 manual service-start
@@ -187,11 +138,6 @@ symptom acceptance. Original negative Envelopes and classified causes remain.
 
 ## Application-owned browser session amendment (2026-10-26)
 
-The replacement interface adapts the existing recovery registry locally, retaining
-its LGPL-2.1-or-later provenance and full shipped license notice. It uses the typed
-same-origin REST client, with no Cockpit transport or runtime dependency. The
-historical Cockpit behavior above remains a separate supported client boundary.
-
 The new registry stores at most32 records/64KiB of closed safe-handle metadata,
 reserving growth for unresolved entries. Persist the original key before POST;
 failure before transmission blocks submission, while possible transmission plus
@@ -215,3 +161,7 @@ configuration effects remain distinct from generic API failure/interruption.
 Exact metadata and user procedures are in [schemas](../schemas.md#186-browser-recovery-metadata-schema-1)
 and [browser recovery](../web-ui/operations.md). No new endpoint, server receipt,
 credential grant, cancellation or automatic recovery effect is introduced.
+
+The pre-removal record remains in Git at
+`c692d7ae4b866fefd8a743a21afdb729da0f39c4`; removed interface-only
+instructions and source evidence are historical, not current operating steps.

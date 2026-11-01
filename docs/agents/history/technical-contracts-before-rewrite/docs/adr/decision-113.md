@@ -127,7 +127,6 @@ Evidence: [wire/read/lifespan tests](../../../../../../tests/unit/test_api_reads
 [shared query containment](../../../../../../tests/unit/test_query_boundary.py), and
 [ephemeral Unix/TCP/TLS tests](../../../../../../tests/unit/test_server_bootstrap.py).
 
-
 ## 2026-10-18 native Unix prefix and REST acceptance amendment (API-016)
 
 The authenticated single application now distinguishes trusted supported Unix

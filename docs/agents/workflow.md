@@ -92,6 +92,13 @@ work remain intact; nothing is migrated or activated just because it exists.
 
 ## Decisions
 
+The explicit WEB-027 removal instruction creates a narrow exception to record
+retention: superseded interface-only records are removed from the current tree,
+and mixed records retain sanitized projections. Original text and exact executed
+invocations remain in Git at the pre-removal commit. [Decision 161](../adr/decision-161.md)
+and the [provenance record](history/removed-interface-records.md) define this
+exception; it does not authorize rewriting Git history or unrelated records.
+
 The **Decisions** section of `docs/agents/progress.md` is numbered, append-only, one
 topic per decision. A decision states what was decided, the alternative that
 lost, and why — future readers get the reasoning, not just the outcome. When a

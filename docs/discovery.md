@@ -599,7 +599,7 @@ compatibility evidence, without a production switch or live NFS acceptance.
 
 ### Guarded rollback and backup
 
-The [Cockpit migration guide](web-ui/migration-from-cockpit.md#compatibility-and-backups)
+The [interface migration guide](web-ui/migration-and-rollback.md#compatibility-and-backups)
 records the observed old-binary results for cards, curation, observations and
 operation state. Review those limits alongside this backup procedure.
 

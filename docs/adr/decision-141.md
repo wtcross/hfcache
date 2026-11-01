@@ -1,5 +1,9 @@
 # Separate privileged host administration from the unprivileged API
 
+The superseded browser interface has been removed under
+[decision 161](decision-161.md). Shared backend, host-helper and web rules below
+remain governed by their current contracts.
+
 - Decision identity: 141.
 - Status: Accepted; implemented with scoped owned native/rootless fixture acceptance.
 - Date: 2026-10-20.
@@ -9,7 +13,7 @@
 The fixed protected reader, managed configuration path and native host controls
 are implemented. [Human acceptance](../web-ui/test-release-acceptance.md) records
 actual native effects and guarded rootless refusals; the
-[migration guide](../web-ui/migration-from-cockpit.md#compatibility-and-backups)
+[migration guide](../web-ui/migration-and-rollback.md#compatibility-and-backups)
 records old-client, refusal and installed rollback limits. Earlier pending
 statements retain the introducing design's historical scope. Original failures,
 unknown durable outcomes and separate production/other-platform holds remain.
@@ -26,22 +30,7 @@ follows from a successful preview.
 
 ## 2026-10-21 protected-reader amendment
 
-[Decision150](decision-150.md) specifies the fixed protected status/config-base
-reader and fresh Basic job proof. Configuration/schedule/observer writes retain
-this record's separate durable obligations and remain denied until implemented.
-The existing Cockpit boundary and historical evidence stand. Source availability
-and real installed native/rootless conformance are separate requirements.
-
 ## Context and decision
-
-Cockpit currently owns guarded configuration installation and fixed host controls
-outside REST. Replacing its transport must preserve those controls without giving
-the API root privileges, broad writable host mounts, a manager/control socket or
-an arbitrary command execution interface. Introduce one protected Unix helper
-with independently versioned protocol 1, fixed operations, finite frames and
-actual peer-identity verification. Caddy and the offline verifier cannot connect.
-No request selects a path, shell, manager, unit, UID, credential source or archive.
-The helper has no Hub authority and opens no archive payloads.
 
 Require explicit internal administration capabilities plus independently
 provisioned protected host policy. Generic REST bearer write grants no
@@ -140,7 +129,6 @@ guards and historical evidence remain. See [server](../server.md),
 legacy guard, durable private outcomes and original-handle read-only observation.
 It supersedes earlier assumptions of a wholly read-only helper for this fixed
 operation; all unrelated authority and original reasoning remain.
-
 
 ## Fixed host-effect amendment (2026-10-27)
 

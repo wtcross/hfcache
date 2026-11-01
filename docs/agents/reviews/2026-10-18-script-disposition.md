@@ -1,5 +1,11 @@
 # Script and code-removal disposition inventory
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `b42a9f79233eb4b49e3df2ea3d3e0ee31cfde760a76e38f51b68a98291955667`,
+original content SHA-256 `83ac35e060ebafe0cd95dc1b0bd120f4b765043d70848cb450140679c28ae8a9`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 Review: 2026-10-18, `feat/rest-api-and-mcp` at `65b65714b29e835498138ec3122b5669571850cf`.
 This is an agent review artifact. The implemented human `docs/scripts.md` must
 use plain purpose/profile/usage language, not these task/finding labels.
@@ -19,7 +25,7 @@ agent must perform the complete reference/install/test inventory before deletion
 | [check-container-worker.py](https://github.com/wtcross/hfcache/blob/65b65714b29e835498138ec3122b5669571850cf/scripts/check-container-worker.py) | Retain — opt-in fixture | Private worker/PID1/peer/isolation fixture checks. | Container/process/local evidence effects. Separate fixture/host-peer/actual-installed-API proof. |
 | [check-hardening.sh](https://github.com/wtcross/hfcache/blob/65b65714b29e835498138ec3122b5669571850cf/scripts/check-hardening.sh) | Retain, restrict and repair — native probe | Native executor hardening wrapper; not the rootless installed-process probe. | Unsafe to treat as routine read-only status. Add profile/mode/target guard and safe help/dry-run. |
 | [check-installations.py](https://github.com/wtcross/hfcache/blob/65b65714b29e835498138ec3122b5669571850cf/scripts/check-installations.py) | Retain — test/build | Verify locked base, server and server+MCP installation profiles. | Throwaway environments/package installation; consumed by the gate. Not dead because --with-build also exists. |
-| [check.sh](https://github.com/wtcross/hfcache/blob/65b65714b29e835498138ec3122b5669571850cf/scripts/check.sh) | Retain and extend — quality gate | Provider-neutral lint/types/tests/build/installation/Cockpit gate. | Development environment/build effects. Add safe documentation/interface checks; distinguish skipped stages. |
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 | [consumer-serve-hfcache-model.sh](https://github.com/wtcross/hfcache/blob/65b65714b29e835498138ec3122b5669571850cf/scripts/consumer-serve-hfcache-model.sh) | Retain — consumer | Serve an explicitly verified consumer-side revision. | Serving/container operation, not archive management. Keep ownership and immutable-promotion separation. |
 | [container-service.py](https://github.com/wtcross/hfcache/blob/65b65714b29e835498138ec3122b5669571850cf/scripts/container-service.py) | Retain — rootless runtime | Closed role launcher and non-killing drain using a protected profile. | Service/container/state effects. Keep fixed role/engine/mount/secret boundaries and unknown-state refusal. |
 | [fetch-container-python.py](https://github.com/wtcross/hfcache/blob/65b65714b29e835498138ec3122b5669571850cf/scripts/fetch-container-python.py) | Retain — build input | Obtain/verify the portable Python input required by the UBI build. | External fetch/local artifact effects; never a runtime dependency resolver. Document trust/provenance. |
@@ -76,11 +82,6 @@ release binding unless a new design changes that contract. It is not the active
 container listener. Keep native socket activation, `scheduled_client.py`, native
 scheduled services and pending-handle logic. Keep actual domain service modules,
 MCP authentication/lifespan helpers and no-replay receipt stores.
-
-Keep `cockpit/src/api/archive.ts` and its host-local report browsing until a scoped
-replacement exists; it is an intentional exception, not unused code. Keep
-`examples/copy-revision.py`, consumer store/serving helpers and their tests: REST/MCP
-metadata do not replace the NFS content path or complete local verification.
 
 Keep `hold-readonly-guard.py`, exact lock paths/inodes, masks, state retention and
 all independent host safety policy. This source cleanup must not alter their

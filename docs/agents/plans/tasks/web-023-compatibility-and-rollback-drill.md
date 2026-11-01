@@ -1,5 +1,11 @@
 # WEB-023: Verify old clients, durable formats and evidence-preserving rollback
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `2bd04b5faa8db37ca3211974bf67d5fed8a1b56d6f826a6de44c06595207784f`,
+original content SHA-256 `55cc7400984c0e43755b5f673d6a59d79e805cdf2ad1709380a7d044806dce7d`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -43,8 +49,6 @@ Execute actual old installed clients/binaries, not only serializers, against new
 In disposable installed targets complete upgrade/open-browser/rollback/reconnect scenarios through Caddy, prove REST/MCP and safe original handles still usable where compatible, and verify incompatible target refuses without data loss.
 
 ## Human documentation deliverables
-
-Write human migration/rollback compatibility tables, prerequisites and stop conditions in migration-from-cockpit.md, deployment.md, schemas/discovery/release notes. No production deployment-status claim.
 
 ## Acceptance
 
@@ -226,14 +230,7 @@ No optional matrix-runner pass is claimed and no required minimum layer is reduc
 
 ### Records, contracts and required gate
 
-The user's latest2026-11-01 instruction excludes further Cockpit plugin work and
-validation. The only gate implementation change makes legacy plugin checks
-explicit opt-in; strict web/backend/docs/build remain required. Gate-control
-regressions cover default omission and retained explicit legacy flag semantics;
-no plugin source/dependencies/tests/build are maintained or executed. This
-supersedes earlier applicable-Cockpit conditions for current validation.
-
-The [human migration guide](../../../web-ui/migration-from-cockpit.md) records
+The [human migration guide](../../../web-ui/migration-and-rollback.md) records
 observed target-specific support/refusal, backups, coherent selection, original
 namespaces and stop conditions. Deployment, discovery, schemas, release guidance
 and web navigation link it. Reviewed INV001/002/018/021/022 and related existing

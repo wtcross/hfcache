@@ -1,7 +1,7 @@
 # Deploy the optional web interface
 
 This describes optional authentication and immutable asset serving in unreleased
-source. Installed systems still use their recorded release and Cockpit. A source
+source. Installed systems still use their recorded release. A source
 build does not install assets, select a release or enable `[web]`. Do not change a
 running installation merely to try the developer preview. See
 [current installed scope](../deployment-status.md) before planning a migration.
@@ -156,7 +156,7 @@ toolchain, license inventory and notices with release evidence. A dirty local
 artifact can exercise an owned test fixture; it does not establish a clean
 release. Full web releases use the indexed construction and installation below.
 Building or staging artifacts grants no production rollout authority and does
-not select a running release, enable policies or retire Cockpit.
+not select a running release, enable policies or remove installed services.
 
 ### Build and select a clean release
 
@@ -399,8 +399,8 @@ changes the six permission booleans or the existing key.
    New helper-created files/directories use the compiled creation transitions.
    Legacy root `unconfined_t` candidate/backup publications use corresponding file
    and named guard transitions under this exact directory, without a new allow
-   grant. Verify the actual Cockpit/root launch domain and resulting installed
-   leaf SID during coexistence acceptance.
+   grant. Verify the actual legacy root publisher launch domain and resulting
+   installed leaf SID during coexistence acceptance.
    The tmpfiles fragment creates only the root0700 history directory, never a
    pending marker or replacement lock. Historical original predecessor/backup
    inodes retain their exact0640 root:hfcache metadata and original application
@@ -507,7 +507,7 @@ changes the six permission booleans or the existing key.
    with host-reader support, retain the existing reviewed six values while
    rebinding `deployment_sha256` to the exact reviewed target index. Changing a
    permission requires separate authorization. Never infer grants from absent
-   guards or migrate the existing Cockpit policy automatically. Only on first
+   guards or migrate a historical interface policy automatically. Only on first
    provisioning, independently create a fresh32-byte random
    `/etc/hfcache/host-helper.key`, root:root0600, using exclusive creation and
    durable write/parent sync. Upgrades and rollbacks preserve the existing key.
@@ -591,7 +591,7 @@ Replacing the parent, changing the index or rebooting requires a reviewed API
 restart. Keep old indexes, keys, bindings and original operation handles through
 rollback review; do not remove unknown records to force an older binary to start.
 
-Use the [Cockpit migration guide](migration-from-cockpit.md#select-a-rollback-scope)
+Use the [interface migration guide](migration-and-rollback.md#select-a-rollback-scope)
 to select the rollback scope and review the recorded old-client and durable-state
 compatibility limits before selecting a target.
 
@@ -642,9 +642,9 @@ receipt and omit these objects. The current guarded rootless profile continues
 to deny schedule and observer changes; no user-manager substitute is supported.
 
 Before activating native host effects, establish that older privileged schedule/
-observer calls are quiescent. The optional fixed `/etc/hfcache/cockpit-policy.json`
-must be safely absent or a protected strict legacy policy with both `schedule`
-and `observer` false. Its historical source/index identity is not changed or
+observer calls are quiescent. The optional policy at the fixed historical
+compatibility path retained by the selected helper must be safely absent or a
+protected strict policy with both `schedule` and `observer` false. Its historical source/index identity is not changed or
 matched to the new release. Current disabled bytes do not prove an older admitted
 call drained. Preserve its original policy, handles and evidence; do not migrate
 permissions, clear pending records or bypass the exclusion to make activation pass.
@@ -737,14 +737,14 @@ draft intent, candidates/backups, private outcomes, both operation stores and
 original lock identities. Importing a safe handle stores local recovery metadata;
 only explicit observation reads the original. Missing history and uncertain
 outcomes do not authorize replay or cleanup. Stopping observation does not cancel
-accepted work. Follow [compatible rollback](migration-from-cockpit.md#select-a-rollback-scope)
+accepted work. Follow [compatible rollback](migration-and-rollback.md#select-a-rollback-scope)
 only after actual executor drain and target-specific format/configuration review;
 retain a compatible observer for unresolved outcomes and preserve previous
 immutable artifacts/indexes. A selector change alone does not restore helper
 bootstrap or protected bindings.
 
 Source and disposable fixture acceptance grant no production migration authority.
-The [production checklist](migration-from-cockpit.md#production-migration-checklist)
+The [production checklist](migration-and-rollback.md#production-migration-checklist)
 remains operator work; all boxes below are unchecked:
 
 - [ ] Authorize the production profile, target identities and migration scope.

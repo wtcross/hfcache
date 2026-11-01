@@ -1,5 +1,11 @@
 # API-010: Expose retention, recovery, repair, quarantine, and guarded initialization
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `b05654c5835e1fd43b7139b6f038d0114fafae99596b8d87321f5b9e86c848be`,
+original content SHA-256 `68d2a8a0ef8bccb2e7df10ad5acb31de9908cad891a2edd3ef336ae28b47a715`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `API-010` |
@@ -142,7 +148,7 @@ Completed 2026-10-17, this commit.
   327 files were formatted, Ruff passed, Pyrefly reported 0 errors (11 suppressed,
   54 hidden warnings); Python passed 2,685 tests, 40 deselected, in 163.41 seconds.
   Version 0.1.10 sdist/wheel built; locked isolated base/server wheel installation,
-  import/help/version passed. Cockpit eslint/stylelint/types, 45 tests (0 failures)
+  import/help/version passed. historical frontend eslint/stylelint/types, 45 tests (0 failures)
   and the production build passed. No functional correction or gate failure;
   a module-docstring-only correction had supplemental format/Ruff/whitespace
   checks and was consumed by the final builds/installations.

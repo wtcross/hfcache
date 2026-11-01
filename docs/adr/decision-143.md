@@ -1,5 +1,9 @@
 # Keep strict web assets separate from Python runtime and require real acceptance
 
+The superseded browser interface has been removed under
+[decision 161](decision-161.md). Shared backend, host-helper and web rules below
+remain governed by their current contracts.
+
 - Decision identity: 143.
 - Asset/bootstrap refinement: [decision147](decision-147.md).
 - Status: Amended; strict source/build and scoped direct installed replacement acceptance recorded. Production releases and other-platform acceptance remain separate.
@@ -13,12 +17,6 @@ Typed browser contracts are refined by [decision 145](decision-145.md); release
 artifact and installed functional conformance remain independently required.
 
 ## Context and decision
-
-Build the replacement UI in `web/` using React and strict TypeScript, with
-committed frozen pnpm dependencies and pinned compatible Node/pnpm/tool versions.
-Record dependency licenses and runtime/build classification. Browser libraries
-are bundled assets; Node is never a deployed application runtime. Existing
-LGPL-2.1-or-later notices survive any Cockpit code reuse.
 
 Require `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`,
 type-aware unsafe-assignment/no-explicit-any lint and known-state exhaustiveness.
@@ -35,13 +33,6 @@ immutable release; rootless images copy a verified artifact to a fixed read-only
 application directory. Full releases require this artifact. Base Python wheel
 build/install remains Node-independent. Do not commit dependency trees, generated
 dist, browser profiles or credential-bearing screenshots.
-
-Extend the provider-neutral gate with `--require-web` and
-`--with-web-functional`; combine both with `--with-build` for final acceptance.
-Frontend-required invocation refuses missing source/toolchain/browser/fixture
-prerequisites. Skips or mocks cannot prove required installed functionality.
-Preserve applicable existing Python, package, docs and Cockpit gates until
-retirement is explicitly accepted.
 
 Every feature includes unit/component and integration tests plus functional
 coverage delivered with its working boundary. Real functional acceptance uses
@@ -70,10 +61,6 @@ Argon2id exception in [140](decision-140.md). Final acceptance may remain blocke
 by unavailable real infrastructure; it cannot redefine a required scenario into
 a skip or use production services/archive as a fixture.
 
-At baseline `6b8fae2e0997403ae5c716a2e92148af0a972af9`, `web/` and its
-strict gate/artifact do not exist. Existing Cockpit checks remain current. This
-commit accepts the design and claims no frontend or installed acceptance.
-
 ## Selected workspace tooling and preliminary gate amendment (2026-10-20)
 
 The initial workspace selects Node `24.18.1`, pnpm `11.18.0`, React/React DOM
@@ -101,13 +88,6 @@ The implemented script contract is `lint`, `typecheck`, `test:strict-fixtures`,
 exercise deliberate invalid TypeScript/unsafe assignments rather than accepting
 configuration flags alone. Combined new-source unit/component coverage must meet
 90% lines and 85% branches; existing Python coverage is not redefined.
-
-`scripts/check.sh --require-web` preflights the package manifest, frozen lock,
-TypeScript configuration and Node/pnpm before backend work. It preserves backend
-and applicable Cockpit gates, then runs frozen web installation and every script
-above in order. A missing tool/input/browser, failed stage or late disappearance
-fails. Default backend-only invocation explicitly omits web validation and cannot
-establish web acceptance. Help remains free of runtime/credential/archive access.
 
 ### Historical workspace-stage scope (2026-10-20)
 
@@ -138,16 +118,6 @@ successful shell-only check.
 
 ## Evidence and relationships
 
-Amends [088](decision-088.md), [FW-01–FW-04](fw-01.md),
-[113](decision-113.md) and [140](decision-140.md).
-See [server asset design](../server.md#web-ui-design-and-current-availability),
-[record formats](../schemas.md#18-web-ui-and-administration-design-records),
-[web UI status](../web-ui/README.md), [development](../development.md),
-[security](../security.md#browser-administration-design) and
-[conditional retirement](decision-144.md). The initial accepted design remains
-the basis for the implementation amendments above; each implemented boundary
-requires its own executable evidence, and installed conformance remains pending.
-
 ## Authenticated asset and bootstrap amendment (2026-10-20)
 
 [Decision147](decision-147.md) amends this record. This refinement fixes deterministic source/toolchain/license/member identity and a source digest computed from the actual installed backend. Prebundle compiled source identity avoids a circular manifest fingerprint. Native platform hashing validates context; final functional gating requires all95 scenarios through actual Caddy and installed native/rootless roles, while early profiles keep future cases pending. The UI ships inside the pinned UBI10micro API image without Node.
@@ -162,13 +132,6 @@ and deterministic indexed artifacts/bootstrap/static serving under
 runner and `--with-web-functional` gate are implemented; their required installed
 inputs still fail closed. Early scoped runs report later cases pending; the final
 flag requires all95 scenarios and is not replaced by source or shell tests.
-
-This clarification changes no gate, artifact or runtime requirement. Dirty owned
-artifacts retain their actual build provenance. Clean release packaging,
-installed role/browser conformance, the remaining feature cases and conditional
-Cockpit retirement require their own evidence; no rollout follows. See the
-[functional development contract](../development.md#installed-shared-caddy-functional-fixture)
-and [recorded installed scope](../deployment-status.md).
 
 ## Installed acceptance execution clarification (2026-10-31)
 
@@ -241,13 +204,6 @@ Chromium, Firefox and WebKit coverage at both public prefixes. Deeper domain,
 failure and privilege combinations run where the relevant boundary exists;
 every scenario need not repeat across the entire profile/browser/prefix product.
 
-Keep the complete source, build and applicable Cockpit gates. Separate direct
-installed product checks supply functional acceptance, with source/artifact and
-role identity, commands, exits, observations and explicit missing clauses.
-The existing `--with-web-functional` runner remains an optional strict diagnostic;
-its invocation is no longer a mandatory acceptance path. Do not report that
-command as passed when only direct checks ran.
-
 Reuse passing evidence only for its actual scope, with an unchanged-subsystem
 justification. Retain failed attempts and original operation identities; a later
 continuation can cover an unfinished clause without relabelling the earlier run.
@@ -262,23 +218,4 @@ cross-product execution method above. See the current
 
 ## User-directed deprecation scope (2026-11-01)
 
-[Decision160](decision-160.md) supersedes the earlier current-validation and
-legacy inventory/porting/removal conditions by explicit user direction. Current
-acceptance requires strict web/backend/docs/build checks; Cockpit is legacy
-opt-in and is not validated for this goal. Preserve its history/source/licenses,
-shared runtime helpers and live installation. All95 new-web behaviors and their
-minimum layers remain required; deprecation and handoff follow guide acceptance.
-
 ## Recorded final source and product acceptance (2026-11-01)
-
-The current strict web/backend/docs/build gate and direct owned native/rootless
-product acceptance are recorded in [human acceptance](../web-ui/test-release-acceptance.md).
-Every required behavior retains its minimum layers and actual source/profile
-scope. Unchanged runtime/dependency bytes support explicit reuse of the coherent
-clean test artifacts; final read-only identity/reload/original-operation checks
-add current observations. This does not relabel those fixtures as a newly built
-or installed production release. The optional instrumented runner was not this
-acceptance path and is not claimed passed. Earlier design-time pending text,
-original failed aggregates and production/NAS holds remain historical evidence;
-[deprecation](decision-160.md) preserves legacy material without further plugin
-validation or removal work.

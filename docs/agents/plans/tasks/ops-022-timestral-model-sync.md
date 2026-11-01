@@ -1,5 +1,11 @@
 # OPS-022: Configure Timestral models and trigger a scoped live sync
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `12c3514fe0c32e70d0cf5fc7a166b4b171c9dfa0033fb39abbc61d95cd9da07a`,
+original content SHA-256 `0ce4c145f34b69600edfafb0e9671648680e99b5d8c56c8dcfd13276404da8b2`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `OPS-022` |
@@ -53,7 +59,7 @@
 Reviewed [configuration](../../../configuration.md),
 [operations](../../../operations.md), [API client](../../../api-client.md),
 [server reload](../../../server.md#archive-policy-reload),
-[configuration pipeline](../../../cockpit.md#6-configuration-editing),
+[configuration pipeline](../../history/removed-interface-records.md),
 [containers](../../../containers.md), [deployment status](../../../deployment-status.md),
 and [environment limits](../../environment.md).
 Review preserves technical `INV-002`/`INV-003`/`INV-004`/`INV-014`, `FS-02` and
@@ -87,7 +93,7 @@ read-only tmpfs at `/srv/hfcache`. Formatting, lint, types and documentation
 alignment (180 human documents/19 helpers) pass; 4,315 Python tests pass with
 40 opt-in tests deselected in 495.19 seconds. Distribution build and all three
 locked base/server/server+MCP installation/import/help/version profiles pass.
-Actual Cockpit lint/style/types, all 135 tests and production build pass.
+Actual historical frontend lint/style/types, all 135 tests and production build pass.
 Service runtime is 9 minutes 4.497 seconds. Gate log SHA-256:
 `12b5779336ba2843d415f0e82b5850c2795fb6b8ab817acd9a6d3a4303725258`.
 The same log is protected as `repository-gate.log` in the local evidence directory.

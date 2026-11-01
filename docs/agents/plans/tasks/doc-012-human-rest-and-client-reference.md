@@ -1,5 +1,11 @@
 # DOC-012: Rewrite REST and client documentation as current references
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `03c13b55f33c4fdd9636c90b4d001f4ac007b352a7f341382fc3571dcb98de37`,
+original content SHA-256 `a482a7f80df75b7158d2ac76c7584475a0ee8e2bc2251d0de227178d57db8dd5`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -78,17 +84,8 @@ over MockTransport, with exact headers and unchanged credential bytes.
 Focused registry/parity/example/migration checks: 88 passed in 5.43s; related
 verification/preflight/example checks: 133 passed. Ruff format/lint and Pyrefly
 (0 errors) passed. `scripts/check.sh` exited 0: 4173 passed/40 opt-in deselected
-in 477.21s, build, all three locked wheel profiles, actual Cockpit lint/135 tests
+in 477.21s, build, all three locked wheel profiles, actual historical frontend lint/135 tests
 (0 skipped)/production build. Log: `/tmp/hfcache-doc012-gate.log`.
-
-Independent reviews restored strict request-body rules, daemon lock ownership,
-complete activation checks, shutdown/logging safeguards and nullable verification
-scope. Native Cockpit integration requirements are distinguished from the shipped
-rootless launcher. Reviewed INV-002/005/006/016 and decisions 119/120/121/123:
-editorial/test alignment only; no technical invariant, format, dependency or
-runtime behavior change, so no new ADR. Generation conformance limitation stays
-explicit. No host/archive/network workload ran. Final feature-branch pushes are
-authorized after plan acceptance; other restrictions remain.
 
 See [completed progress entry](../../progress.md#rest-and-client-reference-2026-10-18).
 Next ready task: DOC-013.

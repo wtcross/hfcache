@@ -1,5 +1,11 @@
 # MCP-001: Mount optional authenticated FastMCP after REST acceptance
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `1c489e20b7b8940883f771dd92dde8dfd16477cd35bb5ebf569b18e7636b8c11`,
+original content SHA-256 `d281f993ca8d7774c4347b82960ea0da5314af8953eb40c8c7a8534844ac8fb6`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `MCP-001` |
@@ -55,7 +61,7 @@ required test is not passing evidence. Use `this commit` until a real commit exi
 Activated 2026-10-18 under Tyler's authorized REST-first implementation after
 completed API-016 committed as `07ff468`. Git/current/dependency evidence was
 reconciled with a clean tree. The required fresh REST `--with-build` gate exited
-0 with 3,324 default Python tests, four extra wheel smokes and 127 Cockpit tests;
+0 with 3,324 default Python tests, four extra wheel smokes and 127 historical frontend tests;
 MCP implementation begins only after that committed boundary. MCP-001 was the
 sole task in progress at activation. Collaborators own optional dependency/install isolation,
 transport/lifespan integration and actual streaming HTTP/auth tests; all Markdown
@@ -164,7 +170,7 @@ cases and scheduled observer restart. Root extracted/reused the existing public
 ApiCli exchange; zero private borrowers remain. All 79 focused cases passed in
 6.80 seconds while preserving signal/timeout/lost-ack/detach/key/restart and
 no-second-POST assertions. No runtime/semantic change was needed; original failed
-log remains intact. Build/install/Cockpit stages were not reached on that attempt.
+log remains intact. Build/install/historical frontend stages were not reached on that attempt.
 
 Definitive full rerun
 `rtk proxy bash scripts/check.sh > .scratch/mcp-001-gate-rerun.log 2>&1`
@@ -172,7 +178,7 @@ exited 0: 94-package lock and both-extra sync, 373 formatted files, Ruff clean,
 Pyrefly 0 errors (11 suppressed, 59 warnings not shown); 3,394 Python tests passed,
 40 deselected in 377.89 seconds. Source distribution/wheel 0.1.10 built; actual
 locked isolated base/server/server+MCP installation/import/help/version checks
-passed. Complete Cockpit ESLint/Stylelint/TypeScript, 127 tests in 2.152 seconds
+passed. Complete historical frontend ESLint/Stylelint/TypeScript, 127 tests in 2.152 seconds
 and production build in 1,203 ms passed. No post-definitive-gate source change.
 
 Reviewed FW-03/04, AD-21, INV-002/003/012–016, correlation/logging and previous

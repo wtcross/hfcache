@@ -1,5 +1,9 @@
 # Separate manual REST jobs from guarded host observers
 
+The superseded browser interface has been removed under
+[decision 161](decision-161.md). Shared backend, host-helper and web rules below
+remain governed by their current contracts.
+
 - Decision identity: 135.
 - Status: Amended; source and temporary fixture acceptance passed. Fixed-manager inspection is qualified below; disposable and installed acceptance remain separate.
 - Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
@@ -28,24 +32,6 @@ longer starts sync or verification services. Detaching a manual display never
 closes its process, cancels work or stops API/worker. An optional stop of the
 scheduled sync observer requires positive proof of its fixed observation-only
 binding and explicit host permission. Never redirect to a user manager.
-
-Add an exact root-only `inspect-cockpit` role to the existing fixed container
-helper. It is read-only, accepts no paths/arguments, starts no container and reads
-no archive contents or credential values. Validate the selected immutable
-release/index, original helper/client bindings and guarded host facts. Read only
-bounded host mount/lock accounting and fixed system-manager properties. Never
-acquire, recreate, replace or remove the original domain lock to inspect it.
-
-The administrator may provision a protected, bounded, strict
-`/etc/hfcache/cockpit-policy.json` pinned to the selected release/index. Explicit
-permissions distinguish archive jobs, Hub-capable jobs, other control jobs,
-configuration changes, sync scheduling and stopping a proven scheduled observer.
-The application never creates or edits that policy. Missing, unsafe, unknown,
-mixed or drifted evidence denies effects. An absent guard or mask never grants
-permission. A held or unconfirmed guard cannot permit archive jobs. Known masked
-or unavailable units deny schedule/observer changes before any file or D-Bus
-mutation. Fresh adapter checks enforce these boundaries; cached UI state is
-explanatory and cannot authorize an effect.
 
 ## Rationale and alternatives
 
@@ -81,18 +67,6 @@ the loaded calendar or success of the interrupted manager operation.
 
 ## Relationships and evidence
 
-Amends [decision122](decision-122.md), [decision89](decision-089.md) and CP-04 in
-the [Cockpit contract](../cockpit.md). Preserves [decision127](decision-127.md)
-and [decision134](decision-134.md), credential separation, all original guards,
-the read-only report exception pending its own replacement, and fourteen MCP
-read tools. [Invariant register](../invariants.md#cockpit-boundary),
-[fixed helper](../../scripts/container-service.py),
-[operation registry](../../cockpit/src/lib/operation-registry.ts),
-[sync](../../cockpit/src/sync.tsx), [verification](../../cockpit/src/verify.tsx)
-and [system interface](../../cockpit/src/api/systemd.ts) define the affected
-boundaries. Regression and required gate evidence accompany the implementation;
-current-source disposable Cockpit/PAM and installed acceptance remain separate.
-
 ## Unit-specific manager properties (2026-10-20)
 
 Real systemd timer properties omit `MainPID`. Inspect only the five common fixed
@@ -103,12 +77,10 @@ Normalize a known timer's internal PID to zero only after that exact field set
 is validated. This does not infer service permissions from a missing property,
 relax guard identity or change the strict public inspection response schema.
 
-
 ## Replacement UI design amendment (2026-10-20)
 
 [Decision 141](decision-141.md) amends this record for the accepted
 replacement design. Accepted future helper transport retains separate manual REST jobs, scheduled observation and protected host permission proof; native positive and rootless denied conformance remains pending.
-
 
 ## Fixed host-effect amendment (2026-10-27)
 
@@ -117,3 +89,7 @@ original-process observer stop, independent durable outcomes and finite diagnost
 reads. It preserves archive serialization, original operation identity and this
 record's unrelated requirements. Implementation and actual installed conformance
 are separately required.
+
+The pre-removal record remains in Git at
+`c692d7ae4b866fefd8a743a21afdb729da0f39c4`; removed interface-only
+instructions and source evidence are historical, not current operating steps.

@@ -4,13 +4,13 @@
     "git": "8f42935",
     "sha256": "df2ed8c74f56b362f3b8c41aa55a0d5de9e6cc0f5414e602da300915596563cd",
     "snapshot": "docs/agents/history/runbooks-before-rewrite/operations.md",
-    "snapshot_sha256": "13e69253e255f681aa588fd2d7e4e9473e0ff4ec639123196991247995b561f2"
+    "snapshot_sha256": "317c70c898ea82c3618d5e43a32a16a02df11880b0ff85640efe978f77375aca"
   },
   {
     "source": "docs/recovery.md",
     "git": "8f42935",
     "sha256": "6f2016dad6b3c291bdb658d92e333a12038202d15d4ee39a2a27eaf7bb684016",
     "snapshot": "docs/agents/history/runbooks-before-rewrite/recovery.md",
-    "snapshot_sha256": "b347abe61237e6abbee0ca1c9c2f267bca7c163cf3a8940ecee20ddf77d5cabd"
+    "snapshot_sha256": "35129212fa842f21a64181ccec1d257ab61372a31d8c6f97a11d7b19e81e8712"
   }
 ]

@@ -1,5 +1,11 @@
 # CAT-011: Expose authenticated bounded REST catalog reads
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `2b3fab3ce6453c6147e90abe2fea196aa8be1f947d3853ced3168dd7cd00e07c`,
+original content SHA-256 `6eb0ef6d2131f83777d298bde5f3d7e020583a3273edeb73269470b41b94ec76`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | complete |
@@ -82,7 +88,7 @@ Completed 2026-10-19 (CAT-011, this commit). Expanded query/storage/HTTP and
 independent REST security/parity/pagination/transport selection: 208 passed in
 15.15s. Ruff and focused Pyrefly pass (zero errors). Final `scripts/check.sh`
 exited 0: 4875 passed, 40 deselected in 535.67s; wheel/sdist, all three locked
-installation profiles and actual Cockpit lint/types/169 tests/build passed.
+installation profiles and actual historical frontend lint/types/169 tests/build passed.
 Reviewed INV-012/014/015/016/018, relevant FS/AD rules and decisions 108,
 113-120/125/133. Human API/server/discovery contracts, invariant and ADR links
 are current; no existing transaction, confidence, dependency or MCP tool changes.

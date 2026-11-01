@@ -1,11 +1,12 @@
 # Code disposition ledger
 
-## API-018 — CLI rendering and observation remnants
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `3f971697ba4bc57748f05b2c8044a4113df091b90e30ed9785c42f0e0089e99f`,
+original content SHA-256 `9a43da00e39f6aa509e0e3309e29830517cf0a361f523b2080b8b04d76d96921`.
+Historical proof hashes identify the original artifacts, not this edited record.
 
-Branch-wide source, tests, examples, scripts, packaging and Cockpit searches at
-`db55170` found these dispositions. No external compatibility API was documented
-for these renderer/migration seams. Current public CLI/transport behavior is the
-replacement coverage; domain services and bootstrap output remain.
+## API-018 — CLI rendering and observation remnants
 
 | Symbol | Callers and decision | Replacement evidence |
 | --- | --- | --- |
@@ -33,6 +34,6 @@ historical ADR links. No runtime/installer caller installs it; old release trees
 and installed drop-ins remain untouched.
 
 All 17 original scripts, native activation, the indexed dormant rootless socket,
-scheduled handles, receipt stores, consumer data path and Cockpit report exception
+scheduled handles, receipt stores, consumer data path and historical frontend report exception
 are retained for supported behavior. The [final finding/script ledger](reviews/2026-10-18-alignment-acceptance.md)
 accounts for all candidates, preserved prose and new helpers.

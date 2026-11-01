@@ -21,13 +21,6 @@ archive automount. Attach timers through their own `[Install] WantedBy=` so
 an installed-but-disabled verification timer stays disabled when the target
 starts.
 
-The shipped initial calendars are daily sync at 02:00 local time and full
-verification on the first Wednesday of January, April, July, and October
-at 04:00. Use `Persistent=true`, documented random delays, and calendar
-validation with `systemd-analyze calendar`. Operator schedule changes use
-drop-ins rather than editing shipped units. Cockpit pauses or resumes only
-The sync timer, because stopping the target also affects the archive mount.
-
 ## Rationale and alternatives
 
 The original locked table explicitly selects systemd timers and drop-ins
@@ -52,13 +45,6 @@ shared application lock (AD-17). The verification timer still requires
 operator coordination before activation. Judge `systemd-analyze verify`
 by its output, since an ordering diagnostic can accompany exit zero.
 
-**scoped execution context clarification (2026-10-17, [decision 111](decision-111.md)).**
-The durable `invocation_mode` retains `systemd`/`interactive` and describes the
-executing host process via `INVOCATION_ID`. In a systemd-hosted daemon it cannot
-prove whether a timer, manual CLI or Cockpit client submitted work. Future
-operation receipts carry authenticated submitter metadata separately. No new
-scheduler, calendar change, unit installation or timer activation is introduced.
-
 ## History and evidence
 
 **scheduled observation amendment (2026-10-18, [decision 121](decision-121.md)).**
@@ -73,17 +59,3 @@ history is retained rather than reset. No bearer/digest/body/queue is stored.
 Server/worker drain, not client-service exit, proves executor termination. Shared
 runtime locks must survive unit stops. Repository fixtures do not establish real
 systemd/cgroup/SELinux/NFS acceptance; those remain deployment holds.
-
-`87323c2` (2026-07-24) records scheduling authority and initial calendars.
-`2fd432a` (2026-07-26),
-[decision 58](decision-058.md), installs and validates all seven units
-and records disabled-timer and mount-ordering corrections. `ea8c02c` (2026-07-28) documents long-running timer semantics.
-`1a0be5d` (2026-07-30) implements the Cockpit drop-in editor.
-
-- [Shipped sync timer](../../packaging/systemd/hfcache-sync.timer).
-- [Shipped verification timer](../../packaging/systemd/hfcache-verify.timer).
-- [Lifecycle target and enabled-timer boundary](../../packaging/systemd/hfcache.target).
-- [Host install and calendar validation runbook](../deployment-centos-stream-10.md).
-- [Cockpit drop-in validation and writes](../../cockpit/src/api/schedule.ts).
-- [Drop-in rendering, round-trip, and calendar-output tests](../../cockpit/test/schedule.test.ts).
-- [Shared local lock tests](../../tests/unit/test_locking.py).

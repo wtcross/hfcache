@@ -10,6 +10,7 @@ import copy
 import hashlib
 import json
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -196,6 +197,15 @@ def test_supplied_design_assets_retain_original_manifest_hashes():
         data = owned_file(reference["path"]).read_bytes()
         assert len(data) == reference["bytes"]
         assert hashlib.sha256(data).hexdigest() == reference["sha256"]
+        if "original_sha256" in reference:
+            original = subprocess.run(
+                ["git", "show", f"c692d7ae4b866fefd8a743a21afdb729da0f39c4:{reference['path']}"],
+                cwd=ROOT,
+                check=True,
+                capture_output=True,
+            ).stdout
+            assert len(original) == reference["original_bytes"]
+            assert hashlib.sha256(original).hexdigest() == reference["original_sha256"]
 
 
 def test_acceptance_evidence_has_every_owned_case_and_planned_layer():

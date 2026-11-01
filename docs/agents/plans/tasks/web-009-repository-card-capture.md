@@ -1,5 +1,11 @@
 # WEB-009: Capture publication-pinned README presentation records safely
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `be7a15f7e55a0a8996403f4c8b8f7dfefd32a248e751f2e072329b156ca7909b`,
+original content SHA-256 `1c6c97306a2a6593f8d3a39f4d84b4814a4e336f286bc33f94bb42bc0b7b1c3f`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -43,7 +49,7 @@ Write readme-cards provenance/refresh/limitations guide sections; update discove
 
 Cards are bounded derived records tied to exact publications; capture executes no repo code/network; old evidence/results remain compatible; partial capture is explicit and never turns into archive corruption or silent success.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution notes and blockers
 
@@ -60,7 +66,7 @@ TLS and real Caddy, installed wheel and actual API/operation runner. Its only
 storage substitutions are the existing owned mount-table/local-lock seam, labelled
 `LOCAL_NFS_METADATA_SIMULATION`. This is not platform/NAS acceptance. Existing
 native/rootless/helper platform evidence remains scoped to its original tasks.
-No production/NAS/live Cockpit, deployment, merge, push or tag action occurred.
+No production/NAS/installed predecessor interface, deployment, merge, push or tag action occurred.
 No new runtime dependency was added. Exact card GET and rendering remain
 WEB-010/014; configuration-backed tags and original operation handles are retained.
 
@@ -68,9 +74,9 @@ WEB-010/014; configuration-backed tags and original operation handles are retain
 
 2026-10-25, WEB-009, this commit; parent `ad3275a`.
 
-- **Strict source gate:** `scripts/check.sh --require-web --require-cockpit`
+- **Strict source gate:** `historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)`
   exits0 in1413.458s:8500 Python tests,52 unrelated opt-in deselections,581
-  Cockpit unit/110 mounted Firefox,2834 web unit/2894 combined component,
+  historical frontend unit/110 mounted Firefox,2834 web unit/2894 combined component,
   strict lint/types/negative fixtures, two built-shell browser tests, real API
   React reads and all three locked wheel-install profiles. Web coverage is
   95.16% lines/92.59% branches/92.36% functions. No required skip. Human docs211

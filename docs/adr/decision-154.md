@@ -1,5 +1,9 @@
 # Install exact managed configuration once and observe durable host outcomes
 
+The superseded browser interface has been removed under
+[decision 161](decision-161.md). Shared backend, host-helper and web rules below
+remain governed by their current contracts.
+
 - Decision identity: 154.
 - Status: Accepted; implemented with scoped guarded Apply and original-outcome acceptance.
 - Date: 2026-10-25.
@@ -12,7 +16,7 @@
 [Human acceptance](../web-ui/test-release-acceptance.md) records owned native and
 guarded-rootless forms, validation, preview, Apply, exact installed bytes and
 observation of original outcomes after reload. The
-[migration guide](../web-ui/migration-from-cockpit.md#compatibility-and-backups)
+[migration guide](../web-ui/migration-and-rollback.md#compatibility-and-backups)
 records the separate compatible rollback limits. Earlier pending statements
 retain their historical scope. Original failed aggregates and uncertain outcomes
 remain preserved; unresolved helper outcomes acquire no rollback guarantee.
@@ -55,12 +59,6 @@ excluding tags and `hub.credential_name`); parity tests guard this independent
 standard-library implementation.
 
 ## Guarded effect and private state
-
-Use the original `/etc/hfcache/.configuration.lock` inode and flock. Never unlink
-or replace that lock. The API releases admission/store locks before calling the
-helper; the helper holds no archive lock and performs no Hub work. Cockpit releases
-the configuration flock while a preview executes, then reacquires it and compares
-the original exact base and candidate before releasing its captured result.
 
 Private schema1 state lives on the same filesystem at fixed root0700
 `/etc/hfcache/.configuration-applications/<operation-id>/`. Files are bounded,
@@ -171,7 +169,6 @@ and an interrupted receipt is not rewritten when host history confirms install.
 No browser retry, rollback, marker removal or history cleanup is added. Drafts
 and bodies stay out of persisted recovery metadata. See the
 [configuration guide](../web-ui/configuration-and-tags.md).
-
 
 ## Fixed host-effect amendment (2026-10-27)
 

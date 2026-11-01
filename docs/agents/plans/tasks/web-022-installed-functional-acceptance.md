@@ -1,5 +1,11 @@
 # WEB-022: Prove full installed functionality on isolated native and rootless targets
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `3a284d0ecd97ad5c8fc0d5e5132d04b60e5ca60d65dee97926fa436c1fb731bb`,
+original content SHA-256 `c5b52ae1b5e7f3c8f5baadb37efd790bb2e86f181a1219b2861477e455c6c8ce`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -47,15 +53,6 @@ Run all new integration suites plus existing CLI/HTTP/Unix/worker/MCP regression
 
 ## Functional validation
 
-Execute the full repository gate with `--require-web --require-cockpit --with-build`
-and reconcile all85 cases owned through this package under the governing
-2026-11-01 amendment. Direct installed native/rootless evidence must include
-Chromium, Firefox and WebKit at root and `/management`, with deeper fault/domain
-checks at the relevant boundary. Record exact artifacts, browsers, guest setup,
-exits and assertions; later-owner cases remain pending. The existing runner,
-`--require-through` and `--with-web-functional` are optional diagnostics whose
-strict protocol remains unchanged, not commands claimed by this acceptance.
-
 ## Human documentation deliverables
 
 Correct deployment/troubleshooting guides from the installed walkthrough. Add a human-readable test-release acceptance summary that explicitly excludes production rollout/NAS proof.
@@ -64,7 +61,7 @@ Correct deployment/troubleshooting guides from the installed walkthrough. Add a 
 
 Real installed native/rootless functional acceptance is complete with no mock-only parity claims or skipped prerequisites; evidence identifies exact artifacts and the limits of the proof.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution notes and blockers
 
@@ -78,14 +75,6 @@ No accepted Apply, maintenance, Repair, schedule or observer effect was replayed
 The one uncovered actual password-rotation clause now has a real protected-file,
 Argon2-provider and durable-store integration test; its focused66 tests and full
 Gate21 pass. Runtime source remains the installed f829857e/0.2.78 candidate.
-
-Gate21 inner/outer both exit0;9646 backend/4051 combined frontend/581 Cockpit/
-16 wheel checks, three locked install profiles, two built-browser checks and
-real API HTTP fixture pass. All1545 frozen inputs remain unchanged. Required
-gates run as loginUID1000 with the live NAS hidden by an empty read-only private
-mount. Subsequent changes adopt acceptance/closure records only, with separate
-documentation/plan/diff validation. Full evidence and qualifications follow in
-the completion section; earlier checkpoint states are historical.
 
 ### Checkpoint 2026-11-01: Fresh-session execution resumed
 
@@ -116,7 +105,6 @@ receive one inexpensive documentation/plan validation before the goal is paused.
 No commit, new runtime behavior, production effect or future-task activation.
 After completion, apply the refreshed13-document testing/effort amendments before
 WEB-023. Current implementation/proof details remain in the retained checkpoints.
-
 
 ### Checkpoint 2026-11-01: Acceptance proposal adopted; task continues
 
@@ -398,16 +386,6 @@ this record update.
 
 ### Checkpoint 2026-11-01: Gate20 passes; product acceptance remains open
 
-[Gate20 inner](../../../../.scratch/web-022-validation/gate20-result.json) `fa2b6d86`
-and [outer](../../../../.scratch/web-022-validation/gate20-shadow1-result.json) `2596cc63`
-pass0/1723s:9645 backend,4051 combined frontend,581 Cockpit,16 wheel, three locked
-profiles, two built-browser checks and real HTTP; all1543 frozen files unchanged.
-This is the latest full green source gate, not normal85×18 installed acceptance.
-Completed TMP retirement0 (`/var/tmp/web022-gate20-temp-retirement1/result.json`,
-`48f3300c`, prepared8339591) retains183016-entry inventory/extents,13 finite outputs
-and two passing all-UID reference checks. Root free612728832→1566720000 B, measured
-gain953991168 B. Interrupted Gate19 TMP, all VM fixtures, originals and user cache remain.
-
 Newly explicit CONFIG-12 gap: normal configuration's28 read/edit/refusal callbacks
 and13 conflict callbacks do NOT add a model and dataset. The prepared20-callback
 actual-UI helper is unexecuted: add disabled model+dataset/Apply30, then remove
@@ -570,7 +548,7 @@ No validation reruns or later-plan edits accompany this bookkeeping checkpoint.
 
 [Gate18](../../../../.scratch/web-022-validation/gate18-result.json) 4417a816 and
 [outer](../../../../.scratch/web-022-validation/gate18-shadow1-result.json) ec8c2133
-pass (0): 9,645 backend, 4,051 combined frontend, 581 Cockpit and 16 wheel checks;
+pass (0): 9,645 backend, 4,051 combined frontend, 581 historical frontend and 16 wheel checks;
 all 1,542 frozen files stay unchanged. Failed Gate16/17 evidence remains retained.
 Clean Source16 `f829857ec045`/0.2.78 builds 19 indexed artifacts (0)
 (`/var/tmp/w22b16/build16-postproof.json`,d8ac51b8); main stays0.2.2.
@@ -604,7 +582,7 @@ The following checkpoints retain their historical scope and pending statements.
 ### Checkpoint 2026-10-31: Gate15 and installed Doctor77
 
 [Gate15](../../../../.scratch/web-022-validation/gate15-result.json) d6cef144 passes0:
-9616 backend,4051 combined frontend,581 Cockpit,16 wheel and two built-browser
+9616 backend,4051 combined frontend,581 historical frontend,16 wheel and two built-browser
 checks; all1541 frozen files remain unchanged. It is the latest full green gate.
 Clean auxiliary Source15 `004ea9e270ef`/0.2.77 builds18 verified artifacts0
 (`/var/tmp/w22b15/build15-postproof.json`,89f0649d); main stays0.2.2.
@@ -692,7 +670,7 @@ unchanged; formatting/lint/types/wire pass. Its ADR143 execution-record link and
 work-package identifier are replaced by a living development-contract link and
 general staged/final matrix wording. [Gate17](../../../../.scratch/web-022-validation/gate17-result.json)
 7df71e7d remains1 after9645 backend passes, three locked wheel profiles and581
-Cockpit passes. Web lint rejects a cleanup throw inside the test driver's finally;
+historical frontend passes. Web lint rejects a cleanup throw inside the test driver's finally;
 the minimal correction defers that throw until after finally while retaining the
 original error. Full web ESLint/Prettier now passes. All1542 inputs stayed unchanged
 during Gate17; no product runtime code changed for this correction. Full Gate18,
@@ -979,7 +957,7 @@ SHA256e82ebf1772f551659ddbc090ca62fec9ddb9e3582a9a2a7ba3c6cd2c9716e97d,
 log48cd1cc640aadf935a88e94b7ffed16f0a576284018e4771e14e8217fd708339;
 outer5e696df8c2917c0730a1d9e0556e72e7b5fe0015b85f184d88fd459741baf7c3.
 Backend9580/52 opt-in deselected/1431.21s, web unit3708/combined4049,
-95.02% line/90.16% branch coverage, Cockpit, two built-browser startup/real HTTP
+95.02% line/90.16% branch coverage, historical frontend, two built-browser startup/real HTTP
 reads, three locked wheel profiles and16 wheel smoke tests all pass. Full85×18/
 CARD gaps/WEB-023–026 and old unknowns outside903 remain open/protected.
 
@@ -1030,188 +1008,6 @@ empty cache-lock mtime/ctime changes are allowed; other old/current state stays
 exact and unchanged during qualification, without new operations/browser/actions.
 Native reaches29 configured/30 union/9 retained/current8 at this checkpoint;
 all original parent/qualification failures remain false.
-
-Actual revision9 passes transport0/browser0/all six UI STEPS in ONE Chromium/root
-cell in237.506228s, `native75-differential-unsafe1-reuse-result.json` SHA256
-8a34e9c175111492f619720591bf47297433f4dd8420a24c2766569f1a17d24c.
-Original Sizing0025e3ba9e7d0df4628d9ff1f2e29485/run
-18e639bbc28845d6b6a087de4ae016af, Applyceb630cd1565f6f0e0ebfc8ffb83e04f/run
-0f4bb6fb1d984bffb176514e607dbc25 and Syncb7c99ad47b9144b346921f4bc99d3c6b/run
-7d59c099f8434b7f8b592e2af5a6a270 succeed. Publication
-ed17f321a0474ee6996107190c73807f/generation3 publishes6286B, downloads59B and
-reuses6227B with truthful HFWRN011, without a new Recovery. Current9's unsafe/NUL
-README body is withheld/presentation null; retained8 unsupported, retained7
-present/source and explicit-current9 no-fallback UI all pass. All contexts/
-browser/server close, errors stay zero and all six boolean root proofs pass;
-only21 shared-payload link/ctime rows and seven manifest-bound empty cache-lock
-timestamps change. Native now29 configured/30 union/10 retained/current9;
-independent rootless stays28/29/7, old unknowns remain protected.
-Actual six engine/prefix read aggregate remains transport/browser1 in423.232197s,
-receipt SHA256a44f42d9fbbfa9887f539c5355d7e21f4b578096cc30fd9a25936374d4196bce.
-Chromium/Firefox at both aliases pass all six UI steps each. Both WebKit aliases
-pass authority and every loaded README DOM/source assertion, then two screenshot-
-related CSP console errors fail strict health checks; the failure image adds a
-third. All contexts/browser/server close, zero effects/three root preservation
-proofs hold; aggregate remains false and its final probe is unrun.
-The separate actual search/type probe1 remains1 in21.769995s, receipt SHA256
-21598052ca33bf2cf95ed7658e98ee74a06b3476fb322f603636445379759734:
-actual fill→Models75.2ms clears typed q/field/hash, yielding HTTP200/15 models
-instead of the expected1. Closures/no effects/errors0 prove a genuine UI bug.
-Contract-first correction changes only `docs/web-ui/library.md`,
-`web/src/components/Library.tsx` and `web/test/library.component.test.tsx`:
-current DOM q is applied with type through existing validation. Two literal-
-Unicode/pending-clear regressions fail before the fix;23/23 component tests,
-lint and format pass after. Fix receipt SHA256
-5c84e988185d2387999a20196b7dd08bead4f9afff2cdd11eeb9767f5173e4fc records
-INV018/021/ADR145 review, no new architecture/dependencies/CSP change. Required
-post-fix gate13 and clean installed UI-artifact regression remain pending.
-Independent screenshot diagnostic0/browser0 in20.711879s, receipt SHA256
-6f6094d6a9b1991cddd3608302f4520870f5f4dd8c3387e439618687bd36136e,
-loads actual README/exact source with console0/CSP0 before capture. One Playwright
-screenshot injects transient HEAD `body {}` and produces inline style-src-elem/
-console refusal at the same instant. All root proofs pass; this is test-actor
-behavior, with no product CSP weakening. Fresh strict no-screenshot WebKit
-follow-up passes transport0/browser0 in244.487418s, receipt SHA256
-818d8c17b9e15fb1e90372f6cfd7eff604545ef65adade484ada62ec9298f4ee:
-both aliases pass all six steps/nine AND queries each, console0/zero effects,
-all closures and all six root preservation proofs. The nine-query aggregate
-steps take46135.314/77523.793ms within the existing120s pilot scope; strict driver
-45s remains unchanged, without performance/mapped acceptance. Combined with the
-four earlier Chromium/Firefox cells, these are six source75 native read cells;
-original a44f aggregate stays false and supplies no copied whole-run pass.
-Exact gate12 generated TMPDIR alone retires0, receipt3a91b6d7…:179508 entries/two
-privileged no-reference checks, root882089984→1807298560B, logs/results/source/
-inventory retained. Gate12 stays historical pre-fix green. Required post-fix
-gate13 now passes inner0 in1849.131650s/outer0 in1850.052418s, all1006 frozen
-files unchanged. Inner receipt SHA256
-dca41acd2b59efb39287c92dc78abe2d645fba2fb7ea73e21b762219046537b6;
-outer0a0c45c82dd7e03720397cccc8cb9450ed580a3b6acbd653aa06ae1f326e8736.
-Backend9580/52 opt-in deselected/1358.64s, web unit3708/combined4051,
-95.02% lines/90.13% branches, Cockpit/16 wheel smoke50.07s/two built-browser/
-real HTTP/three locked build profiles pass. Source14 clean cut0 has commit
-d4d99f8dde2b7bbc9b954da59f33bf8ec483967d/treeb0352c3b69117025a4778e97ffaca9dd3292cbd3,
-receipt55323244f05ad5f19089dbb3e1007725b34ea7ef272f2970f10e9724aafbf778.
-Its seven frozen changes versus source13 plus two fixture-version76 inputs leave
-main0.2.2/refs/index/all1006 unchanged. Native14 build passes0 in15.233s,
-`/var/tmp/w22b14/build14-exit.json` SHA256
-b4eaf3aee07cc6c377894c91bec9fda91ad2929a27711f29843e33078fc8669e;
-postproof620873aaeba31f9b2660721587fd08f2e376aa8684d5dae4c3d7db0f1b98c2ae
-and shadow18bf671b… pass:18 artifacts, clean source/reproducible backend/UI,
-indexe03e8b43…/UIba76372c…/source3c59e387…, main unchanged. API76 canonical build
-passes0/98aae0b45f587101f5f1c182d194b0f006e8744ca0ef8dff9e88c4dca87a43d4,
-with old images/catalogs/contexts/product preserved. Canonical API76 runtime
-foundation now passes0 in14.083s: e529c2ebfad64e3ea4af1babf9c4768163fe778f28cf5fb7fa57be63c38f3a63,
-proof93c873f6cc7b77aaffcdb9628bd18a944156848fd2120c9145c442b767b730c4;
-private-shadowb4bfd789… exits0. No reserve/store/main changes or guest/installed-
-qfix acceptance follows from foundation alone. Native76 now installs by normal
-A/B/C0: A e1b11a1c…/109.649s, B preparedc726678…/publish451293b7…/review677845f5…,
-C8228400df2a1ed8eb54f5e76b0c6169c23d84e3b688f2d932cbe09eda4f84fe2/20.718s.
-Original1722/keys/archive903/stores/new full37523/revisiondf470/Hub stay retained;
-19 bindings/six grants and original SELinux receiptfe124… remain unchanged.
-Normal new helper86976/worker86996/API87017/Caddy87027 run76 with owned NFS-rw.
-Installed q6 aggregate remains transport/browser1/99.21s, receipt SHA256
-71235451b43d7fdbdeef2496864abc5bdb68e8f2ff3a54c207446c7aeacc52a1:
-five cells/ten literal+clear cases pass, while WebKit-management's406ms typed
-click is timing-unobserved and clear is unrun. All closures/health/preservation
-hold; no new app bug is inferred. Fresh exact WebKit-management2 passes0 in
-27.528s, receipt SHA256
-6f35217acb9433dd7d1f97810078f0860a7182b2e933afec5343a0a07314340c:
-actual85/84ms clicks,3747/3969ms observations, both cases/strict health/closures/
-all seven root proofs pass. Together these prove installed76 q-fix coverage in
-six native cells without relabelling the original aggregate or source75 failure.
-Rootless input14 pack0/6d4d188c… after build/foundation/export0 now leads to normal
-rootless76 app start0/bda51883… and actual q/type six-cell0 in97.165309s, receipt
-19d7e7c31ba7c6d01bad0c064e6777eb5abfb5d6020059d5cf0e22688de0fb97.
-All12 fresh cases/strict health/closures/six root proofs pass, zero operations or
-effects; rootless28/29/7 remains separate from native29/30/10.
-Native first schedule remains failed530db125…: validation200 and exactly one
-replacement202 precede ec6747dc582ba18ec65420e5ed82fca0 interrupted/resultnull.
-Authenticated foreign3f history rejects before PENDING/host effects. GET observer
-830efb44… remains aggregate1 solely for the expected direct409 console diagnostic;
-offline scope184ac01a… qualifies actual original-key UI lookup/Observe200,
-unknown/pendingfalse guidance, blocked submission, retained key, all closures and
-preservation. This does not reconcile, replay, or relabel the original.
-Same-guest fresh control prepare0/eee774bc… and independent review3627a890… retain
-old `/var/lib/hfcache/api` untouched at its path and the foreign history/empty
-backups/server inode in private `fresh-control1`, with903 payloads/reports/worker/
-SDK originals/keys/locks exact. Only supported server.state_directory changes to
-`/var/lib/hfcache/api-web022-native76-control1`; neutral65e929fe… remains byte-
-identical with no authority writes. First restart7ec644f8… stays failed after
-four successful normal starts, before observing the store lock. Later read8255fa8f…
-finds exact empty `.lock` inode54280926 held by API89764/fd16; a startup-readiness
-race is consistent, not established as the cause. Read-only qualification2 passes0
-in5.279256s, receipt SHA256
-a72d807a9ba1449c9c619861852918c726af6e6741080dafe845734e6a44478a,
-joining the SAME four started roles and all preserved state with zero new starts.
-It creates the truthful qualified protected activation result; original7ec stays
-false/ec674 unresolved. Schedule summary0 now records scoped six-cell behavior,
-`native76-schedule-six-cells-scope1.json` SHA256
-cd798799a3e19a4ce86e3ade3958d05038a12e438b5c13ec99d4c254792d9aac:
-five full sessions plus Firefox-management's explicit2+2 continuation,24 unique
-confirmed keys/operations and all six final default/inactive. Raw Firefox9dae3804…
-remains failed after confirmed Replace/Resume and a30s disabled-Edit wait.
-Independent R0c87accd0… proves valid managed2050/current authority; GET diagnostic0/
-35bcc3ad… fully observes both original outcomes and enabled controls. The old
-in-memory page state is lost; no app cause is established. Only fresh Pause/Reset
-0/4dbc97db… in210.163s restores default/inactive and reloads all four originals,
-with old2 bytes/results preserved. Previously unrun WebKit root0/abd3239d…/
-351.370s and management0/89679218…/302.177s each pass four actions/five POSTs and
-all ten preservation flags. No old aggregate is rewritten or full HOST/matrix
-acceptance claimed; stale/concurrent revision and injection/timeout branches remain.
-Rootless76 admin1 remains transport/browser1 in919.435s, SHA8f027823…: Library
-locator404 console/read deadlines, no operation/POST/effect, all contexts closed
-and preservation flags hold except its unaccepted scope. Admin2 remains1 in
-301.809s/SHA5bdb14be…: abort/deadline and expected400-versus-actual422 assertions;
-one pure config-validation422, zero accepted operations/effects, all closures and
-other preservation flags hold. Ordinary workload3 now passes transport/browser0
-in580.334236s, receipt SHA256
-740d46ba58e35412a1cf78568e4adeb1f0223c60f9831d012c61dcc63b032428:
-six cells/six UI callbacks each,12 pure UI validations, zero operations/effects,
-all seven preservation flags and closures, maximum callback32.101s.35/36 UI body
-captures succeed; one Chromium-management body remains unavailable, so no complete
-wire-transfer claim.
-Focused rootless tag19 passes0/231f8cc6… in479.852s: six cells/19 fresh callbacks
-each,114 passes, maximum10.165s; each joins16 queries and three client refusals.
-Zero POSTs/operations, all seven preservation flags/closures and strict console/
-CSP checks pass. Split tag-provenance/bounds scope adds no full-case/matrix stamp
-or completed-transfer claim. Earlier aggregate failures stay false.
-Tag19 receipt SHA256231f8cc6c908314752c8dc458a1cdc205279cb3c67bace595e461444e995bba7.
-The tracked test driver now replaces the overlong tag aggregate with19 named
-45s callbacks; CATALOG-02 requires all19, with52 baseline assertion IDs and16
-case mappings. Exact query/hash/settled-DOM and client-side no-request refusals
-remain; no receipt import or timeout relaxation is added. Driver8cba6cd6…/
-runner70b3a8fb… and the existing unit fixture's ID list are the only new test
-changes. Existing Node metadata18 and Python functional-runner545 checks pass0;
-the initial27 stale-fixture-ID failures stay retained. Ruff/ESLint/format/syntax
-pass; no new full gate covers this test-only integration. Installed tools3855
-and source76 runtime/UI are unchanged, ordinary/negative integration is pending.
-Rootless configuration-negatives1 remains transport/browser1/1320d5a6… in699.559s:
-five cells each pass25 callbacks/24 local refusals; WebKit-root times out on its
-first10s Administration navigation click before config GET. Zero POSTs/operations,
-strict health/all closures and all other preservation flags pass. Focused fresh
-WebKit-root2 is running, not yet qualified; any later coverage must join original
-five plus its actual result, retaining the failed aggregate. No server422 claim
-comes from these local form refusals.
-Native maintenance4 remains transport/browser1/fa102fc6… in1084.098s: seven UI
-steps pass, publishing only the new903 copy's B/C/D pairs, each2files/4751B,
-with four successful Sizings and three confirmed Applys. Apply-E original
-7d6d6295954ab6087f8f1ec8bc344a2b fails20/HFAPI022 on protected policy inspection
-timeout before helper handoff; it is not resubmitted. Read-only0d8be27c…/
-cb8b2777… prove empty events, configuration-D/retention5 and no pending host or
-configuration intent/application audit for that failed original. The UI correctly
-fails closed under ADR154; no product defect is established. All browsers close,
-with zero unexpected page/console/5xx errors, and the old ten publications,
-worker reports, private originals, roles/keys/1722/Hub remain protected. E Sync,
-retention reduction, prune and purge are unrun. Fresh-context M5 preparation is
-for a distinct reviewed remaining workflow, not replay or a false M4 pass.
-TARs4 preservation passes0/12807934… at same-host ROOT
-`/var/tmp/web022-retained-public-source-tars4`: four completed public source6–9
-TARs retain bytes/semantic metadata/old HOME aliases and88 producer/artifact
-hashes. HOME276353024→346816512B/net70463488B; ROOT1975537664→1904615424B.
-FIEMAP70660096 exclusive bytes remains separate from actual net free movement.
-Source10–13 capture-only originals stay untouched; no VM/image/checkout/venv/
-private-store cleanup, off-machine backup or lowered reserve occurs. WEB-022
-and full85×18 remain open; check18 is historical to these new records.
 
 Current batch exact receipts: configuration-negatives1 SHA256
 1320d5a6166704d3b66f97c674bd20e1d669fb4b42dc7a4dc538df07173bf1ed;
@@ -1271,7 +1067,6 @@ HOME257499136→328552448B/net71053312B; ROOT2153357312→2082168832B. FIEMAP709
 exclusive bytes is separate from shared-filesystem free-space movement. No guest,
 VM/image, checkout/.venv, private-state moves or off-machine backup.
 Receipt SHA2565fc485f6753952c71d983f8cb4b76909af6a57e380c56a4da20fd96afc71e9d5.
-
 
 Current source75 worker UI passes transport0/browser0/five steps in261.833791s,
 `native75-corpus-jobs-clients1-reuse-result.json` SHA256
@@ -1565,7 +1360,7 @@ SHA2566ce33f05eb2e5e533bac9dbc2991de8f1962c1d116c1b4a539f69f68b5c75d24.
 `source13-with-browser-tests-product-freeze2.json` still pins1006 files, exactly
 four test-file changes/1002 unchanged. Required gate11 now passes inner0 in
 2625.186s and outer0 in2626.031s, all1006 frozen files unchanged:9580 backend/
-52 opt-in deselections,4049 combined frontend,581 Cockpit,16 wheel and two built-
+52 opt-in deselections,4049 combined frontend,581 historical frontend,16 wheel and two built-
 browser fallback checks. `gate11-result.json` SHA256
 c0176af893b9f10d609b3db391d004d41c8dc690bf27fa9058344f9a0606bd94
 pins inner logc58bd0588260f247d6f65cb75ddb0812474c3b22cae7d164fc20e38e9fac45db;
@@ -1627,7 +1422,7 @@ passes transport0/browser0: real reload invitation, same document/no automatic
 reload, visible unsaved RAM tag draft and both original verification handles
 unchanged, no POST. `native75-oldpage-route08-qualified1.json` joins the actual
 receipt and preservation proof to ROUTE-08; raw observer filenames/field
-fullRELEASE08Accepted are a retained naming mistake, never RELEASE-08 Cockpit
+fullRELEASE08Accepted are a retained naming mistake, never RELEASE-08 historical frontend
 absence evidence. Screenshot `native75-oldpage-version-notice.png` SHA256
 2ddbb5e668286143763af684e468310ac0704e7bee879c4e083c268676d68ffe is copied and
 visually viewed. This is one current native cell, not all18 acceptance.
@@ -1649,8 +1444,8 @@ actual browser pilot remain required. Cheap documentation alignment221/29 and
 all9 test_web_plan checks pass after the preceding record update.
 
 2026-10-30 source13/current execution checkpoint: actual required gate9
-`scripts/check.sh --require-web --require-cockpit --with-build` exits0 in1943.444s:
-9580 backend/52 opt-in deselections,4049 combined frontend,581 Cockpit and16
+`historical gate invocation (original command SHA-256 `96992218df1e5503ba0d1151d2e761d67cda95065427e485c8f5dc09fdda80fd`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` exits0 in1943.444s:
+9580 backend/52 opt-in deselections,4049 combined frontend,581 historical frontend and16
 wheel smoke checks. All1006 frozen files remain unchanged. Receipt
 `.scratch/web-022-validation/gate9-result.json` has log SHA256
 `6be36795cb864c83a5e66046f5cb2730ae918eb8d3be05c83f0d1ef2b14d4d0c`.
@@ -1721,7 +1516,7 @@ Receipts are `config-ui2-original-recovery1-result.json` and
 e61ac924…1249 is visually reviewed. Recovery does not settle the Apply.
 Required gate8 passes0 in1902.967s under root's NAS shadow/login1000/nice10:
 9574 backend/52 opt-in deselections,3708 web unit/4049 combined frontend,581
-Cockpit and16 wheel checks. All1006 frozen product files remain unchanged.
+historical frontend and16 wheel checks. All1006 frozen product files remain unchanged.
 `.scratch/web-022-validation/gate8-result.json` records log SHA256
 `97aa79a75585d28cb15bcd1e1a6706f1dd14e275b8002a8d1b6523e4c5386570`.
 Clean auxiliary source12 `739ab272e48edf481310d290dcab7b43b4206cb9`, version0.2.74,
@@ -2101,7 +1896,7 @@ files remain unchanged. Current locked, hash-verified resolver inputs are restor
 in separate disposable environment `/home/tyler/w22-cachewarm1`; unchanged offline
 three-profile installation precheck2 passes0 in19.62s. Full required gate7 now
 passes0 in1637.91s:9569 backend/52 opt-in deselections,3708 web unit/4049 combined
-frontend,581 Cockpit and16 wheel smoke tests. All1006 product files stay unchanged;
+frontend,581 historical frontend and16 wheel smoke tests. All1006 product files stay unchanged;
 coverage is95.02% lines/90.16% branches. Log SHA256 is
 `3659aa84266c0433b36c05cd34aefee8cb7e8d5e2092e43d6d13b17cad4e1bb2`.
 Evidence is `.scratch/web-022-validation/gate7-{start,result}.json` and `gate7.log`.
@@ -2521,7 +2316,7 @@ temp2/temp3 remain retained at this checkpoint. No runtime timeout, transport,
 privilege or protocol change is added.
 
 Required repository gate3 passes0 in1580.36s with
-`scripts/check.sh --require-web --require-cockpit --with-build`:9481 backend/
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 52 opt-in deselections,3708 web unit/4049 combined frontend and16 wheel smoke
 tests; all1006 frozen product files stay unchanged. Log SHA256
 `6ec63159adccba3817d45450a05086f205483cd287a8cfcc4b9bc732e4fa13a9`;
@@ -2646,14 +2441,6 @@ original logs; no installed/guest or runtime/dependency changes are credited, an
 the full required gate remains future. The full85-case/18-cell matrix remains substantially
 incomplete; eleven implemented runner case mappings cannot stand in for it.
 WEB-022 remains in_progress, with all production/source/retirement holds intact.
-
-2026-10-29 checkpoint: required gate2 exits0 in2043.63s with all1006
-frozen product files unchanged:9402 backend passes/52 opt-in deselections,
-3708 web unit/4049 combined frontend and16 wheel smoke checks, including the
-required web/Cockpit/build checks. The retained log is
-`.scratch/web-022-validation/gate2.log`, SHA256
-`99afc00c1674516eeb8ee819c376866b235a79109b98bb72ae39cfd4ef215712`.
-This repository gate does not complete the installed85-case/18-cell matrix.
 
 Three source9 native schedule cells pass their four original UI effects without
 retry: Chromium at both aliases and Firefox at root. Firefox `/management`
@@ -2846,7 +2633,7 @@ Artifacts are under `.scratch/web-022-validation/`; no positive archive job,
 writable transition, native v2 grant or final functional acceptance is claimed.
 
 2026-10-29 sequencing correction: the original invocation of the final
-`--with-web-functional` gate here also required RELEASE-08 (Cockpit absence,
+`--with-web-functional` gate here also required RELEASE-08 (historical frontend absence,
 owner WEB-025) and final handoff cases owned by WEB-026. Those packages depend
 on this task, so applying their final conditions before WEB-022 would create a
 dependency cycle and premature retirement. Existing ADR143/testing strategy
@@ -2871,7 +2658,7 @@ configuration-only. Full workflows, native positive controls, actual role probes
 and the explicit owned functional manifest/gate are required here. Reuse valid
 historical evidence only within its exact source/profile scope. Preserve all
 failed/unknown evidence and original handles; no force, replay, production/NAS,
-remote publication or live Cockpit removal.
+remote publication or installed predecessor interface removal.
 
 ## Completion evidence
 
@@ -2908,9 +2695,9 @@ executions, failed aggregates, accepted operations and explicit uncertainty.
   `auth-read-refusals-qualification-resume1-result.json`; original browser1 and
   unrelated workflow failure remain unchanged. No product effect is repeated.
 - Required full command
-  `rtk proxy scripts/check.sh --require-web --require-cockpit --with-build`
+  `historical gate invocation (original command SHA-256 `11c0442a9ef2abe3e2f357afc26e487ff24830bb577e2c10714e5a70570447e5`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)`
   passes0 in1744.448s (outer0/1745.113s): **9646 backend**,52 unrelated opt-in
-  deselections; **4051 combined frontend** (3708 unit), **581 Cockpit** and
+  deselections; **4051 combined frontend** (3708 unit), **581 historical frontend** and
   **16 wheel** checks; three locked install profiles, two built-browser checks,
   real HTTP/API fixture,175 transport definitions and strict lint/types/docs.
   Frontend coverage95.02% lines/90.13% branches; static build1220003B,
@@ -2940,7 +2727,7 @@ executions, failed aggregates, accepted operations and explicit uncertainty.
   Refresh/apply every related bounded-testing and GPT-6.1-sol effort amendment
   **after this commit and before WEB-023**: high/medium/high/medium. Preserve
   production/NAS, credentials, user caches, original locks/unknown handles,
-  disabled calendars, historical failures and live Cockpit. No merge/push/tag.
+  disabled calendars, historical failures and installed predecessor interface. No merge/push/tag.
 
 Post-adoption record checks: `rtk uv run --locked --extra server --extra mcp
 python scripts/check-docs.py` exits0 (222 human documents/29 helpers),

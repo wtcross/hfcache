@@ -118,7 +118,6 @@ quiet, and bounded sanitized event/status/result reads share one deadline.
 Timeout/Ctrl-C retains handles and uncertainty, without cancellation or replay.
 No direct local mutation backend, new dependency or durable shape is introduced.
 
-
 ## 2026-10-18 native Unix prefix and REST acceptance amendment (API-016)
 
 Existing local Unix clients retain fixed unprefixed paths without another
@@ -142,7 +141,6 @@ admitted operation identity stay explicit; no extra capabilities request, new ro
 cancellation authority is introduced. This is an existing-contract correction,
 not a new architectural decision. [Final integration task](../../../../plans/tasks/api-017-final-integration-and-handoff.md)
 owns exact subprocess/direct-client proof and required fresh gate evidence.
-
 
 Correction accepted 2026-10-18: [actual CLI socket integration](../../../../../../tests/unit/test_interface_integration.py)
 and [observer budget tests](../../../../../../tests/unit/test_cli_operation_helpers.py) pass;

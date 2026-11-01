@@ -1045,7 +1045,6 @@ not old-format acceptance or nonexecution. No archive operation or production
 installation occurred; the [task](../../../plans/tasks/api-014-systemd-and-deployment-integration.md)
 records commands/results and rollback rules.
 
-
 ## 15. Rootless runtime deployment profile (OPS-015)
 
 The selected release's rendered/runtime.json is independent schema 1, separate
@@ -1064,7 +1063,6 @@ checks fail closed. Release artifact identity has a separate protected manifest;
 its settled format/compatibility evidence is recorded with the implementation.
 No archive durable format or operation replay rule changes. OPS-015 acceptance
 remains actual task evidence, not a deployed profile assertion.
-
 
 ## 16. Rootless release manifest and artifact index (OPS-015)
 

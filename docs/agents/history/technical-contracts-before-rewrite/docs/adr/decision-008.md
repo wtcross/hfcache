@@ -1,5 +1,11 @@
 > Historical technical reference preserved before consolidation. Current authority is the living contract.
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `b7f84d381a85a9849796f5851e777b9eb0e21f7d079760d4e490ab8821016753`,
+original content SHA-256 `19c7f733a526671ebc3ee0e8e8861ef33cf2c334d95bdff524e1b55488987fac`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 # Decision 008: `scripts/` added to the project layout; no CI-provider configuration
 
 Status: accepted when recorded; retained as historical evidence. Dated
@@ -23,8 +29,8 @@ installed on the CentOS Stream 10 writer, and bash is.
 
 ## Later history and current interpretation
 
-The original gate covered the Python application. [Decision 88](../../../../../adr/decision-088.md)
-later adds the conditional Cockpit toolchain stage without adding an application
+The original gate covered the Python application. [Decision 88](../../../removed-interface-records.md)
+later adds the conditional historical frontend toolchain stage without adding an application
 runtime dependency.
 
 ## Provenance and governing evidence

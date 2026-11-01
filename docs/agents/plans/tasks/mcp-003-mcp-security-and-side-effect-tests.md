@@ -1,5 +1,11 @@
 # MCP-003: Prove MCP cannot mutate through tools, auth, or transport bypasses
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `99b1bcdf3520f9d24864db37c9cae0dfdf13b6ea3020977eb1271123de697c45`,
+original content SHA-256 `8194c4423d41b5f23de650a208698c439beb70b771fde3a4b18788ab91f027dc`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `MCP-003` |
@@ -56,7 +62,7 @@ Activated 2026-10-18 under Tyler's authorized REST-first implementation after
 MCP-002 committed clean as `35e5f51`. Git history, clean tree, current selector and
 completed dependency agreed; MCP-003 was the sole task in progress. MCP-002's first
 full gate passed 3,481 Python tests, all three locked wheel profiles and 127
-Cockpit tests. Collaborators remain within this package: malformed original
+historical frontend tests. Collaborators remain within this package: malformed original
 evidence/secret projections, mounted transport/concurrency, adversarial exact
 registry/arguments/state snapshots, and all Markdown traceability.
 
@@ -162,7 +168,7 @@ exited 0: 94-package lock/both-extra sync, 383 formatted files, Ruff clean,
 whole Pyrefly 0 errors (11 suppressed, 59 warnings not shown); 3,522 Python tests
 passed, 40 deselected in 417.54 seconds. Source distribution/wheel 0.1.10 built;
 all actual locked isolated base/server/server+MCP installation/import/help/version
-checks passed. Cockpit ESLint/Stylelint/TypeScript, 127 tests in 2.112 seconds
+checks passed. historical frontend ESLint/Stylelint/TypeScript, 127 tests in 2.112 seconds
 and production build in 1,234 ms passed. No full-gate failure/correction/restart,
 runtime source change or new dependency/config/durable format.
 

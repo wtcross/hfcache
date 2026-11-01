@@ -5,17 +5,17 @@ difference between a failed domain read and unavailable or unsupported evidence.
 
 The replacement interface is implemented in unreleased source and can be enabled
 explicitly with a matching protected asset release. Installed systems retain
-their recorded release and the [legacy Cockpit interface](../cockpit-plugin/README.md).
+their recorded release; repository source changes do not migrate live services.
 These guides do not install a release, enable a schedule or grant archive write
 permission.
 
-Cockpit is deprecated for new work. Use the independent web interface described
-here; legacy source, tests, history, licenses and installed state remain preserved.
-The [migration guide](migration-from-cockpit.md) covers original handles and
+Use the independent web interface described here. The superseded interface has
+been removed from the repository; installed services remain unchanged.
+The [migration guide](migration-and-rollback.md) covers original handles and
 rollback evidence for a separately authorized transition.
 
 See the [candidate test-release acceptance summary](test-release-acceptance.md)
-for observed test-system behavior and the acceptance that remains incomplete.
+for completed scoped test-system acceptance and separate production holds.
 
 When enabled, open `/ui/` on the existing HTTPS endpoint, or
 `/management/ui/` for an installation whose public prefix is `/management`.
@@ -29,7 +29,7 @@ For a reviewed build and operator transition, use the
 [operator handoff](deployment.md#operate-the-unreleased-web-interface).
 
 For an interface transition or release rollback, follow the
-[migration and compatibility guide](migration-from-cockpit.md). Preserve original
+[migration and compatibility guide](migration-and-rollback.md). Preserve original
 operation handles, protected configuration and compatible observers before switching.
 
 After sign-in, **Administrator session** identifies the authenticated human.

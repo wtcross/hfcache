@@ -1,5 +1,11 @@
 # Acceptance scenario matrix
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `bf8ee2ef3ea9658dedebafa423f294f25a2d8b4299de997fd7474636b3775a95`,
+original content SHA-256 `4c2669fccb8c12ac7fec25757ea684af6ae7f0d447e2bef515ed7d48aeaea7d4`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 This matrix contains **95 required scenarios**: 85 are owned through WEB-022 and
 all 95 remain required at final acceptance. These are assertions, not passing test
 claims. Every scenario and its clauses retain the existing `minimum_layers` in
@@ -14,15 +20,6 @@ evidence only with an explicit justification. Preserve original failures and
 accepted effects; never replay an operation to obtain a clean aggregate. Missing
 required assertions block completion, and a test name or source review alone is
 not a pass. No new framework, schema, proof model or binder is required.
-
-Actual installed native and rootless product acceptance still covers Chromium,
-Firefox and WebKit at root and `/management`, with fresh browser contexts and
-real Caddy/API/worker/helper boundaries. Exercise deeper faults/domain behavior
-where the boundary is relevant, including supported native controls and
-maintenance/Repair and guarded rootless denials. HTTP mocks alone never satisfy
-an installed/browser assertion. The full source web/backend/docs/build gate remains required. The2026-11-01
-user direction excludes legacy Cockpit validation; its flag is explicit opt-in
-only and is not run for this goal.
 
 The existing instrumented runner and its `acceptance-evidence.json`, run IDs,
 fresh-fixture joins and exact private proofs remain optional diagnostics. Their
@@ -163,8 +160,8 @@ no failed aggregate becomes passed and no mandatory runner cross-product returns
 | `RELEASE-05` / [WEB-023](../../tasks/web-023-compatibility-and-rollback-drill.md) | Actual legacy client compatibility | Pinned installed old CLI reader/writer and MCP clients validate actual new server envelopes/capabilities/receipts and literal candidate behavior. |
 | `RELEASE-06` / [WEB-023](../../tasks/web-023-compatibility-and-rollback-drill.md) | Durable format downgrade drill | Old binaries inspect copied new cards/helper/config operation state and either work or refuse as documented, preserving all unknown/new evidence. |
 | `RELEASE-07` / [WEB-023](../../tasks/web-023-compatibility-and-rollback-drill.md) | Evidence-preserving rollback | Actual isolated upgrade/rollback drains executors, retains original locks/stores/handles/candidates and refuses unsafe target observation; no forced kill/delete/replay. |
-| `RELEASE-08` / [WEB-025](../../tasks/web-025-retire-cockpit-plugin.md) | Independent web UI and legacy deprecation | Built/staged release and browser workflows operate independently of Cockpit; new-web safety coverage, generic helpers, history and licenses remain. The legacy plugin is deprecated without further maintenance or validation. |
-| `RELEASE-09` / [WEB-026](../../tasks/web-026-final-gate-and-handoff.md) | No production or remote publication claims | Final evidence separates source/fixture acceptance from unperformed live deployment, Caddy reload, NAS, push, tag and production Cockpit removal. |
+| `RELEASE-08` / [WEB-025](../../tasks/web-025-independent-web-handoff.md) | Independent indexed web interface | Built/staged release and browser workflows use indexed application assets independently; current web safety coverage, generic host/client helpers and required attribution remain. |
+| `RELEASE-09` / [WEB-026](../../tasks/web-026-final-gate-and-handoff.md) | No production or remote publication claims | Final evidence separates source/fixture acceptance from unperformed live deployment, Caddy reload, NAS, push, tag and production historical frontend removal. |
 
 ## DOC
 

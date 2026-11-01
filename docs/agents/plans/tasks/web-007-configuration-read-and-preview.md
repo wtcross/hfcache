@@ -1,5 +1,11 @@
 # WEB-007: Expose safe installed configuration and exact managed-edit validation/preview
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `b225ae0b4f670f0edf95c06d9593b1f7eccb590bf5596e74886b69f7eba9ac13`,
+original content SHA-256 `b1f537e207289c2364dfd1496b743c73ed5d2d1c328ad22bafc1947016ddd2c5`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | complete |
@@ -10,8 +16,6 @@
 | Work-package commit | `WEB-007: expose safe configuration and exact managed previews` (this commit) |
 
 ## Read before implementation
-
-config models/candidate assessment; existing POST config validate/plans DTOs and renderer; Cockpit candidate guard/read pipeline; config API specification.
 
 Also read the relevant sections of [architecture](../support/web-ui/architecture.md), [API contracts](../support/web-ui/api-contracts.md), [testing strategy](../support/web-ui/testing-strategy.md), [acceptance matrix](../support/web-ui/acceptance-matrix.md), and [human documentation map](../support/web-ui/documentation-map.md). Load only affected living contracts and ADRs through their indexes. Refer to the [source review](../support/web-ui/source-review.md) for pinned baseline evidence; current git wins over it.
 
@@ -43,7 +47,7 @@ Start configuration-and-tags guide with projection/advanced-view limits, normali
 
 The UI has a safe complete editable source with full-byte concurrency protection; existing candidate clients work; preview is exact and non-installing; protected authority and secrets cannot be changed via redacted fields.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution notes and blockers
 
@@ -113,7 +117,7 @@ explicit test-only inventory refresh; subsequent source inventory records the
 actual transferred contents and the separate native public-CA unit fixture delta.
 
 Gate three fails after1,303.223s with all1,372 inputs unchanged:7,982 Python
-tests pass,52 documented opt-in deselections; locked wheel profiles,572 Cockpit
+tests pass,52 documented opt-in deselections; locked wheel profiles,572 historical frontend
 unit/110 mounted Firefox,2,826 web unit/2,886 combined component and both shell
 browser tests pass. Combined coverage is95.11%line/92.52%branch/92.26%function.
 The final real-API React fixture has one stale independent corpus-count assertion
@@ -139,7 +143,7 @@ without changing production validators. Gate five uses snapshot
 `0ca1a8dc7461e5ee6b4283656d18ac7d8a4f625819a697ea0c64ee0602bc605b`.
 
 Gate five now ACTUALLY PASSES in1,366.734s:7,982 Python tests,52 documented
-opt-in deselections, all three locked wheel profiles, strict Cockpit and web
+opt-in deselections, all three locked wheel profiles, strict historical frontend and web
 checks, both shell browser tests and the complete real-API React read fixture.
 All1,372 frozen source hashes/modes remain unchanged. Original log/result are
 `/var/tmp/web-007-validation-yc95plp8/gate5/strict-gate{.log,-result.json}`.
@@ -214,11 +218,6 @@ stock pasta routing without changing source, runtime arguments, privileges or
 isolation. The corrected rootless run is recorded in final acceptance below; this failed
 cohort is not promoted.
 
-All failed logs/results and originals remain under
-`/var/tmp/web-007-validation-yc95plp8/` and the owned guest's private
-`/opt/hfcache-web006/helper-web007/` evidence directories. No production/NAS/live
-Cockpit/rollout/publication action follows.
-
 Focused API coverage remains90% (141 statements,11 missed,24 branches/five partial)
 for unchanged API source `fa1673a7750a46e4af298ef2f62251e990c188812ffa809a8da0453a55d90d8c`;
 retained data/export/provenance are in the validation directory. This is focused
@@ -267,13 +266,6 @@ ADR141 links it. No runtime dependency or archive durable-format change is added
 The final source gate hash/modes remain valid; subsequent edits are the five
 explicitly excluded plan/evidence/progress bookkeeping files. Documentation,
 plan/evidence parsing and final whitespace checks run before commit.
-
-[Current selector](../current.md) advances to
-[WEB-008](web-008-atomic-configuration-application.md). Guarded Apply/persistent
-private outcomes/crash reconciliation remain that task; no installation surface
-is claimed here. Completed progress/Operator handoff accompany this commit.
-The feature branch is unmerged/unpublished; production Caddy/services/timers/
-credentials/guards/NAS/live Cockpit remain untouched, and rollout stays separate.
 
 Final bookkeeping checks pass: documentation alignment209human/27helpers; plan/
 evidence parsing9tests in6.06s; whitespace clean. All1,372 checked source hashes/

@@ -1,3 +1,6 @@
+# Historical supplied-record checksums, not current-tree verification.
+# Original exact filename/hash pairs remain in Git c692d7ae4b866fefd8a743a21afdb729da0f39c4.
+# A renamed/removed filename is identified by its original UTF-8 path SHA-256.
 2b17d3fad2599e26b66f98f67e831d2db1e584dc688eec9bf82db43ac3b5c7cb  docs/agents/plans/2026-10-20-plan-web-ui.md
 59fc5854d1485a94fe137deee6288c82e91ae54dc2c3bcd04d3d22ae9ee63a64  docs/agents/plans/support/web-ui/KICKOFF.md
 66e2621fedde53bc3a18a2954e8d58cecc252e527d04096f1486fc6e02172b43  docs/agents/plans/support/web-ui/README.md
@@ -43,5 +46,5 @@ f6be42eb3495bffd58f7d25751dd6cb3b542142cb817019270be6f9e6e708f13  docs/agents/pl
 b547ebcd6e94e13a9a37356262b9c6ffc7b2128a852ecd8de605b86a17ce92e6  docs/agents/plans/tasks/web-022-installed-functional-acceptance.md
 2c7f79647fb94c455bf9da2de6dd6fdcdc3394eca6a621af1bab5fbfc14a6594  docs/agents/plans/tasks/web-023-compatibility-and-rollback-drill.md
 e5393570d5cc9fe0d8f248e081f4ec19497e9644bcd11b085ee7fba7b427d709  docs/agents/plans/tasks/web-024-human-documentation-acceptance.md
-9dde9a1cb983b5712b7a56ffe913b78297098bc10bf12882995b9446b98f2501  docs/agents/plans/tasks/web-025-retire-cockpit-plugin.md
+9dde9a1cb983b5712b7a56ffe913b78297098bc10bf12882995b9446b98f2501  original-path-sha256:317a2be4f2c743a4adc0126d77c83220687cd139c5172e436655a7edf70ed433
 525d0fdfa3203d08172c87c360444ef65219f73d3aecf83cbcc526c443535da2  docs/agents/plans/tasks/web-026-final-gate-and-handoff.md

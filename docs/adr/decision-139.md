@@ -1,5 +1,9 @@
 # Confirm installed configuration through a pipe and bounded local collector
 
+The superseded browser interface has been removed under
+[decision 161](decision-161.md). Shared backend, host-helper and web rules below
+remain governed by their current contracts.
+
 - Decision identity: 139.
 - Status: Amended; source FD/status regressions and actual enforcing disposable installation/confirmation passed; original installed symptom remains separate.
 - Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
@@ -14,14 +18,6 @@ path is removed. Original candidates, backups and operation handles remain
 evidence; helper availability never proves an uncertain apply did not occur.
 
 ## Context and decision
-
-An actual disposable Cockpit installation wrote and validated its candidate,
-then installed exact bytes and retained the exact predecessor. Confirmation
-failed before another client unit started. The enforcing audit log records PID1
-`init_t` denied `write` to an `etc_t` file. The guard redirected `systemd-run
---pipe` stdout directly to its root-owned confirmation file in the configuration
-directory. This recreates the pipe-only lesson in [decision 92](decision-092.md),
-independently of that record's superseded credential delivery.
 
 Give the fixed launcher an anonymous stdout pipe. A local privileged collector
 alone writes the existing bounded root-owned confirmation spool while the same
@@ -53,15 +49,8 @@ replay/cleanup/rollback permission follows. Keep the already installed bytes,
 predecessor, original lock and failed confirmation evidence. Source correction
 does not confirm that installation or prove the original production symptom.
 
-[Guard implementation](../../cockpit/src/lib/candidate-guard.ts),
-[filesystem/FD regressions](../../cockpit/test/candidate-guard.test.ts),
-[Cockpit contract](../cockpit.md) and the
-[invariant register](../invariants.md#cockpit-boundary) define the boundary.
-Native denial, source regression, fresh disposable acceptance and later installed
-verification remain separate evidence.
-
-
 ## Replacement UI design amendment (2026-10-20)
 
-[Decision 141](decision-141.md) amends this record for the accepted
-replacement design. Accepted future helper confirmation retains exact installed-content and operational-fingerprint confirmation, original failed evidence and no-replay uncertainty; current Cockpit collector remains supported.
+The pre-removal record remains in Git at
+`c692d7ae4b866fefd8a743a21afdb729da0f39c4`; removed interface-only
+instructions and source evidence are historical, not current operating steps.

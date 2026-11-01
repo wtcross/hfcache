@@ -19,13 +19,14 @@ from hfcache.publication import read_reference, retained_references
 from hfcache.server_config import InstalledPolicy
 from hfcache.verification_executor import VerificationWorker
 from tests.unit.test_api_commands import configured as configured  # noqa: PLC0414 - shared fixture
-from tests.unit.test_api_commands import result, submit
+from tests.unit.test_api_commands import submit
 from tests.unit.test_api_operations import READER_HEADERS, WRITER_HEADERS
 from tests.unit.test_synchronize import CONTENT, DATASET, MODEL, SHA_A
 from tests.unit.test_verification_executor import listening
 from tests.unit.test_web_operations_worker import (
     real_services as real_services,  # noqa: PLC0414 - real external-boundary fixture
 )
+from tests.unit.test_web_operations_worker import result
 
 
 def retained_file(path):

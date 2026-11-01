@@ -2172,7 +2172,6 @@ functions and archive evidence remain authoritative; incremental adapters and
 a bounded non-resuming submission lane add remote management. See [API](../../api.md)
 for target coverage and implementation status. No production rollout is claimed.
 
-
 **2026-10-18 local rollout scope amendment (OPS-014, decision 126).** New user
 authority permits reviewed local release/deployment with Caddy/rootless runtime,
 but forbids NAS content/metadata writes, other-host changes, remote push and ACME

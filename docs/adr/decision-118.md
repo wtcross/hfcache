@@ -6,7 +6,6 @@
 - Date: 2026-10-17.
 Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
-
 ## Context, decision and rationale
 
 A base reader needs only explicit endpoint/trust/API credential settings, not

@@ -1,5 +1,11 @@
 # WEB-019: Complete the operator administration workspace
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `f2a3fba268113a26c28c5eddcc20bb68a92a9e235887aeb4d9ab9c80127db6e5`,
+original content SHA-256 `954f80cb76697bbf59712d88f457f7d0b1795ee563b60ca6da54161872fc797e`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -11,8 +17,6 @@
 
 ## Read before implementation
 
-Host status/schedule/journal endpoints; diagnostics/runs; config forms; current Cockpit dashboard and warning runbooks.
-
 Also read the relevant sections of [architecture](../support/web-ui/architecture.md), [API contracts](../support/web-ui/api-contracts.md), [testing strategy](../support/web-ui/testing-strategy.md), [acceptance matrix](../support/web-ui/acceptance-matrix.md), and [human documentation map](../support/web-ui/documentation-map.md). Load only affected living contracts and ADRs through their indexes. Refer to the [source review](../support/web-ui/source-review.md) for pinned baseline evidence; current git wins over it.
 
 ## Scope and implementation requirements
@@ -20,8 +24,6 @@ Also read the relevant sections of [architecture](../support/web-ui/architecture
 Integrate Administration panels for profile/permissions, archive health/free reserve, installed config, diagnostics, fixed sync schedule/observer, read-only verification timer and bounded journals. Surface archive/Hub/control/config/schedule/observer permission reasons independently from Basic authentication and daemon ready. Unknown/missing facts never look healthy or writable.
 
 Map existing archive-health fields and warning codes to human guidance and relevant actions; distinguish snapshot status, actual verification, metadata coverage, API readiness and host restrictions. Show safe server/UI/release identities without secrets or false deployment claims. Schedule forms preview normalized expression/next event and explicit timezone, show expected-revision conflict, and explain reset/pause semantics. Display original operation recovery globally even on host panels.
-
-Ensure all parity rows are linked to a real workspace/control or a profile-justified denial, not a placeholder toast. Keep technical evidence available without burying ordinary workflows. No direct Cockpit/D-Bus/file/shell dependency remains in newly implemented screens.
 
 ## Unit and component validation
 
@@ -41,9 +43,7 @@ Complete administration.md and troubleshooting, update navigation, operator scre
 
 ## Acceptance
 
-Administration replaces the existing operator information/control surface accurately, with clear permission/unknown states and no dependence on Cockpit or a browser host bridge.
-
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution notes and blockers
 
@@ -61,10 +61,6 @@ text without inventing a timezone API field. Review INV018/020/021/022 and
 ADR145/150/154/156; existing authority, budgets and no-replay contracts apply.
 Reconcile ADR156's stale design-status sentence with committed WEB018 evidence,
 while keeping production/full-platform acceptance separate.
-
-Unit/component/integration and three-engine real rendered-control acceptance on
-permitted native and guarded rootless remain mandatory before this commit.
-No production, NAS, live Cockpit, push, merge, Git tag or new engine work.
 
 Source checkpoint: the composed workspace, original host-outcome recovery,
 configuration/schedule navigation guards, diagnostics and warning guidance
@@ -186,9 +182,9 @@ and all evidence are summarized in
 `/var/tmp/web-019-validation-fnvch46d/source3-functional-all-summary.json`, SHA256
 `3ebb9e272cabca97780740d06a9fa8da0bcc0063baa879076667b7e095d2488d`.
 
-`rtk proxy scripts/check.sh --require-web --require-cockpit` passes0 in1994.337s:
+`historical gate invocation (original command SHA-256 `b9d97947112e6e5c5005002b465c3dd68f8bd158ca8c41cb5966f57422999103`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` passes0 in1994.337s:
 8927 backend tests/52 unrelated opt-in deselections,3690 required web unit tests,
-4007 combined frontend tests,581 Cockpit unit/110 mounted checks, all locked
+4007 combined frontend tests,581 historical frontend unit/110 mounted checks, all locked
 wheel/build/browser/API-read checks,217 human documents/27 helpers and no required
 skips. Line/branch coverage is94.94%/90%; gzip JavaScript252464 bytes. Gate log
 and unchanged-source result are under `gate2/`. The earlier failed gate remains
@@ -244,10 +240,3 @@ no-replay decisions are reviewed. No new endpoint, runtime dependency, durable
 format or privilege is introduced. Original host certainty stays independent of
 API/domain completion. Configuration, exact publications, captured README,
 REST bearer and read-only MCP authority are preserved.
-
-[Progress and operator handoff](../../progress.md#web-ui-replacement-2026-10-20)
-record this package. [WEB-020](web-020-cross-browser-accessibility-and-load.md)
-is pending next. This is LOCAL_STORAGE_SIMULATION plus actual isolated host
-behavior, not NAS/production or the later full platform, compatibility,
-retirement/final acceptance. Production0.2.2, guards/timers/credentials/Caddy and
-live Cockpit remain untouched; no merge, push, Git tag or rollout occurred.

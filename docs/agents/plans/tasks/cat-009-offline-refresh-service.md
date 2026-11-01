@@ -1,5 +1,11 @@
 # CAT-009: Add a typed writer-only offline catalog refresh service
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `7065ba980a65df2442deb10e842e502a580693f49cf7d5f4ea14479ac3c46145`,
+original content SHA-256 `28a17b14288092546b3fe68f02b5297d1e722da5178824b4133a281764b3124e`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -111,7 +117,7 @@ tests/unit/test_command_services.py tests/unit/test_command_models.py`:
 184 passed in 19.09s. New refresh/replay subset: 49 passed in 8.77s. Lint,
 types, docs and whitespace pass. Full `rtk proxy scripts/check.sh` exited 0:
 4677 passed/40 opt-in deselected in 507.48s, build, three locked installation
-profiles and actual Cockpit lint/types/169 tests/build. Ignored complete log:
+profiles and actual historical frontend lint/types/169 tests/build. Ignored complete log:
 `.git/cat-009-check.log`. Independent current-package review is clear after
 the bounded malformed-selector diagnostic fix and its regressions.
 

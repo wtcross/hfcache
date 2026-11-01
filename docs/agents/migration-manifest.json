@@ -150,11 +150,12 @@
       "after_reference_repair_sha256": "134046627fd4c609f9fa17a2da88503d8903c47cfe70ab2e90cb661ff09f4d98"
     },
     {
-      "old": "docs/plans/tasks/api-015-cockpit-api-client-compatibility.md",
-      "new": "docs/agents/plans/tasks/api-015-cockpit-api-client-compatibility.md",
       "sha256": "d459bd573972e16dce99798205e9d39a85b297c820d55966ddc9a6b4a8696d90",
       "before_move_sha256": "d459bd573972e16dce99798205e9d39a85b297c820d55966ddc9a6b4a8696d90",
-      "after_reference_repair_sha256": "d4d15e04c8f8f752388f3eb6127024cfee924ade49cd55d6ca35c343aec30193"
+      "after_reference_repair_sha256": "d4d15e04c8f8f752388f3eb6127024cfee924ade49cd55d6ca35c343aec30193",
+      "old_path_sha256": "20b6a51a97180128896815bf25664a5d24e1f0924bf78bf7e386a32a696e5fc2",
+      "retired": true,
+      "retirement_reason": "Superseded interface-only record removed by WEB-027; original Git hashes retained."
     },
     {
       "old": "docs/plans/tasks/api-016-rest-acceptance-gate.md",

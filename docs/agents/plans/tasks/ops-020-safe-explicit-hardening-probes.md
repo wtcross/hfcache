@@ -1,5 +1,11 @@
 # OPS-020: Make hardening probes explicit, safe and evidence-based
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `7b5dee3d8dbf8b3aab1499d0076e43fb98ce9d0e9ec588ca2ec99ebcb1364345`,
+original content SHA-256 `f2a00741baf4525516342a2283951b2e31d31e488b1ef5ab01145827d6f2bfdf`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -78,7 +84,7 @@ Validation: `uv run --locked --extra server --extra mcp pytest
 tests/unit/test_hardening_probe.py --no-cov` exited 0, 74 passed. Shell syntax,
 Ruff, types and migration-link checks passed. `scripts/check.sh` exited 0:
 4,107 passed, 40 deselected in 473.88s; wheel build; all three isolated locked
-installation profiles; actual Cockpit lint/types, 135 tests and production build.
+installation profiles; actual historical frontend lint/types, 135 tests and production build.
 The earlier fixture type-inference failure was corrected before this final gate;
 interrupted review runs are not acceptance evidence. Log:
 `/tmp/hfcache-ops020-gate.log`.

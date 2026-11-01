@@ -1,5 +1,11 @@
 # MCP-004: Complete MCP client guidance and the read-only acceptance gate
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `dc61f358f727fcf358de84e8051336d480af5519c6a2130a9e77218e11bee7ff`,
+original content SHA-256 `f2cd83a1ee9a27b68d205241826de9ec33c866e41116759b009f9a2222a19c1e`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `MCP-004` |
@@ -33,7 +39,7 @@ Complete MCP, server, API-client/consumer cross-references, README, CHANGELOG, s
 
 Planned checks, not execution evidence:
 
-Complete registered-tool and mounted HTTP suites, example execution against a throwaway server, all-extra lock/install/import checks, REST disabled/enabled regressions, docs/schema/link validation, and `scripts/check.sh --with-build` including Cockpit.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution and completion rules
 
@@ -56,7 +62,7 @@ Activated 2026-10-18 under Tyler's authorized sequential plan after MCP-003
 committed clean as `91ca214`. Git history, clean working tree, current selector
 and completed dependency agreed; MCP-004 was the sole task in progress. MCP-003's
 first full gate passed 3,522 Python tests, all three locked wheel profiles and
-127 Cockpit tests. This package owns tested protected-file client guidance,
+127 historical frontend tests. This package owns tested protected-file client guidance,
 complete interface/cost/identity/session/rotation/troubleshooting documentation,
 packaging/REST isolation acceptance and the required --with-build gate. Root owns
 AGENTS.md routing/commands; all other Markdown has one owner. No new role/tool or
@@ -150,7 +156,7 @@ whole Pyrefly 0 errors (11 suppressed, 59 warnings not shown); 3,616 Python test
 passed, 40 deselected in 425.94 seconds. Source distribution/wheel 0.1.10 built;
 all three actual locked isolated base/server/server+MCP install/import/help/version
 profiles passed, including enabled exact-nine tools and zero resources/templates/
-prompts. Cockpit ESLint/Stylelint/TypeScript, 127 tests in 2.141 seconds and
+prompts. historical frontend ESLint/Stylelint/TypeScript, 127 tests in 2.141 seconds and
 production build in 1,268 ms passed. Required extra wheel smoke subset passed
 4 tests, 3,652 deselected in 5.66 seconds. No full-gate failure/correction/restart
 or post-freeze source/semantic change. Source version 0.1.10 is unchanged metadata,

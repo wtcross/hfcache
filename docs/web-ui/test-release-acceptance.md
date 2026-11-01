@@ -31,20 +31,20 @@ test layers; every scenario was not repeated in every browser/profile combinatio
 | CLI, MCP and worker | All14 read-only MCP tools and existing CLI credential classes traverse shared Caddy at both entrypoints. Native0.2.78 has actual browser/client overlap:32 CLI/MCP calls occur during nine visible Library workflows. Rootless client reads are sequential and use labelled synthetic reports. One genuine native0.2.78 revision-verification job reads eight objects/6,286bytes for one exact revision; its original result/report survive reload. Two subsequent MCP reads match that new report. Concurrency with the new worker job is not claimed. |
 
 The guide review matches 40 documented workflow steps to retained actual installed
-observations and current controls. Thirteen genuine synthetic screenshots keep
-their historical build labels; 19 examples pass strict-model or inert syntax
-checks. Protected provisioning, installation and refresh examples are not executed
+observations and current controls. The original review covered 13 genuine
+synthetic screenshots; 11 remain published with their historical build labels.
+Nineteen examples pass strict-model or inert syntax checks. Protected provisioning, installation and refresh examples are not executed
 for documentation review. Existing keyboard and screen-reader observations retain
 their recorded limits; no new human-listening or universal accessibility claim is
 made.
 
-The current required source/build check **passes**:
+The recorded replacement source/build check **passed** before the subsequent
+repository removal of the superseded interface:
 `scripts/check.sh --require-web --with-build` exits 0 with 9,650 backend tests,
 4,051 unique combined web tests and 16 wheel checks, three locked installation
 profiles, two built-browser checks and the real HTTP/API fixture. All 1,547 frozen
 inputs remain unchanged. Frontend coverage is 95.02% of lines and 90.13% of branches.
-Legacy Cockpit validation is excluded from current acceptance. The acceptance
-ledger and closure documents are reconciled after the source check and validated
+The acceptance ledger and closure documents are reconciled after the source check and validated
 separately. The optional instrumented functional runner was not run as this
 acceptance path and is not claimed to have passed.
 
@@ -55,8 +55,18 @@ credential/candidate-authority refusals are retained. Actual old copied-state
 readers preserve all inputs and document unsupported formats. Both disposable
 installations complete indexed78→77→78, with matching UI/backend/helper selection,
 trusted TLS, Library/reload, stable subject and unchanged original-operation
-outcomes. The [migration guide](migration-from-cockpit.md) records exact limits,
+outcomes. The [migration guide](migration-and-rollback.md) records exact limits,
 including the predecessor's configuration-read limitation and preserved failures.
+
+The subsequent repository cleanup also passes the strict source/build command:
+9,562 backend tests, 4,051 unique combined web tests, all 16 wheel checks, three
+locked installation profiles, both built-browser checks and the real HTTP/API
+React read fixture. All 1,227 tracked inputs remain unchanged during that run;
+frontend coverage remains 95.02% of lines and 90.13% of branches. The validation
+harness preserves child ownership across process creation and cancellation;
+real-worker fixtures use finite observation budgets without changing production
+settings. This current-source check does not replace the separately scoped
+installed-candidate evidence above or perform a live deployment.
 
 ## Retained qualifications
 
@@ -83,18 +93,17 @@ They perform no domain write or external request. Original old-client GETs
 return the same succeeded native and failed rootless operations; both remain
 unchanged, and both temporary tunnels close normally. No accepted job is replayed.
 
-These final checks reuse the coherent clean 0.2.78/f829 artifacts. Runtime
-code, packaging and web source bytes and the normalized locked dependency
-closure remain unchanged; repository self-version 0.2.2 is kept distinct. Deeper
+These recorded replacement checks used the coherent clean 0.2.78/f829 artifacts.
+At that point, runtime code, packaging and web source bytes and the normalized
+locked dependency closure matched; repository self-version 0.2.2 remained distinct. Deeper
 Chromium/Firefox/WebKit and prefix evidence retains its recorded scope. This is
 not a newly installed final 0.2.2 artifact, a new full browser matrix or refreshed
 Firefox/WebKit trust proof. Private store preservation in final captures means
 metadata continuity, not a new byte-for-byte private-payload audit.
 
-The hfcache Cockpit plugin is deprecated. The new web UI operates independently
-through its indexed API/static artifacts and existing Caddy endpoint. Legacy
-source, history, licences, shared helpers and installed state remain; no further
-plugin maintenance/validation or live uninstall was performed.
+The web UI operates independently through its indexed API/static artifacts and
+existing Caddy endpoint. Source removal of the superseded interface does not
+change the recorded installed release or perform any live uninstall.
 
 The [operator handoff](deployment.md#operate-the-unreleased-web-interface) links
 build/provision/validation, original-handle recovery and compatible rollback.
@@ -104,5 +113,5 @@ preserved; final acceptance does not invent their causes or broaden their scope.
 
 This summary supplies **no production rollout or real NAS acceptance proof**.
 Production archive permissions, original guards, unresolved handles, disabled
-calendars and live Cockpit remain unchanged. See [deployment status](../deployment-status.md)
-and the [deployment guide](deployment.md) for those separate boundaries.
+calendars and live installed services remain unchanged. See
+[deployment status](../deployment-status.md) and the [deployment guide](deployment.md) for those separate boundaries.

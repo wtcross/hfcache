@@ -22,8 +22,11 @@ verification calendar, operation stores, scheduled observation handles, secrets
 and hardening. Guard PID `1868228` owns the original domain lock, device/inode
 `27:2273`. The six retained control-store files, existing configuration,
 candidate, backup, lock identities, and secret identities and bytes were
-unchanged. Protected backup and rollout evidence are retained at
-`/opt/hfcache/deployment/20261020-cockpit-0.2.2`.
+unchanged. Protected backup and rollout evidence remain in the root-private
+deployment evidence directory retained by the original rollout. No live
+evidence directory is renamed by repository cleanup. The
+[deployment guide](deployment-centos-stream-10.md) and
+[container guide](containers.md) define current selection and preservation rules.
 
 The original Timestral operation was observed through its original identity;
 its terminal `HFMNT010` failure result remains byte-identical (`9c0b18f8…`) and
@@ -36,30 +39,26 @@ snapshot restore, hypervisor memory reclamation, and calendar approval remain
 separate acceptance work. Source, fixture and installed metadata checks do not
 establish those behaviors or authorize restoring write access or scheduling.
 
-The fixed Cockpit launcher targets the rootless client and file-mounted API-only
-secret. Its legacy system-bus sync/verify/timer controls remain masked; it has no
-native/user-manager selector. The installed plugin now reads reports through
-authenticated REST, retains bounded optional host journal diagnostics, and routes
-manual full jobs through the fixed REST client. Effects require fresh indexed
-release facts and explicit root-provisioned policy. Only configuration permission
-is enabled; archive, Hub, control, schedule and observer permissions remain denied.
-The existing workload holds remain in force.
+The fixed host client targets the rootless API-only image and file-mounted REST
+credential. Installed writer controls remain masked. Only the recorded
+configuration permission is enabled; archive, Hub, control, schedule and observer
+permissions remain denied. Existing installed files, protected policy and workload
+holds are unchanged by removal of superseded repository source.
 
-Production Cockpit PAM/browser and candidate-install acceptance remain unperformed.
-The next operator verification is a fresh browser reload and read-only inspection
-of the preserved candidate. Do not overwrite, reinstall, discard or clean up that
-candidate to test the rollout. No original installed `reconnected` cause or browser
-symptom correction is claimed.
+Production browser migration and candidate-install acceptance remain separate.
+Preserve the existing candidate without overwrite, reinstall, discard or cleanup.
+No cause or correction is claimed for the original installed `reconnected`
+browser symptom.
 
 Source and disposable acceptance recorded on 2026-10-20 repair classified errors,
 original-operation retention, candidate readiness/reconciliation, manual REST jobs
 and report/read presentation. Actual isolated runtime probes reproduced and
-corrected timer-property inspection, NUL-framed Cockpit text input and PID1 output
+corrected timer-property inspection, bounded text framing and PID1 output
 redirection under Enforcing SELinux. Real private-socket tests also proved the
-Unix HTTP empty-write ownership correction. A fresh disposable Cockpit/PAM/rootless
-test passed exact candidate API validation, installation and confirmation, followed
-by bridge interruption and read-only captured-byte inspection. Installed-wheel
-tests establish the CLI/API boundary separately from browser acceptance.
+Unix HTTP empty-write ownership correction. Disposable rootless checks retained
+exact candidate API validation, installation, confirmation and interrupted
+observation evidence. Installed-wheel tests establish the CLI/API boundary
+separately from browser acceptance.
 
 This disposable evidence uses synthetic archives without production credentials
 or a live/NAS archive. The five retained guest environments include earlier
@@ -72,7 +71,7 @@ source inspection established that separate cause. The endpoint was restored
 only after authenticated API-first drain and complete executor quiescence; no
 operation was replayed. Future static verification must use independently owned
 runtime, bus and generator paths. This incident does not explain the original
-Cockpit symptom.
+browser symptom.
 
 Immutable 0.2.1, source `4088994`, remains retained as the predecessor. Selecting
 0.2.0 for rollback returns its API-to-worker SELinux connection limitation.

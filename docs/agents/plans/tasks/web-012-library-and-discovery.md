@@ -1,5 +1,11 @@
 # WEB-012: Implement the unified model and dataset Library
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `220d4f347d869ca40ccdd85d6b00169aac551251cdd96ecf85b24f7ebdca101a`,
+original content SHA-256 `ce35910722deb01eeb771a9d9ec0b6f0393c1dd7251a824b8faacba461d19844`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -43,7 +49,7 @@ Create library.md and update root navigation; explain scopes, search boundaries,
 
 The Library exposes existing hfcache discovery and inventory accurately with bounded requests and useful filters; model/dataset/provenance distinctions and unknown coverage survive all read states.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution notes and blockers
 
@@ -82,9 +88,9 @@ was submitted or replayed. There is no unresolved WEB012 acceptance blocker.
 ## Completion evidence
 
 - **Strict gate:** `rtk proxy python3 -B .scratch/web-012-run-strict-gate.py --attempt 2`
-  executes `scripts/check.sh --require-web --require-cockpit`: exit0,1442.837s,
+  executes `historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)`: exit0,1442.837s,
   zero source drift.8581 backend tests pass (52 unrelated opt-in deselections),
-  581Cockpit unit and110 mounted Firefox cases,3234web unit and3337combined
+  581historical frontend unit and110 mounted Firefox cases,3234web unit and3337combined
   component cases pass. Types/lint/format/contracts/strict fixtures, locked wheel
   profiles, builds, two startup Chromium cases and real HTTP/API React reads pass;
   zero required skips. Web coverage:94.55%statements,91.82%branches,
@@ -132,5 +138,5 @@ was submitted or replayed. There is no unresolved WEB012 acceptance blocker.
 - **Scope:** real installed application/business reads use explicit owned local
   NFS-metadata simulation, not NAS or full native/rootless platform acceptance.
   Required later platform/parity/compatibility and final gates remain. No production,
-  credentials/guards/calendars, live Cockpit, merge/push/tag or rollout action.
+  credentials/guards/calendars, installed predecessor interface, merge/push/tag or rollout action.
   Next: [WEB-013](web-013-publication-detail-pages.md).

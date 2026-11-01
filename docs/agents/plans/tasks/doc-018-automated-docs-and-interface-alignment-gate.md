@@ -1,5 +1,11 @@
 # DOC-018: Add executable documentation and script-alignment checks
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `236ca9e39533f7b36120fafb00d64f88c4274d81611cf09ecd7f54f2db3b566a`,
+original content SHA-256 `336c2f66f67c1050aa4f7dcc23514c41590cdf7f384ef3b88746eb147306a8cb`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -13,7 +19,7 @@
 
 Add a deterministic documentation alignment checker to `scripts/check.sh` and the relevant test suite. Use the standard library/existing dependencies unless a material new dependency is explicitly justified. It must run offline, with no service-manager, Podman, credential or archive access.
 
-Enumerate human surfaces: `README.md`, `CHANGELOG.md`, all `docs/**` outside `docs/agents/**`, `cockpit/README.md`, other human package/example guides, and generated public CLI/OpenAPI/MCP/script help. Agent roots are `AGENTS.md`, its symlink, and `docs/agents/**`; do not exclude all docs or all ADRs to make the check pass.
+Enumerate human surfaces: `README.md`, `CHANGELOG.md`, all `docs/**` outside `docs/agents/**`, `docs/agents/history/removed-interface-records.md`, other human package/example guides, and generated public CLI/OpenAPI/MCP/script help. Agent roots are `AGENTS.md`, its symlink, and `docs/agents/**`; do not exclude all docs or all ADRs to make the check pass.
 
 Reject human references to planning/task/progress/agent-process records, actual work-package IDs and stage-chronology patterns. Detect links in prose, tables, reference-style links, literal paths and relevant HTML, not just inline markdown. Do not ban legitimate product concepts such as `hfcache plan`, retention/recovery plans, JSON-RPC, MCP clients, technical invariants or stable error codes. Include tests proving those are allowed. Remove the transitional leakage baseline entirely before completion.
 
@@ -51,7 +57,7 @@ progress log contain execution evidence. Keep related code/tests/docs together.
 
 ## Validation
 
-Run checker unit tests including intentional-bad fixtures, route/tool/config/inventory checks, safe-help subprocess isolation, markdown link tests and `scripts/check.sh --with-build`. Run Cockpit gate when affected; an unrun required stage is not a pass.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 Required checks are planned, not performed. Record exact commands, exit results,
 coverage and any explicit skips on completion. Do not replace meaningful tests
@@ -91,7 +97,7 @@ Validation: integrated focused 246 passed in 27.57s; final reviewed boundary,
 configuration and help 95 passed in 6.02s; Ruff and Pyrefly passed. One running gate
 was deliberately interrupted to include the final boundary fixes. Full final
 `scripts/check.sh --with-build` exited 0: 4315 passed/40 deselected in 483.90s;
-distributions, three locked profiles, actual Cockpit lint/types/135 tests/build
+distributions, three locked profiles, actual historical frontend lint/types/135 tests/build
 and four opt-in wheel smoke tests (5.94s) passed. Checker reports 180 human docs,
 19 helpers and zero errors. No external host/NAS/manager/image operation ran.
 Reviewed INV-010, existing dependency exceptions, all affected source-of-truth

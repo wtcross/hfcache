@@ -1,5 +1,11 @@
 # API and authority requirements
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `aad1622ed3632b0d4fdf4b6c6bb2c2e54a14291dee9e815d43a480eda50ba98c`,
+original content SHA-256 `c137ef685b841915076bde2cebf5a8cbd31887aeb92c39a8e09a14d5a3558cbb`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 All proposed paths are relative to `/api/v1`, except `/ui/*`. Finalize the exact names in WEB-001 against current code, then amend `docs/api.md` and schemas before implementation. Do not create endpoints already present at execution time. Existing routes retain method/body/query/permission/error/size constraints and stable wrappers.
 
 ## Reuse existing routes
@@ -24,7 +30,7 @@ No generic `/models`, `/datasets`, `/dashboard`, `/tags` CRUD, global search, ca
 | Proposed endpoint/surface | Why it is necessary | Authority and effects |
 | --- | --- | --- |
 | GET `/config` | UI needs editable installed configuration and exact-byte concurrency identity; validation output is not the installed document. | Explicit config-administration read permission; protected host proof; no archive/Hub effects. |
-| POST `/config/applications` | Cockpit's privileged atomic configuration installer has no REST equivalent. | Explicit config-write permission plus protected helper policy; keyed durable admission; root helper performs exact guarded local write/backup/confirmation, never arbitrary host/archive changes. |
+| POST `/config/applications` | historical frontend's privileged atomic configuration installer has no REST equivalent. | Explicit config-write permission plus protected helper policy; keyed durable admission; root helper performs exact guarded local write/backup/confirmation, never arbitrary host/archive changes. |
 | GET `/repositories/{type}/{namespace}/{name}/publications/{sha}/{publication_id}/card` | Existing observations omit the README body. | REST metadata read; exact retained publication, bounded adjunct read only; no payload/Hub/refresh effects. |
 | GET `/host/status` | Host policy/binding, fixed unit/timer states and safe effective-action reasons are not archive readiness. | Explicit administration read permission; narrow helper; no arbitrary unit query. |
 | POST `/host/sync-schedule/validations` | Preserve authoritative systemd calendar/timespan validation before edits. | Admin policy; synchronous bounded fixed validation process; no write/lock creation. |

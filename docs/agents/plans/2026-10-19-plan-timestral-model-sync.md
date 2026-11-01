@@ -1,5 +1,10 @@
 # Add Timestral models to the installed archive policy and trigger sync
 
+WEB-027 archival projection: superseded interface references are summarized
+neutrally; exact original text, paths and invocations remain in Git
+`c692d7ae4b866fefd8a743a21afdb729da0f39c4`. Recorded proof hashes still identify
+the original artifacts. See [historical provenance](../history/removed-interface-records.md).
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -30,7 +35,7 @@ visible; trigger admission is not a claim of downloaded or published models.
 
 Review [configuration](../../configuration.md), [operations](../../operations.md),
 [API client](../../api-client.md), [server policy reload](../../server.md#archive-policy-reload),
-[protected configuration editing](../../cockpit.md#6-configuration-editing),
+[protected configuration editing](../history/removed-interface-records.md),
 [deployment status](../../deployment-status.md), and [host limits](../environment.md).
 Preserve technical invariants `INV-002`, `INV-003`, `INV-004`, `INV-014`, `FS-02`,
 and `AD-07`, plus [planning invariant `INV-011`](../invariants.md).

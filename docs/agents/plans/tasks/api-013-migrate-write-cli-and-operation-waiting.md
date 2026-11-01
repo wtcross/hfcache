@@ -1,5 +1,11 @@
 # API-013: Move CLI writes onto the API and preserve resumable observation
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `c56ca69c3a045689808205023ea7176abac841c68acf88ff31b62e8c1c508da1`,
+original content SHA-256 `45cd97c857897045cecdfda4923bd2dbe3b3f0a35a27ee01300c28f7ff0d7a11`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `API-013` |
@@ -180,7 +186,7 @@ Completed 2026-10-18, this commit.
   351 files were formatted, Ruff passed, Pyrefly reported 0 errors (11 suppressed,
   55 hidden warnings). Python passed 3,031 tests, 40 deselected, in 303.11 seconds.
   Version 0.1.10 sdist/wheel built; actual locked isolated base/server wheel
-  installation/import/help/version checks passed. Cockpit eslint/stylelint/types,
+  installation/import/help/version checks passed. historical frontend eslint/stylelint/types,
   45 tests (0 failures/skips) and production build passed. No gate failure,
   correction, retry or post-freeze source change.
 - Reviewed INV-006/012–015, AD-16/17, TX-07 and existing output/credential/lock/

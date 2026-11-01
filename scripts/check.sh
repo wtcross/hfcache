@@ -11,7 +11,6 @@
 # Usage:
 #   scripts/check.sh              # the §8.4 gate
 #   scripts/check.sh --with-build # additionally build and smoke-test the wheel
-#   scripts/check.sh --require-cockpit # explicit legacy Cockpit validation only
 #   scripts/check.sh --require-web # strict web, generated contracts and real API read fixture
 #   scripts/check.sh --with-web-functional # final installed shared-Caddy acceptance
 #
@@ -20,20 +19,17 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 WITH_BUILD=0
-REQUIRE_COCKPIT=0
 REQUIRE_WEB=0
 WITH_WEB_FUNCTIONAL=0
 for arg in "$@"; do
   case "$arg" in
     --with-build) WITH_BUILD=1 ;;
-    --require-cockpit) REQUIRE_COCKPIT=1 ;;
     --require-web) REQUIRE_WEB=1 ;;
     --with-web-functional) WITH_WEB_FUNCTIONAL=1; REQUIRE_WEB=1 ;;
     -h | --help)
       printf '%s\n' \
-        'Usage: scripts/check.sh [--with-build] [--require-cockpit] [--require-web] [--with-web-functional]' \
+        'Usage: scripts/check.sh [--with-build] [--require-web] [--with-web-functional]' \
         '  --with-build       additionally smoke-test the installed wheel' \
-        '  --require-cockpit  explicit legacy Cockpit opt-in; refuse missing sources or tools' \
         '  --require-web      require frozen web/contracts, preliminary browser smoke and real API read fixture' \
         '  --with-web-functional require all installed shared-Caddy functional cases in all profiles' \
         '                       requires explicit HFCACHE_WEB_FUNCTIONAL_MANIFEST; implies --require-web' \
@@ -52,14 +48,6 @@ find_pnpm() {
   PNPM_BIN="$(command -v pnpm || true)"
   if [[ -z $PNPM_BIN && -x "${PNPM_HOME:-$HOME/.local/share/pnpm}/bin/pnpm" ]]; then
     PNPM_BIN="${PNPM_HOME:-$HOME/.local/share/pnpm}/bin/pnpm"
-  fi
-}
-
-require_cockpit() {
-  find_pnpm
-  if [[ ! -d cockpit || -z $PNPM_BIN ]] || ! command -v make > /dev/null 2>&1; then
-    printf 'Cockpit gate required: cockpit/ sources, pnpm and make must be available; see docs/development.md\n' >&2
-    exit 69
   fi
 }
 
@@ -84,9 +72,6 @@ require_web() {
   fi
 }
 
-if [[ $REQUIRE_COCKPIT -eq 1 ]]; then
-  require_cockpit
-fi
 if [[ $REQUIRE_WEB -eq 1 ]]; then
   require_web
 fi
@@ -137,16 +122,6 @@ uv build
 
 step 'locked base, server and server-plus-MCP wheel installations'
 uv run --locked --extra server --extra mcp python scripts/check-installations.py
-
-# Legacy Cockpit validation runs only when explicitly requested.
-# Replacement web acceptance uses --require-web independently.
-if [[ $REQUIRE_COCKPIT -eq 1 ]]; then
-  require_cockpit
-  step 'cockpit plugin gate'
-  make -C cockpit check PNPM="$PNPM_BIN"
-else
-  printf '\nNOTE: legacy Cockpit validation is opt-in; use --require-cockpit.\n' >&2
-fi
 
 if [[ $REQUIRE_WEB -eq 1 ]]; then
   require_web

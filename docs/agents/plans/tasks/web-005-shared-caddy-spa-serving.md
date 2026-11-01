@@ -1,5 +1,11 @@
 # WEB-005: Serve authenticated assets through the existing Caddy and build the real functional harness
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `39d327142cf6ee94e5e657ae11bcbadf2482893f87f2e8935d83eb663d2a53d3`,
+original content SHA-256 `a0e09d7b5004b7a73108787fac60b0de848150e807002c3cb4f1b5e93b0e1b5e`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -43,7 +49,7 @@ Write user entrypoint/navigation and operator shared-Caddy deployment/prefix sec
 
 A built authenticated SPA works through the existing Caddy topology with real trusted test TLS and no bearer regressions; route/security tests pass in three engines; the reusable functional harness is fail-closed.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution notes and blockers
 
@@ -81,10 +87,10 @@ a fresh common21/runtime13-to-host14 compatibility receipt is still required.
 selector has no active task. WEB-005 stays in progress, uncommitted and blocked on
 required installed acceptance; it is not complete and no successor is activated.
 Host source14 remains frozen. The already-running
-`scripts/check.sh --require-web --require-cockpit` gate14 exits0/reaped at
+`historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` gate14 exits0/reaped at
 2026-10-21T10:40:34.430894UTC in1202.869seconds, all1310 hashes/modes unchanged.
 Actual results:6643Python/52default deselections; three locked wheel profiles;
-572Cockpit unit/110mounted;2756web unit/2805combined;21sandbox/9functional
+572historical frontend unit/110mounted;2756web unit/2805combined;21sandbox/9functional
 metadata;2preliminary browser/14real-API read checks. Required checks have no
 skips/retries; coverage95.61%lines/92.83%branches. Log SHA256
 `49b76ee0668f9a36a6549bdbf2861c0e84d8680cd33cc9b28ca25f75931354fe`.
@@ -171,7 +177,7 @@ Source13 gate13 actually exits0/reaped at2026-10-21T10:17:17.765626UTC,
 1321.085seconds. Independent audit SHA256
 `9f4d2f457360f9d274a3604fe79bf9614e23fc83bd1e40a7860199e4f6b85377`
 records6643 Python passed/52 default deselections, three wheel profiles,
-Cockpit572+110, web2756unit/2805combined, two preliminary+14 real API-read browser
+historical frontend572+110, web2756unit/2805combined, two preliminary+14 real API-read browser
 checks and unchanged1310 hashes/modes; line coverage95.61%, branches92.83%.
 Root then applies the exact approved nine-document prose patch, correcting stale
 implementation labels without changing product/UI/runner/tests/builds or runtime
@@ -216,7 +222,7 @@ fresh backup/atomic reconciliation. Conditional completion drafts remain on HOLD
 
 Source12 gate12 actually exits0/reaped at2026-10-21T06:58:57.953317UTC,
 1255.446seconds:6561 Python passed/52 default deselections, three locked wheel
-profiles, Cockpit572+110, web2756unit/2805combined, two preliminary and14 real
+profiles, historical frontend572+110, web2756unit/2805combined, two preliminary and14 real
 API-read browser checks. Independent audit
 `.scratch/web-005-twelfth-gate-audit.json` SHA256
 `aed3aa94455b802804357d854950523115f186bf4bc5c497a48c4a9f23828318`
@@ -454,8 +460,8 @@ remain frozen/green. The completion-only all-six auditor must not run on this
 failed invocation, and supplementary quiescence cannot relabel its unknown stop.
 
 Source11 gate10 completes2026-10-21T04:49:46.332190Z with exit0 in1301.44s.
-The actual `scripts/check.sh --require-web --require-cockpit` run passes6475Python
-(52default opt-in deselections), three locked wheel profiles,572Cockpit unit/
+The actual `historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` run passes6475Python
+(52default opt-in deselections), three locked wheel profiles,572historical frontend unit/
 110mounted,2756web unit/2805combined,21sandbox/9functional metadata, two
 preliminary browser and14real-API read checks. Required checks have no skips,
 failures, flaky results or retries; web coverage is95.61%lines/92.83%branches.
@@ -499,7 +505,7 @@ inventory `.scratch/web-005-source-9v37kwww/source-inputs-v11.json` SHA256
 `3358026beaad1aa0db536c1dcf41f5afdc1a20808bea556a80c41342888250f1`,
 snapshot `285ca369f6a72965e0ed189f15cf3cd784ca3ddecc003228f1c81d8283906253`.
 Gate10 starts2026-10-21T04:28:04.892257Z, exact hostPID2442635/start402542673,
-with `scripts/check.sh --require-web --require-cockpit`; command metadata is
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 `.scratch/web-005-tenth-gate-command.json`. Its exit/counts and required fresh
 all-six installed execution remain pending. No passing gate or feature result
 is inferred from its start.
@@ -594,7 +600,7 @@ fresh fixture pressure diagnosis is pending; no full-feature or task acceptance
 is promoted from this failed run.
 
 Source10 ninth strict gate exits0 in1208.897s:6434Python/52default marker
-deselections, all3locked wheel profiles,572Cockpit unit/110mounted,2756web unit/
+deselections, all3locked wheel profiles,572historical frontend unit/110mounted,2756web unit/
 2805combined, two preliminary startup and14real-API read checks. Required checks
 have no skips/retries; all1310source hashes/modes remain unchanged. Log
 `.scratch/web-005-ninth-strict-gate.log` SHA256
@@ -735,7 +741,7 @@ unproved; release packaging remains WEB-021 work.
 
 Frozen source9 eighth strict gate exits0 in1192.728s with no changed input:
 6424Python/52default opt-in marker deselections; three locked wheel profiles;
-572Cockpit unit/110mountedFirefox;21sandbox/9functional-driver metadata;
+572historical frontend unit/110mountedFirefox;21sandbox/9functional-driver metadata;
 2756web unit/2805combined component; two preliminary startup Chromium checks
 and14actual API React read checks. Coverage95.61%lines/92.83%branches/
 93.02%functions; required reports contain no skipped/flaky/retried checks.
@@ -880,9 +886,7 @@ only in owned disposable environments; no live NAS or production service access.
 
 WEB-005 scoped serving/harness acceptance completes on2026-10-21, this uncommitted work package above parent24625fc. Final host source14 snapshot9257e274…8fce9/gate14 actual0 (auditd80896c6…174d4) remains distinct from installed guest source13 snapshotd3530149…e92d3/common21. Original all-profile monitor0/reaped caller60032/start5697770, six distinct normal results and independent audit283e5818…fb94d pass:306 trusted+18 untrusted actual browser checks/zero skips or retries;131 recorded PID/start pairs gone,40 cgroups empty,18 containers stopped/PID0,26 endpoints refuse. Actual metrics73321b0ce435 record17trusted+1untrusted per engine, installed Python MCP SDK14 named tools per generation, Node MCP14 named tools and two REST credential classes per engine; the old draft phrase “14 Python SDK REST calls” is superseded without rewriting historical records. Fresh bridge483ed653…156d9 proves the exact nine-prose-path13→14 delta with all1310 modes, unchanged101 package/wheel files,44 UI inputs/two builds and original source10 artifact4/image provenance. Old02acce remains unchanged with its unfulfilled common20 condition.
 
-Actual generation/API identities: application/ e5418045eed543e4bce7fea1794bbf2d (API 82a0d473b6014adca3bef30242de6288); application/management 6b2f31567e41471aaf5ebfa0aa1d6157 (API 6ab3efbafe9747e498214cf2a3c73d32); native/ 098a9c019a5745d5bdc40703df446315 (API aa3d9bb515114777b659d5f948578a92); native/management 412ce26a52414990991ea32e89a0c084 (API 35d8701509f049dc8d3bfc5ab546bc14); rootless/ baacb01a6fa9450e8ecf573bf9465add (API 5aefe7b6db0545c99259b134c246cb05); rootless/management 3f7162b99bdc4cacb05539a5e474e8c6 (API a5d86a8216284a5aa01a2d61cb417e9f). Original record/report hashes and exact test nodes are retained in acceptance-evidence.json and the final scratch receipt. Source14 gate14 passes6643 Python/52default deselections,3 locked wheel profiles,572+110Cockpit,2756unit/2805combined web,21sandbox/9metadata,2preliminary+14real-API read checks;95.61%line/92.83%branch coverage,202human/24helper docs, no required skip/retry, all1310 source hashes/modes and seven gate processes verified. ADR147/148/149, INV013/019/021 and human API/server/security/deployment/troubleshooting guides align.
-
-AUTH09/ROUTE01/04/05/07 close only their demonstrated full clauses/layers. ROUTE02 pagination/data-linked navigation (WEB012/013), ROUTE03 exact publication details (WEB013) and ROUTE06 cards (WEB010/014) remain in progress with future clauses pending. ROUTE05 uses physical-filesystem/unit checks and four actual source10 installed startup refusals alongside current Caddy/browser/raw-wire observations, not browser404 alone. RELEASE03/WEB021 clean-release/registry attestation and all other unproved cases remain pending; selected dirty UBI proof is not a clean release. No full95, production/NAS/deploy/Cockpit-retirement/remote publication claim follows. Every older failed/UNKNOWN/HOLD and pause remains retained. Next is WEB-006; no future task implementation is included in this completion.
+Actual generation/API identities: application/ e5418045eed543e4bce7fea1794bbf2d (API 82a0d473b6014adca3bef30242de6288); application/management 6b2f31567e41471aaf5ebfa0aa1d6157 (API 6ab3efbafe9747e498214cf2a3c73d32); native/ 098a9c019a5745d5bdc40703df446315 (API aa3d9bb515114777b659d5f948578a92); native/management 412ce26a52414990991ea32e89a0c084 (API 35d8701509f049dc8d3bfc5ab546bc14); rootless/ baacb01a6fa9450e8ecf573bf9465add (API 5aefe7b6db0545c99259b134c246cb05); rootless/management 3f7162b99bdc4cacb05539a5e474e8c6 (API a5d86a8216284a5aa01a2d61cb417e9f). Original record/report hashes and exact test nodes are retained in acceptance-evidence.json and the final scratch receipt. Source14 gate14 passes6643 Python/52default deselections,3 locked wheel profiles,572+110historical frontend,2756unit/2805combined web,21sandbox/9metadata,2preliminary+14real-API read checks;95.61%line/92.83%branch coverage,202human/24helper docs, no required skip/retry, all1310 source hashes/modes and seven gate processes verified. ADR147/148/149, INV013/019/021 and human API/server/security/deployment/troubleshooting guides align.
 
 The supplemental selected-metrics v1 read-only projection refuses while decoding
 SUMMARY above the helper's1MiB JSON limit; its empty output/original source remain.
@@ -1042,7 +1046,7 @@ The implementation and retained preliminary evidence currently include:
 - The first strict gate fails on two real disabled-UI route regressions, fixed
   by conditional route registration, and on superseded mixed-source wire pins.
   The second gate passes6272Python tests/52default marker deselections and all
-  retained572unit/110mounted Cockpit checks, then fails web lint while the new
+  retained572unit/110mounted historical frontend checks, then fails web lint while the new
   functional driver is being edited. Four changed harness paths make that gate
   superseded independently of the lint result. Its1088.667-second result/log
   remain in `.scratch/web-005-second-gate-result.json` and
@@ -1050,7 +1054,7 @@ The implementation and retained preliminary evidence currently include:
   `5298ff4855a871fa95cb71d58910145588a5b40fb71fbe32314ad784fca101f8`).
   The third gate refuses agent execution links in a human ADR; the narrow
   correction passes the documentation checks. The fourth frozen gate passes
-  6281Python/52default marker deselections, all wheel/Cockpit checks,
+  6281Python/52default marker deselections, all wheel/historical frontend checks,
   2756web unit/2805combined and both preliminary browser checks, then fails the
   real-API read fixture's obsolete277-example count against297 actual examples.
   Its1171.406-second log SHA256 is
@@ -1059,13 +1063,13 @@ The implementation and retained preliminary evidence currently include:
   both prefixes without skips/retries, with exact API/browser drain; evidence
   `.scratch/web-005-read-corpus-count-correction-evidence.json` SHA256
   `a8c6e0a98b0905c6a4bd25e0122bf78f028d6b2d4fb64fd99ac2e8b3cf4c7a5e`.
-  The fifth `scripts/check.sh --require-web --require-cockpit` exits0 in1173.121s
+  The fifth `historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` exits0 in1173.121s
   against all1306 frozen source files, snapshot
   `bb2353cab1261936df1be140b6e20abb96a0b201e26d2e43574cf6c9ed33f5bb`,
   inventory SHA256
   `210585f49aa6797452395a0bfbd135b3ac05c7d1bf79c8dff9e9fc0470531242`.
   Result:6281Python/52default opt-in marker deselections; three locked wheel
-  profiles;572Cockpit unit/110mountedFirefox;21sandbox-process/9functional-driver
+  profiles;572historical frontend unit/110mountedFirefox;21sandbox-process/9functional-driver
   metadata checks;2756web unit/2805combined component; two preliminary startup
   Chromium checks and14real-API read checks. No required check skips/retries.
   Coverage95.61%lines/92.83%branches. Production manifest remains `a5b9e9a7…`.
@@ -1087,9 +1091,9 @@ The implementation and retained preliminary evidence currently include:
   `f7719b7358f7a8ba65d0d22cd4e9f0fe561bbfaf3842025ea7a57520f7ce0042`.
   It binds runner SHA256
   `aedfe5dc47094070ccd0db7dfebe8c84a57ea6c1dc3a18d8a4cef607df7006ca`.
-  Its seventh `scripts/check.sh --require-web --require-cockpit` exits0 in
+  Its seventh `historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` exits0 in
   1172.025s:6401Python/52default marker deselections; all3 locked wheel profiles;
-  572Cockpit unit/110mountedFirefox;21sandbox/9functional-driver metadata;
+  572historical frontend unit/110mountedFirefox;21sandbox/9functional-driver metadata;
   2756web unit/2805combined component; two preliminary startup Chromium checks
   and14actual API React read checks. Coverage remains95.61%lines/92.83%branches;
   no required skipped/flaky/retried test is present. Gate log SHA256
@@ -1159,7 +1163,7 @@ its exact494-line bytes remain in ignored
 | Active plan | [Web UI replacement](../2026-10-20-plan-web-ui.md) |
 | Next task | [WEB-005 — Shared-Caddy UI serving](web-005-shared-caddy-spa-serving.md) |
 | Blockers | Source11 gate10 passes. Common18 provisioning passes, but its unsupported rootless-only CLI attempt exits2 before workspace creation. A CapDrop metadata predicate is under read-only investigation; no new functional failure or acceptance is established. Fresh canonical all-six acceptance remains required. |
-| Last completed plan | [Cockpit repair local rollout](../2026-10-20-plan-cockpit-rest-rollout.md) |
+| Last completed plan | [historical frontend repair local rollout](../../history/removed-interface-records.md) |
 | Updated | 2026-10-21 |
 
 Common18 native17/rootless18 provisioning exits0 with no role/container starts.
@@ -1315,8 +1319,8 @@ remain frozen/green. The completion-only all-six auditor must not run on this
 failed invocation, and supplementary quiescence cannot relabel its unknown stop.
 
 Source11 gate10 completes2026-10-21T04:49:46.332190Z with exit0 in1301.44s.
-The actual `scripts/check.sh --require-web --require-cockpit` run passes6475Python
-(52default opt-in deselections), three locked wheel profiles,572Cockpit unit/
+The actual `historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` run passes6475Python
+(52default opt-in deselections), three locked wheel profiles,572historical frontend unit/
 110mounted,2756web unit/2805combined,21sandbox/9functional metadata, two
 preliminary browser and14real-API read checks. Required checks have no skips,
 failures, flaky results or retries; web coverage is95.61%lines/92.83%branches.
@@ -1360,7 +1364,7 @@ inventory `.scratch/web-005-source-9v37kwww/source-inputs-v11.json` SHA256
 `3358026beaad1aa0db536c1dcf41f5afdc1a20808bea556a80c41342888250f1`,
 snapshot `285ca369f6a72965e0ed189f15cf3cd784ca3ddecc003228f1c81d8283906253`.
 Gate10 starts2026-10-21T04:28:04.892257Z, exact hostPID2442635/start402542673,
-with `scripts/check.sh --require-web --require-cockpit`; command metadata is
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 `.scratch/web-005-tenth-gate-command.json`. Its exit/counts and required fresh
 all-six installed execution remain pending. No passing gate or feature result
 is inferred from its start.
@@ -1455,7 +1459,7 @@ fresh fixture pressure diagnosis is pending; no full-feature or task acceptance
 is promoted from this failed run.
 
 Source10 ninth strict gate exits0 in1208.897s:6434Python/52default marker
-deselections, all3locked wheel profiles,572Cockpit unit/110mounted,2756web unit/
+deselections, all3locked wheel profiles,572historical frontend unit/110mounted,2756web unit/
 2805combined, two preliminary startup and14real-API read checks. Required checks
 have no skips/retries; all1310source hashes/modes remain unchanged. Log
 `.scratch/web-005-ninth-strict-gate.log` SHA256
@@ -1508,7 +1512,7 @@ tests pass. Frozen source9 contains1308files, snapshot
 `040fc0cda617de9446c035978a5babfed7ce202f72b203f7cde36b364210f901`;
 the owned guest verifies every file after preserving22 replaced/new inputs.
 The eighth required source gate exits0 in1192.728s:6424Python/52default
-deselections, three locked wheel profiles, retained572/110Cockpit,2756web unit/
+deselections, three locked wheel profiles, retained572/110historical frontend,2756web unit/
 2805combined, two preliminary startup and14actual API read checks. Independent
 seven-report/seven-closed-process audit rechecks all1308hashes/modes, with no
 required skipped/flaky/retried check. Artifact3's445289-byte wheel matches
@@ -1562,12 +1566,12 @@ plan or historical backlog is activated or abandoned.
 
 WEB-001 completed the contract/ADR/acceptance/prerequisite audit and fixed a
 reproduced baseline Bash frame-reader wait defect. Its corrected strict gate
-passes 5308 Python/572 Cockpit unit/110 mounted Firefox tests. All 95 web feature
+passes 5308 Python/572 historical frontend unit/110 mounted Firefox tests. All 95 web feature
 cases remain pending. The exact original baseline and failed evidence remain.
 
 WEB-002 adds the strict React workspace, required web gate, full locked license
 inventory, retained per-run evidence and actual preliminary browser checks. Its
-final strict gate passes 5337 Python, 572 Cockpit unit, 110 mounted Firefox,
+final strict gate passes 5337 Python, 572 historical frontend unit, 110 mounted Firefox,
 45 web unit/50 combined component and 2 sandboxed Chromium tests. Coverage is
 98.46% lines/98% branches. The source preview is disconnected; Caddy/API serving
 and authentication remain unimplemented. All 95 feature cases remain pending.
@@ -1577,7 +1581,7 @@ gate again; that same work-package commit is amended before advancing.
 
 WEB-003 completes authoritative route/mode projections, generated reconstructing
 decoders, bounded exact numeric/Unicode validation and a same-origin client.
-Its strict gate passes 5452 Python, retained 572/110 Cockpit, 2718 web unit/2744
+Its strict gate passes 5452 Python, retained 572/110 historical frontend, 2718 web unit/2744
 combined component, two shell and 14 real-API React browser tests with no required
 skip. Coverage is 95.85% lines/92.94% branches. This read fixture remains temporary
 until WEB-005 and proves no Caddy/Basic/installed behavior. All 95 feature cases
@@ -1588,7 +1592,7 @@ WEB-004 completes the protected optional Basic provider, internal permissions,
 exact-subject key namespace, bounded off-loop verification and CSRF. A fresh owned
 CentOS guest proves48native browser checks through real installed API TLS in three
 engines/both prefixes, including actual OPTIONS refusal and exact cleanup. Final
-strict gate exits0:5940Python/52default deselections,572/110Cockpit,21process,
+strict gate exits0:5940Python/52default deselections,572/110historical frontend,21process,
 2722unit/2748combined web and2shell/14real-API read checks; all1278source hashes
 match the guest. Earlier failures remain. Decision146 and human/standing contracts
 align. All95full feature cases still await required layers. Next is WEB-005's
@@ -1605,7 +1609,7 @@ must use actual built assets, installed API over Unix and trusted test TLS in al
 three engines, preserving concurrent REST/MCP and owned native/rootless boundaries.
 No WEB-005 acceptance is claimed by the preceding direct-TLS authentication run.
 The earlier frozen1306-file source snapshot is `bb2353ca…`; its fifth required
-source gate passes in1173.121s with6281Python, retained572/110Cockpit,
+source gate passes in1173.121s with6281Python, retained572/110historical frontend,
 2756web unit/2805combined, two shell and14real-API read checks. An independent
 seven-report/process audit confirms unchanged source and exact local drain.
 Subsequent execution-proof schema/test-contract corrections supersede that
@@ -1613,7 +1617,7 @@ snapshot; product wheel/assets are unchanged. The sixth gate fails six stale
 fixture assertions after6358Python passes. Corrected source8 snapshot
 `ad444c4834446cd323cffa4e42a7d0fcf4a33b07636081065f386e57a1d49b63`
 and runner `aedfe5dc…` pass gate7 in1172.025s:6401Python/52default deselections,
-retained572/110Cockpit,2756web unit/2805combined, two preliminary startup and
+retained572/110historical frontend,2756web unit/2805combined, two preliminary startup and
 14real-API read checks. Independent seven-report/seven-closed-process audit
 rechecks all1306source hashes; required checks have no skips/retries. This source
 gate establishes no installed shared-Caddy/native/rootless acceptance.
@@ -1643,6 +1647,6 @@ contents, tool absence, static ownership and size proof remain WEB-021 work.
 
 Scope permits source changes and owned local/disposable tests only. No merge,
 push, tag, production deployment/Caddy reload, service/timer/credential/guard
-change, NAS access or live Cockpit uninstall. Preserve the earlier operator
+change, NAS access or installed predecessor interface uninstall. Preserve the earlier operator
 handoff and all original candidates, backups, locks, stores and handles.
 ~~~~

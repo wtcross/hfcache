@@ -1,5 +1,11 @@
 > Historical technical reference preserved before consolidation. Current authority is the living contract.
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `89ae31047f952c3493ddbf6228c535e31a069f30879d2ae2f0f812a3da6f6110`,
+original content SHA-256 `997893df5ae725ddd90910f6a735b13bf441cd448679d4bb6369c8044527addf`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 # Decision 123 — Keep public prefixes separate from native Unix REST paths
 
 - MCP transport amendment: [decision 124](../../../../../adr/decision-124.md).
@@ -11,12 +17,6 @@
   [task](../../../../plans/tasks/api-016-rest-acceptance-gate.md).
 
 ## Context and decision
-
-The same application serves public TCP and private Unix sockets. A public
-`root_path` such as `/management` currently also forces that prefix onto native
-Unix requests, while installed scheduled/Cockpit clients deliberately use the
-fixed unprefixed local API. Prefix-bearing acceptance links compound the mismatch.
-REST acceptance must resolve the complete supported arrangement before MCP starts.
 
 Keep configured public prefix, TLS/proxy and Host/Origin enforcement for TCP.
 Permit native unprefixed REST paths only for the supported Uvicorn AF_UNIX
@@ -41,12 +41,6 @@ Native Unix accepts both unprefixed and configured-prefixed spellings and return
 links for the spelling used. Its unprefixed OpenAPI response may copy the schema
 with `servers=[{"url":"/"}]`; prefixed/TCP responses keep the configured public
 prefix. Never mutate the cached public schema to produce that native view.
-
-No client/config/durable format change is needed. The existing endpoint-group
-selection, verified TLS, disabled ambient proxy/credential discovery and strict
-same-operation link validation remain. Scheduled/Cockpit clients keep their
-fixed local socket/client TOML and API-only credential boundaries. Request,
-operation, admitted fingerprint and domain result identities are unchanged.
 
 ## Rationale and alternatives
 
@@ -89,7 +83,7 @@ Evidence: [actual socket/schema/scope cases](../../../../../../tests/unit/test_r
 Repository acceptance completed 2026-10-18: the first full
 `scripts/check.sh --with-build` exits 0 with 3,324 default Python tests, four
 additional wheel smoke tests, locked base/server installations and the complete
-127-test Cockpit gate/build. The task preserves focused source/socket/page,
+127-test historical frontend gate/build. The task preserves focused source/socket/page,
 route/parity/example/docs and actual predecessor/current compatibility evidence.
 This completes the REST repository boundary; installed-host holds remain and MCP
 is still absent until this package commits.

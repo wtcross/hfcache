@@ -1,5 +1,11 @@
 > Historical technical reference preserved before consolidation. Current authority is the living contract.
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `dd8b5879dd2465a215fe14ec0a40f635466aec7dee6883ecc06b1a4a1a9cec2d`,
+original content SHA-256 `6b4b8abbb06cee58d5085a5377e986d6751bc8a712d7335cf788fde23527d283`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 # hfcache invariants
 
 This is the living register of conditions that every implementation and new
@@ -55,7 +61,7 @@ Read only the affected areas:
 | Configuration, credentials, authorization | [Configuration and security](#configuration-and-security) |
 | JSON, CLI, verification confidence | [Durable formats and reporting](#durable-formats-and-reporting) |
 | Downstream copies and serving | [Consumer boundary](#consumer-boundary) |
-| Browser management | [Cockpit boundary](#cockpit-boundary) |
+| Browser management | [historical frontend boundary](../../removed-interface-records.md) |
 | Dependencies, tests, implementation model | [Framework and engineering](#framework-and-engineering) |
 
 ## Identity and location
@@ -365,7 +371,7 @@ History: `SYNC-007` (`54e4671`), decision 94.
   fail. That anonymous fallback applies to Hub policy; API writer authentication
   is required and an unprovisioned optional API reader grants no capability.
   API and Hub credentials are distinct explicit sources, never ambient reuse.
-  Cockpit transient clients import named API-only `hfcache.api`; Hub authority
+  historical frontend transient clients import named API-only `hfcache.api`; Hub authority
   remains daemon-side and the page never handles a bearer (decision 122).
   A reader resolves only its selected protected API file/named systemd source;
   no Hub/netrc/ambient token or anonymous fallback after source failure.
@@ -624,55 +630,6 @@ Enforcement and evidence: [copy helper](../../../../../examples/copy-revision.py
 The [consumer runbook](../../../../consumers.md) records the helper's copy/corruption/retry
 acceptance evidence; it is an example consumer, not an application dependency.
 
-## Cockpit boundary
-
-- **`CP-01`, `CP-02`, `CP-09`** — The plugin uses installed CLI JSON envelopes
-  and systemd, never reimplements archive logic or writes archive files. The
-  sole direct archive-read exception is run-report browsing as the service
-  identity. Refuse unknown envelope versions and unbounded/malformed terminal
-  output. Separately validated bounded progress/safety notices may render and
-  reconnect, never grant domain authority or invent outcome/checkpoints/percentages
-  (decision [122](../../../../adr/decision-122.md)).
-- **`CP-03`, `CP-04`, `CP-10`** — Mutation needs administrative Cockpit access,
-  while CLI work runs as the service identity in a transient unit, never root.
-  Full sync/verification use their installed services. Respect the single
-  writer lock; report busy without bypassing it.
-- **`CP-05`–`CP-08`** — Schedule controls affect only the sync timer; never
-  manipulate `hfcache.target`, enable the verify timer, or expose archive init.
-  The page never reads credentials or accepts tokens; systemd imports its
-  API-only `hfcache.api` credential directly into spawned CLI work, never Hub
-  authority or browser/environment/argument bearers (decision 122).
-- **`CP-11`, `CP-12`** — Config installs follow candidate → successful CLI
-  validation → required successful preview → atomic install → exact installed
-  fingerprint confirmation. A retained root config flock and exact candidate/base
-  bytes guard the pipeline; incompatible/unknown authority blocks plugin install.
-  Retain the predecessor and `0640 root:hfcache` ownership/mode. Timer changes use validated calendar drop-ins,
-  never edit shipped units.
-- **`CP-13`, `CP-14`** — Never weaken host hardening. The plugin ships static
-  files; Node tooling is build-time only, adds no Python runtime dependency,
-  and generated bundles/node_modules are never committed.
-
-Contract: [Cockpit rules and pipelines](../../../../cockpit.md#1-rules).
-Enforcement: [CLI/unit API](../../../../../cockpit/src/api/hfcache.ts),
-[config API](../../../../../cockpit/src/api/config.ts),
-[schedule API](../../../../../cockpit/src/api/schedule.ts), and
-[command boundary](../../../../../cockpit/src/lib/command.ts).
-API-015 enforcement: [bounded observation runner](../../../../../cockpit/src/lib/runner.ts),
-[UTF-8 framing](../../../../../cockpit/src/lib/stream.ts),
-[validated notices](../../../../../cockpit/src/lib/events.ts),
-[terminal classification](../../../../../cockpit/src/lib/envelope.ts) and
-[unit/action allowlist](../../../../../cockpit/src/lib/systemd.ts), decision
-[122](../../../../adr/decision-122.md). The browser can stop only sync observation, start
-installed sync/verify clients and control the sync timer; actual API/worker/socket/
-mount/arbitrary unit actions are refused.
-Candidate enforcement/evidence: [exact-content guard](../../../../../cockpit/src/lib/candidate-guard.ts),
-[readiness/confirmation pipeline](../../../../../cockpit/src/lib/config-pipeline.ts),
-[guarded filesystem fixtures](../../../../../cockpit/test/candidate-guard.test.ts) and
-[pipeline cases](../../../../../cockpit/test/config-pipeline.test.ts). These preserve the
-privileged host-install boundary and do not prove deployed browser/SELinux behavior.
-Evidence: [plugin tests](../../../../../cockpit/test) and the
-[operator install/acceptance runbooks](../../../../cockpit-plugin/README.md).
-
 ## Framework and engineering
 
 - **`INV-017` — Diagnostics require explicit authority and honest evidence.**
@@ -716,22 +673,6 @@ Enforcement and evidence: [dependency/tool configuration](../../../../../pyproje
 [checkpoint tests](../../../../../tests/unit/test_transactions.py).
 
 ## Remote management (incremental enforcement)
-
-API-001 introduces these constraints for the activated plan. API-006 implements
-authenticated metadata HTTP and its foreground bootstrap; API-007 adds durable
-admission primitives and operation observation. API-008 adds execution/private
-verification and API-009 adds the typed command subset. API-010 adds guarded
-maintenance and initialization; API-012 adds candidate operations/read CLI and
-API-013 completes operational CLI/observation. API-014 packages named activation
-and actual-executor isolation policy with disposable runtime tests; API-015 integrates Cockpit's
-API-only clients and guarded configuration pipeline. API-016 validates complete
-REST acceptance. MCP-001 adds optional authenticated transport; MCP-002 adds nine
-explicit metadata tools through a narrow read protocol. MCP-003 proves mounted
-security and side-effect boundaries; MCP-004 records completed client/package
-acceptance.
-Final plan closure and installed-host enforcement retain their separate gates.
-[API](../../../../api.md) and [server](../../../../server.md) track exact availability; implementing tasks
-own proof.
 
 - **`INV-012` — Adapters share one domain implementation.** HTTP/MCP
   adapters call typed services, never Typer/public CLI callbacks or each other's

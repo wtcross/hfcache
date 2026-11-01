@@ -1,5 +1,11 @@
 # Resolved execution contract
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `345af7bbfb9980800049c59d610fc0d36ccc014179947f367bd1152837a1ab74`,
+original content SHA-256 `5d55dfff3e68ab69ea3c36d13109ba2937e84cc4cbe2fa68ea35a447e60e4708`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 WEB-001 accepts these design boundaries against exact baseline
 `6b8fae2e0997403ae5c716a2e92148af0a972af9`. They are implementation requirements,
 not implemented feature claims. Standing contracts/ADRs state their conformance
@@ -14,7 +20,7 @@ runner lifecycle/proof details below stay strict for optional diagnostic use;
 they do not require new machinery or a mandatory85×18/95×18 acceptance path.
 Valid evidence reuse is not new execution. Original baseline records remain.
 
-Latest user amendment,2026-11-01: explicitly “ignore the cockpit plugin moving
+Latest user amendment,2026-11-01: explicitly “ignore the historical frontend plugin moving
 forward” and deprecate it once the new web UI is complete. This supersedes
 pending legacy-plugin validation, exhaustive retirement inventories, harness
 ports, dependency cleanup and source/live removal obligations. Preserve legacy
@@ -31,13 +37,6 @@ bundle untracked. No WEB IDs or `feat/web-ui` branch existed and the selector wa
 inactive. Activation preserves every historical task, rollout restriction and
 original unknown operation/candidate. The source audit reconfirmed existing
 catalog/maintenance/job routes; none needs a duplicate UI endpoint.
-
-Allocated decisions: 140 authentication/static serving, 141 protected host and
-configuration administration, 142 card adjuncts, 143 frontend/tool gates, and
-144 conditional Cockpit retirement. That historical proposed retirement scope
-does not override the later explicit user deprecation amendment above.
-Dependency versions are selected and verified in WEB-002/004/014, as required by
-their tasks; this package adds no runtime dependency.
 
 ## Frozen route delta
 
@@ -103,23 +102,6 @@ the preserved predecessor contains original bytes. Validation, sizing and Apply
 use that same reconstruction and opaque candidate binding. Upsert replaces all
 supported repository fields, including normalized tags and declared dependencies.
 Remove changes configuration only. Read never creates locks or adopts candidates.
-
-Apply body is `{managed: ManagedEditRequest, preview_operation_id}`. Preserve the
-existing `selectorsNeedingPreview` rule from `cockpit/src/lib/config.ts`: derive
-the exact **newly added, newly enabled or revision-retargeted enabled repository
-set** server-side. The managed form requires selectors omitted or empty, never
-a caller-selected subset. A nonempty required set needs successful complete
-Hub sizing for that exact set/resolved revisions/candidate/base/archive and
-independent Hub permission. Tag-only, settings-only, removal-only and other
-empty-required-set edits retain the existing no-Hub rule. After syntax/authority
-validation they receive an explicit successful no-Hub managed assessment; the
-bound assessment operation is still required. This preserves an existing class
-rule rather than inventing a tag exemption, and lets configuration-only guarded
-profiles edit tags without granting Hub authority. Mere HTTP 200 or client
-assertion grants nothing.
-Helper checks that bound managed assessment against
-the fixed local receipt/result store read-only, not an arbitrary posted result.
-No raw configuration is persisted in generic receipt/event/result data.
 
 ## Privileged boundary and uncertainty
 

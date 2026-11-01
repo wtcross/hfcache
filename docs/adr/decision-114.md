@@ -16,7 +16,6 @@
 - Public CLI observation clarification: [decision 120](decision-120.md), CLI operation observation.
 - Date: 2026-10-17.
 
-
 ## Context, decision and rationale
 
 A receipt durably binds one authenticated credential class/key/route/body digest

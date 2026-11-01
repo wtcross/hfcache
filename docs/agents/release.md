@@ -1,5 +1,11 @@
 # Releasing hfcache
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `f34b70af482d09ae5b64b9e92f1cf547a6a98550d087e5e1fcd2bc1920447bd2`,
+original content SHA-256 `7d1c7be9292526a9d2b5174fe726bc300a5135510527af5bd47695503eda7526`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 The rule everything else hangs on (decisions 75 and 79): **a version is tagged
 because it is deployed.** Deploying and tagging are one motion; nothing is
 tagged that is not running, and nothing stays deployed that is not tagged.
@@ -32,7 +38,7 @@ rootless deployment. The main fast-forward and both pushes at cdc35a4 are comple
 The immutable 0.2.2 release is now selected and actual host TLS/authentication,
 API-origin worker PROBE and confinement acceptance passed. Preserve the old 0.2.1
 release/backup and all original configuration, candidate, locks, stores and handles.
-The [rollout record](plans/support/cockpit-rest-rollout/acceptance-record.md) owns
+The [rollout record](plans/support/host-rollout/acceptance-record.md) owns
 exact fixed-client, before/after preservation and local-tag outcomes; selection
 alone does not prove those checks. No production PAM/browser candidate flow or
 NAS workload has been accepted. Do not infer remote tag
@@ -82,12 +88,6 @@ becomes the release's rollback rule in `docs/deployment-centos-stream-10.md`
 §14 (0.1.3's null-SHA rule is the worked example). Bump `schema_version` per
 `docs/schemas.md` §1.1, or record which widening precedent (decision 78) lets
 the version stand.
-
-For the web UI and Cockpit transition, the
-[migration guide](../web-ui/migration-from-cockpit.md#compatibility-and-backups)
-records actual old-reader results and distinguishes copied-state checks from
-installed transport and rollback checks. Carry those limits into the selected
-release's rollback rule.
 
 ## Cut
 
@@ -181,7 +181,6 @@ constraints that section records (the prune-in-flight rule; 0.1.3's null-SHA
 finding rule). A rollback that uses a different procedure than the install is
 a procedure nobody has tested.
 
-
 ## Rootless artifact and drain requirements (OPS-015)
 
 The selected [rootless profile](../adr/decision-127.md) uses explicit user systemd
@@ -205,7 +204,7 @@ evidence without changing package inputs. Use a clean detached source worktree
 outside ignored repository parents (REL-012 uses /var/tmp/hfcache-rel-012-source)
 so type/test discovery is not silently excluded. Keep final production artifacts,
 contexts, provenance and logs outside that source checkout. Normal ignored gate
-outputs such as .venv, cockpit/node_modules and dist may be inside while tracked
+outputs such as .venv and dist may be inside while tracked
 Git state stays clean.
 Main-workspace task/evidence edits cannot contaminate source provenance; source
 and evidence commits remain distinct. A stopped or incompletely scoped gate is

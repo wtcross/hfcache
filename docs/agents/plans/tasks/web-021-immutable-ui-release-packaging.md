@@ -1,5 +1,11 @@
 # WEB-021: Integrate web assets and the host adapter into native/rootless releases
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `5192a627ef04dfed5fb216a23a9121c875092a52cfbc71d90f8d824e0585a3fb`,
+original content SHA-256 `b4bd772005458bc280099a3f621887323f36943ef689cc330f5ea43721c44eff`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -51,7 +57,7 @@ Complete deployment.md for operator prerequisites, exact artifact selection, sha
 
 A complete immutable release carries matching SPA/backend/helper artifacts and runs with existing Caddy/no Node runtime; Python-only profiles remain supported; packaging preserves all role/policy safety boundaries.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution notes and blockers
 
@@ -86,7 +92,7 @@ inputs; these probes do not inherit application SELinux/cgroup/seccomp contexts.
 Both native REST aliases pass; MCP invokes14 tools with12 successes and2 absent-
 report errors, explicitly leaving full positive report coverage to WEB-022.
 Documentation221/29 and all9 existing evidence-validator tests pass. The final
-`scripts/check.sh --require-web --require-cockpit --with-build` is running in
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 `gate5.log` against frozen product files. Final gate/role-audit completion and
 the work-package commit remain pending; earlier checkpoints stay historical.
 
@@ -156,13 +162,6 @@ replacement is authorized. Native/disabled behavior and existing receipts remain
 unchanged. Source8 construction, actual enforcing rootless checks and a final
 gate remain necessary; no package completion is inferred.
 
-2026-10-29: Activated by the user's WEB-021 through WEB-026 goal after startup
-reconciliation at clean tracked baseline `c199c4af1d05356d56abe5a0b7b7c9b8f860ce48`.
-The existing root `node_modules/` remains untracked. Native/rootless release
-construction and installed isolated acceptance are authorized; production, NAS,
-remote publication and live Cockpit removal remain excluded. WEB-020's completed
-records and every unresolved fixture operation remain preserved.
-
 Current implementation checkpoint (2026-10-29, uncommitted): explicit clean
 constructor/native and rootless installer inputs, indexed helper/UI bytes,
 standard-library bounded verification and expanded actual image probing are in
@@ -186,112 +185,6 @@ rewritten as success. Native install3 separately exits2 during uv's filesystem
 reflink operation despite17GiB free; ordinary copying succeeds. Dependency
 installation now explicitly copies rather than sharing/cloning cache files.
 The partial native release and original log remain preserved, unselected.
-
-An additional owned QEMU copy-on-write fixture (port46321, bootb7d4d5f6…) is
-Enforcing with no NFS or application executors at startup. Its inherited release,
-config and both stores were renamed with directory inode identity preserved;
-the original guest on46261 and its backing/snapshots remain untouched. New
-mutating acceptance uses this separate fixture and fresh stores. Installed
-native/rootless functional acceptance remains unperformed. Evidence starts at
-`/var/tmp/web-021-validation-4ibo9g0f` and
-`.scratch/web-021-validation/`; `.scratch/web-021-evidence-location.json` routes
-current exact sources, hashes, known exits and live tool handles. Two closed
-failed build environments were relocated byte-for-byte to the home filesystem;
-their inventory/relocation receipt preserves each file/link and source worktree.
-The new guest now has a real read-only kernel NFSv4.2 mount from its own
-`127.0.0.1:/` initialized fixture export at `/srv/hfcache`, with Enforcing policy,
-nosuid/nodev/noexec and exact PID1 mount evidence in
-`.scratch/web-021-fixture/nfs-loopback-result.json`. No archive initialization,
-manual archive-tree writes, production or NAS connection was used.
-Clean source4 (`e318bb4c…`) again reproduces all three artifacts. Native installation
-and supported guarded selection both exit0; native asset/package audit verifies
-six UI members plus manifest, nine helper artifacts and119 wheel package files
-as readable by UID983. API imagee2c69f25…/205689300B and Caddyfa2a5634…/128643310B
-have actual pinned ancestry and runtime absence/byte proofs; current wheel
-5354bcc7… passes all three no-Node Python installation profiles. Evidence is in
-`.scratch/web-021-validation/host-acceptance4.json` and `native-assets4/`.
-The native audit's aggregate remains false: its selected managed interpreter
-contains pip/ensurepip. Decision158 requires a fresh version/source runtime copy
-with only optional installers omitted, leaving shared donors and older runtimes
-unchanged. This is under implementation; no native absence or task completion is
-claimed from source4, and new final artifacts/gate remain necessary.
-The source4-era second gate command exits0:9229 backend tests/52 opt-in
-deselections in1114.89s,3702 web unit/4029 combined frontend,95% lines/90.02%
-branches, required Cockpit/wheel/build/browser/real HTTP/API checks. The mutable
-worktree received later native-runtime delivery edits during that command, so
-it is not final-source gate evidence. The independent runtime-copy implementation
-now passes640 focused tests plus targeted copy/probe regressions and full
-Pyrefly/Ruff; a new clean source/build and final gate are still required.
-The actual installed provisioning helper also passes via a non-echoing TTY in
-the new fixture, producing a private fresh Basic record; separate reader/MCP
-encrypted credentials are API-only and the original writer credential is kept.
-No application services or browser acceptance have started in this fixture.
-Clean source5 (`2b2b3744…`) reproduces the artifacts and API image6ff74ccf… passes
-actual micro/runtime/asset probing (`host-acceptance5.json`). Its native runtime
-copy refuses before creating a destination because standard CPython terminfo
-entries contain `+`. The dedicated runtime component grammar now permits that
-character without widening source/UI grammars or link containment;207 focused
-tests and full Pyrefly/Ruff pass. Source5's refusal remains known exit1 and its
-donor/stages remain untouched. New source6 construction/installed proof and the
-final gate remain necessary; no runtime absence or task completion is inferred.
-The third full gate exits0:9250 backend tests/52 opt-in deselections in1103.32s,
-3702 web unit/4029 combined frontend tests and16 wheel smoke tests; required
-Cockpit, browser and actual HTTP checks pass. The final runtime name correction
-arrived during that run, so this remains intermediate-source evidence. The next
-gate runs against the frozen corrected source while installed checks proceed.
-Clean source6 (`662b7bf2…`) reproduces all artifacts. Native install and guarded
-selection exit0; UID983 verifies the16 UI/helper files and selected3.14.6 runtime
-without pip/ensurepip/build executables. API image79ba66ca…/205689304B passes
-actual ancestry, runtime and asset checks; `host-acceptance6.json` records exact
-hashes and qualified unchanged Caddy/Python profile joins. The frozen corrected
-implementation gate exits0:9261 backend tests/52 opt-in deselections in1272.62s,
-3702 web unit/4029 combined frontend tests and16 wheel smoke tests, with all
-required Cockpit/browser/actual HTTP checks. Later documentation/evidence edits
-still require the final package gate before commit.
-Native browser smoke3 exits0 on Chromium/Firefox/WebKit at both root and
-`/management`, including clean bootstrap, navigation, supported helper status,
-installed configuration and zero mutation requests. Smoke1 preserved an actual
-fixed-peer refusal of API credential drop-ins; the supported protected file
-sources restore the exact indexed API unit without changing Caddy's PID.
-Smoke2 preserves a Chromium response-body instrumentation race; smoke3 uses
-bounded page-context reads. Installed application lifespan rejects missing/hash-
-mismatched/missing-member/changed-member inputs with HFCFG005; earlier unrelated
-CLI instance-lock refusals remain separate. REST class checks pass both aliases;
-all fourteen MCP tools are invoked, twelve succeed and two explicitly absent
-report reads remain protocol errors. This is not full positive MCP acceptance.
-Worker/Caddy namespace probes deny administrator/writer credentials, and actual
-process privilege/SELinux/cgroup facts are retained. A separate root namespace
-probe does not supply a helper-domain secret denial. Original unbounded network
-test children were identified and terminated without touching application
-executors; bounded probes show both actual no-IP cgroups block the otherwise
-reachable Caddy endpoint. Rootless installed acceptance and the real upgrade
-dirty-draft/original-handle check remain pending. A clean fixture-only0.2.70
-projection changes exactly the two version fields; it is not a release claim.
-The real native0.2.2→fixture0.2.70 upgrade now passes ROUTE-08 on all three
-browsers: each old document holds its unsaved Tags text and one original admitted
-Basic recovery record, detects the new clean build, presents the reload guard,
-and retains exact draft/record/storage hashes after Stay, with zero mutation
-requests or document navigation. The original tag-only preview/Apply succeeded
-and is retained as operation9a80ba21…; no lost or uncertain earlier handle was
-replayed. The supported installer stages/selects0.2.70 after exact original API,
-worker, helper and Caddy drain, retaining both stores, key inode and permissions.
-A first helper start correctly refuses the new version's `usr_t` unit targets;
-provisioning only the nine indexed immutable targets as standard systemd unit
-files restores READY/supported status with the kernel policy hash unchanged.
-That native label prerequisite is now explicit in the human deployment guide.
-Evidence: `native6-upgrade1.json`, `native70-stage.json`,
-`native70-unit-label-provisioning.json`, and `native70-ready-and-marker.json` in
-`.scratch/web-021-validation/`. Rootless installation remains the next check.
-Rootless source6 now stages and switches through the canonical installer, with
-the stock UID983 engine, exact images, fifteen-role receipt, original key,
-READY guard/helper and active API/worker/Caddy. Native trees/stores/credentials,
-prior engine state and runtime coordination objects are retained by original
-inodes; same-device private retention handles the tmpfs boundaries. The first
-IP-address HTTPS check fails TLS selection: the shipped Caddy template lacks
-the canonical `default_sni` already present in the native fixture. The template
-now binds that default to its existing hostname, preserving certificate and
-Host/Origin checks. New clean source/artifacts and actual rootless TLS checks
-are required; the active source6 stack and failed evidence remain preserved.
 
 ## Completion evidence
 
@@ -352,7 +245,7 @@ all earlier gates/failures and prior unknown observations remain preserved.
 All9 existing ledger tests and documentation221human/29helpers pass before the
 short-path final gate. Final gate6 exits0 in1516.98s with all1005 frozen product
 files unchanged:9318 backend tests/52 opt-in deselections in1114.68s,3702 web
-unit/4029 combined frontend,95% lines/90.02% branches, all required Cockpit,
+unit/4029 combined frontend,95% lines/90.02% branches, all required historical frontend,
 browser/actual HTTP/API and16 wheel smoke checks. No required check is skipped.
 Original log SHA256 is
 `b696088557fbf9ef151f59f8921bb1dbd6d5c74931a8d4004aded24243c5fb6d`.
@@ -372,7 +265,7 @@ WEB-022 remains pending for the complete installed workflow matrix, positive
 verification/maintenance/native controls and all14 positive MCP report calls.
 Current REST credential classes pass; MCP smoke has12 positives and2 absent-
 report errors/client1, not full positive MCP acceptance. Original lost/uncertain
-Apply state remains unreplayed. Production/NAS, live Cockpit uninstall, merge,
+Apply state remains unreplayed. Production/NAS, installed predecessor interface uninstall, merge,
 push and tags are excluded. The completed
 [progress entry and operator handoff](../../progress.md#operator-handoff) and
 [current selector](../current.md) select WEB-022 next; this plan remains active.

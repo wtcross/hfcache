@@ -1,5 +1,11 @@
 # CAT-002: Add strict configuration tags and separate curation identity
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `92c67bc829a36d7508792583cd2da309f96cc2e6520dbe969b3da11c8558a3d3`,
+original content SHA-256 `5157a0567829752d4aa1dd4d9ab6d4b43b1651dba98854f501535957b062b86f`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -65,15 +71,6 @@ schema-1 canonical curation fingerprint. Preserved the old fingerprint enumerati
 and pinned its prior hash before changing code. Shared frontend/backend grammar
 fixture is `tests/fixtures/tags.json`. No old strict wrapper/payload fields changed.
 
-Fingerprint caller audit: run/journal/bootstrap/server policy, API runner and
-private verifier comparisons correctly retain operational identity. Candidate
-PlanSubmission/OperationStore digests already bind full candidate text; a new real
-admission regression proves tag-only requests conflict under one key. Six fixed
-authority fields remain unchanged. Candidate diagnostics retain field location
-without rejected contents. Cockpit privileged guard already compares full bytes;
-its final policy-only confirmation needs strengthening in CAT-003. No config
-installation authority or secret-bearing full-config hash was added.
-
 Reviewed INV-001/002/005/018 and AD-12/17, decisions 119/122/133. The implemented
 normalizer/identity follows the accepted contract; no new architectural choice or
 runtime dependency. The full gate and focused checks passed; evidence follows.
@@ -92,10 +89,10 @@ under one key. Old wrappers and fixed authority comparisons remain unchanged.
 Focused config/tag/candidate/docs selection: 193 passed; final tag/candidate
 selection: 43 passed. `rtk proxy scripts/check.sh` exited 0: 4351 passed,
 40 opt-in deselected in 480.08s; lock/format/lint/types/docs/build/three locked
-installation profiles and actual Cockpit lint/types/135 tests/build all passed.
+installation profiles and actual historical frontend lint/types/135 tests/build all passed.
 Final format/lint/whitespace checks passed after added golden assertions.
 Reviewed INV-001/002/005/018, AD-12/17 and decisions 119/122/133: implementation
 follows existing accepted boundaries; no new ADR or runtime dependency needed.
 Updated configuration/discovery guides and fictional authoring example.
-No live/credential/production/push work. CAT-003 owns the remaining Cockpit
+No live/credential/production/push work. CAT-003 owns the remaining historical frontend
 confirmation/tag-authoring changes; later tasks own discovery interfaces.

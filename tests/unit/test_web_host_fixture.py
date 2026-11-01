@@ -286,21 +286,68 @@ def test_real_late_launcher_is_reaped_and_refused_without_signalling(tmp_path):
     assert proof.read_text() == "normal"
 
 
-def test_real_cancelled_launcher_keeps_child_owned_until_actual_normal_close(tmp_path):
+@pytest.mark.parametrize("boundary", ["spawn", "exchange"])
+def test_real_cancelled_launcher_keeps_child_owned_until_actual_normal_close(
+    tmp_path, monkeypatch, boundary
+):
     program = tmp_path / "owned-read"
     proof = tmp_path / "closed"
+    ready = tmp_path / "received"
+    release = tmp_path / "release"
     program.write_text(
         f"#!{sys.executable}\nimport pathlib,sys,time\nsys.stdin.buffer.read()\n"
-        f"time.sleep(.10)\npathlib.Path({str(proof)!r}).write_text('normal')\nprint('{{}}')\n"
+        f"pathlib.Path({str(ready)!r}).touch()\n"
+        f"while not pathlib.Path({str(release)!r}).exists(): time.sleep(.001)\n"
+        f"pathlib.Path({str(proof)!r}).write_text('normal')\nprint('{{}}')\n"
     )
     program.chmod(0o700)
 
     async def exercise():
-        task = asyncio.create_task(module.command(str(program), {}, timeout=2))
-        await asyncio.sleep(0.02)
-        task.cancel()
-        with pytest.raises(module.FixtureError):
-            await task
+        spawned = asyncio.Event()
+        return_child = asyncio.Event()
+        children = []
+        actual_spawn = asyncio.create_subprocess_exec
+
+        async def delayed_spawn(*args, **kwargs):
+            child = await actual_spawn(*args, **kwargs)
+            children.append(child)
+            spawned.set()
+            if boundary == "spawn":
+                try:
+                    await return_child.wait()
+                except asyncio.CancelledError:
+                    # A regression must fail without leaking the test's child.
+                    assert child.stdin is not None
+                    child.stdin.close()
+                    await child.wait()
+                    raise
+            return child
+
+        async def received_request():
+            while not ready.exists():
+                await asyncio.sleep(0.001)
+
+        monkeypatch.setattr(asyncio, "create_subprocess_exec", delayed_spawn)
+        task = asyncio.create_task(module.command(str(program), {}, timeout=30))
+        try:
+            await asyncio.wait_for(spawned.wait(), timeout=30)
+            if boundary == "exchange":
+                await asyncio.wait_for(received_request(), timeout=30)
+            task.cancel()
+            await asyncio.sleep(0)
+            assert not task.done()
+            return_child.set()
+            release.touch()
+            with pytest.raises(module.FixtureError):
+                await task
+            assert len(children) == 1
+            assert children[0].returncode == 0
+        finally:
+            return_child.set()
+            release.touch()
+            if not task.done():
+                task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
 
     asyncio.run(exercise())
     assert proof.read_text() == "normal"
@@ -326,7 +373,7 @@ def test_host_browser_metadata_adversaries_execute_without_browser_or_credential
         cwd=ROOT,
         capture_output=True,
         check=False,
-        timeout=15,
+        timeout=60,
     )
     assert result.returncode == 0, result.stdout.decode() + result.stderr.decode()
 

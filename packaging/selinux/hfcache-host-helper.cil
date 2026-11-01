@@ -93,7 +93,7 @@
 (typetransition hfcache_host_helper_t hfcache_host_helper_configuration_dir_t file hfcache_host_helper_application_conf_t)
 (typetransition hfcache_host_helper_t hfcache_host_helper_configuration_dir_t file ".configuration.lock" hfcache_host_helper_configuration_guard_t)
 (typetransition hfcache_host_helper_t hfcache_host_helper_configuration_dir_t file ".configuration.pending" hfcache_host_helper_configuration_guard_t)
-; Legacy root Cockpit/CLI publications use the same parent and persistent guard.
+; Predecessor root/CLI publications use the same parent and persistent guard.
 ; Transitions assign types only; they add no unconfined-domain access grant.
 (typetransition unconfined_t hfcache_host_helper_configuration_dir_t file hfcache_host_helper_application_conf_t)
 (typetransition unconfined_t hfcache_host_helper_configuration_dir_t file ".configuration.lock" hfcache_host_helper_configuration_guard_t)

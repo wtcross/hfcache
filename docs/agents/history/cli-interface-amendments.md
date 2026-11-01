@@ -1,5 +1,11 @@
 # Historical CLI interface amendments
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `4865dd7d448d1f2ae08ad81248186111a48c7eaf3a02e8f9c3ba9c92dfebb189`,
+original content SHA-256 `db2aec27ff8911de8e477a6302141696459a1c28715b881e1179c413ca4b89f1`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 Preserved from `db55170:docs/cli.md` before API-018 replaces the accumulated
 interface chronology with the current human reference. Relative links repaired;
 this record is not current technical authority. See `docs/cli.md`.
@@ -79,7 +85,7 @@ accepted execution. [Decision 120](../../adr/decision-120.md) and
 **2026-10-18 API-016 acceptance amendment:** the earlier amendments retain each
 migration stage's history. All operational modes now use typed HTTP, with explicit
 local help/version, `serve` and `config validate --local` bootstrap exceptions.
-API-014 packages scheduled observers and API-015 integrates Cockpit. Native Unix
+API-014 packages scheduled observers and API-015 integrates historical frontend. Native Unix
 uses fixed unprefixed paths even with a public TCP prefix; public clients retain
 their configured URL prefix/security. [Decision 123](../../adr/decision-123.md) and the
 [complete parity matrix](../../api.md#routes-and-effects) govern REST acceptance;
@@ -89,5 +95,3 @@ MCP remains absent until API-016 passes and commits. No deployment is asserted.
 MCP transport now has its own distinct credential and no curated tools yet.
 The operational CLI remains the typed REST client, with no MCP command migration.
 See [MCP enablement/limits](../../mcp.md) and [decision 124](../../adr/decision-124.md).
-
-

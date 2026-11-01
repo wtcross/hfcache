@@ -567,7 +567,7 @@ The route-independent browser observation controller retains original keys/IDs
 across navigation without introducing a submission endpoint or receipt format.
 Its recovery metadata is bounded to32 records/64KiB; restored records are
 unverified until authenticated original observation. Basic keys retain their
-stable-subject namespace, while manually retained Cockpit bearer keys remain
+stable-subject namespace, while manually retained legacy bearer keys remain
 unbound legacy references. ID observation does not prove creator/key ownership.
 An explicit compatible reconnect can refresh the API instance/authority epoch
 without rebinding the original operation's admitted authority. Authentication or

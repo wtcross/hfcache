@@ -1,5 +1,11 @@
 # WEB-017: Implement guarded maintenance and integrity remediation
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `9a5fbe0b34c6bae1c38efef12ce909e51013c65f3db2e2630d1bf47b704c0237`,
+original content SHA-256 `4cca8b8e34c7a11954e9b7581525e2baeb80865a9b02ab8575fb5d094709f1e9`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -43,7 +49,7 @@ Create maintenance.md with prerequisites, effects, confirmations, safe stop cond
 
 Every existing maintenance capability is available with truthful previews and strict backend authority; destructive or ambiguous cases cannot bypass safeguards through the UI.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution notes and blockers
 
@@ -97,8 +103,6 @@ This precheck precedes the final strict source gate and is not installed browser
 acceptance. Early fixture origin/receipt chronology and an incoherent blocked
 recovery test input were corrected without relaxing runtime validation.
 
-
-
 ## Validation history
 
 The following entries retain the chronological attempts and their original
@@ -120,7 +124,6 @@ because it used host Python 3.12 against the project's Python 3.14 syntax
 locked `.venv/bin/python -I -B` interpreter and the same unchanged frozen source;
 there is no application or gate exception.
 
-
 Matching artifact build attempt 2 passes (exit 0, 64.713s). The shared image
 `12b5d456b9d22c34fa3b32c20825b27962189bc6c466c8451dc6031e96cd67a6`
 contains UI manifest
@@ -139,7 +142,6 @@ modules byte-identical to the frozen wheel/source and matching UI. The existing
 .36 selector and 1,150 preserved old WEB015/.32/.34/.36 objects remain exact.
 No services or browser cases start at staging; fresh fixture setup is separate.
 
-
 Fresh fixture preparation also passes all six finite stages (setup, draft,
 install, profile, labels and additive Caddy mask 73), preserving all 1,150 old
 objects. The .38 archive UUID is `376f2bda-9b3b-40ab-84a2-75f1b5c0448b`.
@@ -151,13 +153,12 @@ The built initial JavaScript measures 188,858 gzip bytes against the 358,400-byt
 engineering target, with Markdown in a separate chunk. This static size check
 (`E/source1-bundle-size.json`) is not a latency or Caddy-compression claim.
 
-
 ### Current strict pass and retained installed-fixture failure
 
 Strict gate 1 passes exit 0 in 1,647.475s on source 1 / 1,481 inputs with no
 source drift: 8,610 backend tests, 3,597 web unit and 3,855 combined frontend tests,
 zero required skips, final 95.00% line / 90.10% branch coverage and all required
-Cockpit, type, lint, documentation, build, wheel-profile and read-fixture checks.
+historical frontend, type, lint, documentation, build, wheel-profile and read-fixture checks.
 Result SHA256:
 `8e94c7e6e062d48bc38474a98498d97fab99988324ee38ef4b4cbeb3286a95f1`.
 MAINT01–06 record actual unit/integration evidence but remain in progress.
@@ -181,7 +182,6 @@ source 1, with only isolated artifact-version metadata projected. Existing guest
 Caddy and browser engine are reused. Correct only the synthetic cache adapter and
 its caller's original-path subset/new-journal checks. The complete 39-case matrix
 must still pass on the fresh archive before this package can complete.
-
 
 C1 read-only retrospective closure v2 passes exit 0 in 1.360s, separately from
 acceptance. Proof SHA256:
@@ -208,7 +208,6 @@ A latent private lost-response assertion is also corrected from nonexistent
 `record.operationId` to the actual `record.receiptIdentity.operation_id`; the
 original C1 failure occurred before that assertion. Lookup and no-replay checks
 remain required.
-
 
 ### Fresh B first-phase installed pass
 
@@ -237,7 +236,6 @@ The repair and final ambiguity phases remain required; no task completion is
 claimed. Existing reviewed phase runners have conditional authorization to proceed
 only after each actual success/effect/normal-drain proof, stopping on unexpected
 or unknown outcomes without retries.
-
 
 ### S2 application fix after the installed repair-read failure
 
@@ -272,7 +270,6 @@ TypeScript, lint and format pass; the four affected contracts/guides pass 69 doc
 checks and 216 human/27 helper alignment. A new strict S2 gate, matching .42
 artifacts and a fresh complete 39-case environment are required before completion.
 All .38/.40 archives, damage, pending journals, receipts and failed evidence remain.
-
 
 S2 is now frozen at
 `8e320cf16ced0020feadc21c6d8492ba50383abc244b3c83fca3a57b52707691`, 1,481 inputs.
@@ -353,10 +350,9 @@ final three ambiguous-recovery cases are authorized once, without later healing
 or jobs. Strict gate and their actual pass remain required.
 
 S2 strict gate 2 now passes exit 0 in 1768.399s, with all 1,481 source hashes and
-modes unchanged. Command: `rtk proxy scripts/check.sh --require-web
---require-cockpit`. Actual results: 8,610 backend tests (52 unrelated opt-in
+modes unchanged. Command: `historical gate invocation (original command SHA-256 `d0975cb94dae6301d0072f8317bbe5d5f6d97449426a3e2fd021422c522bf1e1`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)`. Actual results: 8,610 backend tests (52 unrelated opt-in
 deselections), 3,599 frontend unit tests, 3,858 combined unit/component tests,
-95.06% line and 90.29% branch coverage, 581 Cockpit unit tests and 110 mounted
+95.06% line and 90.29% branch coverage, 581 historical frontend unit tests and 110 mounted
 checks. All required lock, format, lint, types, generated-wire, documentation
 (216 human documents / 27 helpers), wheel profiles, production builds, browser
 startup and real API read-fixture checks pass, with no required skips.
@@ -366,7 +362,6 @@ log SHA256:
 `c92ab15ae1bdd9c6bb131082fe90eba307b8f9fe1b0628cecf8bb438751bd2ee`.
 The final three ambiguity cases remain running; completion is not inferred from
 this successful source gate.
-
 
 ## Completion evidence (2026-10-27)
 
@@ -379,11 +374,10 @@ without inventing publication-ID compare-and-swap. The repository route releases
 read subscriptions and aggregate payload references on pause, retaining exact
 bookmark identity and requiring fresh membership on return.
 
-**Current source gate.** `rtk proxy scripts/check.sh --require-web
---require-cockpit` passes exit 0 in 1768.399s on S2
+**Current source gate.** `historical gate invocation (original command SHA-256 `d0975cb94dae6301d0072f8317bbe5d5f6d97449426a3e2fd021422c522bf1e1`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` passes exit 0 in 1768.399s on S2
 `8e320cf16ced0020feadc21c6d8492ba50383abc244b3c83fca3a57b52707691`,
 1,481 regular inputs with zero hash/mode drift. All 8,610 backend tests, 3,599
-frontend unit tests, 3,858 combined frontend tests, 581 Cockpit unit tests and
+frontend unit tests, 3,858 combined frontend tests, 581 historical frontend unit tests and
 110 mounted checks pass. The 52 deselections are unrelated opt-in tests; there
 are no required skips. Coverage is 95.06% lines, 90.29% branches, 93.32%
 statements and 94.92% functions. Lock, format, lint, types, generated contracts,
@@ -448,11 +442,6 @@ Review covers AD04–06/13/16/20, FS14/18–20, TX01–07, INV020/021 and
 ADR117/134/137/145; ADR117/145 and INV021 are amended. No endpoint, dependency,
 privilege, durable format or architectural decision is added. MAINT01–06 retain
 exact current unit/integration/functional mappings and failed historical records.
-
-[Progress and handoff](../../progress.md#operator-handoff) record completion;
-[WEB-018](web-018-schedule-observer-and-journal.md) is pending through the
-[current selector](../current.md). Evidence root: `E=/var/tmp/web-017-validation-n5qoqk8f`.
-No production, NAS, live Cockpit, rollout, merge, push or Git tag action occurred.
 
 After recording completion, documentation alignment passes again (216 human
 documents / 27 helpers, 7.222s), and all 78 affected plan/evidence/documentation

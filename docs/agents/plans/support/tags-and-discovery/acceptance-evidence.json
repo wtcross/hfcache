@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "scope": "Offline temporary fixtures only; no production, live NFS/Hub, deployment or push acceptance.",
+  "scope": "Offline temporary fixtures only; no production, live NFS/Hub, deployment or push acceptance. Current scope is53active cases and2explicit retired interface-only cases; original55IDs remain. No retired test is loaded or executed.",
   "execution_record": "docs/agents/plans/tasks/cat-016-compatibility-docs-and-final-acceptance.md",
   "required_final_gate": "scripts/check.sh --with-build",
   "cases": [
@@ -32,21 +32,19 @@
     },
     {
       "case": "V05",
-      "evidence": [
-        "cockpit/test/candidate-guard.test.ts::concurrent tag-only ${target} edit refuses without overwriting labels",
-        "cockpit/test/config-pipeline.test.ts::equal policy hash never bypasses changed installed tag bytes during confirmation"
-      ]
+      "evidence": [],
+      "status": "retired",
+      "retirement_reason": "Dedicated predecessor tag-editor behavior retired with removal of that interface; no current test execution or replacement acceptance is claimed."
     },
     {
       "case": "V06",
-      "evidence": [
-        "cockpit/test/config.test.ts::tag forms, toggles, add/remove and text serialization preserve canonical labels"
-      ]
+      "evidence": [],
+      "status": "retired",
+      "retirement_reason": "Dedicated predecessor tag-editor behavior retired with removal of that interface; no current test execution or replacement acceptance is claimed."
     },
     {
       "case": "V07",
       "evidence": [
-        "cockpit/test/config.test.ts::existing tags are suggestions for an invalid draft, with no registry or silent repair",
         "tests/unit/test_tags.py::test_bad_tag_error_is_located_without_rejected_secret"
       ]
     },
@@ -319,8 +317,7 @@
     {
       "case": "V47",
       "evidence": [
-        "tests/unit/test_catalog_adversarial.py::test_prompt_like_source_values_and_filenames_are_inert_and_terminal_controls_escape",
-        "cockpit/test/config.test.ts::script, shell, URL and terminal fragments cannot become browser tag labels"
+        "tests/unit/test_catalog_adversarial.py::test_prompt_like_source_values_and_filenames_are_inert_and_terminal_controls_escape"
       ]
     },
     {

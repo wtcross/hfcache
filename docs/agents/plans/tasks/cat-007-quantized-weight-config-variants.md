@@ -1,5 +1,11 @@
 # CAT-007: Detect scoped AWQ/GPTQ weight-bundle declarations
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `fb11718cfe46d46c15315e49dc9fde2d74f52f347b1970ace2eb7b235207cbc0`,
+original content SHA-256 `eb771d2291c08cbb73de32a603f52ba178a8d5e94b32f7966fdb53cc070f1276`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -118,7 +124,7 @@ tests/unit/test_catalog_extractors.py tests/unit/test_catalog_storage.py`:
 248 passed in 4.57s; this includes 54 scoped weight cases. Lint/types/docs pass.
 Full `rtk proxy scripts/check.sh` exited 0: 4605 passed, 40 opt-in deselected
 in 485.32s; format/lint/types/docs, build, all three locked installation profiles
-and actual Cockpit lint/types/169 tests/build passed. Complete local ignored log:
+and actual historical frontend lint/types/169 tests/build passed. Complete local ignored log:
 `.git/cat-007-check.log`. Final docs and whitespace checks passed.
 
 Independent read-only review is clear, including a 4,394-case malformed-field probe

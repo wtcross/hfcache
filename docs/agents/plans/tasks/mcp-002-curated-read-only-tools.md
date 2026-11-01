@@ -1,5 +1,11 @@
 # MCP-002: Expose a curated, structurally read-only archive toolset
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `1c4d229f3d9a8359120b1a2bf18f51e8b9639aa6a880cee37eccc8dd42ef2f62`,
+original content SHA-256 `5eaf3e37be7dc59ebf65ba4b797c6c4f34af962599772e1b4c6da39bb8df4db1`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `MCP-002` |
@@ -55,7 +61,7 @@ required test is not passing evidence. Use `this commit` until a real commit exi
 Activated 2026-10-18 under Tyler's authorized REST-first plan after completed
 dependency MCP-001 committed clean as `d808a05`. Git/current/dependency were
 reconciled; MCP-002 was the sole task in progress. MCP-001's definitive full gate
-passed 3,394 Python tests, all three locked wheel profiles and 127 Cockpit tests.
+passed 3,394 Python tests, all three locked wheel profiles and 127 historical frontend tests.
 Collaborators own a transport-neutral narrow read backend, explicit typed MCP
 adapters/app wiring and actual registry/schema/adversarial tool proof; all
 Markdown belongs to this work package. Decision 125 follows the actual log.
@@ -151,7 +157,7 @@ exited 0: lock/both-extra sync, 380 formatted files, Ruff clean, whole Pyrefly
 0 errors (11 suppressed, 59 warnings not shown); 3,481 Python tests passed,
 40 deselected in 401.60 seconds. Source distribution and wheel 0.1.10 built;
 actual locked isolated base/server/server+MCP installation/import/help/version
-checks passed. Cockpit ESLint/Stylelint/TypeScript passed, 127 tests passed with
+checks passed. historical frontend ESLint/Stylelint/TypeScript passed, 127 tests passed with
 0 failures in 2.093 seconds, and production build passed in 1,246 ms. No full-gate
 failure/correction/restart or post-freeze source change.
 

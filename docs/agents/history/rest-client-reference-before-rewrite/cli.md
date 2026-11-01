@@ -72,7 +72,6 @@ for every API operation; select `--api-token-file` or client settings instead.
 Explicit `config validate --local` remains the Hub-token/bootstrap exception.
 Endpoint/source precedence follows [client configuration](../../../api-client.md).
 
-
 Ordinary event progress is rendered only when both stdout and stderr are terminals
 and quiet is off. Event-history gaps, warnings/errors and retained safety handles
 remain on stderr on pipes and in quiet mode. Scheduled observation has a separate

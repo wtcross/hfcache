@@ -2,11 +2,6 @@
 
 - Decision identity: 120.
 
-- Status: Accepted; current scope includes the amendments referenced below.
-- Date: 2026-10-18.
-API-backed Cockpit mechanisms are amended by [decision 122](decision-122.md).
-
-
 ## Context, decision and rationale
 
 Operational commands submit typed HTTP intent; credentials, preflight, recovery,
@@ -21,12 +16,6 @@ ordinary progress requires both output streams to be terminals. No-color is per
 invocation; client verbosity never changes daemon logging. Finite observation covers
 all event/status/result work, retains sequenced gaps and handles, and stops without
 cancellation/replay on timeout, Ctrl-C or connection loss.
-
-Missing, expired, interrupted or protocol-invalid history proves no outcome. Lookup
-uses the original class/key without submitting. Never replace uncertainty with a
-new key, local fallback, automatic recovery or client-stop/free-lock assumptions.
-Scheduled and Cockpit clients retain the same boundaries. Local help/version,
-explicit bootstrap validation and foreground serve remain named local exceptions.
 
 ## Relationships and technical evidence
 

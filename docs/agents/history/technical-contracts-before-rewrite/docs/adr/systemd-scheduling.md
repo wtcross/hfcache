@@ -1,16 +1,12 @@
 > Historical technical reference preserved before consolidation. Current authority is the living contract.
 
-# Keep host scheduling in systemd timers and drop-ins
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `b94313c565fc9421c5db6f77a8e57c9a3bcf36f922b5a9b531d859301b4185b5`,
+original content SHA-256 `7a46554512eb7db42d947d07a3603cbf2924fd43e9c3061b352aac1f7bb5f700`.
+Historical proof hashes identify the original artifacts, not this edited record.
 
-- Status: accepted; an existing locked plan decision without an AD number;
-  provenance clarified by [111](../../../../../adr/decision-111.md), API client lifecycle amended by
-  [121](../../../../../adr/decision-121.md).
-- Original record: 2026-07-24, `87323c2` (initial plan, §4 and §22).
-- ADR backfill: 2026-10-17.
-- Authority: [plan §22](../../../plan.md#22-systemd-design),
-  [operations §9](../../../../../operations.md), and
-  [Cockpit schedule contract](../../../../../cockpit.md#7-sync-schedule) remain
-  normative. Maintain this record under [the ADR policy](../../../../../adr/README.md).
+# Keep host scheduling in systemd timers and drop-ins
 
 ## Context
 
@@ -27,13 +23,6 @@ application TOML. Use `hfcache.target` to group the scheduled lifecycle and
 archive automount. Attach timers through their own `[Install] WantedBy=` so
 an installed-but-disabled verification timer stays disabled when the target
 starts.
-
-The shipped initial calendars are daily sync at 02:00 local time and full
-verification on the first Wednesday of January, April, July, and October
-at 04:00. Use `Persistent=true`, documented random delays, and calendar
-validation with `systemd-analyze calendar`. Operator schedule changes use
-drop-ins rather than editing shipped units. Cockpit pauses or resumes only
-the sync timer, because stopping the target also affects the archive mount.
 
 ## Rationale and alternatives
 
@@ -59,13 +48,6 @@ shared application lock (AD-17). The verification timer still requires
 operator coordination before activation. Judge `systemd-analyze verify`
 by its output, since an ordering diagnostic can accompany exit zero.
 
-**API-004 clarification (2026-10-17, [decision 111](../../../../../adr/decision-111.md)).**
-The durable `invocation_mode` retains `systemd`/`interactive` and describes the
-executing host process via `INVOCATION_ID`. In a systemd-hosted daemon it cannot
-prove whether a timer, manual CLI or Cockpit client submitted work. Future
-operation receipts carry authenticated submitter metadata separately. No new
-scheduler, calendar change, unit installation or timer activation is introduced.
-
 ## History and evidence
 
 **API-014 amendment (2026-10-18, [decision 121](../../../../../adr/decision-121.md)).**
@@ -80,18 +62,3 @@ history is retained rather than reset. No bearer/digest/body/queue is stored.
 Server/worker drain, not client-service exit, proves executor termination. Shared
 runtime locks must survive unit stops. Repository fixtures do not establish real
 systemd/cgroup/SELinux/NFS acceptance; those remain deployment holds.
-
-`87323c2` (2026-07-24) records scheduling authority and initial calendars.
-`2fd432a` (`SYS-001`, 2026-07-26),
-[decision 58](../../../../../adr/decision-058.md), installs and validates all seven units
-and records disabled-timer and mount-ordering corrections. `ea8c02c`
-(`DOC-008`, 2026-07-28) documents long-running timer semantics.
-`1a0be5d` (`CPT-009`, 2026-07-30) implements the Cockpit drop-in editor.
-
-- [Shipped sync timer](../../../../../../packaging/systemd/hfcache-sync.timer).
-- [Shipped verification timer](../../../../../../packaging/systemd/hfcache-verify.timer).
-- [Lifecycle target and enabled-timer boundary](../../../../../../packaging/systemd/hfcache.target).
-- [Host install and calendar validation runbook](../../../../../deployment-centos-stream-10.md).
-- [Cockpit drop-in validation and writes](../../../../../../cockpit/src/api/schedule.ts).
-- [Drop-in rendering, round-trip, and calendar-output tests](../../../../../../cockpit/test/schedule.test.ts).
-- [Shared local lock tests](../../../../../../tests/unit/test_locking.py).

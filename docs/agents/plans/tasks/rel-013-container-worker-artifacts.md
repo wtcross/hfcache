@@ -1,5 +1,11 @@
 # REL-013: Build clean 0.2.1 artifacts and prove container peer access
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `ceb62514c360c2e1a669c91acd35effbbfc074c9e46a1d730ed9e5b7de9e23ea`,
+original content SHA-256 `2de09180953204bcac1f7756de429be8be17be36efa4f7c93931ea1f3aa01fb6`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `REL-013` |
@@ -297,7 +303,7 @@ invocation 87e859d2ebd041919601316404af726c, elapsed 9m38.319s:
 - 423 formatted files; Ruff/lint and whole types 0;
 - 4,057 Python passed, 40 deselected in 510.38s;
 - actual locked base/server/server+MCP wheel installation/import/help profiles;
-- Cockpit lint/style/types, 135 tests in 2,290.408886ms and production build 1,422ms;
+- historical frontend lint/style/types, 135 tests in 2,290.408886ms and production build 1,422ms;
 - four extra wheel smokes in 7.32s.
 
 Log .scratch/rel-013-ubi-gate.log SHA256

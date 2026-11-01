@@ -1,5 +1,11 @@
 > Historical technical reference preserved before consolidation. Current authority is the living contract.
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `35d308b271f39d60ecac1cfe4e48f7441af865c079dfd5fe76876b64ac11f9f3`,
+original content SHA-256 `79754d6bbe0f3af1049edfb2f90897c7adfc9928e99cb31bf268b7c405f7acfe`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 # hfcache Architecture
 
 | Field | Value |
@@ -1297,16 +1303,6 @@ references and all Hub download-cache files remain untouched. The new empty
 quarantine may then be explicitly cleaned under §7.8.1 before restarting sync.
 A valid early download journal may have no publication ID; completed recovery
 provenance still establishes ownership of that staging transaction.
-
-**API-008 clarification (2026-10-17, decision 115).** With API-backed execution,
-the CLI or its scheduled service is an observer, while the daemon lane or private
-verifier owns the work. Stopping that client, closing Cockpit or losing HTTP does
-not establish writer termination. Identify the exact operation/domain run and
-the real executor, prove it has ended, then acquire the common archive flock and
-apply the same narrow evidence checks above. A released lock or PID alone is
-insufficient. This does not waive the normal stale-age policy or activate a new
-cancellation endpoint. The currently shipped direct-service workflow is migrated
-only by the later client/packaging tasks; no production service change is claimed.
 
 **API-014 clarification (2026-10-18, [decision 121](../../../../adr/decision-121.md)).**
 The packaged sync/verify services are observers with retained pending handles.

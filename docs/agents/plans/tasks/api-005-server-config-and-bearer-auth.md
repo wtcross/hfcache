@@ -1,5 +1,11 @@
 # API-005: Add server dependencies, strict configuration, and bearer capabilities
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `ecb4ed948b0c30b0a70e5eba10446ab9db0727945358be55d385c32e864f5b73`,
+original content SHA-256 `2c6759c4be46dd6834ba58c8616e5c1c7eb94d43bc3c86a9a1aa72ae7c61ec5c`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `API-005` |
@@ -149,7 +155,7 @@ Validation:
   exit `0` on the first full attempt, with no gate-cycle failures/fixes. Lock
   check and locked server-extra sync, formatting/lint/types, 2,009 Python tests
   (40 deselected, 109.51s), wheel/sdist 0.1.10, real isolated locked base/server
-  wheel installation/import/help/version checks, Cockpit lint/styles/types,
+  wheel installation/import/help/version checks, historical frontend lint/styles/types,
   45 tests (0 failed/skipped) and production build all pass. The isolated wheel
   installs run offline against the populated locked cache.
 - `rtk proxy python .scratch/audit_records.py`: changed-document local links,

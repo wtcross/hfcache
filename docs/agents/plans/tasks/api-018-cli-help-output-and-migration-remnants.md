@@ -1,5 +1,11 @@
 # API-018: Align CLI help and output; remove obsolete rendering paths
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `62ae9b2ea97a8e1229efa7efcbeab1cba1f48d2020d885d15231f42ad9204e2c`,
+original content SHA-256 `471537d396d627e91da3e8ed2133d1ae6bf0d0f6db9e16aa0c2cff10d7c04743`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -91,7 +97,7 @@ explicit captured TTY identity; existing timeout/uncertainty/reconnect tests rem
 Initial fixture event shape/type inference was corrected before acceptance.
 
 `scripts/check.sh` exited 0: 4,171 passed, 40 deselected in 475.75s; wheel/sdist;
-all three locked isolated installation profiles; actual Cockpit lint/types,
+all three locked isolated installation profiles; actual historical frontend lint/types,
 135 tests and production build. Ruff/types/link checks passed. Log:
 `/tmp/hfcache-api018-gate.log`.
 

@@ -1,10 +1,16 @@
 # DOC-016: Consolidate living technical contracts and architectural rationale
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `a23613c96574253acceaa48cf59774fab3e6cef1e88d621d10e2d7e1e2449317`,
+original content SHA-256 `cc13497bbbf53a71f60e7239a5785d5c98e72071eb882d2ae4211004d077cae9`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
 | Plan | [REST/MCP documentation and script alignment](../2026-10-18-plan-rest-mcp-docs-scripts-alignment.md) |
-| Depends on | [DOC-015](doc-015-deployment-runtime-and-cockpit-guide-alignment.md) |
+| Depends on | [DOC-015](doc-015-deployment-guide-alignment.md) |
 | Phase | 2 — Human-facing guides |
 | Review findings | F01, F02, F07, F10, F14 |
 | Suggested commit | `DOC-016: consolidate human technical contracts and ADRs` |
@@ -85,7 +91,7 @@ Validation: 493 focused transaction/model/config/verification/auth/lock/failure-
 matrix/reference/migration tests passed in 11.31s; final link/anchor scan reported
 zero broken human links. Full `scripts/check.sh` exited 0: 4210 passed,
 40 opt-in deselected in 477.78s; distribution build, all three locked installation
-profiles and actual Cockpit lint/typecheck/135 tests/build passed. Final
+profiles and actual historical frontend lint/typecheck/135 tests/build passed. Final
 transaction/reference/migration checks also passed after editorial review.
 No live/NFS/installed-host operations ran; guards, stores, locks, credentials,
 NAS-read-only state and disabled calendar remain untouched.

@@ -1,5 +1,11 @@
 # Functional prerequisite inventory
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `6cf87467954d89c9b349b76350bcac24587e3c97d00d93cb5764d1263dc57baf`,
+original content SHA-256 `51110a0d38c42797a659f7b8e9cbb4894d70d30f01a0ca6a75fe6acfff4dbec7`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 WEB-001 inspected these prerequisites on 2026-10-20 without contacting a
 production manager, the production API, any retained guest or the live archive.
 This inventory establishes availability only. It does not establish that a
@@ -9,7 +15,6 @@ web functional deployment or any acceptance scenario has passed.
 
 | Input | Observed availability |
 | --- | --- |
-| Locked development tools | `uv`, Python, `make`, Node `v24.18.1`, pnpm `11.18.0` and existing `cockpit/node_modules` are present. |
 | Browser | `/usr/bin/firefox`, Mozilla Firefox `140.13.0esr`, runs its version command. Browser execution for the new UI is unperformed. |
 | Three-engine test closure | Chromium/Chrome and Caddy are absent from `PATH`; `~/.cache/ms-playwright` and `~/.cache/puppeteer` are absent. Other locations and dependency closure are unverified. This is not proof that those prerequisites cannot be provisioned. |
 | TLS tooling | OpenSSL `3.5.7` and `curl` are present. No test CA has been created for this plan. |
@@ -24,7 +29,7 @@ The retained CentOS Stream 10 base is
 1,045,299,200 bytes, SHA256
 `a88076a3b342d97cd9f980ef7e36ab647f174338bce0d999963748e4cc698847`.
 This matches the pinned historical acquisition record in
-[the isolated runtime setup](../cockpit-rest-repair/runtime-setup.md).
+[the isolated runtime setup](../../../history/removed-interface-records.md).
 The image was not booted or modified by this inventory.
 
 The retained Caddy archive is

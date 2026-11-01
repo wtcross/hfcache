@@ -1,5 +1,11 @@
 # CAT-005: Extract bounded static model and dataset declarations
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `c9f263aeb08960fc086d4a5b85ec688f836d9791d4c2ae1b41679645b7fd7d01`,
+original content SHA-256 `c4314f699c6000e237266c2a9da3e47473b9ecec899f74ed5ea99de954bc4fa2`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -109,7 +115,7 @@ tests/unit/test_catalog_storage.py tests/unit/test_transactions.py
 tests/unit/test_verification.py` — 224 passed in 10.18s. Final extractor suite:
 37 passed in 0.88s. Full `rtk proxy scripts/check.sh` exited 0: 4452 passed,
 40 opt-in deselected in 485.46s; format/lint/types/docs, build, all three locked
-installation profiles and actual Cockpit lint/types/169 tests/build passed.
+installation profiles and actual historical frontend lint/types/169 tests/build passed.
 Complete local gate log: `.git/cat-005-check.log` (ignored). The earlier pre-final
 run was intentionally stopped for the mixed-list classification correction, and
 is not claimed as passing. Final docs/whitespace checks passed.

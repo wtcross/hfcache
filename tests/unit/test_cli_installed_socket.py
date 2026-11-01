@@ -1,7 +1,7 @@
-"""Installed CLI wheels cross authenticated private UDS boundaries (CP-02/08/11).
+"""Installed CLI wheels cross authenticated private UDS boundaries.
 
 The API uses existing deterministic synthetic Hub/verifier fixtures. This proves
-wheel/CLI/HTTP/authentication/result compatibility, not Cockpit/PAM or host guards.
+wheel/CLI/HTTP/authentication/result compatibility, not browser login or host guards.
 """
 
 import asyncio

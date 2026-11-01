@@ -1,4 +1,8 @@
-# Preserve Cockpit authority through the API client and guarded candidates
+# Preserve authority through the API client and guarded candidates
+
+The superseded browser interface has been removed under
+[decision 161](decision-161.md). Shared backend, host-helper and web rules below
+remain governed by their current contracts.
 
 - Decision identity: 122.
 
@@ -9,22 +13,7 @@ Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
 ## 2026-10-21 protected-reader amendment
 
-[Decision150](decision-150.md) defines the replacement's protected Unix reader,
-independent policy/index/address and fresh Basic action proof. Legacy Cockpit
-transport and guarded candidate installation remain unchanged. Configuration
-writes retain original locks, previews, predecessor/confirmation and no-replay
-requirements; status or a policy bit alone does not implement installation.
-
-
 ## Context, decision and rationale
-
-Cockpit remains static host administration over fixed CLI/systemd interfaces.
-The shipped launcher runs the fixed rootless API-only client with protected rendered
-settings/socket and mounted named Podman REST source; host ImportCredential/native
-launcher selection is not implemented by this plugin. Hub authority stays in the
-API executor and no bearer reaches browser state, argv or ambient environment.
-Legacy system-bus sync/verify/timer controls remain blocked on the guarded rootless
-installation, with no redirect to same-named user units.
 
 Require strict bounded schema-1 terminal Envelopes, separately bounded diagnostics/
 progress and independently retained validated handles. Closure/timeout stops
@@ -41,39 +30,6 @@ trusting a posted preview or silently rolling back would discard these boundarie
 
 ## Relationships and technical evidence
 
-- [decision 123](decision-123.md)
-- [087](decision-087.md)
-- [089](decision-089.md)
-- [091](decision-091.md)
-- [092](decision-092.md)
-- [119](decision-119.md)
-- [120](decision-120.md)
-- [121](decision-121.md)
-- [Cockpit](../cockpit.md)
-- [client](../api-client.md)
-- [configuration](../configuration.md)
-- [security](../security.md)
-- [invariants](../invariants.md)
-- [fixed command construction](../../cockpit/src/lib/command.ts)
-- [injected runner](../../cockpit/src/lib/runner.ts)
-- [bounded UTF-8 framing](../../cockpit/src/lib/stream.ts)
-- [typed progress notices](../../cockpit/src/lib/events.ts)
-- [terminal/envelope classification](../../cockpit/src/lib/envelope.ts)
-- [API adapter](../../cockpit/src/api/hfcache.ts)
-- [configuration adapter](../../cockpit/src/api/config.ts)
-- [exact config guard](../../cockpit/src/lib/candidate-guard.ts)
-- [readiness/confirmation pipeline](../../cockpit/src/lib/config-pipeline.ts)
-- [unit-action boundary](../../cockpit/src/lib/systemd.ts)
-- [command tests](../../cockpit/test/command.test.ts)
-- [runner tests](../../cockpit/test/runner.test.ts)
-- [framing tests](../../cockpit/test/stream.test.ts)
-- [event tests](../../cockpit/test/events.test.ts)
-- [envelope tests](../../cockpit/test/envelope.test.ts)
-- [configuration tests](../../cockpit/test/config.test.ts)
-- [guarded file fixtures](../../cockpit/test/candidate-guard.test.ts)
-- [pipeline tests](../../cockpit/test/config-pipeline.test.ts)
-- [Decision 127](decision-127.md)
-
 Recorded installed scope and remaining acceptance are described in
 [deployment status](../deployment-status.md).
 
@@ -86,15 +42,6 @@ remain in force until corresponding additive implementation is accepted. Tags do
 not change operational policy identity or grant installation/write authority.
 
 ### Exact installed-content confirmation
-
-Installed confirmation compares validated candidate bytes with the installed file
-before and after API validation under the retained configuration flock. The
-candidate pathname has already been consumed by rename. Buffer at most 4 MiB
-of confirmation stdout until postchecks pass, and require successful confirmation
-process completion before accepting its Envelope. The operational hash
-continues to exclude tags, so it cannot substitute for document equality. This
-strengthens the existing exact-content guard rather than adding curation or
-full-config hashes to old validation wrappers. See [configuration editing](../cockpit.md#6-configuration-editing).
 
 ## Presentation and recovery amendment (2026-10-19)
 
@@ -123,7 +70,6 @@ stored. Lookup/wait follows the original identity without replay or cancellation
 No installed acceptance follows from these tests, and the full-service and
 direct-report exceptions remain current.
 
-
 ### Negative confirmation evidence (2026-10-19)
 
 The successful-completion requirement above governs accepting installation as
@@ -146,13 +92,6 @@ mask, guard, original lock, API policy or credential boundary is weakened.
 
 ## REST report browsing amendment (2026-10-20)
 
-[Decision 136](decision-136.md) retires the remaining direct-report exception.
-Narrow `runs list` / `runs show` CLI reads retain exact server Envelopes and use a
-separate bounded validated read-metadata line for pagination/archive correlation.
-Cockpit performs no archive-file reads. Optional host journals are strictly bounded
-closed-event diagnostics, independent of report availability and outcome. Existing
-credential separation, whole-archive trust, workload holds and guards remain.
-
 ## Read presentation and identity diagnostics amendment (2026-10-20)
 
 [Decision 137](decision-137.md) validates all read-card payloads before display,
@@ -162,11 +101,7 @@ selected physical release and authenticated API identities remain separate facts
 no package-version, health-readiness or selected-binding claim proves writability
 or a running payload. No new transport, capability or credential authority follows.
 
-
 ## Replacement UI design amendment (2026-10-20)
-
-[Decision 141](decision-141.md) amends this record for the accepted
-replacement design. Accepted replacement helper design preserves exact config guards, original handles and protected host authority. The current Cockpit transport remains until implemented replacement and conditional retirement are accepted.
 
 ## Guarded application amendment (2026-10-25)
 
@@ -174,3 +109,7 @@ replacement design. Accepted replacement helper design preserves exact config gu
 legacy guard, durable private outcomes and original-handle read-only observation.
 It supersedes earlier assumptions of a wholly read-only helper for this fixed
 operation; all unrelated authority and original reasoning remain.
+
+The pre-removal record remains in Git at
+`c692d7ae4b866fefd8a743a21afdb729da0f39c4`; removed interface-only
+instructions and source evidence are historical, not current operating steps.

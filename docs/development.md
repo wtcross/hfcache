@@ -63,10 +63,8 @@ The provider-neutral gate checks the lock, synchronizes the locked environment,
 checks Ruff formatting and lint, checks Pyrefly types, validates documentation,
 runs offline pytest, builds the distribution and smoke-installs locked base,
 server and server-plus-MCP wheels. `--with-build` adds isolated wheel-install
-tests. Cockpit validation is omitted by default, including when its sources and
-tools are present. `--require-cockpit` remains an explicit legacy opt-in: it
-requires plugin sources, pnpm and make before backend checks and refuses a
-skipped legacy stage. It is not required for replacement web acceptance.
+tests. The current browser workspace is validated through the required web
+checks below.
 
 Use `scripts/check.sh --require-web --with-build` for replacement web interface
 acceptance. `--require-web` first requires the web package manifest, frozen
@@ -132,13 +130,12 @@ versions and unresolved peer requirements fail installation.
 Keep the [license inventory](../web/dependencies/licenses.json) and
 [third-party notices](../web/THIRD_PARTY_NOTICES.txt) synchronized with changes;
 browser libraries become shipped static assets, while lint/test/browser tools
-remain development dependencies. Preserve any reused Cockpit LGPL notices.
-The application-owned recovery registry is a local adaptation of the existing
-Cockpit registry under LGPL-2.1-or-later. Its reviewed local-source provenance
-and full LGPL text are included in the shipped notices; the workspace license
-is `(MIT AND LGPL-2.1-or-later)`. This adds no npm package, Cockpit bridge or
-Cockpit runtime dependency. The npm closure retains reviewed package-specific
-licenses: MIT packages and the exact ISC-licensed `@ungap/structured-clone@1.4.0`
+remain development dependencies. Preserve the LGPL notices for retained adapted
+code. The application-owned recovery registry is a local LGPL-2.1-or-later
+adaptation. Its reviewed local-source provenance and full LGPL text are included
+in the shipped notices; the workspace license is `(MIT AND LGPL-2.1-or-later)`.
+This adds no npm package or separate runtime bridge. The npm closure retains
+reviewed package-specific licenses: MIT packages and the exact ISC-licensed `@ungap/structured-clone@1.4.0`
 are recorded with full texts in the inventory and shipped notices.
 After changing the lock, refresh the inventory explicitly with
 `pnpm --dir web exec node scripts/licenses.ts --refresh`. This contacts the
@@ -696,12 +693,3 @@ base/server/MCP dependency closure in uv's offline cache. Installed package byte
 are compared with the selected old sources before behavior is tested. Synthetic
 mount tables and temporary state establish only offline behavior; no archive
 initialization command, real mount, service, credential or Hub workload is used.
-
-
-The explicit legacy Cockpit test command includes actual mounted React tests in
-`/usr/bin/firefox` with fresh temporary profiles and owned loopback fixtures.
-Firefox must be present for an executed legacy gate; absence fails rather than
-silently skipping those tests. The fixtures control Cockpit's process/D-Bus and
-privilege event boundaries, never access the installed archive or credentials,
-and add no shipped browser dependency. Real Cockpit/PAM/systemd/rootless acceptance
-requires a separately provisioned isolated environment and remains distinct.

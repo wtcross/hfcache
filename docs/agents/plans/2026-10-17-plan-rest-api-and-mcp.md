@@ -1,5 +1,11 @@
 # Add the writer REST API, migrate the CLI, and expose read-only MCP
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `f14a2946d9bf021905e21c0b4cc3666035e74e906e7532786e2abc7a8c585a89`,
+original content SHA-256 `f91e81a7ab6a26d83f3f971bd6361018c5f1adecd9a50945f6be4e0791a75adb`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Plan ID | `2026-10-17-plan-rest-api-and-mcp` |
@@ -25,12 +31,6 @@ The writer remains the only machine with archive write authority. REST and MCP
 are management and metadata interfaces, not new storage authorities. Published
 ordinary-file trees, immutable manifests, references, retention semantics,
 transaction journals, and consumer verification retain their current meaning.
-
-This plan includes compatibility work in systemd and Cockpit, documentation
-throughout implementation, security tests, and an operator deployment handoff.
-It does not authorize production installation, starting new listeners on the
-live writer, changing host policies, modifying NAS exports, enabling the
-verification timer, or exercising destructive operations against the live archive.
 
 ### Explicit boundaries
 
@@ -67,26 +67,12 @@ run the repository test suite or inspect the deployed host.
 | [Hub adapter](../../../src/hfcache/hub.py) | `networking_disabled()` changes `os.environ["HF_HUB_OFFLINE"]`. | Never toggle process-wide networking flags in concurrent ASGI requests. Preserve offline verification using the isolated executor in §6. |
 | [Verify service](../../../packaging/systemd/hfcache-verify.service), [offline ADR](../../adr/offline-verification.md) | Verification has `HF_HUB_OFFLINE=1`, no Hub credential, and `IPAddressDeny=any`; systemd owns its scheduling. | A TCP-only client would fail in the shipped sandbox. Use authenticated Unix-socket HTTP locally, and preserve deny-all IP protection around the actual verification executor, not merely around the client. |
 | [Configuration](../../../src/hfcache/config.py), [credential contract](../../configuration.md) | Config is strict, frozen, schema-versioned; `--token-file` means a Hub token. | Separate archive/server/client configuration and API/Hub credentials. Define long-lived config refresh explicitly. Never reinterpret a Hub flag as API authentication. |
-| [Cockpit CLI adapter](../../../cockpit/src/api/hfcache.ts), [candidate pipeline](../../../cockpit/src/api/config.ts) | Cockpit consumes schema-1 CLI envelopes, streams progress, and validates/plans a candidate config before root-owned atomic installation. | Preserve those workflows via the API-backed CLI. Candidate content is validated without granting a caller arbitrary writer paths or endpoints. Browser code never receives tokens. |
 | [Framework ADR](../../adr/fw-01.md), [pyproject](../../../pyproject.toml) | Runtime dependencies are deliberately closed; Python is 3.14. | Record the correctness rationale for HTTP client, FastAPI, Uvicorn, and later FastMCP; lock and test compatible versions. Avoid unrelated dependency upgrades. |
 | [Consumer boundary](../../consumers.md), [AD-21](../../adr/ad-21.md) | Reference locators are relative to `published/`; restricted repositories can be archived; all consumers share one authorization boundary. | API locators retain their base and exact publication identity. Reader and MCP credentials authorize the whole exposed archive, not merely public repositories. |
 
 ### Governing contracts and decisions
 
 Load the relevant sections, not all historical documentation in every session:
-
-- Identity/publication/deletion: `FS-01`–`FS-23`, `AD-09`–`AD-18`, `AD-20`,
-  `TX-01`–`TX-07`, [architecture](../../architecture.md),
-  [schemas](../../schemas.md), [recovery](../../recovery.md).
-- Concurrency and authority: `AD-17`, `AD-19`, `INV-005`–`INV-007`,
-  [single-writer ADR](../../adr/ad-17.md),
-  [offline-verification ADR](../../adr/offline-verification.md),
-  [scheduling ADR](../../adr/systemd-scheduling.md).
-- Security/configuration: `AD-15`, `AD-21`, `INV-001`–`INV-004`,
-  [security](../../security.md), [configuration](../../configuration.md).
-- Interfaces/process: `INV-006`, `INV-008`–`INV-011`, `CP-01`–`CP-14`,
-  `FW-01`–`FW-04`, [CLI](../../cli.md), [Cockpit](../../cockpit.md),
-  [agent conventions](../conventions.md), [release](../release.md).
 
 Create numbered progress decisions and corresponding `decision-NNN.md` records
 for the service boundary/dependencies, command admission, credentials, verification
@@ -374,90 +360,12 @@ admission closed if the required executor is unavailable. Hermetic tests inject 
 fake executor; no production fallback quietly runs verification in the
 network-enabled ASGI process. Document standalone development limitations.
 
-Serve writer-local REST over `/run/hfcache/api.sock`; scheduled CLI clients use
-that socket with their own API credential. This allows the existing verify-client
-unit to retain deny-all IP policy. Move the effective no-IP/no-Hub protections to
-the actual executor as well. Preserve sync/verify unit names as API-client wrappers
-so schedules, Cockpit integration, exit outcomes, and monitoring remain legible.
-Use a single app/admission registry for local and TCP listeners; test the chosen
-Uvicorn socket arrangement rather than launching an independent server per socket.
-
 Update `scripts/install-release.sh`, unit/config packaging, hardening probes, and
 release runbooks for server dependencies, socket lifecycle, credential ownership,
 startup ordering, graceful drain, rollback, and stale lock-directory protection.
 Never unlink or recreate a lock file another process may still hold. Do not enable
 `hfcache-verify.timer`, stop `hfcache.target`, relax SELinux, add blanket egress
 exceptions, or test NFS disconnection against the production mount.
-
-Stopping an API-backed `hfcache-sync.service` or closing Cockpit now stops a client,
-not necessarily the writer. Explicitly amend supervised-cancellation/recovery
-instructions (including architecture §7.8.2): proof of writer termination must
-identify the actual executor and operation. Preserve the narrow QUA-003 age-policy
-exception; a vanished CLI process is not sufficient proof to invoke it.
-
-## 7. CLI and Cockpit migration contract
-
-### Normal runtime commands
-
-Keep existing commands, selectors, human rendering, JSON schema-1 envelopes,
-warning behavior, and domain exit classifications. Writer and reader use the same
-API client. A reader needs no archive mount, archive TOML, service UID, `/run`
-write access, or Hub credential. There is no silent direct-filesystem fallback
-when the API is down and no automatic daemon startup from a client command.
-API-backed status, doctor, and installed-config validation describe the writer,
-not the reader host's mount or local Hub account. Client connectivity errors are
-reported as transport failures; the independent consumer copy helper still owns
-local-copy verification.
-
-Add `--api-url`, `--api-socket`, `--client-config`, and `--api-token-file`; URL and
-socket are mutually exclusive. Precedence is explicit CLI options, then client
-config, then the local Unix-socket default. API credential precedence is explicit
-API token file, then client-config token file, then the explicitly named systemd
-API credential; an installed unusable source is an error, not anonymous fallback.
-Do not add a plaintext-token argument. Disable ambient HTTP proxy/credential
-behavior unless explicitly configured and documented; never forward Authorization
-through redirects to a different origin.
-
-Keep `--help` and local `version` independent of any config/server, and add
-`version --server`. `hfcache serve` is writer-local bootstrap and uses server
-configuration. Retain an explicit `config validate --local` mode for offline
-operator validation/bootstrap; it validates on that host, is never an API fallback,
-and is documented separately from server-side validation.
-
-For API-backed runtime operations, `--token-file` is rejected with a clear
-migration error; it remains a Hub credential option only in explicitly local
-bootstrap/validation contexts. Add a dedicated `serve --hub-token-file` where
-needed for non-systemd development. Never transmit an operator's Hub token to the
-REST server as an implicit override.
-
-### Candidate configuration and legacy `--config`
-
-For API `config validate` and `plan`, an explicit `--config PATH` means a candidate
-file on the CLI host: read bounded TOML content and submit that content, never a
-server pathname. The server validates it without installation. Installed-config
-operations with no explicit candidate use the server's installed archive policy.
-An explicit `--config` on other API runtime commands is a migration error rather
-than a silently ignored option. Update shipped systemd/Cockpit callers so they
-no longer pass the archive path to ordinary runtime commands.
-
-Candidate validation returns syntax/policy validity separately from compatibility
-with the running writer. For candidate Hub planning, require the candidate archive
-root/UUID, Hub endpoint, credential source, token mode, and expected account to
-match the installed authority boundary; otherwise refuse planning with a specific
-reason. It may preview repository/retention/worker-policy changes. Resolve only
-the installed authorized Hub credential, never a candidate-selected credential.
-Prospective authority changes can be syntax-validated but require an operator
-configuration/restart procedure before network planning. This deliberate limit
-prevents sending the writer's credential to an attacker-controlled endpoint.
-
-Keep Cockpit's existing administrative candidate → validate → preview → atomic
-install pipeline. Installation and backups remain privileged host work outside
-REST. After install, a fresh API query/operation observes the new config fingerprint
-without restarting the server unless authority changed. Update Cockpit UI messaging
-for candidate restrictions and running-operation snapshots. Its transient CLI
-units import the API credential directly from systemd; browser code never reads
-that credential. Preserve schema-1 parsing and streamed operation progress through
-the CLI; do not rewrite Cockpit to hold a writer bearer in JavaScript.
 
 ## 8. MCP, after the REST gate
 
@@ -535,8 +443,8 @@ writers to the branch.
 | 3 — CLI and REST integration | [API-012 — Move CLI reads and candidate validation/planning onto the API](tasks/api-012-migrate-read-cli-and-candidates.md) | [API-011](tasks/api-011-typed-client-and-client-config.md) |
 | 3 — CLI and REST integration | [API-013 — Move CLI writes onto the API and preserve resumable observation](tasks/api-013-migrate-write-cli-and-operation-waiting.md) | [API-012](tasks/api-012-migrate-read-cli-and-candidates.md) |
 | 3 — CLI and REST integration | [API-014 — Package the server, private worker, and API-backed scheduled services](tasks/api-014-systemd-and-deployment-integration.md) | [API-013](tasks/api-013-migrate-write-cli-and-operation-waiting.md) |
-| 3 — CLI and REST integration | [API-015 — Preserve Cockpit operations, progress, and candidate configuration flow](tasks/api-015-cockpit-api-client-compatibility.md) | [API-014](tasks/api-014-systemd-and-deployment-integration.md) |
-| 3 — CLI and REST integration | [API-016 — Prove complete REST and CLI parity before beginning MCP](tasks/api-016-rest-acceptance-gate.md) | [API-015](tasks/api-015-cockpit-api-client-compatibility.md) |
+| 3 — CLI and REST integration | [API-015 — Preserve historical frontend operations, progress, and candidate configuration flow](../history/removed-interface-records.md) | [API-014](tasks/api-014-systemd-and-deployment-integration.md) |
+| 3 — CLI and REST integration | [API-016 — Prove complete REST and CLI parity before beginning MCP](tasks/api-016-rest-acceptance-gate.md) | [API-015](../history/removed-interface-records.md) |
 | 4 — Read-only MCP | [MCP-001 — Mount optional authenticated FastMCP after REST acceptance](tasks/mcp-001-mount-authenticated-fastmcp.md) | [API-016](tasks/api-016-rest-acceptance-gate.md) |
 | 4 — Read-only MCP | [MCP-002 — Expose a curated, structurally read-only archive toolset](tasks/mcp-002-curated-read-only-tools.md) | [MCP-001](tasks/mcp-001-mount-authenticated-fastmcp.md) |
 | 4 — Read-only MCP | [MCP-003 — Prove MCP cannot mutate through tools, auth, or transport bypasses](tasks/mcp-003-mcp-security-and-side-effect-tests.md) | [MCP-002](tasks/mcp-002-curated-read-only-tools.md) |
@@ -563,7 +471,6 @@ publish a proposed API behavior as already implemented without an explicit statu
 | `docs/configuration.md`, examples under `packaging/` | Separate config domains, credential precedence, reload/fingerprint semantics; API-005/011/012/014. |
 | `docs/architecture.md`, `docs/schemas.md`, `docs/security.md`, `docs/invariants.md` | New service/trust boundaries, receipt formats, concurrent verification, threats and controls; affected implementation package, not a final documentation batch. |
 | `docs/operations.md`, `docs/recovery.md`, deployment and release docs | Service startup/drain, uncertain jobs, real executor termination, key expiry, rollout/rollback and hardening checks; API-007/008/013/014. |
-| `docs/cockpit.md`, `docs/cockpit-plugin/`, relevant agent routing | API-backed units, credentials, candidate flow, operation progress and host limits; API-015 and related packages. |
 | `docs/consumers.md` | Reader CLI without writer config/mount, whole-archive authorization, publication-relative locators; API-006/012 and MCP-004. |
 | ADRs/index, progress, plan/task/current | Review and evidence in every package. Historical `docs/agents/history/plan.md` gets dated attributed amendments where standing claims are superseded, not silent history rewrites. |
 
@@ -596,8 +503,8 @@ do not generate a schema containing machine-specific URLs, secrets, or timestamp
    and documentation together. On interruption, inspect uncommitted work before
    resuming; never infer completion from a summary or rerun completed mutations.
 6. Run `scripts/check.sh` before each commit. Preserve the lock, format, lint,
-   pyrefly, Python suite, build, and applicable Cockpit checks. Provision implemented
-   extras explicitly. When Cockpit changes, a skipped plugin gate is not passing
+   pyrefly, Python suite, build, and applicable historical frontend checks. Provision implemented
+   extras explicitly. When historical frontend changes, a skipped plugin gate is not passing
    evidence. Run `scripts/check.sh --with-build` at REST and final acceptance.
    Use opt-in live/NFS/hardening tests only in an authorized safe environment.
 7. Record actual acceptance and validation results, invariant/ADR review, docs
@@ -637,12 +544,6 @@ ship this as an automatic overwrite):
 
 ### REST gate — API-016
 
-All existing command modes in §4 have typed services, authenticated REST coverage,
-compatible API-backed CLI behavior, and tests. Reader credentials cannot perform
-writer operations, and ordinary readers work without writer filesystem state.
-Candidate validation/planning, systemd wrappers, Cockpit envelopes/progress, and
-local version/help remain functional. MCP is still absent from this gate.
-
 Tests prove: concurrent mutation exclusion across processes; verification locks
 through persistence; no Hub in verification; ASGI responsiveness during heavy
 work; admission/idempotency crash boundaries; uncertain-execution handling;
@@ -667,7 +568,7 @@ Documentation matches the actual registered tool schema and tested client setup.
 
 ### Final closure — API-017
 
-Run `scripts/check.sh --with-build`, all implemented-extra tests, Cockpit gate,
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 local transport/integration suites, documentation links/examples, and the
 old/new-format compatibility drill wherever a durable/config format changed.
 Review commits for task evidence, contracts/ADRs/invariants, and documentation
@@ -795,16 +696,6 @@ versions when implementing, especially FastMCP imports and test transports:
   sockets; FW-04 rationale is in decision 119. No new package/version, durable
   shape or production operation is introduced.
 
-- 2026-10-18 API-013: Decision 120 completes operational CLI and explicit
-  show/wait/lookup observation through typed HTTP without direct mutation imports.
-  Default exact terminal Envelopes remain distinct from explicit identified
-  admission. Validated key and accepted-ID stderr handles survive quiet; one finite
-  event/status/result deadline retains uncertainty on timeout/Ctrl-C, without
-  cancel/replay. Initialization obtains omitted optional UUID from authenticated
-  inspection while preserving restated root/confirmation and server guards;
-  no-confirm refusal submits nothing. No durable schema/dependency/MCP or production
-  change. Installed unit/Cockpit and REST/host acceptance retain their task gates.
-
 - 2026-10-18 API-014: Decision 121 packages named one-app Unix/optional TCP
   activation and a separate unprivileged offline/no-IP credential-free verifier,
   preserving service names/calendars, disabled verify timer, OnFailure/target/mount
@@ -821,14 +712,14 @@ versions when implementing, especially FastMCP imports and test transports:
   remain unchanged; actual handle compatibility evidence belongs to this task.
   Completed repository acceptance on 2026-10-18: definitive full gate exit 0,
   3,223 Python tests passed (40 deselected, 349.85 seconds), locked build/isolated
-  base+server installation checks and 45 Cockpit tests/production build passed.
+  base+server installation checks and 45 historical frontend tests/production build passed.
   The first gate was interrupted after a stale shipped-example assertion; its
   assertion-only correction and full rerun are preserved in the task. Actual
   old/current handle drill preserves unsupported/future evidence. Real installed
   activation/cgroup/SELinux/NFS and verify-calendar acceptance remain holds.
   API-015 is next pending after this package's commit; no MCP work has begun.
 
-- 2026-10-18 API-015: Decision 122 retains Cockpit's CLI/systemd/admin/service
+- 2026-10-18 API-015: Decision 122 retains historical frontend's CLI/systemd/admin/service
   boundary with fixed local API client settings, named API-only `hfcache.api` and
   no Hub/browser bearer. Strict bounded terminal Envelopes govern outcomes;
   separate validated progress/handles retain safe observation/reconnection.
@@ -840,11 +731,11 @@ versions when implementing, especially FastMCP imports and test transports:
   CP-01–14, full sync/verify units and sync-timer-only/no-init controls remain.
   No new durable JSON/dependency/MCP or production authorization; installed-host
   browser/credential/hardening acceptance remains an explicit handoff.
-  Completed repository acceptance on 2026-10-18: standalone full Cockpit gate
+  Completed repository acceptance on 2026-10-18: standalone full historical frontend gate
   passes 127 tests, lint/style/types and production build; source/decompressed
   production security scans are clean. First full project gate exits 0 with
   3,223 Python tests passed (40 deselected, 352.53 seconds), locked builds/isolated
-  base+server installs and 127 Cockpit tests/production build. No gate restart or
+  base+server installs and 127 historical frontend tests/production build. No gate restart or
   post-gate source change. API-016 is next pending after this package's commit;
   no MCP implementation has begun and installed-host holds remain explicit.
 
@@ -856,7 +747,7 @@ versions when implementing, especially FastMCP imports and test transports:
   five-example, docs/anchor, disabled-import and actual old/current parser drills
   support the fresh REST acceptance gate. First full
   `scripts/check.sh --with-build` exits 0: 3,324 Python tests passed (40 deselected,
-  358.69 seconds), locked 0.1.10 builds/base+server installations, 127 Cockpit
+  358.69 seconds), locked 0.1.10 builds/base+server installations, 127 historical frontend
   tests/production build and four additional wheel smoke tests. Fresh actual
   predecessor/current schema-1/future-2 parser drill passes all 28 cases without
   changing fixture bytes. No config/durable/dependency change, MCP or production
@@ -877,7 +768,7 @@ versions when implementing, especially FastMCP imports and test transports:
 
   Repository acceptance completed 2026-10-18: definitive full rerun exits 0 with
   3,394 Python tests (40 deselected, 377.89 seconds), 0.1.10 builds, three actual
-  locked base/server/server+MCP installation profiles and 127 Cockpit tests/build.
+  locked base/server/server+MCP installation profiles and 127 historical frontend tests/build.
   First full gate's nine HTTPX/HTTPX2 test-fixture failures and public exchange
   correction are retained in the task; no runtime/semantic change was required.
   Current selects MCP-002 pending after this commit. Tools and installed-host
@@ -894,18 +785,16 @@ versions when implementing, especially FastMCP imports and test transports:
   Registry/schema and mounted success/failure side-effect proof own acceptance;
   no dependency/durable/config or production change, and later tasks remain pending.
 
-
   Repository acceptance completed 2026-10-18: actual mounted registry/tool cases
   pass 65 tests; final mounted/pool selection passes 66 and direct/legacy readers
   32. Fresh status headline/warnings do not invalidate row-bound continuation;
   immutable artifacts bind all sanitized headers/collections. The first full
   `scripts/check.sh` exits 0 with 3,481 Python tests (40 deselected, 401.60 seconds),
   0.1.10 builds, all three actual locked wheel installation profiles and 127
-  Cockpit tests/production build. No gate failure/correction/restart or post-freeze
+  historical frontend tests/production build. No gate failure/correction/restart or post-freeze
   source change. Current selects MCP-003 pending after this commit; dedicated
   MCP security/final acceptance and operator holds remain separate. No dependency,
   durable/config format, production operation or later-task implementation.
-
 
 - 2026-10-18 MCP-003: Activated after committed MCP-002 (`35e5f51`) under the
   authorized sequential plan. Existing decisions 124/125 govern mounted
@@ -920,10 +809,9 @@ versions when implementing, especially FastMCP imports and test transports:
   proof, finite legacy task metadata and real deployment assumptions. First full
   `scripts/check.sh` exits 0 with 3,522 Python tests (40 deselected, 417.54 seconds),
   0.1.10 builds, all three actual locked wheel installation profiles and 127
-  Cockpit tests/production build. No full-gate correction/restart or runtime source
+  historical frontend tests/production build. No full-gate correction/restart or runtime source
   change; no new decision or format/dependency. Current selects MCP-004 pending
   after this commit, with final MCP/API-017 acceptance and operator holds separate.
-
 
 - 2026-10-18 MCP-004: Activated after committed MCP-003 (`91ca214`) under the
   authorized sequential plan. Existing decisions 124/125 govern the tested
@@ -936,13 +824,12 @@ versions when implementing, especially FastMCP imports and test transports:
   and required --with-build gate completed 2026-10-18: positive client selection
   passes 6 tests, negative client/REST/rotation/packaging 88 and anchors/parity 63.
   First full gate exits 0 with 3,616 Python tests (40 deselected, 425.94 seconds),
-  unchanged-version 0.1.10 builds/all three locked wheel profiles, 127 Cockpit
+  unchanged-version 0.1.10 builds/all three locked wheel profiles, 127 historical frontend
   tests/production build and four extra wheel smokes. No full-gate correction/
   restart or post-freeze source/semantic change. MCP repository acceptance is
   complete; current selects API-017 pending after this commit. Final closure and
   real operator deployment holds remain separate; no release/tag or production
   operation is performed.
-
 
 - 2026-10-18 API-017: Activated after committed MCP-004 (`f9a96dd`) for final
   history/artifact/contract review, fresh installed-reader compatibility and
@@ -957,7 +844,6 @@ versions when implementing, especially FastMCP imports and test transports:
   final-source fresh 42-case drill distinguishes supported schema reads/refusals
   from absent pre-feature readers. Closure evidence follows the actual full gate.
 
-
 ## Completion — 2026-10-18
 
 All 21 scoped task records are completed in dependency order, with incremental
@@ -966,7 +852,7 @@ committed before MCP began. API-017's first required
 `scripts/check.sh --with-build` confirmed actual exit 0: 3,624 Python tests
 (40 deselected, 442.05 seconds), lock/format/lint/whole types, 0.1.10 source/wheel
 builds, all three actual locked base/server/server+MCP installation profiles,
-127 Cockpit tests/production build and four additional wheel smokes. No final
+127 historical frontend tests/production build and four additional wheel smokes. No final
 full-gate correction/restart or post-freeze source/semantic change. The real
 CLI socket proof found an observer event-limit defect before the gate; its
 bounded adaptive correction and 176-case focused proof are recorded in

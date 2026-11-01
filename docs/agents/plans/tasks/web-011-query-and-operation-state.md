@@ -1,5 +1,11 @@
 # WEB-011: Build authority-scoped query state and durable browser observation
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `b7774126be15b551385a912dbc9d21582e38033a6f49e7cf7672d8ee9c4668dc`,
+original content SHA-256 `121030aab2157da3478664b4c904af1f29e39b41c652c750524b0983278670d0`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -11,8 +17,6 @@
 
 ## Read before implementation
 
-Typed client; Cockpit operation registry/recovery/event/failure tests; operation endpoints and errors; architecture operation constraints.
-
 Also read the relevant sections of [architecture](../support/web-ui/architecture.md), [API contracts](../support/web-ui/api-contracts.md), [testing strategy](../support/web-ui/testing-strategy.md), [acceptance matrix](../support/web-ui/acceptance-matrix.md), and [human documentation map](../support/web-ui/documentation-map.md). Load only affected living contracts and ADRs through their indexes. Refer to the [source review](../support/web-ui/source-review.md) for pinned baseline evidence; current git wins over it.
 
 ## Scope and implementation requirements
@@ -21,7 +25,7 @@ Implement the route-independent operation controller and bounded session recover
 
 Separate query loading/stale/unavailable/failed from operation queued/waiting/running/terminal/interrupted/observation-unknown states. Preserve request versus domain IDs and raw classified structured results through decoders; never parse human messages for authority. Poll result/events with finite read retry/backoff and cursor sequences, show gaps, stop when appropriate and keep observation after route changes. Abort read observation, not the backend operation. No POST retry/cancel/recover after timeout.
 
-Clear private caches on changed authority/auth failure without discarding unresolved safe handles; prevent restored cross-origin/archive entries from auto-observation or auto-rebinding. Cross-tab coordination is bounded and advisory; backend idempotency/locks remain final. Provide manual original-key/ID lookup for migration from Cockpit.
+Clear private caches on changed authority/auth failure without discarding unresolved safe handles; prevent restored cross-origin/archive entries from auto-observation or auto-rebinding. Cross-tab coordination is bounded and advisory; backend idempotency/locks remain final. Provide manual original-key/ID lookup for migration from historical frontend.
 
 ## Unit and component validation
 
@@ -43,28 +47,13 @@ Create user operations/reconnect guide and troubleshooting decision paths, inclu
 
 Operation observation survives the supported UI lifecycle without replay and without false outcomes; all uncertainty/limits are visible; original safe handles remain recoverable and authority-scoped.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution notes and blockers
 
-Started2026-10-26 after WEB-010 `beebb7a` and a clean checkout. Implement the
-accepted application-owned registry/observation design with existing typed client,
-React and APIs. Root owns shared contracts, session controller/mount/recovery UI,
-acceptance and commit; registry, query/event state and human documentation are
-collaborative scopes within this package. Query/session identity includes local
-auth generation as well as server scope; original operation authority remains
-historical. Restore Basic-key handles through authenticated original-key lookup
-before trusting saved IDs. Legacy Cockpit keys do not share Basic namespaces;
-manual ID observation never proves key ownership or resolves another record.
-No POST replay/cancel/cleanup or secret/body persistence. Preserve LGPL provenance
-and artifact notice for ported registry code. Shared encoded retention budget and
-finite read sessions must remain visible on refusal. Reuse owned application
-fixtures; no production/NAS/live Cockpit/rollout/publication actions.
-
 ## Completion evidence
 
-2026-10-26, WEB-011, this commit. Commands: scripts/check.sh --require-web --require-cockpit (gate2, exit0); the owned guest launcher with web-011-run-native-source2.py and functional-descriptor-source2-v1.json (exit0); source2 stock build plus check-container-foundation.py (exit0). No required acceptance check is skipped.
-
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 - Implemented the route-independent original-operation controller, bounded
   authority-scoped query/evidence state, event observation, durable safe-handle
@@ -80,27 +69,10 @@ fixtures; no production/NAS/live Cockpit/rollout/publication actions.
   reconnect permanently retires old handles. Cross-tab notices are bounded
   advisory signals without automatic merge, settlement or execution authority.
 - Local LGPL registry provenance/full license is retained in generated notices;
-  no Cockpit bridge/runtime or new npm dependency is introduced. Full job forms,
+  no historical frontend bridge/runtime or new npm dependency is introduced. Full job forms,
   the complete Operations workspace and subsequent domain views remain future work.
 
 ### Source and strict gates
-
-- Historical gate1 **PASS1577.982s**,8581backend tests,3130required web unit and
-  3211required component-suite tests as reported by that gate, plus strict
-  Cockpit/web/build/browser/read-fixture checks; no required skips. Source1412
-  snapshot `9e56c017fc327800e70f0738197bbdcccf838c857f418d23810d0a668a9ed75b`.
-  Evidence: `/var/tmp/web-011-validation-1oxmmhrk/gate1/{strict-gate.log,strict-gate-result.json}`.
-- Gate2 **PASS1501.198s**:8581backend/52unrelated opt-in deselections,581Cockpit unit/110mountedFirefox,3131web unit/3214combined component; statements94.23%, branches91.71%, functions92.98%, lines95.46%. All strict types/lint/generated contracts, wheel installs/build, two startup Chromium and14real API browser checks pass with zero required skips. Final log SHA b740b922e333252a04295d4341290a63b970e20af3f1c058ef74fab667a3e32b.
-  Frozen final source1413 snapshot
-  `d1edf7be6cc65379808839bfa5d09ddb4eb7ce280d5c58f613c02f71d78f2e25`.
-  Evidence: `/var/tmp/web-011-validation-1oxmmhrk/gate2/`.
-  Gate1 does not qualify the later fetch-receiver correction by itself.
-- Source2 artifact/source comparison verifies all1413 gate files with only the
-  two declared fixture version projections (`pyproject.toml`, editable self entry
-  in `uv.lock`). Proof `source2-artifact-gate-proof.json`, SHA
-  `36261c7db4daabdb52ca2296d35a4a61a46b5d9a61e2788202df7d1f74ab83f3`,
-  under the validation directory. Fixture native version0.2.18 is not a canonical
-  version bump or a production deployment.
 
 ### Installed functional evidence
 
@@ -201,7 +173,7 @@ fixtures; no production/NAS/live Cockpit/rollout/publication actions.
   Documentation alignment passes212human documents/27helpers.
 - OPS01–05 now have executed unit/component, real runner/store integration and installed native functional mappings. The task/current/dated-plan/progress records advance to WEB-012. The final source-preservation check covers all1413 frozen inputs; only the five documented bookkeeping files change after the gate.
 - The owned VM is drained and retained with source1 failure artifacts and source2
-  evidence. No production/NAS/live Cockpit changes, rollout, merge, push or tag.
+  evidence. No production/NAS/installed predecessor interface changes, rollout, merge, push or tag.
 
 Final bookkeeping checks: documentation alignment passes212human documents and
 27helpers;78plan/documentation tests pass8.56s. The precommit preservation proof

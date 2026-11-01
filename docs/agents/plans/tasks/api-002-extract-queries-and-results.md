@@ -1,5 +1,11 @@
 # API-002: Extract transport-neutral query services and command results
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `ab2394cec03a11f1e5d297fcd3df33827b980d7765cdf7846303a58b391c12c5`,
+original content SHA-256 `40b232db19048ce4f804039d4ada95beaed1999c3eb4d5d6b500680edc876e6f`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `API-002` |
@@ -87,7 +93,7 @@ architecture, CLI, API, consumer, invariant and Unreleased documentation.
 336 existing targeted tests and 47 new query/evidence tests pass. Initial gate
 stopped on two deliberate immutable-mutation test type errors; targeted test
 annotations corrected. Final `scripts/check.sh` exits 0: lock, format, lint,
-types, 1,797 Python tests, 45 Cockpit tests, wheel/sdist and plugin builds.
+types, 1,797 Python tests, 45 historical frontend tests, wheel/sdist and plugin builds.
 Changed documentation links, parity-table structure and git whitespace pass.
 No host/live checks or production operations. HTTP traversal review/pagination
 and bounds remain API-006 scope; runtime HTTP routes remain planned.

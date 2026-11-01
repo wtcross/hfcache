@@ -1,5 +1,11 @@
 # OPS-017: Implement the confined worker-owned listener
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `92982340efd8f0f912ed7221a201833d8023bf40f962c48fd8c3834b3311c9e4`,
+original content SHA-256 `c1f94b18460d7687c6ebf4834b8a471cbfce5c7a58f6bf783abbe6fa8bd24544`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `OPS-017` |
@@ -181,7 +187,7 @@ Actual NAS-masked `scripts/check.sh --with-build` exits 0, invocation
 42ab771951b943619cadcbc746a843e6, unit elapsed 9m1.567s: 415 formatted/Ruff clean,
 whole Pyrefly 0 (11 suppressed, 60 warnings not shown), 3,912 Python passed/
 40 deselected in 487.56 seconds; 0.2.1 builds and all three locked isolated wheel
-profiles; Cockpit lint/style/types, 135 tests in 2,324.192292 ms/build 1,385 ms;
+profiles; historical frontend lint/style/types, 135 tests in 2,324.192292 ms/build 1,385 ms;
 four extra wheel smokes in 5.42 seconds. Log .scratch/ops-017-gate.log SHA256
 b3c81f81bfdc736d907cafdd8212228d0bba189fe57becfc663aadcbce58054a.
 

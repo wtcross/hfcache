@@ -1,5 +1,11 @@
 # API-007: Persist bounded operation receipts and idempotent admission
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `5e402b514033f75b9d694acc4612b48525f42a970ae1a026edc6b065d6a96aa4`,
+original content SHA-256 `17c1bd218fd503638d3a75bc8bc3e6c87fd0c6a3e574bf20e284f4ad5cc940d7`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `API-007` |
@@ -36,7 +42,7 @@ Add receipt/result/event schemas and compatibility rules to schemas/API docs, id
   were clean across 306 Python files; pyrefly reported 0 errors (11 suppressed,
   53 hidden warnings). Python: **2,224 passed, 40 deselected in 118.15 seconds**.
   Version `0.1.10` sdist/wheel built; real isolated locked base/server wheel
-  installation, imports, help and local version checks passed. Cockpit lint,
+  installation, imports, help and local version checks passed. historical frontend lint,
   stylelint/types, **45 tests** with no failures and the production build passed.
 - The first full gate was already green: 2,222 Python tests passed, with 40
   deselected in 118.06 seconds. Its log is preserved as

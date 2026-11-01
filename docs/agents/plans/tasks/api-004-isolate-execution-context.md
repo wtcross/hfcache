@@ -1,5 +1,11 @@
 # API-004: Make correlation and offline execution safe for concurrent requests
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `c695354755cbd1e8ea08d63c802df55e976129bba01397e08a6d166fe420ef47`,
+original content SHA-256 `a045cce8eb6c8248e19238b35faad6df1964cb2c5f0a09e802ceb29f82d08b3f`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `API-004` |
@@ -135,7 +141,7 @@ Validation:
 - `rtk proxy bash scripts/check.sh > .scratch/api-004-gate.log 2>&1`:
   exit `0` on the first full attempt; no gate-cycle failures or fixes. Lock check,
   Ruff formatting (280 files), lint and Pyrefly (0 errors) pass; 1,835 Python
-  tests pass, 40 deselected in 108.80s. Wheel/sdist build; Cockpit lint/styles,
+  tests pass, 40 deselected in 108.80s. Wheel/sdist build; historical frontend lint/styles,
   types, 45 tests and production build all pass.
 - `rtk proxy python .scratch/audit_records.py`: local documentation links,
   task dependencies/current pointer and parity-table structure pass. Numbered

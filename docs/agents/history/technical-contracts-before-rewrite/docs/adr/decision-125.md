@@ -1,5 +1,11 @@
 > Historical technical reference preserved before consolidation. Current authority is the living contract.
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `81e3a58c5d6ffbb700014c567827384d9647018c641fce087f5ab06bcc63c333`,
+original content SHA-256 `c860b8b25b580483ced87077d2ff4fe9861ffffc9695ce7b25b07a171913995b`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 # Decision 125 — Expose nine typed metadata tools through a narrow read capability
 
 - Status: Accepted; implemented by MCP-002.
@@ -120,7 +126,7 @@ Implementation: [transport-neutral backend/models](../../../../../../src/hfcache
 Repository acceptance completed 2026-10-18: actual mounted registry/tool selection
 passes 65 cases, final mounted/pool selection 66 and direct backend/legacy readers
 32. The first full gate exits 0 with 3,481 Python tests (40 deselected, 401.60
-seconds), all three locked wheel profiles and 127 Cockpit tests/production build.
+seconds), all three locked wheel profiles and 127 historical frontend tests/production build.
 No gate correction or post-freeze source change. The task owns exact commands,
 results and remaining operator holds; MCP-003/004 and final acceptance remain
 pending after this package's commit.
@@ -138,7 +144,7 @@ fixture effects remain attributable to REST. Actual host credential/egress/
 transport/SELinux/NFS/drain/rollback acceptance remains separate operator work.
 Repository proof completed 2026-10-18: the first full gate exits 0 with 3,522
 Python tests (40 deselected, 417.54 seconds), all three locked wheel profiles and
-127 Cockpit tests/production build. No runtime source or architectural choice
+127 historical frontend tests/production build. No runtime source or architectural choice
 changed. The task owns exact evidence; MCP-004/API-017 and real host acceptance
 remain separate. No new numbered decision is introduced for these proofs.
 
@@ -160,7 +166,7 @@ runs and required --with-build results. Real deployment holds remain separate.
 Repository client/package acceptance completed 2026-10-18: positive example
 selection passes 6 cases, negative client/REST/rotation/packaging 88, and the
 first full --with-build gate exits 0 with 3,616 Python tests (40 deselected,
-425.94 seconds), all three locked wheel profiles, 127 Cockpit tests/build and
+425.94 seconds), all three locked wheel profiles, 127 historical frontend tests/build and
 four extra wheel smokes. No new decision, role/backend/dependency/config format
 or post-freeze source change. MCP repository acceptance is complete; API-017
 closure and actual installed-host holds remain separate.

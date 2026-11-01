@@ -1,5 +1,11 @@
 > Historical technical reference preserved before consolidation. Current authority is the living contract.
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `131cb78276fc9b6b34ce06a7bc8528a3e0b7db5ab16c48d703903258f77e9a34`,
+original content SHA-256 `c6663faebc5cba70bc5dbb29c4e7f2129bb01328a8d6e97af7af6aeb1279c9da`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 # hfcache Configuration Contract
 
 | Field | Value |
@@ -520,20 +526,6 @@ fields are checked again after queue waiting before Hub work, including the
 credential name deliberately excluded from the policy fingerprint. The startup-only
 `serve --hub-token-file` remains installed server authority, never request input.
 
-Only an absent candidate means installed intent; explicit null is refused. The
-absent optional field is omitted from plan canonical bodies, preserving existing
-installed-plan key digests.
-Candidate exact text binds a new request; no raw candidate body is durable control
-state. REST cannot install policy or backups. Cockpit's CP-11 pipeline now guards
-exact candidate/base bytes under the retained root config flock, requires valid
-compatible assessment and any required successful preview, then preserves atomic
-backup/install and confirms the exact expected installed fingerprint. Edits
-invalidate readiness; incompatible/unknown authority blocks plugin install with
-manual operator guidance. API-only clients never receive Hub authority. See
-[decision 122](../../../../adr/decision-122.md), [Cockpit pipeline](../../../../cockpit.md#6-configuration-editing)
-and [decision 119](../../../../adr/decision-119.md)
-and [candidate wire contract](../../../../api.md#candidate-content-and-installed-authority).
-
 ## 13. Independent reader/client configuration (API-011)
 
 [Client configuration](../../../../api-client.md) is a separate strict schema-1 TOML domain,
@@ -570,14 +562,12 @@ binds endpoint/UUID/REST-writer class across restarts and token rotation; it nev
 contains a bearer, credential digest or archive policy. It is not another client
 configuration or execution queue. See [decision 121](../../../../adr/decision-121.md).
 
-
 MCP client guidance uses an explicit protected MCP-reader file and canonical
 HTTP endpoint, not archive TOML, the REST client's credential or a new config
 schema. See [the runnable setup example](../../../../mcp.md#connect)
 and [resource limits](../../../../mcp.md#resource-costs-and-troubleshooting). Credential/source
 settings remain startup-only; rotation requires the normal API drain/restart and
 new clients. Disabled mode requires neither optional package nor MCP source.
-
 
 ## Rootless deployment selector (OPS-015)
 

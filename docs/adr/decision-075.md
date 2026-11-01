@@ -38,7 +38,6 @@ Implementation or shipped-artifact evidence:
 Verification or recorded operational evidence:
 [recorded deployment scope](../deployment-status.md).
 
-
 ## 2026-10-18 data-preserving local rollout amendment
 
 [Decision 126](decision-126.md) records new local-host release/rollout authority

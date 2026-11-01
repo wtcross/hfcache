@@ -1,5 +1,11 @@
 > Historical reference preserved before the human rewrite. Current authority is the living guide.
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `339f67b6748ed684f1aa2e57b914abf8846b1e88646b39db4dd8abf5f111484c`,
+original content SHA-256 `0e1316ea0eab9bc992f020e102442dd022f4d1d3f4ebdd52bf0315408963737e`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 # Optional MCP metadata interface
 
 MCP-001 adds an optional authenticated Streamable HTTP transport after committed
@@ -436,11 +442,6 @@ refuse at the parent boundary with HFAPI008/HTTP 500 rather than return changed
 or exposed evidence. The numeric cursor substitution test independently proves
 that hidden numeric values do not enter client-visible continuation fingerprints.
 
-Repository proof completed 2026-10-18 with the first full gate exiting 0; the task
-records 3,522 Python tests, all three locked wheel profiles and 127 Cockpit tests.
-Dedicated MCP client/final acceptance remains MCP-004. No runtime behavior or
-architectural decision changed in this proof package.
-
 ### Snapshot and concurrency method
 
 No-hash assertions concern verification/ingestion hashing of archived payload
@@ -528,13 +529,12 @@ request context. The SDK request is not a tool argument or backend capability.
 [Shared metadata-pool tests](../../../../tests/unit/test_mcp_pool.py) prove off-loop work
 and refusal at the shared capacity limit.
 
-
 MCP-004 client/packaging acceptance uses [the runnable example](../../../../examples/mcp-client.py),
 [actual example socket tests](../../../../tests/unit/test_mcp_client.py),
 [negative client/trust/budget tests](../../../../tests/unit/test_mcp_client_security.py) and
 [REST/rotation/packaging acceptance](../../../../tests/unit/test_mcp_acceptance.py). The
 [MCP-004 task](../../plans/tasks/mcp-004-mcp-client-docs-and-acceptance.md) owns precise
 commands/counts and the required --with-build gate, including all implemented
-extras, three real locked wheel profiles and Cockpit. Cold base/REST-only imports,
+extras, three real locked wheel profiles and historical frontend. Cold base/REST-only imports,
 unchanged verifier no-IP/credential/timer policy and disabled/enabled REST parity
 are repository claims; operator-only deployment holds are not inferred passes.

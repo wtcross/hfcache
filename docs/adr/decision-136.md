@@ -1,16 +1,10 @@
 # Read run reports through REST and keep journals diagnostic
 
-- Decision identity: 136.
-- Status: Accepted; source and temporary CLI/component acceptance passed. Disposable Cockpit/PAM and installed acceptance remain separate.
-- Date: 2026-10-20.
+The superseded browser interface has been removed under
+[decision 161](decision-161.md). Shared backend, host-helper and web rules below
+remain governed by their current contracts.
 
 ## Context and decision
-
-The REST API already exposes authenticated bounded run inventory and exact report
-reads. Cockpit instead lists and reads archive filenames through privileged host
-commands. Retire that CP-01/09 exception. Add only `runs list` and `runs show
-RUN_ID` to the fixed management CLI; no new HTTP route, payload-byte endpoint,
-path, method, local fallback or browser credential surface follows.
 
 `runs list [--limit N] [--cursor TOKEN]` requests one page, default min(100,
 authenticated server page limit), bounded
@@ -66,20 +60,6 @@ cursor restart are rejected; stale/refused reads stay visible.
 
 ## Consequences and relationships
 
-Amends [decision 122](decision-122.md), [decision 134](decision-134.md), CP-01/09
-and [the Cockpit contract](../cockpit.md). Preserves
-[decision 135](decision-135.md), INV-005/006, durable report identity, whole-archive
-authorization, fixed credentials, archive-byte/NFS separation and fourteen MCP
-read tools. [CLI](../cli.md), [API client](../api-client.md),
-[API](../api.md), [invariants](../invariants.md#cockpit-boundary),
-[CLI source](../../src/hfcache/cli.py), [client](../../src/hfcache/client.py),
-[report view](../../cockpit/src/reports.tsx) and
-[host diagnostic adapter](../../cockpit/src/api/archive.ts) define the boundary.
-Source/temporary fixtures never establish real Cockpit/PAM, installed symptom,
-deployment or NAS/workload acceptance. No runtime dependency or durable format
-change is introduced.
-
-
 ## Application Operations/report composition (2026-10-26)
 
 The application-owned browser reuses existing typed operation/run reads and exact
@@ -90,7 +70,6 @@ complete archive/repository audit. Events/journals stay diagnostic and do not
 replace classified domain results. See [Operations](../web-ui/operations.md).
 No endpoint, report format, archive-path access or execution authority changes.
 
-
 ## Fixed host-effect amendment (2026-10-27)
 
 [Decision156](decision-156.md) adds a bounded fixed-route host-action lane,
@@ -98,3 +77,7 @@ original-process observer stop, independent durable outcomes and finite diagnost
 reads. It preserves archive serialization, original operation identity and this
 record's unrelated requirements. Implementation and actual installed conformance
 are separately required.
+
+The pre-removal record remains in Git at
+`c692d7ae4b866fefd8a743a21afdb729da0f39c4`; removed interface-only
+instructions and source evidence are historical, not current operating steps.

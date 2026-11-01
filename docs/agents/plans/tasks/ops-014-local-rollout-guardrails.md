@@ -1,5 +1,11 @@
 # OPS-014: Establish data-preserving local rollout guardrails
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `c3aacdc2bb0e870cb9078366cc59324fc017342b2b3863975335c06d75d9f1ad`,
+original content SHA-256 `5b0b372e04a3b694761a10af5d736e373f8bb67a74d8c3f2a3e2e7bbb984c852`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `OPS-014` |
@@ -40,7 +46,6 @@ Activated 2026-10-18 under Tyler's new local rollout authorization after clean
 feature commit c73822d. This is the sole task in progress; all later tasks remain
 pending. Initial root inventory and intended guard actions are in the parent
 plan; no action is claimed complete before its actual evidence is recorded.
-
 
 ### Actual local guard execution — 2026-10-18T14:08:47Z
 
@@ -101,7 +106,7 @@ lines beginning event=. The transient gate's INVOCATION_ID legitimately selected
 the existing systemd syslog-priority prefix (`<6>event`), so those expectations did
 not match. Production logging was correct; no production or test source changed.
 The failed log is retained as .scratch/ops-014-gate-systemd-env-failed.log; no
-build/install/Cockpit pass is claimed for that stopped run.
+build/install/historical frontend pass is claimed for that stopped run.
 
 Root started a fresh NAS-masked gate (invocation
 f84179116ea847dbb8e3a7b9c79c2a50), clearing only the test process's inherited
@@ -137,7 +142,7 @@ Results: 94-package lock/both-extra sync; 395 files formatted; Ruff clean;
 whole Pyrefly 0 errors (11 suppressed, 59 warnings not shown); 3,624 Python tests
 passed, 40 deselected in 455.10 seconds. Source distribution/wheel 0.1.10 built,
 with actual locked isolated base/server/server+MCP import/help/version smoke
-profiles passing. Cockpit lint/style/types, 127 tests in 2.027 seconds and
+profiles passing. historical frontend lint/style/types, 127 tests in 2.027 seconds and
 production build in 1,257 ms passed. No additional build-marked subset was
 required for this guard/policy package. Production/test source stayed unchanged.
 The initial SELinux-rejected launch and first executing gate's three inherited-

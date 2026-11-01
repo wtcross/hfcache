@@ -92,6 +92,10 @@ it.
   makes standing plan text wrong, add a dated, attributed amendment beside it
   and record the decision; `docs/agents/history/plan.md` §30 and §36 carry the pattern.
   Living runbooks are edited directly.
+  The explicit WEB-027 removal instruction is the narrow exception recorded in
+  [decision 161](../adr/decision-161.md): superseded interface records leave the
+  current tree, with original text and hashes retained in Git and sanitized
+  shared evidence labeled as a current projection.
 - **Voice.** Dense, declarative, reasons attached. Tables hold enumerable
   facts; prose holds reasoning. Requirements say **must** and **never** and
   carry stable IDs so code and tests can cite them.

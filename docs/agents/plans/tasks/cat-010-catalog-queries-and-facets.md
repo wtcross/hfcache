@@ -1,5 +1,11 @@
 # CAT-010: Build shared tag and variant search with truthful coverage and facets
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `d5c608ec573372cc6f2f9c146fb5743f91adb5d3e8409e889f21ebaa1e6e792e`,
+original content SHA-256 `227bf10bc93f2b63efc5dae77d609ab281c648652eec6eae6d24531bc067275b`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | complete |
@@ -81,7 +87,7 @@ and focused Pyrefly passed. No live or host actions.
 Completed 2026-10-19 (CAT-010, this commit). V29-V35 focused query/model/storage/
 refresh selection: 270 passed in 13.41s. `scripts/check.sh` exited 0: 4,839 passed,
 40 deselected in 507.37s; wheel/sdist built, all three locked installation profiles
-passed, and actual Cockpit lint/types/169 tests/production build passed. Reviewed
+passed, and actual historical frontend lint/types/169 tests/production build passed. Reviewed
 INV-018, FS-08/09/11/12/15, AD-12/15/17/18 and decision 133; no transaction,
 confidence, dependency or existing inventory/MCP capability changes. Updated
 human discovery/schema contracts, invariant and ADR enforcement links. Explicit

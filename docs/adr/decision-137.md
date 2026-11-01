@@ -1,28 +1,14 @@
 # Validate read presentation and separate deployment identities
 
+The superseded browser interface has been removed under
+[decision 161](decision-161.md). Shared backend, host-helper and web rules below
+remain governed by their current contracts.
+
 - Decision identity: 137.
 - Status: Accepted; source implementation and automated acceptance passed. Real disposable and installed acceptance remain separate.
 - Date: 2026-10-20.
 
-The replacement browser's generated wire boundary is refined by
-[decision 145](decision-145.md); existing Cockpit behavior remains supported.
-
 ## Context and decision
-
-Valid failed CLI Envelopes resolve as values. Several Cockpit cards still assume
-success payloads, render absent values as healthy-looking empty data or retain
-old evidence after a refresh. The current unreachable-status payload deliberately
-omits health counters. Preserve original Envelopes and validate each payload
-before rendering: successful data, successful empty, classified failure, valid
-partial data, malformed data, loading and unavailable are distinct states.
-Malformed success cannot become zeros, an empty inventory or action readiness.
-Failed reads render their original codes first; separately validated partial data
-is explicitly informational and never authorizes a mutation. Refresh/session/
-host changes invalidate old evidence and late callbacks without closing observers.
-Passive invalidators read current stores and cannot erase a newer acknowledged
-inspection, confirmation or proposal. An older pipeline generation does not make
-a later explicit current-generation inspection stale. Existing exact-content and
-authenticated original-scope checks still control reconciliation readiness.
 
 Keep `version --server`, complete CLI status/list pagination and existing job,
 candidate and report identities. Validate the current documented CLI payloads,
@@ -46,21 +32,6 @@ Missing/invalid/unknown fields produce a fixed unavailable diagnostic, never raw
 rejected values. A missing commit has unknown dirty state. Development/watch
 builds emit unknown provenance rather than a stale production claim.
 
-Fresh production build input hashing uses only declared public repository inputs:
-regular files under `cockpit/src/`, the build scripts, Makefile, package manifest,
-lockfile and pinned `pkg/lib` helper inputs. Sort relative paths and frame their
-names, lengths and bytes deterministically; never hash fixture/private files or
-emit environment/absolute paths. This is a browser build-input digest, not the
-output bundle checksum or a hash of installed dependency bytes. Capture source
-commit, working-copy state and digest before and after the build; refuse a changed
-snapshot. A source export can report an input digest with unknown Git provenance.
-Runtime diagnostics grant no effect permission. Actual bundle checksum, image,
-physical bindings and running payload still need separate operator verification.
-Linux production provenance uses descriptor-anchored no-follow traversal through
-the build process's own `/proc/self/fd`, including every declared ancestor.
-Other build platforms emit unknown provenance rather than using an unsafe read
-fallback or losing the existing ability to build the browser bundle.
-
 ## Rationale and alternatives
 
 Throwing every nonzero result away would erase useful domain classifications.
@@ -72,16 +43,6 @@ keeping unknown facts explicit. A package version or selected symlink is not
 sufficient evidence of the bytes a browser or running executor actually uses.
 
 ## Consequences and relationships
-
-Amends [decision 122](decision-122.md) and [decision 134](decision-134.md), preserves
-[decision 135](decision-135.md), [decision 136](decision-136.md), INV-006 and
-CP-02/08/10/13. [Cockpit](../cockpit.md), [client guidance](../api-client.md),
-[API health semantics](../api.md#routes-and-effects),
-[installation](../cockpit-plugin/installation.md) and
-[troubleshooting](../cockpit-plugin/troubleshooting.md) define the presentation.
-No runtime dependency, durable format, REST/MCP authority, deployment or workload
-permission changes. Source, disposable Cockpit/PAM, installed symptom and NAS
-acceptance remain separate.
 
 ## Shared query and original-operation state amendment (2026-10-26)
 
@@ -109,7 +70,6 @@ explicit reload without automatic replay or loss of safe uncertain handles.
 The [recovery guide](../web-ui/operations.md) defines the user procedure; full job
 forms and repository views are separate work.
 
-
 ## Existing-job presentation composition (2026-10-26)
 
 The application Operations workspace adds bounded forms for existing sizing,
@@ -120,3 +80,7 @@ unavailable evidence remain distinct. No manufactured progress, success or empty
 result follows from HTTP200/202, missing events or observation failure. Existing
 original-handle state, server grants/locks and [typed report rules](decision-136.md)
 remain authoritative; job forms introduce no endpoint, dependency or replay.
+
+The pre-removal record remains in Git at
+`c692d7ae4b866fefd8a743a21afdb729da0f39c4`; removed interface-only
+instructions and source evidence are historical, not current operating steps.

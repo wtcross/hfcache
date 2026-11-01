@@ -1,5 +1,11 @@
 Historical onboarding reference before DOC-017; source identity and hash are in the sibling manifest.
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `f589d00be0adfbed5e3adec6774358f57f511fa3e5ce7fd5b647bfc8cd11951f`,
+original content SHA-256 `5cdb3d402ad4775e49152efd5f6f4898553e2119bf38ab4066c5447334562fc2`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 # hfcache
 
 Archive complete revisions of Hugging Face model and dataset repositories on
@@ -136,8 +142,6 @@ implementation plan and contract reference.
 | [`docs/operations.md`](../../../operations.md) | Running it: sync, verify, prune, purge, status, timers, exit codes, measured performance |
 | [`docs/recovery.md`](../../../recovery.md) | Corruption, repair, snapshot restore, lost writer, and the stopped-machine states |
 | [`docs/consumers.md`](../../../consumers.md) | Copying and verifying a revision from a downstream host |
-| [`docs/cockpit.md`](../../../cockpit.md) | The Cockpit plugin's contract: rules, privilege model, operation surface |
-| [`docs/cockpit-plugin/`](../../../cockpit-plugin) | Installing and using the Cockpit plugin |
 | [`docs/agents/history/plan.md`](../plan.md) | Original implementation plan and contract/history reference |
 | [`docs/agents/plans/current.md`](../../plans/current.md) | Active-plan selector and next task |
 | [`docs/agents/plans/`](../../plans/README.md) | Dated plans and individual work-package task records |
@@ -156,30 +160,11 @@ documents and the agent-specific set under [`docs/agents/`](../..).
 
 ## Browser administration
 
-An optional Cockpit plugin under [`cockpit/`](../../../../cockpit) administers a
-deployed writer from the browser: sync control with live activity, archive
-browsing, configuration editing, schedule management, verification, run
-reports, and maintenance. Every action is one of the runbook's own CLI
-commands or systemd units — never a side channel — and the CLI remains the
-plugin's current interface. The activated
-[REST-first implementation plan](../../plans/2026-10-17-plan-rest-api-and-mcp.md)
-introduces authenticated remote management incrementally;
-[the API contract](../../../api.md) marks metadata, operation observation and typed
-sync/verification/planning/diagnostic/installed-validation, maintenance and
-candidate routes as implemented; API-012 migrates reader commands. Every route, health/schema/docs
-and error surface authenticates; discovery preserves exact publication identity and
-`published/`-relative reference locators. Bulk copies still use the read-only
-export and independent verification in [the consumer runbook](../../../consumers.md).
-[`docs/cockpit-plugin/`](../../../cockpit-plugin) covers installation and
-usage; [`docs/cockpit.md`](../../../cockpit.md) is the contract it is written
-against.
-
 ## Repository layout
 
 | Path | Contents |
 | --- | --- |
 | `src/hfcache/` | Domain services and CLI; base HTTP client with optional FastAPI/Uvicorn server dependencies |
-| `cockpit/` | The Cockpit administration plugin: a browser UI over the CLI and the systemd units |
 | `docs/` | The contracts and runbooks in the table above |
 | `docs/agents/` | Agent-facing planning, workflow, conventions, environment, and release docs |
 | `docs/agents/plans/` | Current-plan selector, dated plans, and individual task records |
@@ -267,18 +252,6 @@ The Unix client adapter closes failed connections through public HTTPX/HTTPCore
 interfaces. HTTPCore becomes direct at its already-locked 1.0.9 version; no package
 or version upgrade is added.
 
-API-013 removes the CLI's direct operational backend. Jobs wait for exact server
-results by default; explicit `--detach` identifies admission separately. Validated
-submission keys and accepted operation IDs are printed even in quiet mode, with
-bounded sanitized progress on stderr. `operations show`, `lookup` and `wait`
-resume observation without submission; Ctrl-C/timeouts preserve handles and do
-not cancel accepted work. Use [the client runbook](../../../api-client.md#submit-detach-and-resume)
-for finite wait, same-key retry and uncertainty. Initialization keeps explicit
-root/confirmation and the server's disabled gate; no-confirm inspection never
-submits. API-014 packages systemd integration and API-015 integrates Cockpit's
-API-only client; installed OS isolation proof remains operator work. This branch has
-not been deployed.
-
 API-014 packages activated API/private-verifier services and API-only scheduled
 clients. One API socket feeds one application across Unix/optional loopback TCP.
 The actual verifier carries offline/no-IP/credential-source policy; no-IP on a
@@ -289,15 +262,6 @@ calendars, disabled verify timer and shared runtime locks remain. Installer dry-
 and disposable stage/drain/rollback tests do not establish installed cgroup,
 credential, SELinux or NFS acceptance; those remain explicit deployment holds.
 No production service or archive operation is performed by this implementation.
-
-API-015 keeps Cockpit on the installed CLI/systemd boundary with API-only named
-credentials, strict bounded terminal/progress parsing and validated reconnect
-handles. Closing a page or stopping a client does not cancel accepted work.
-Configuration changes bind exact candidate/base content under a root flock and
-require compatible server assessment, required preview and exact installed
-fingerprint confirmation; incompatible/unknown authority needs manual operator
-installation. Full sync/verify units, sync-timer-only controls and no init UI
-remain. Browser credentials, direct REST installs and MCP are not added.
 
 API-016 reconciles all 29 REST modes with concrete CLI/API evidence and fresh
 security, example, transport and build acceptance before MCP. Native Unix clients
@@ -324,8 +288,3 @@ uv run --locked --extra server --extra mcp pytest -m build # throwaway wheel smo
 ```
 
 ## License
-
-MIT ([`LICENSE`](../../../../LICENSE)), with one subtree different:
-[`cockpit/`](../../../../cockpit) is LGPL-2.1-or-later — it derives from the Cockpit
-starter kit — declared per file in SPDX headers (decision 90 in
-`docs/agents/progress.md`).

@@ -171,8 +171,8 @@ outcome access. It cannot resolve a different uncertain key-only record.
 
 Administrator Basic keys are scoped to the stable administrator subject. Password
 rotation with that same subject retains the namespace; a different subject does
-not. Old Cockpit bearer keys use a different namespace. Keep a manually imported
-legacy key as an unbound reference; do not associate it with the current Basic
+not. Previously retained bearer keys use a different namespace. Keep a manually
+imported legacy key as an unbound reference; do not associate it with the current Basic
 session or claim that a missing Basic lookup proves nonexecution. Its presence
 alone does not permanently block unrelated actions in the current namespace.
 An original operation ID can still be observed with the current authorized

@@ -1,20 +1,15 @@
 # Preserved reference before human rewrite
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `f4397ffaa4535086c8335a04ed48faefcedb0619c540b5138a929fa0604ae743`,
+original content SHA-256 `fc1a725d2589a9baf156e03df761e419f0b0e6f2c9707bac66e10a9eb7c874f8`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 Source: `5503e3b:docs/api.md`. Historical text and requirements are retained;
 relative links repaired. Current technical authority remains `docs/api.md`.
 
 # Writer REST API contract
-
-Status: API-006 implements authenticated archive metadata and API-007 adds
-bounded receipt/admission primitives and operation observation; API-009 adds
-typed command routes, with guarded maintenance/initialization added by API-010,
-under [the active plan](../../plans/2026-10-17-plan-rest-api-and-mcp.md).
-API-012 adds candidate validation/planning/read CLI and API-013 completes
-operational CLI/observation. API-014 packages activated/scheduled services and
-API-015 integrates Cockpit; API-016 completes REST acceptance. MCP-001 adds an
-optional authenticated transport; MCP-002 adds nine curated metadata tools
-through a narrow read protocol; see [MCP](../../../mcp.md). No
-production installation or listener start is asserted by implementation evidence.
 
 ## Service and transport boundary
 
@@ -883,14 +878,6 @@ local refusal metadata with successful inspection evidence. See
 
 ## Acceptance boundaries
 
-[Server contract](../../../server.md) owns deployment/lifecycle detail. API-016 requires
-complete REST, CLI, Cockpit, packaging and offline build acceptance before MCP
-code, dependencies, imports or endpoints are added. A 29-mode matrix is separate
-from the independent 34 method/path security inventory (33 with interactive docs
-disabled); both must remain complete. Invalid bearers authenticate before body
-reception on every route, including docs/schema/error surfaces. Mixed candidate/
-probing roles cannot admit work before their capability check.
-
 Concrete gate evidence lives in the [parity manifest](../../../../tests/rest_parity.py),
 [route-complete security tests](../../../../tests/unit/test_rest_security_gate.py),
 [actual Unix/TCP/OpenAPI tests](../../../../tests/unit/test_rest_transport_gate.py),
@@ -912,15 +899,6 @@ credentials, contacting the Hub/API, opening the archive or starting listeners:
 | [Server](../../../../packaging/server.toml) | `ServerConfig` through `load_server_config` |
 | [Reader](../../../../packaging/client.example.toml) | `ClientConfig` through `resolve_client_config` |
 | [Scheduled client](../../../../packaging/scheduled-client.example.toml) | Same client schema, explicit expected UUID required at execution |
-| [Cockpit client](../../../../packaging/cockpit-client.toml) | Same client schema, API-only named credential |
-
-Example parse success does not provision credentials, prove UUID/sentinel identity
-or authorize installation. Placeholder endpoint/source/UUID values require
-operator selection. API-016 runs fresh `scripts/check.sh --with-build`, complete
-Cockpit and isolated locked base/server wheel checks, actual local sockets and
-old/current parser compatibility. A cold disabled app imports no MCP and creates
-no archive/control state. The task records actual counts and results; prior
-package counts do not stand in for fresh acceptance.
 
 Installed systemd activation, cgroup no-IP/credential-source masking (including
 custom paths), hardening, browser/PAM bridge, SELinux/NFS, executor drain and
@@ -950,7 +928,6 @@ rows while status headline/warnings remain fresh per page. Limits count entries 
 or single entry fits the wire byte cap. No projection is a bulk transfer or a
 complete manifest until all required collections are reconstructed. See
 [MCP output/pages](../../../mcp.md#metadata-output-and-pages) and [consumer identity](../../../consumers.md).
-
 
 MCP-004's [protected-file client/setup](../../../mcp.md#connect)
 walks metadata and exact publication projections under independent finite bounds;

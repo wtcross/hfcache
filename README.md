@@ -23,7 +23,7 @@ NFS export; neither API serves model downloads.
 | Administer a writer | [Operations](docs/operations.md), [deployment](docs/deployment-centos-stream-10.md) |
 | Connect an MCP client | [MCP connection and tools](docs/mcp.md) |
 | Copy and verify a model or dataset | [Independent consumers](docs/consumers.md) |
-| Use the browser interface | [Web interface, availability and sign-in](docs/web-ui/README.md), [administrator provisioning](docs/web-ui/deployment.md), [migration and rollback](docs/web-ui/migration-from-cockpit.md), [legacy Cockpit guides](docs/cockpit-plugin/README.md) |
+| Use the browser interface | [Web interface, availability and sign-in](docs/web-ui/README.md), [administrator provisioning](docs/web-ui/deployment.md), [migration and rollback](docs/web-ui/migration-and-rollback.md) |
 | Contribute or run tests | [Development](docs/development.md) |
 | Find a contract or helper | [Documentation index](docs/README.md), [script reference](docs/scripts.md) |
 
@@ -72,14 +72,14 @@ See [discovery](docs/discovery.md) for provenance, incomplete coverage and rollb
 ## Status
 
 The independent [web interface](docs/web-ui/README.md) is available in unreleased
-source with installed native/rootless test-release evidence. Cockpit is deprecated
-for new work; its source, history, licenses and live installation are preserved.
-See [migration and rollback](docs/web-ui/migration-from-cockpit.md) before a
+source with installed native/rootless test-release evidence. Repository removal
+of the superseded interface does not alter installed services.
+See [migration and rollback](docs/web-ui/migration-and-rollback.md) before a
 separately authorized production transition.
 
 The source package and recorded local deployment are **0.2.2**. Clean application
 source `1c68501` is identified by local annotated `v0.2.2`. This release combines
-configured tags and evidence-backed discovery with Cockpit error handling,
+configured tags and evidence-backed discovery with classified client error handling,
 original-operation recovery, guarded configuration validation/confirmation, manual
 REST jobs and report/read views.
 
@@ -93,11 +93,10 @@ writers masked and verification scheduling disabled. See
 and [release notes](CHANGELOG.md), including guarded rollback requirements and the
 private-worker connection limitation that returns on rollback to 0.2.0.
 
-Installed-wheel/private-socket tests and isolated Cockpit/PAM/rootless acceptance
-passed for the repair source, including bridge interruption and exact guarded
-configuration installation. The original installed browser symptom still needs
-fresh-session verification without discarding the existing candidate or replaying
-an operation. Live NAS/workload and other-host acceptance remain separate.
+Installed-wheel/private-socket tests and isolated rootless acceptance passed for
+the repair source. Original operation and candidate evidence remains preserved;
+an unexplained historical browser symptom is not retroactively resolved by later
+fixture success. Live NAS/workload and other-host acceptance remain separate.
 
 ## Repository layout
 
@@ -106,7 +105,6 @@ an operation. Live NAS/workload and other-host acceptance remain separate.
 | `src/hfcache/` | Archive services, HTTP client, CLI and optional REST/MCP transports |
 | `docs/` | Human guides, technical contracts and architectural rationale |
 | `web/` | Independent React/TypeScript interface, frozen build inputs and bundled browser assets |
-| `cockpit/` | Deprecated legacy plugin source, preserved with its history and licenses |
 | `packaging/` | Native and container units, configuration, image inputs and runtime templates |
 | `scripts/` | Reviewed build, install, diagnostic, test and consumer helpers; [complete catalog](docs/scripts.md) |
 | `examples/` | Archive policy, independent copy helper and protected-file MCP client |
@@ -123,11 +121,11 @@ scripts/check.sh
 
 The gate includes format, lint, types, offline tests, build and three isolated
 installation profiles. Use `scripts/check.sh --require-web --with-build` for
-strict web UI and wheel validation. Legacy Cockpit checks are explicit opt-in and
-are outside replacement acceptance. [Development instructions](docs/development.md)
+strict web UI and wheel validation. [Development instructions](docs/development.md)
 describe safe examples, build smoke tests and separately authorized live/NFS work.
 
 ## License
 
-The application is [MIT licensed](LICENSE); the [Cockpit subtree](cockpit/README.md) is LGPL-2.1-or-later, derived
-from the Cockpit starter kit and declared per file in SPDX headers.
+The application is [MIT licensed](LICENSE). Retained adapted recovery code in
+the web workspace is LGPL-2.1-or-later; its attribution and full license text are
+included in the [shipped notices](web/THIRD_PARTY_NOTICES.txt).

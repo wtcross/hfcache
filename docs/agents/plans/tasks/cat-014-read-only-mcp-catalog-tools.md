@@ -1,5 +1,11 @@
 # CAT-014: Expose five explicit read-only MCP discovery tools
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `d27888c2e87d28161f5fdda0893ce86320a18ad9369e45a3b1402d53f81d7077`,
+original content SHA-256 `0b3afb177319f3c2fa970bc47d5098c4746488dcff8117fcd752b4e5c004a5f9`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | complete |
@@ -92,7 +98,7 @@ production/live/credential/host/push action.
 
 Completed 2026-10-19 (CAT-014, this commit). `scripts/check.sh` exited 0:
 4988 passed/40 deselected in 579.39s; wheel/sdist, all three locked isolated
-profiles, actual Cockpit lint/types/169 tests/build passed. Focused mounted suite:
+profiles, actual historical frontend lint/types/169 tests/build passed. Focused mounted suite:
 165 passed in 63.33s; corrected example suite: 6 passed in 11.61s. V44-V46 have
 actual registry/schema, capability/side-effect and REST/MCP evidence. Reviewed
 INV-016/018, AD-10/15/21, FW-01 and decisions 124/125/133; affected current

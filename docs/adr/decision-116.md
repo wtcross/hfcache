@@ -5,7 +5,6 @@
 - Status: Accepted; current scope includes the amendments referenced below.
 - Date: 2026-10-17.
 
-
 ## Context, decision and rationale
 
 Typed routes submit explicit validated command intent through the receipt lane;

@@ -1,5 +1,11 @@
 # Implementation instruction
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `72920a473776dd2a9af14efc467f4087fbb54fbcee34eae78f23ec8ba7ada94e`,
+original content SHA-256 `5bc1dd57a77e6c6245cfea6d65381c558eb78f01af68886622fa5fb03f997c79`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 Use the following instruction after extracting the bundle into the checkout:
 
 ```text
@@ -24,7 +30,7 @@ work package, using the repository's <ID>: <summary> convention. Each commit mus
 include its tests, human documentation/contract changes, invariant and ADR review,
 task evidence, progress entry and appropriate plan/current selector updates.
 Run scripts/check.sh for every package; do not record a skipped or failed
-required check as passing. Cockpit work requires an actually executed frontend
+required check as passing. historical frontend work requires an actually executed frontend
 gate. Record genuine blockers and continue only with other authorized ready work.
 
 Use offline temporary fixtures. No production deployment, live Hub/NFS workloads,

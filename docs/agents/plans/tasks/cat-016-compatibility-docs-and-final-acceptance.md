@@ -1,5 +1,11 @@
 # CAT-016: Complete lifecycle compatibility drills, documentation and plan handoff
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `95f2fe514f7ba1541753cfa74fb840a22575bad09d2fd317d6e3d0f50e3f4e0d`,
+original content SHA-256 `4f8d0d0a1fe0cfa11dc70ae0ee8972adf6d227126be2fa71ec0fad223a95d90b`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | complete |
@@ -102,7 +108,7 @@ INV-018/decision 133 enforcement and rationale link the actual target probes.
 Completed 2026-10-19 (CAT-016, this commit). Final
 `scripts/check.sh --with-build` exited 0: 5008 offline tests passed/42 opt-in tests
 deselected in 583.36s; all three locked isolated installation profiles passed;
-actual Cockpit lint/types/170 tests/production build passed with zero skips;
+actual historical frontend lint/types/170 tests/production build passed with zero skips;
 extended build stage passed 6 tests/5044 deselected in 18.26s, including both
 actual installed-old-wheel targets and current clean-wheel smoke. Earlier focused
 lifecycle/cursor/evidence selection passed 9 in 3.51s; installed target probes

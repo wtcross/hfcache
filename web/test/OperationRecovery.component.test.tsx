@@ -135,7 +135,7 @@ test("stopping observation aborts GET and preserves the imported handle without 
 test("legacy bearer-key reference is preserved separately and cannot be converted by the Basic session", async () => {
     const { controller, fetcher } = mount();
     await userEvent.click(
-        screen.getByRole("radio", { name: "Legacy Cockpit key reference" }),
+        screen.getByRole("radio", { name: "Legacy bearer key reference" }),
     );
     await userEvent.type(
         screen.getByRole("textbox", { name: "Original handle" }),
@@ -187,7 +187,7 @@ test("native radio groups support keyboard mode changes while preserving typed a
     ).not.toBeInTheDocument();
     await user.keyboard("{ArrowRight}");
     const legacyChoice = within(handleChoices).getByRole("radio", {
-        name: "Legacy Cockpit key reference",
+        name: "Legacy bearer key reference",
     });
     expect(legacyChoice).toBeChecked();
     expect(legacyChoice).toHaveFocus();

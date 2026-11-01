@@ -4,6 +4,7 @@ import hashlib
 import json
 import re
 import subprocess
+from functools import lru_cache
 from pathlib import Path
 from urllib.parse import unquote
 
@@ -11,21 +12,54 @@ ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "docs/agents/migration-manifest.json"
 
 
+@lru_cache
+def original_paths(commit):
+    return subprocess.run(
+        ["git", "ls-tree", "-r", "--name-only", commit],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.splitlines()
+
+
+def original_path(row, field, commit):
+    """Resolve an intentionally omitted historical spelling without losing provenance."""
+    if field in row:
+        assert field + "_path_sha256" not in row
+        return row[field]
+    digest = row[field + "_path_sha256"]
+    matches = [
+        name
+        for name in original_paths(commit)
+        if hashlib.sha256(name.encode()).hexdigest() == digest
+    ]
+    assert len(matches) == 1, (commit, digest)
+    return matches[0]
+
+
 def test_every_migrated_record_has_original_git_hash_and_unique_destination():
     manifest = json.loads(MANIFEST.read_text())
     records = manifest["records"]
-    assert len({row["old"] for row in records}) == len(records)
-    assert len({row["new"] for row in records}) == len(records)
+    assert len({original_path(row, "old", manifest["baseline"]) for row in records}) == len(records)
+    current = [row["new"] for row in records if not row.get("retired")]
+    assert len(set(current)) == len(current)
     for row in records:
+        old = original_path(row, "old", manifest["baseline"])
         original = subprocess.run(
-            ["git", "show", f"{manifest['baseline']}:{row['old']}"],
+            ["git", "show", f"{manifest['baseline']}:{old}"],
             cwd=ROOT,
             check=True,
             capture_output=True,
         ).stdout
         assert hashlib.sha256(original).hexdigest() == row["sha256"]
-        assert (ROOT / row["new"]).is_file(), row
-        assert not (ROOT / row["old"]).exists(), row
+        if row.get("retired"):
+            assert row["retired"] is True
+            assert row["retirement_reason"].strip()
+            assert "new" not in row
+        else:
+            assert (ROOT / row["new"]).is_file(), row
+        assert not (ROOT / old).exists(), row
 
 
 def test_agent_entrypoint_and_single_selector_survive_relocation():
@@ -42,7 +76,6 @@ def test_every_migration_markdown_link_has_an_existing_destination():
         ROOT / "AGENTS.md",
         ROOT / "README.md",
         ROOT / "CHANGELOG.md",
-        ROOT / "cockpit/README.md",
         *(ROOT / "docs").rglob("*.md"),
     ]
     for document in documents:
@@ -64,15 +97,18 @@ def test_planning_invariant_and_process_decisions_have_agent_homes():
 def test_original_documentation_inventory_accounts_for_each_tracked_document():
     manifest = json.loads(MANIFEST.read_text())
     inventory = json.loads((ROOT / "docs/agents/documentation-inventory.json").read_text())
-    paths = subprocess.run(
-        ["git", "ls-tree", "-r", "--name-only", manifest["baseline"]],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.splitlines()
+    paths = original_paths(manifest["baseline"])
     expected = {p for p in paths if p.endswith(".md") and p != "CLAUDE.md"}
-    assert {row["original"] for row in inventory["documents"]} == expected
+    retained = {
+        original_path(row, "original", manifest["baseline"]) for row in inventory["documents"]
+    }
+    retired_rows = inventory["retired_documents"]
+    retired = {original_path(row, "original", manifest["baseline"]) for row in retired_rows}
+    assert not retained & retired
+    assert retained | retired == expected
+    assert len(retained) == len(inventory["documents"])
+    assert len(retired) == len(retired_rows)
+    assert all(row["reason"].strip() for row in retired_rows)
     assert all((ROOT / row["current"]).exists() for row in inventory["documents"])
 
 
@@ -82,8 +118,9 @@ def test_every_preserved_reference_snapshot_has_an_original_git_hash_and_current
     snapshots = set()
     for manifest in manifests:
         for row in json.loads(manifest.read_text()):
+            source = original_path(row, "source", row["git"])
             original = subprocess.run(
-                ["git", "show", f"{row['git']}:{row['source']}"],
+                ["git", "show", f"{row['git']}:{source}"],
                 cwd=ROOT,
                 check=True,
                 capture_output=True,
@@ -96,4 +133,4 @@ def test_every_preserved_reference_snapshot_has_an_original_git_hash_and_current
                 hashlib.sha256((ROOT / row["snapshot"]).read_bytes()).hexdigest()
                 == row["snapshot_sha256"]
             )
-            assert (ROOT / row["source"]).is_file()
+            assert (ROOT / row.get("current_source", source)).is_file()

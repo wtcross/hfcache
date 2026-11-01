@@ -1,5 +1,11 @@
 # API-012: Move CLI reads and candidate validation/planning onto the API
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `1a1b574f599036ccb7e536fc878ba27a25486684c1bba51172bbcbc67ede3c54`,
+original content SHA-256 `da77499f83ed7633f1c0dc0ade47ead3bf670da6315385f623c4a5fa2cd3c2d9`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `API-012` |
@@ -90,15 +96,6 @@ is path-free. Inventory reconstruction bounds accumulated rows across base and
 revision pages, preserves empty/unmanaged repositories and checks current SHA/
 publication identity, membership, counts and ordering before rendering.
 
-Source review covers INV-001/002/006/008/012–014, AD-21, CP-11 and FW-03/04.
-Decision 119 amends 087/108/112/116/118, AD-21 and the framework record. Candidate
-validation has explicit unknown compatibility when installed policy is invalid;
-candidate planning rechecks all six fields after waiting, including credential
-name excluded from fingerprints. Exact candidate text binds keys; explicit null
-is refused while the absent field preserves historical installed-plan digests.
-All 29 HTTP parity rows are implemented; mutating CLI/operation UX, installed
-host/Cockpit integration and REST/MCP acceptance retain their later task gates.
-
 Focused candidate command
 `rtk uv run --locked --extra server pytest tests/unit/test_api_candidates.py tests/unit/test_api_candidates_adversarial.py -q`
 passed 55 tests in 7.28 seconds (7 core, 48 adversarial), including malicious
@@ -173,12 +170,12 @@ Completed 2026-10-18, this commit.
   345 files were formatted, Ruff passed, Pyrefly reported 0 errors (11 suppressed,
   55 hidden warnings). Python passed 2,953 tests, 40 deselected, in 195.16 seconds.
   Version 0.1.10 source distribution/wheel built; locked isolated base/server
-  installation/import/help/version checks passed. Cockpit eslint/stylelint/types,
+  installation/import/help/version checks passed. historical frontend eslint/stylelint/types,
   45 tests (0 failed/skipped) and production build passed. No full-gate failure,
   correction, retry or post-freeze source change.
 - Reviewed INV-001/002/006/008/012–014, AD-21, CP-11 and FW-03/04. Decision 119,
   amendments 087/108/112/116/118, AD-21/framework records and affected CLI/client/
-  API/configuration/security/server/architecture/invariant/consumer/Cockpit,
+  API/configuration/security/server/architecture/invariant/consumer/historical frontend,
   README/plan/Unreleased contracts agree. Direct HTTPCore use has recorded FW-04
   correctness rationale; no durable archive/control-state schema, domain algorithm,
   writer authority or MCP change. All 29 HTTP parity rows are implemented.

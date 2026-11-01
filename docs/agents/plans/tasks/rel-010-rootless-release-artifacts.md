@@ -1,5 +1,11 @@
 # REL-010: Review and commit 0.2.0 source
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `6c3856d9b75629a669270b1a31d7fc229a9731998aa2a67d28f12560f20b6d20`,
+original content SHA-256 `e973092d750baae442368cc38816efef75dc4da5305ff37b450b6a332740a0f0`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `REL-010` |
@@ -65,7 +71,7 @@ The required NAS-masked `scripts/check.sh --with-build` gate ran in
 541f3e5c6dfe49dc8a7e0d5dd1319cbb, session 16776, with confirmed actual exit 0.
 It passes 405 formatting checks, Ruff/whole types 0, 3,792 Python tests with
 40 deselected in 461.15 seconds, 0.2.0 wheel/sdist and all three locked isolated
-installation profiles. Cockpit lint/style/types, 135 tests in 2.273 seconds and
+installation profiles. historical frontend lint/style/types, 135 tests in 2.273 seconds and
 build 1,221 ms pass; four extra wheel smokes pass in 7.15 seconds. Unit runtime
 is 8 minutes 34.329 seconds. Log SHA-256:
 0ec960317ee6ec0b73c3ec72428c835edf6d4e66f888c4cfc330f767c1dd529f.

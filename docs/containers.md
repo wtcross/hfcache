@@ -23,7 +23,7 @@ Host service UID/GID come from protected runtime metadata and the helper caller.
 `keep-id` maps them to container `981:981`; 981 is not a universal host UID.
 Persistent roles run under the service account's user manager, reached through
 the protected system bridge. The finite client is launched by the fixed host
-wrapper (including Cockpit's service-identity transient unit).
+wrapper running under the selected service identity.
 
 | Role | Network | Secrets | Executable | Persistent/writable state |
 | --- | --- | --- | --- | --- |
@@ -154,98 +154,27 @@ the selected immutable release. It resolves its physical release root once,
 then pins that root's rendered/runtime.json and host seccomp/Caddy sources. The fixed
 [client launcher](../scripts/hfcache-client) installs as
 /usr/local/libexec/hfcache-client, using explicit client settings and
-/run/hfcache/api/api.sock. Cockpit retains outer identity/UMask/MemoryHigh and
-candidate guards, without host ImportCredential; Podman delivers the API-only
+/run/hfcache/api/api.sock. The wrapper retains the service identity and fixed
+client settings without host ImportCredential; Podman delivers the API-only
 secret inside the client. No generic engine/executable authority or bare-host
-fallback is exposed. See [Cockpit](cockpit.md).
+fallback is exposed.
 
 For API/worker, the helper explicitly forwards only a canonical non-secret
 32-lowercase-hex systemd INVOCATION_ID when present; Podman does not inherit it
 automatically. This preserves executing-service metadata/log framing, not timer
 or client provenance. Other ambient environment is not forwarded.
 
-### Read-only Cockpit host permission inspection
+### Protected host permission inspection
 
-The existing helper accepts the exact additional role `inspect-cockpit`, with no
-arguments. Run it as root through the privileged Cockpit bridge. It starts no
-container, acquires no lock, changes no host files or units, and reads neither
-archive contents nor credential values. The normal service/client roles retain
-their service-account identity and fixed launcher behavior.
-
-Inspection requires an independently administrator-provisioned
-`/etc/hfcache/cockpit-policy.json`. The application never creates or edits it.
-It must be a root-owned, single-link regular file of at most 4 KiB, with no
-group/other writes or symlinked parents. JSON is duplicate-free and permits
-exactly this schema:
-
-```json
-{
-  "schema_version": 1,
-  "source_commit": "cccccccccccccccccccccccccccccccccccccccc",
-  "index_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
-  "permissions": {
-    "archive": false,
-    "hub": false,
-    "control": false,
-    "schedule": false,
-    "configuration": false,
-    "observer": false
-  }
-}
-```
-
-The source and index values must identify the selected immutable release; these
-example values grant nothing. Permissions distinguish archive-effecting jobs,
-Hub-capable sizing/diagnostic jobs, other keyed control jobs, fixed sync scheduling, guarded host
-configuration changes, and stopping a proven scheduled sync observer. Permission
-to submit is not proof of writable storage or workload readiness. Server
-authentication, policy, capacity, identity, executor and archive locks remain
-final, and the runtime archive binds remain read-only.
-
-The selected release must include `scripts/install-container-release.py` as an
-indexed, authenticated required artifact. Inspection verifies captured bytes of
-that fixed script against the policy-pinned index before using only its
-read-only stage and nine-binding verifiers. Releases lacking that proof are
-unsupported. Root-owned protected descriptor reads, manifest/rendered hashes and
-the physical helper root must match the selected `releases/VERSION` target.
-Selection, policy, index and host mount facts are checked again before returning.
-
-Host facts come from bounded `/proc/1/mountinfo`, `/proc/locks`, metadata of the
-existing local domain lock, and fixed system-manager unit properties. A held
-guard requires its actual main PID to own the exclusive flock on that same
-device/inode. Inspection never opens the lock for content or attempts to acquire
-it. It never invokes Podman as root or queries a different manager. A held guard
-forces archive permission false; missing or unconfirmed facts deny effects.
-An absent guard or mask does not create permission.
-
-The current nine rootless bindings do not prove a system scheduled observer or
-timer binding. Native `.venv` scheduled-client units are insufficient for this
-profile. Effective `observer` and `schedule` permissions therefore remain false,
-including when the policy requests them. No scheduler, alternate direct client,
-user-manager redirection, unit unmasking or binding is installed by inspection.
-
-Output is one JSON object, bounded to 16 KiB. A supported result has exactly
-`schema_version=1`, `state` (`guarded` or `permitted`), `deployment=rootless`,
-`source_commit`, `index_sha256`, selected `image`, `policy_sha256`, the six
-effective `permissions`, and `facts`. Facts contain `guard` (`held`, `inactive`,
-`absent`), `archive_mount` (`nfs-ro`, `local-ro`, `local-rw`, `absent`) and `units`.
-The units object has exactly the sync/verify system services and timers; each
-has `load`, `active` and `unit_file`. Load is `loaded`, `masked` or `not-found`;
-active is `active`, `inactive` or `failed`. Unit-file states are `enabled`,
-`enabled-runtime`, `disabled`, `static`, `linked`, `linked-runtime`, `masked`,
-`masked-runtime` or `not-found`.
-The fixed manager read requests the five common properties for the two allowed
-timers; systemd does not expose `MainPID` for timers. Services and the guard still
-require their numeric `MainPID`. A known timer's internal zero PID is a parser
-normalization, never evidence that a service or guard is inactive. Unknown or
-missing required fields remain unavailable; the public facts schema is unchanged.
-
-An unavailable result has exactly `schema_version=1`, `state=unknown` and a
-`reason`: `privilege-required`, `policy-missing`, `policy-invalid`,
-`deployment-unverified` or `facts-unavailable`. It includes no permissions or
-partial facts. Every valid inspection result exits zero, including denied
-inspection; this is not successful workload acceptance. Invalid arguments or
-bridge/process failures remain separate failures. No raw diagnostics are emitted.
+The web API uses the separately confined fixed host helper for bounded selected-
+release, mount, original-lock and manager observations. Permissions, actual
+storage writability and workload readiness remain independent. A held guard
+forces archive denial; missing, unsafe or unconfirmed evidence denies effects.
+The guarded rootless profile does not establish native scheduled-observer or
+timer bindings, so schedule/observer effects stay denied. Inspection does not
+start containers, alter units, acquire the archive lock or read credential values.
+See the current [host contract](host-administration.md) for the fixed protocol,
+protected policy, captured-byte validation and deployment-specific proofs.
 
 ## Bind selection to actual execution
 
@@ -468,7 +397,7 @@ are missing or incompatible. Preserve the existing API-only policy bind,
 worker/client credential masks, no Caddy policy bind and helper opt-in below.
 Staging never installs the separate protected helper bootstrap copies or starts
 services. Source packaging and disposable acceptance do not authorize production
-deployment or live Cockpit removal.
+deployment or live service removal.
 
 ### Optional host reader input
 
@@ -716,10 +645,9 @@ checks, the exact fourteen read-only MCP tools, an API-container-origin private
 PROBE and actual worker PID1 offline/mask/capability/read-only-root observations
 under Enforcing SELinux. The new notify guard holds the original domain inode;
 NAS read-only, writer masks, disabled calendars and original configuration,
-candidate, backup, locks and durable stores remain. The protected Cockpit policy
-permits configuration only; archive, Hub, control, schedule and observer remain
-denied. This does not prove the original production PAM/browser candidate flow
-or permit a NAS workload. The [deployment status](deployment-status.md) records
+candidate, backup, locks and durable stores remain. Historical protected policy
+grants remain unchanged. This does not prove an original production browser
+candidate flow or permit a NAS workload. The [deployment status](deployment-status.md) records
 the installed identities, local tag and remaining holds.
 
 Historical 0.2.1 checks include the installed API-container private PROBE under

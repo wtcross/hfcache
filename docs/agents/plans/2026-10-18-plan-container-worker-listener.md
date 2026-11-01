@@ -1,5 +1,11 @@
 # Let the confined rootless verifier own its private listener
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `aaea1ddad6435460a468c5d4701693e0b6641a92f0320c710f6c60d53c528e19`,
+original content SHA-256 `dc88a824d019c10c52d8a031fc3a9af9946edced054f273a229b70a5ac973622`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Plan ID | `2026-10-18-plan-container-worker-listener` |
@@ -177,7 +183,7 @@ owner and coordinated source freeze before its gate.
   real notify/container-origin peer/isolation and exact cleanup; the failed
   startup-stop regression and superseded untested preview remain task evidence.
   Actual NAS-masked --with-build exits 0: 3,912 Python tests/40 deselected in
-  487.56 seconds, three locked installation profiles, 135 Cockpit tests/build
+  487.56 seconds, three locked installation profiles, 135 historical frontend tests/build
   and four wheel smokes. REL-013 is next pending until this source commit;
   deployed 0.2.0/hold 22 and all NAS/other-host restrictions remain unchanged.
 
@@ -209,7 +215,7 @@ owner and coordinated source freeze before its gate.
   omission and supported caio fallback corrections retain failed foundation
   evidence. Dirty UBI foundation/notify/container-peer/isolation/TLS proofs pass;
   the fresh NAS-masked --with-build exits 0 with 4,057 Python/40 deselected,
-  three locked profiles, 135 Cockpit tests/build and four wheel smokes. REL-013
+  three locked profiles, 135 historical frontend tests/build and four wheel smokes. REL-013
   is next pending until this commit and must repeat clean UBI acceptance.
   Production 0.2.0/hold 22/NAS/guard/writer-mask/state/remote barriers remain.
 
@@ -225,7 +231,7 @@ owner and coordinated source freeze before its gate.
   with actual foundation/notify/container-peer/isolation/TLS/compatibility,
   separately labeled simulated-NFS complete HTTP domain, protected stage/index
   and service/control-reader acceptance. Clean-source NAS-masked --with-build
-  exits 0: 4,057 Python/40 deselected, three locked profiles, 135 Cockpit tests/build
+  exits 0: 4,057 Python/40 deselected, three locked profiles, 135 historical frontend tests/build
   and four wheel smokes. Earlier superseded/failed evidence remains intact.
   OPS-018 stays pending until this evidence commit; production 0.2.0/hold 22,
   guard/NAS/writer-mask/state/remote restrictions remain unchanged.
@@ -243,7 +249,7 @@ owner and coordinated source freeze before its gate.
   Guard/original locks/stores/secrets/masks/NAS-ro persist; old socket/failures
   remain retained. Verified TLS/auth/MCP/client/effective-unit/isolation checks
   and full masked --with-build pass (4,057 Python/40 deselected, three profiles,
-  135 Cockpit tests/build, four wheel smokes). REL-014 stays pending until this
+  135 historical frontend tests/build, four wheel smokes). REL-014 stays pending until this
   rollout commits. No 0.2.1 tag or NAS workload/storage/other-host/remote acceptance
   is claimed; rollback to 0.2.0 restores its known connection limitation.
 
@@ -257,7 +263,7 @@ owner and coordinated source freeze before its gate.
 
 - 2026-10-18: REL-014 completes final independent release/history/artifact/host
   reconciliation and fresh NAS-masked --with-build exit 0 (4,057 Python/40
-  deselected, three locked profiles, 135 Cockpit tests/build, four wheel smokes).
+  deselected, three locked profiles, 135 historical frontend tests/build, four wheel smokes).
   Actual annotated local v0.2.1 targets reviewed deployment/evidence 156506f,
   while immutable app source remains 4088994. All five task dispositions are
   complete; this plan closes and only its current selector clears. Original

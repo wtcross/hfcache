@@ -1,11 +1,12 @@
 > Historical technical reference preserved before consolidation. Current authority is the living contract.
 
-# Decision 092: Plugin CLI invocations run in transient units that import the deployment's encrypted Hub credential
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `950f428faa32460e1a2ae964adde639fb0df2d9996bddb8a42e7995f1b5caa03`,
+original content SHA-256 `8986d5772d5a5d1e5fcd1938510594da586cfe417ac420e1144dba547ca17eac`.
+Historical proof hashes identify the original artifacts, not this edited record.
 
-Status: accepted when recorded; retained as historical evidence. Dated
-implementation and deployment details are not independent current requirements.
-Current contracts and later qualifications below govern.
-API-backed Cockpit mechanisms are amended by [decision 122](../../../../../adr/decision-122.md).
+# Decision 092: Plugin CLI invocations run in transient units that import the deployment's encrypted Hub credential
 
 - Original decision date: 2026-07-30.
 - Original work package: `CPT-013`.
@@ -39,7 +40,7 @@ share it. Lifetime semantics change deliberately: a transient unit
 outlives its page-side waiter (verified: unit stayed `active` after the
 waiter was killed), so closing a tab now detaches the view and loses
 the envelope rather than killing the run — contract §5, the UI copy,
-and `docs/cockpit-plugin/usage.md` restate it. `CP-08` holds:
+and `docs/agents/history/removed-interface-records.md` restate it. `CP-08` holds:
 decryption is PID 1's, token bytes never pass through the bridge or
 the page. **Rejected: probing for a credential file and conditionally
 passing `LoadCredentialEncrypted=`** — turns the pure argv builder into
@@ -72,23 +73,5 @@ ImportCredential`). The decision text above preserves the complete reasoning in
 the current historical log, including its recorded alternatives and
 consequences.
 
-Current governing documents: [docs/cockpit.md](../../../../../cockpit.md),
+Current governing documents: [docs/agents/history/removed-interface-records.md](../../../removed-interface-records.md),
 [docs/security.md](../../../../../security.md).
-
-Implementation or shipped-artifact evidence:
-[cockpit/src/lib/command.ts](../../../../../../cockpit/src/lib/command.ts),
-[packaging/systemd/hfcache-sync.service.d/credential.conf.example](../../../../../../packaging/systemd/hfcache-sync.service.d/legacy-hub-credential-reset.conf.example).
-
-Relevant verification:
-[cockpit/test/command.test.ts](../../../../../../cockpit/test/command.test.ts).
-
-
-## 2026-10-18 Cockpit API integration amendment (API-015)
-
-The credential-delivery mechanism remains systemd, but its authority changes:
-transient API clients import only `hfcache.api`, use fixed client TOML/socket and
-omit ordinary archive config/Hub environment. Hub `hf-token` stays daemon-only;
-there is no anonymous fallback for missing API credentials. Browser/argv/environment
-bearers remain forbidden. Closing/stopping a client loses observation, never
-cancels accepted execution or proves recovery safe. This supersedes the Hub-import
-and direct-execution implications above; see [decision 122](../../../../../adr/decision-122.md).

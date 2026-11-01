@@ -1,4 +1,4 @@
-"""Client authority metadata uses authenticated reads, never recovery submission (CP-08)."""
+"""Client authority metadata uses authenticated reads, never recovery submission."""
 
 import asyncio
 import hashlib

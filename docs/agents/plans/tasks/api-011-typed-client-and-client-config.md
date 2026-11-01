@@ -1,5 +1,11 @@
 # API-011: Build the typed API client and reader-only configuration
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `b53abf932a71c3b0f50b9f2cf8c6ec2479a5efb28ca2cdb134a18c2dedad401e`,
+original content SHA-256 `69d0beaceddb19b8945b5a62b97e701f12168c77918b31669b6d6a79445c4ceb`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `API-011` |
@@ -162,7 +168,7 @@ Completed 2026-10-18, this commit.
   54 hidden warnings); Python passed 2,852 tests, 40 deselected, in 163.45 seconds.
   Version 0.1.10 sdist/wheel built; actual locked isolated base/server wheel
   installation/import/help/version passed, now explicitly importing client modules
-  without server/MCP dependencies in base. Cockpit eslint/stylelint/types, 45
+  without server/MCP dependencies in base. historical frontend eslint/stylelint/types, 45
   tests (0 failures/skips) and production build passed. No gate failure/correction
   or source change after final freeze.
 - Reviewed INV-001–003/006/008/012–014, FS-12, AD-21 and decisions 108/111–117.

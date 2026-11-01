@@ -1,5 +1,11 @@
 # API-008: Run bounded operations and implement the private offline executor
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `59ae9afb7d5fc091e51cb2c90e8e165825450c02d33d9d5f69130268391b5769`,
+original content SHA-256 `94a5846ab09f3555e78aae2490756461428e97e317e8c2f5d27d3e4d05022ffa`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `API-008` |
@@ -37,7 +43,7 @@ Document execution state transitions, deadlines, no-replay semantics, worker tru
   (11 suppressed, 54 hidden warnings). **2,309 Python tests passed, 40 deselected
   in 124.99 seconds**. Version `0.1.10` sdist/wheel built; real isolated locked
   base/server wheel installation, import, help and local-version checks passed.
-  Cockpit eslint/stylelint/types, **45 tests** with no failures and production
+  historical frontend eslint/stylelint/types, **45 tests** with no failures and production
   build passed.
 - The first full gate was green at 2,307 Python tests, 40 deselected in 124.45
   seconds, with all later stages passing. Its log remains
@@ -159,7 +165,7 @@ passed (1 selected, 119 deselected in 1.24 seconds). These are separate selectio
 the full-gate history below distinguishes the first pass from final acceptance.
 
 The first full gate passed 2,307 Python tests (40 deselected in 124.45 seconds),
-plus every build/install/Cockpit stage. Its log is preserved as
+plus every build/install/historical frontend stage. Its log is preserved as
 `.scratch/api-008-gate-first-green.log`. A subsequent positive inherited-FD-3
 entry-point probe found a real bootstrap ordering defect: shared runtime imports
 opened `/dev/urandom` at FD 4 before the inherited-descriptor audit, so the audit

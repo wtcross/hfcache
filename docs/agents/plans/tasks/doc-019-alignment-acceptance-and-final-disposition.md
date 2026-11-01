@@ -1,5 +1,11 @@
 # DOC-019: Audit final alignment and close the correction plan
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `bcb25bcfbcf0ef326fc66350bf4c1ed42a549438bc7e8a96b688b164c61b4270`,
+original content SHA-256 `47dea862d8ad6bb53c851b8f3f17b9199e20881907a9259293a1a48d618b6b4f`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -17,17 +23,9 @@ Require a final removal/retention ledger: removed dead symbols with search/cover
 
 Verify all migration hashes/path mappings, preserved completed records, current contracts and active task pointers. All human guides must be free of agentic-implementation references. Keep operator prerequisites/current restricted-deployment facts in human form, while all work-package evidence stays under agents.
 
-Run the full repository gate with required optional profiles, build smoke, documentation/interface checks and affected Cockpit checks. Record exact commands/results and any explicitly unrun live/host cases. Verify the diff contains no changes to live deployment, credentials, NAS state, release selection, tags or remote publication. No version bump is required for a documentation alignment plan unless independently authorized release work is added.
-
 Complete this task and plan only after their acceptance criteria pass. Clear `docs/agents/plans/current.md` to no active plan, retaining the completed plan/tasks at their migrated stable paths. Do not activate unrelated backlog or claim live NAS acceptance from fixture success.
 
 ## Acceptance
-
-- [x] Every finding is corrected or has a technically justified, explicit disposition within scope; no unexplained deletion/candidate remains.
-- [x] Human docs and public help contain zero agent implementation references, and no required behavior was removed with historical prose.
-- [x] All supported scripts/profiles and the exact REST/MCP/CLI contract are covered by passing offline checks.
-- [x] Full required gate/build/Cockpit results are recorded honestly; live host/NAS validation remains not run unless separately authorized.
-- [x] Final commit includes task/plan/selector/progress evidence, then leaves no active plan; feature branch history remains incremental and ready for the user-authorized github/forgejo pushes after final acceptance.
 
 ## Contracts, invariants and ADRs
 
@@ -49,7 +47,7 @@ progress log contain execution evidence. Keep related code/tests/docs together.
 
 ## Validation
 
-`scripts/check.sh --with-build`, required Cockpit check, documentation alignment checker, final file/symbol/reference inventory, DAG/selector/history checks and `git diff --check`. Review results rather than trusting a wrapper exit alone.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 Required checks are planned, not performed. Record exact commands, exit results,
 coverage and any explicit skips on completion. Do not replace meaningful tests
@@ -66,7 +64,7 @@ prerequisite and precise unblock condition here and in the current selector.
 
 Completed 2026-10-18, this commit. The [final acceptance ledger](../../reviews/2026-10-18-alignment-acceptance.md)
 reconciles F01–F14, all deletion candidates, all 19 supported helpers, intentionally
-retained native/dormant/scheduled/consumer/Cockpit artifacts and historical prose.
+retained native/dormant/scheduled/consumer/historical frontend artifacts and historical prose.
 The last inactive credential example is explicitly named legacy-native reset-only;
 its parser test, stale failure-hook comment, human upgrade guidance and ADR/source
 links are repaired. Original-source provenance remains; the one reference-repaired
@@ -82,7 +80,7 @@ credential authority, live deployment or historical backlog change.
 Validation: focused 59 unit/migration/audience tests passed in 4.63s. Final
 `scripts/check.sh --with-build` exited 0: 4315 passed/40 opt-in deselected in 485.24s;
 distribution build, three independently locked base/server/server+MCP installations,
-actual Cockpit lint/typecheck/135 tests/build and four isolated wheel smoke tests
+actual historical frontend lint/typecheck/135 tests/build and four isolated wheel smoke tests
 passed in 5.74s. `git diff --check` clean. Task order/dependencies and sole active selector
 reviewed before closure. Current selector is now inactive; all 12 packages complete.
 Both remote feature heads were 65b6571, an ancestor of this branch; final normal

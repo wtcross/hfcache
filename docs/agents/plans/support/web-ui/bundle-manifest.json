@@ -77,27 +77,37 @@
     {
       "path": "docs/agents/plans/support/web-ui/reference/hfcache-ui-dataset-detail.png",
       "bytes": 234529,
-      "sha256": "fdb2dcde4b18aab436b4719392f14237b6e1d674bf7b82ccafdc048dee6fdb5b"
+      "sha256": "fdb2dcde4b18aab436b4719392f14237b6e1d674bf7b82ccafdc048dee6fdb5b",
+      "original_sha256": "fdb2dcde4b18aab436b4719392f14237b6e1d674bf7b82ccafdc048dee6fdb5b",
+      "original_bytes": 234529
     },
     {
       "path": "docs/agents/plans/support/web-ui/reference/hfcache-ui-library.png",
       "bytes": 235033,
-      "sha256": "a2c1279d85d6f72d5140d05b389b14e0229f7781440e3be965cc9e2a89cd2b2c"
+      "sha256": "a2c1279d85d6f72d5140d05b389b14e0229f7781440e3be965cc9e2a89cd2b2c",
+      "original_sha256": "a2c1279d85d6f72d5140d05b389b14e0229f7781440e3be965cc9e2a89cd2b2c",
+      "original_bytes": 235033
     },
     {
       "path": "docs/agents/plans/support/web-ui/reference/hfcache-ui-model-detail.png",
       "bytes": 244543,
-      "sha256": "0833ca83a56da024aaca13fee70ba9bb67893e17afbc9d6670a2e1ef0f76e2bf"
+      "sha256": "0833ca83a56da024aaca13fee70ba9bb67893e17afbc9d6670a2e1ef0f76e2bf",
+      "original_sha256": "0833ca83a56da024aaca13fee70ba9bb67893e17afbc9d6670a2e1ef0f76e2bf",
+      "original_bytes": 244543
     },
     {
       "path": "docs/agents/plans/support/web-ui/reference/hfcache-ui-operations.png",
       "bytes": 179407,
-      "sha256": "1dd1a7e4d0fe90df4ec1bf3afbe3e68a58f51916565eb286b962635fc83ce5f4"
+      "sha256": "1dd1a7e4d0fe90df4ec1bf3afbe3e68a58f51916565eb286b962635fc83ce5f4",
+      "original_sha256": "1dd1a7e4d0fe90df4ec1bf3afbe3e68a58f51916565eb286b962635fc83ce5f4",
+      "original_bytes": 179407
     },
     {
       "path": "docs/agents/plans/support/web-ui/reference/hfcache-web-ui-mockup.html",
-      "bytes": 79340,
-      "sha256": "e5d97d8b70a49c956aadf6826d02fabf436b2b2654d9a676b90b81fc26fb4ccb"
+      "bytes": 79367,
+      "sha256": "e6610dbbd14ca0a0d14c84ad855d54f4454699b2fd8a6153270b6a06df58dd6c",
+      "original_sha256": "e5d97d8b70a49c956aadf6826d02fabf436b2b2654d9a676b90b81fc26fb4ccb",
+      "original_bytes": 79340
     },
     {
       "path": "docs/agents/plans/support/web-ui/source-review.md",
@@ -235,14 +245,23 @@
       "sha256": "e5393570d5cc9fe0d8f248e081f4ec19497e9644bcd11b085ee7fba7b427d709"
     },
     {
-      "path": "docs/agents/plans/tasks/web-025-retire-cockpit-plugin.md",
+      "path": "docs/agents/plans/tasks/web-025-independent-web-handoff.md",
       "bytes": 5357,
-      "sha256": "9dde9a1cb983b5712b7a56ffe913b78297098bc10bf12882995b9446b98f2501"
+      "sha256": "9dde9a1cb983b5712b7a56ffe913b78297098bc10bf12882995b9446b98f2501",
+      "original_path_sha256": "317a2be4f2c743a4adc0126d77c83220687cd139c5172e436655a7edf70ed433"
     },
     {
       "path": "docs/agents/plans/tasks/web-026-final-gate-and-handoff.md",
       "bytes": 5432,
       "sha256": "525d0fdfa3203d08172c87c360444ef65219f73d3aecf83cbcc526c443535da2"
     }
-  ]
+  ],
+  "reference_projection_provenance": {
+    "original_git": "c692d7ae4b866fefd8a743a21afdb729da0f39c4",
+    "note": "Original supplied reference hashes remain separate; bytes/sha256 bind current sanitized reference copies."
+  },
+  "historical_manifest_provenance": {
+    "original_git": "c692d7ae4b866fefd8a743a21afdb729da0f39c4",
+    "scope": "Outside reference assets, bytes/sha256 retain original supplied-record identities, not current-content hashes. Path is the current locator; original_path_sha256 identifies any renamed original path. Original exact manifest remains in Git."
+  }
 }

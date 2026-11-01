@@ -1,5 +1,11 @@
 # API-014: Package the server, private worker, and API-backed scheduled services
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `c87e5c6a9bf68f90897a121f636217e061623058ccefe799f1fb1fded8868da6`,
+original content SHA-256 `134046627fd4c609f9fa17a2da88503d8903c47cfe70ab2e90cb661ff09f4d98`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `API-014` |
@@ -175,7 +181,7 @@ Definitive `rtk proxy bash scripts/check.sh > .scratch/api-014-gate.log 2>&1`
 exited 0: lock/sync, 360 formatted Python files, Ruff and Pyrefly 0 errors
 (11 suppressed, 57 warnings not shown); 3,223 Python tests passed, 40 deselected,
 in 349.85 seconds; 0.1.10 source distribution/wheel built; actual isolated locked
-base/server installation/import/help/version checks passed. Cockpit ESLint,
+base/server installation/import/help/version checks passed. historical frontend ESLint,
 stylelint, TypeScript, 45 tests (0 failures) and production build passed. No
 post-gate source change. Final record/link/current/dependency/parity, 121 unique
 indexed decision/ADR and whitespace audits pass; all 29 API parity rows remain
@@ -186,7 +192,7 @@ amendments to scheduling/offline, AD-17, 061/065/115/120 and FW-01–04 distingu
 observer lifetime, executor ownership, retained evidence and private-format
 compatibility. Server/client/API/schema/configuration/CLI/security contracts,
 architecture §7.8.2, original plan, deployment/operations/recovery, agent guidance,
-Cockpit baseline amendment, README and Unreleased agree. Archive/receipt schemas
+historical frontend baseline amendment, README and Unreleased agree. Archive/receipt schemas
 and runtime dependencies are unchanged; no MCP work or production operation.
 
 Operator handoff retains real named systemd socket activation, executor cgroup

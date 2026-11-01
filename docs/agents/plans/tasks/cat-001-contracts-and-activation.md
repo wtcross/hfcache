@@ -1,5 +1,11 @@
 # CAT-001: Activate the feature plan and establish technical contracts
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `c3709b0c4919e9834bb4826f1093b3d3508226494f2332fc28964d459e929c47`,
+original content SHA-256 `fc98f3d88c4256f4a14838330952e1298d5fa4ed5d5783127fdf829aa703b9b9`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | completed |
@@ -83,7 +89,7 @@ remain unchanged. Independent read-only review corrections are incorporated.
 
 `rtk proxy scripts/check.sh` exited 0: 4315 passed, 40 opt-in deselected in
 489.31s; lock, format/lint/types, build, three locked wheel profiles and actual
-Cockpit lint/types/135 tests/build passed. It began as the baseline gate before
+historical frontend lint/types/135 tests/build passed. It began as the baseline gate before
 contract edits; final documentation alignment independently passed (182 human
 documents/19 helpers), and final affected document-parsing suites passed 173/173.
 `rtk proxy git diff --check` passed. No implementation, credential, live archive,

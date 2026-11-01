@@ -1,5 +1,11 @@
 # Human documentation requirements
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `736ed79cb07c44c2e98c847ce47dee3a285266f2946b59719a21d907e3a26c00`,
+original content SHA-256 `3e0b22770fdba5c6695f66758fbf1d528de8658931158aaf902321f1ef41d925`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 The primary audience is **people who use and operate hfcache**. Agent plans, progress logs and ADRs are required audit material, but do not substitute for human guides. Documentation is created and updated in the same work package as behavior. WEB-024 is a final walkthrough/polish gate, not the first documentation task.
 
 ## 1. Information architecture to create
@@ -18,7 +24,7 @@ Create a human-facing `docs/web-ui/` section, indexed from `docs/README.md` and 
 | `administration.md` | Which host controls are available and why might they be disabled? Explain supported profiles, policy provisioning, fixed systemd schedule/observer semantics and journals as diagnostics. | WEB-006, WEB-018, WEB-019 |
 | `deployment.md` | How do I provision one Basic user and serve the static UI behind the existing Caddy? Include protected hash input, compatible versions, asset identity, native/rootless differences, same origin/prefix, no extra port/server, TLS/CSRF and validation. | WEB-004, WEB-005, WEB-021 |
 | `troubleshooting.md` | What should I do for a login failure, HTTP/Envelope error, stale draft/cursor, missing card, unavailable helper, blocked profile or uncertain operation? Give safe checks, exact labels/codes, and escalation without replay/cleanup. | WEB-004 onward |
-| `migration-from-cockpit.md` | How do I move to the independent web UI without losing operational capability or evidence? Include parity, handles/candidates, rollback constraints, preserved deprecated legacy material/live installation and production acceptance checklist. | WEB-021, WEB-023, WEB-025 |
+| `migration-and-rollback.md` | How do I move to the independent web UI without losing operational capability or evidence? Include parity, handles/candidates, rollback constraints, preserved deprecated legacy material/live installation and production acceptance checklist. | WEB-021, WEB-023, WEB-025 |
 
 These are target paths, not files already supplied as completed user documentation. Create each with functioning content when its behavior first exists; no placeholder guide presented as finished.
 
@@ -31,15 +37,6 @@ Update `docs/discovery.md` and `docs/schemas.md` for card adjunct formats, captu
 Update `docs/containers.md`, `docs/deployment-centos-stream-10.md`, and packaging/build/install script contracts for asset artifacts, host-helper socket separation, role/secret matrices, native/rootless differences, same Caddy and immutable rollback. `docs/deployment-status.md` records only **actually observed** installed facts; feature tests do not change the recorded production version/acceptance. Do not put future implementation assertions into its current-status table.
 
 Update `docs/development.md` with exact strict/unit/integration/functional commands, test infrastructure setup, safe fixture boundaries, no-skip rules and evidence interpretation. Update `docs/scripts.md` for every new executable helper/runner, including dependency/effect/inspection classification and safe help. Human guides may link to technical references, but must explain operator consequences in their own words.
-
-Per the user's2026-11-01 instruction to ignore and deprecate the plugin once the
-new web UI is complete, mark `docs/cockpit.md` and `docs/cockpit-plugin/` as
-deprecated legacy with replacement guidance. Preserve source, history, licenses,
-generic clients/runtime helpers and the live installation. Do not require more
-plugin validation, inventory, harness ports, dependency cleanup or uninstall.
-Human navigation leads to the independent web UI without claiming production
-migration. Reference screenshots use only synthetic data, identify UI version,
-have useful alt text, and match actual built screens—not this design prototype.
 
 ## 3. Style and safety standard
 

@@ -1,5 +1,11 @@
 # OPS-016: Deploy the local runtime with read-only acceptance
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `f4dcee3f173a6262505b1690f21c6ba737ad62c7b10fbe79e58c1bc5b72361fe`,
+original content SHA-256 `ffa8d6279bfd0ff0b6eaab83f6d7cfd44097c30f6eeb75979b0a71dcd697dc0b`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Work package | `OPS-016` |
@@ -81,7 +87,7 @@ owns actual fixed-file installation, service/bridge readiness and holder transfe
 Root's UID-981 account/rootless engine check passes, with no actual hfcache app
 units or containers running. Exact app/Caddy OCI archives load into that service
 engine and inspect as the expected AMD64 image IDs. Root reuses the active
-encrypted hf-token and existing Cockpit TLS material, creates three distinct
+encrypted hf-token and existing historical frontend TLS material, creates three distinct
 host-key-encrypted API-class sources and provisions six fixed Podman secrets.
 No secret value is printed or ad hoc plaintext credential file created.
 
@@ -90,7 +96,7 @@ description text and was replaced with exact unit-name-prefix matching; an empty
 secret-list --format=json result failed parsing before secret creation and was
 replaced with explicit name-template output. Neither proves an app was active
 or authorizes overwriting unknown state. Fixed guard/boot files, nine bindings,
-local SELinux labels and Cockpit binding are being installed under root control;
+local SELinux labels and historical frontend binding are being installed under root control;
 the old guard still owns the original lock and current still selects native.
 The NAS-masked full gate is running, invocation
 49ab5b67f73d44f6ab367e86b6d7aaf5. No application readiness or completion is claimed.
@@ -132,7 +138,7 @@ no NAS label or content is touched and no permissive/label-disable fallback is u
 
 The system bridge is active, invocation fed1a06d63734927881a17dd97298957, with
 rootless Caddy/API and listener 0.0.0.0:8443. Verified local TLS uses FQDN SNI and
-the existing Cockpit trust material. The corrected HTTPS probe passes all 13
+the existing historical frontend trust material. The corrected HTTPS probe passes all 13
 checks, including version 0.2.0 and the exact nine MCP tools; its record is
 /var/lib/hfcache/container-home/rollout-acceptance-corrected.json. Initialize
 negotiates 2025-11-25 from the SDK's supported HANDSHAKE_PROTOCOL_VERSIONS. The
@@ -161,7 +167,7 @@ retained. A reviewed activation/label design remains operator work. No NAS job,
 archive scan, verification submission or write-bearing acceptance is run.
 
 The first full NAS-masked gate passes 3,827 Python tests (40 deselected,
-461.25 seconds), 135 Cockpit tests and four extra wheel smokes; elapsed unit time
+461.25 seconds), 135 historical frontend tests and four extra wheel smokes; elapsed unit time
 is 8m32.899s. It precedes the final alias source freeze; final gate evidence follows.
 
 ### Final drain and partial acceptance
@@ -211,7 +217,7 @@ NAS-masked `scripts/check.sh --with-build` pipeline exits 0 after all host-polic
 source freezes, invocation 71300b042f624b2a96dc1daeaaefdcea:
 407 formatted files, Ruff clean, whole Pyrefly 0; 3,827 Python passed/40 deselected
 in 471.22 seconds; 0.2.0 wheel/sdist and three locked isolated installation
-profiles; Cockpit lint/style/types, 135 tests in 2,255.084017 ms/build 1,247 ms;
+profiles; historical frontend lint/style/types, 135 tests in 2,255.084017 ms/build 1,247 ms;
 four extra wheel smokes/3,863 deselected in 5.34 seconds. Unit runtime 8m43.299s.
 Log .scratch/ops-016-final-gate.log SHA256
 34f6c22c1403486692f3ec896e4c8eb085d644fd1e593336ea0c9d98c0e151e6.

@@ -1,5 +1,11 @@
 # WEB-014: Render archived README cards as inert, bounded React content
 
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `5c9b01b5b8c6dd19cd85cc0faf1a133aae151b8f7556a1a4cd34cbbe5f6ea8de`,
+original content SHA-256 `11c550b71620c851bb31e69d040416e6160fd9c045a81effd1f3c125ea1998e5`.
+Historical proof hashes identify the original artifacts, not this edited record.
+
 | Field | Value |
 | --- | --- |
 | Status | complete |
@@ -43,21 +49,9 @@ Complete readme-cards.md: offline provenance, supported formatting, blocked medi
 
 Useful README content displays safely for model/dataset publications, including hostile inputs, without external requests or execution; source view cannot reveal unsuppressed credentials.
 
-The task also requires the existing `scripts/check.sh` gate plus strict applicable web/Cockpit and functional checks described above. New capabilities are not completed solely by adding test descriptions. Update actual test-to-case mappings and run them. Documentation and relevant contract/invariant/ADR updates land with the behavior, not in a later catch-up task.
+Historical execution summary: the recorded gate included the retired interface; exact invocation and original proof remain in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`.
 
 ## Execution notes and blockers
-
-Started2026-10-26 from clean WEB-013 `14ca753`, after strict gate1 and39
-installed three-browser cases. Reuse the exact reference/card decoder/store and
-shared Caddy/owned browser stack. Root owns dependency admission, Overview
-integration and real acceptance; parallel scopes own pure URL/work policy,
-closed React Markdown components and human/contracts/fixture preparation.
-Decision155 records browser-only parser/GFM/sanitizer dependencies and finite
-renderer admission before provisioning. Capture already removes front matter;
-rendering preserves the verified sanitized source exactly, including a legitimate
-leading horizontal rule. No new endpoint, backend dependency, frontend server,
-automatic refresh, payload read or engine machinery is planned. Production,
-NAS/live Cockpit, rollout, merge, push and tag remain excluded.
 
 2026-10-26 review checkpoint: the first source freeze/build and standalone
 0.2.24 installation are retained without acceptance. Read-only review found
@@ -141,9 +135,9 @@ Completed2026-10-26, WEB-014, this commit. Evidence directory:
   match under `/opt/hfcache-web014-source3-runtime`; no release selector changes.
   Actual image ancestry/stock CA and UID981/read-only/network-none probe prove
   pinned UBI10micro, matching UI and absent Node/package managers (proofSHA5dc12122…).
-- Full command `scripts/check.sh --require-web --require-cockpit` passes gate4
+- Full command `historical gate invocation (original command SHA-256 `dfe15d4ee16e8207e5ddfe1138f7416950f8e6013a5d77e8aa230bfd51dccdc4`; Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`)` passes gate4
   exit0/1465.321s with changed_source_files[]. All8591 backend cases pass
-  (52 unrelated opt-in deselections),581 Cockpit unit/110 mounted Firefox,
+  (52 unrelated opt-in deselections),581 historical frontend unit/110 mounted Firefox,
   3404 web unit and3561 combined unit/component cases;96.01% line/91.29% branch
   coverage. Locked wheels in all three supported profiles, format/lint/types,
   contracts/licenses, strict metadata/auth fixtures, production builds,2 built
@@ -182,7 +176,7 @@ Completed2026-10-26, WEB-014, this commit. Evidence directory:
   and INV021 align. ADR142/143 amendments link new decision155. Actual final
   screenshots (synthetic data) match functional4: renderedSHA6ad22bb8…,
   datasetSHAf748d355…, mobile sourceSHAdca74965…. Documentation alignment passes
-  215 human documents/27 helpers after captions. No production/NAS/live Cockpit,
+  215 human documents/27 helpers after captions. No production/NAS/installed predecessor interface,
   rollout, merge, push or tag action.
 
 CARD10–12 now map actual unit/component/integration/functional evidence in the
@@ -191,4 +185,4 @@ preserved. Plan/current select WEB-015; completed progress and Operator handoff
 record the source/build/functional scope. Final bookkeeping command
 `uv run --locked --extra server --extra mcp pytest tests/unit/test_web_plan.py tests/unit/test_docs_alignment.py tests/unit/test_docs_config_contract.py tests/unit/test_docs_migration.py`
 passes78 cases/12.86s; all frozen source hashes/modes remain exact. The final strict plan-wide gate remains later
-scope; Cockpit retirement is not authorized by this package's result.
+scope; historical frontend retirement is not authorized by this package's result.

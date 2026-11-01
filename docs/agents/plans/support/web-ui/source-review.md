@@ -1,6 +1,10 @@
 # Pinned source review and external references
 
-Reviewed October 20, 2026. Repository baseline: `wtcross/hfcache` **`6b8fae2e0997403ae5c716a2e92148af0a972af9`** (main when checked), titled `OPS-023: deploy and accept the guarded Cockpit repair release`. Prior UI research used application source `1c685018803a365bbb8b0c1aad4b94709f60e7d7`; the later commit records guarded 0.2.2 deployment and packaging/evidence changes. These are repository-recorded facts, not a new inspection of the live host. Reconcile HEAD before implementation; do not reset the checkout to this SHA.
+Interface-only instructions and source references have been omitted from this
+retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
+original document path SHA-256 `7e27a651112e30e6f483b16434676700dc8cb17f18f52d4ddacee71bb0b75a42`,
+original content SHA-256 `b321107dc374cfc90b3fa6cc88ab6b5b4ab11a5e8e7569be1bd4d4ad47d1c125`.
+Historical proof hashes identify the original artifacts, not this edited record.
 
 ## Observed repository facts
 
@@ -9,14 +13,12 @@ Reviewed October 20, 2026. Repository baseline: `wtcross/hfcache` **`6b8fae2e099
 | Current selector is inactive after guarded rollout; browser/NAS/workload holds remain separate. | [Current plan](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/docs/agents/plans/current.md) |
 | Plans now live under docs/agents/plans; tasks own status; one work package per commit; drafting is not activation. | [Planning](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/docs/agents/planning.md), [workflow](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/docs/agents/workflow.md), [AGENTS](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/AGENTS.md) |
 | Caddy proxies HTTPS :8443 to the API Unix socket with no file server, ACME, or admin endpoint. | [Caddyfile](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/packaging/containers/Caddyfile.in), [container contract](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/docs/containers.md) |
-| Default gate is provider-neutral and includes docs plus locked base/server/MCP installation checks; frontend strict mode currently means require-cockpit. | [Gate](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/scripts/check.sh), [development](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/docs/development.md) |
+| Default gate is provider-neutral and includes docs plus locked base/server/MCP installation checks; frontend strict mode currently means require-historical frontend. | [Gate](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/scripts/check.sh), [development](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/docs/development.md) |
 | Existing REST has search/facets/details/variants, metadata refresh, inventory, references/manifests, jobs, reports and maintenance. It has no generic payload endpoint or remote configuration installer. | [REST contract](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/docs/api.md), [app](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/src/hfcache/api/app.py), [catalog routes](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/src/hfcache/api/catalog.py) |
 | Tags live in config; operational fingerprint excludes them; last-observed labels are not current curation. README extraction currently retains declarations, not a renderable body. | [Discovery](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/docs/discovery.md), [records](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/src/hfcache/catalog_models.py) |
 | Principal currently carries credential class; bearer-only auth and strict public schemas must be preserved. | [Auth](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/src/hfcache/api/auth.py), [wire models](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/src/hfcache/api/models.py) |
-| Cockpit still performs guarded config I/O, host profile inspection, system manager and timer/drop-in operations, and optional journal diagnostics outside REST. | [Cockpit contract](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/docs/cockpit.md), [config adapter](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/cockpit/src/api/config.ts), [schedule adapter](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/cockpit/src/api/schedule.ts) |
 | Rootless API policy mount is read-only and old system timer/observer permissions are effectively denied; the worker is separately confined. | [Rootless contract](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/docs/containers.md), [invariants](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/docs/invariants.md) |
 | Nested Envelope data is generic in OpenAPI; catalog exposes specific x-catalog-payload schemas. | [Wire models](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/src/hfcache/api/models.py), [catalog schema hooks](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/src/hfcache/api/catalog.py) |
-| Frontend uses pnpm 11.18.0, Node constraint ^24.18.1, React 18.3.1, TypeScript 6.0.3 at this review. New selections must be compatibility-verified, not copied blindly. | [Cockpit package](https://github.com/wtcross/hfcache/blob/6b8fae2e0997403ae5c716a2e92148af0a972af9/cockpit/package.json) |
 
 The imported mockup uses fictional repositories and values and is not evidence of endpoint availability or production state. HuggingFaceModelDownloader organizational inspiration was reviewed at `20f4be12d05012afbefbf54ad13dcfc12c6560b9`; no code or feature list from it is required by this plan.
 
@@ -44,10 +46,6 @@ untracked extraction. No drift/reset/rebase or unrelated-work disposition is
 needed. Created `feat/web-ui`; activated the plan under the new explicit
 instruction. Prior rollout authority is not reused. No production manager, API,
 archive or credential inspection supplies this audit.
-
-Re-audited `api/app.py`, `auth.py`, `command_models.py`, catalog adapters and
-capture/storage, configuration models, Caddy template and Cockpit's fixed
-candidate/host boundaries. Concrete changes required before implementation:
 
 - Current interface classification recognizes REST/MCP only; UI needs a separate
   recognized prefix path without weakening corroborated Unix scope.
@@ -77,7 +75,7 @@ provenance, not current mutable execution-file hashes.
 ### Baseline gate correction
 
 The exact detached baseline passes 5299 Python tests and wheel/installation
-checks but exposes an intermittent Cockpit confirmation failure. Focused runs,
+checks but exposes an intermittent historical frontend confirmation failure. Focused runs,
 actual rendered-helper xtrace and an independent shell-only reproduction locate
 a builtin-only process-substitution wait returning `-1` after complete line
 reads, before configuration/lock effects. This is distinct from earlier NUL

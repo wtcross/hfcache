@@ -431,7 +431,7 @@ interrupted even when authenticated host history confirms installation; a later
 legitimate edit does not erase that historical confirmation.
 
 A pending marker is persisted before the first private staging write, so a crash
-there also blocks Cockpit and other participating guarded writers. A marker with
+there also blocks other participating guarded writers. A marker with
 no complete private outcome remains `unknown` with `pending=true`; it is not
 permission to retry or remove it. Pending state, unresolved
 history or corrupt/missing evidence blocks new applications, including when a
