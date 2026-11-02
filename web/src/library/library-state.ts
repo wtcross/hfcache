@@ -71,6 +71,11 @@ interface Slot<T> {
     readonly handle: Handle<T>;
     readonly unsubscribe: () => void;
 }
+interface FacetSlot extends Slot<CatalogFacetPayload> {
+    readonly filters: LibraryFilters;
+    readonly authGeneration: number;
+    readonly port: Controller["apiReads"];
+}
 interface Supplements {
     readonly signature: string;
     readonly inventory: Slot<RepositoriesPayload>;
@@ -126,7 +131,7 @@ export function createLibraryStore(controller: Controller) {
         pageActive = true;
     let pending: Promise<void> | null = null;
     let catalog: Slot<CatalogSearchPayload> | null = null;
-    let facets: Partial<Record<LibraryFacet, Slot<CatalogFacetPayload>>> = {};
+    let facets: Partial<Record<LibraryFacet, FacetSlot>> = {};
     let supplements: Supplements | null = null;
     let supplementVisible = false;
     let facetCursors: Partial<Record<LibraryFacet, string>> = {};
@@ -229,9 +234,14 @@ export function createLibraryStore(controller: Controller) {
                 : { cursor: facetCursors[facet] }),
         });
         const port = api;
-        facets[facet] = slot("catalog_facets_default", query, (options) =>
-            port.readCatalogFacets(query, options),
-        );
+        facets[facet] = {
+            ...slot("catalog_facets_default", query, (options) =>
+                port.readCatalogFacets(query, options),
+            ),
+            filters,
+            authGeneration,
+            port,
+        };
     }
     function ensure() {
         if (catalog === null) createCatalog();
@@ -268,6 +278,31 @@ export function createLibraryStore(controller: Controller) {
         return response === undefined
             ? undefined
             : { scope: api.scope, response };
+    }
+    function compatibleFacet(
+        main: ReadResponse<CatalogSearchPayload>,
+        name: LibraryFacet,
+    ): boolean {
+        const value = facets[name];
+        const response =
+            value === undefined
+                ? undefined
+                : success(value.handle.snapshot(), true);
+        return (
+            value !== undefined &&
+            response !== undefined &&
+            value.filters === filters &&
+            value.authGeneration === authGeneration &&
+            value.port === api &&
+            main.archive_id !== null &&
+            main.archive_id === api.scope.archiveId &&
+            main.config_fingerprint !== null &&
+            (api.scope.configFingerprint === null ||
+                main.config_fingerprint === api.scope.configFingerprint) &&
+            main.archive_id === response.archive_id &&
+            main.config_fingerprint === response.config_fingerprint &&
+            sameCatalogSource(main.envelope.data, response.envelope.data)
+        );
     }
     function snapshot(): LibrarySnapshot {
         sessionChanged();
@@ -356,14 +391,9 @@ export function createLibraryStore(controller: Controller) {
                 ? "partial_empty"
                 : "empty";
         const compatible = (facet: LibraryFacet) => {
-            const response = success(facetPages[facet], true);
             return (
                 mainResponse !== undefined &&
-                response !== undefined &&
-                sameCatalogSource(
-                    mainResponse.envelope.data,
-                    response.envelope.data,
-                )
+                compatibleFacet(mainResponse, facet)
             );
         };
         const compatibility = {
@@ -481,10 +511,7 @@ export function createLibraryStore(controller: Controller) {
             const page = facets[name]?.handle.snapshot() ?? IDLE;
             if (stale(page)) return "stale_cursor";
             const facet = success(page, true);
-            if (
-                facet !== undefined &&
-                !sameCatalogSource(response.envelope.data, facet.envelope.data)
-            )
+            if (facet !== undefined && !compatibleFacet(response, name))
                 return "catalog_changed";
         }
         return null;
@@ -494,7 +521,10 @@ export function createLibraryStore(controller: Controller) {
             ? null
             : (success(value.handle.snapshot(), true)?.next_cursor ?? null);
     }
-    async function load(resetAllowed: boolean): Promise<void> {
+    async function load(
+        resetAllowed: boolean,
+        reuseFacets = false,
+    ): Promise<void> {
         if (disposed || !pageActive || !connected) return;
         ensure();
         const currentGeneration = generation,
@@ -508,6 +538,23 @@ export function createLibraryStore(controller: Controller) {
             await restart(prepared);
             return;
         }
+        const mainResponse = success(main.handle.snapshot(), true);
+        if (mainResponse === undefined) return;
+        // ADR145: only a fresh main read can qualify existing charged facet slots.
+        const needed = LIBRARY_FACETS.filter((facet) => {
+            const compatible = compatibleFacet(mainResponse, facet);
+            if (compatible && reuseFacets) return false;
+            if (!compatible) {
+                forget(facets[facet]);
+                Reflect.deleteProperty(facets, facet);
+                Reflect.deleteProperty(facetCursors, facet);
+                facetSeen[facet].clear();
+                cached = null;
+                cachedSources = [];
+                createFacet(facet);
+            }
+            return true;
+        });
         if (supplementVisible && supplements !== null) {
             const bundle = supplements;
             await Promise.all([
@@ -524,9 +571,11 @@ export function createLibraryStore(controller: Controller) {
             LIBRARY_FACETS.slice(2),
         ]) {
             await Promise.all(
-                pair.map(
-                    (facet) =>
-                        facets[facet]?.handle.refresh() ?? Promise.resolve(),
+                pair.map((facet) =>
+                    !needed.includes(facet)
+                        ? Promise.resolve()
+                        : (facets[facet]?.handle.refresh() ??
+                          Promise.resolve()),
                 ),
             );
             if (!current(currentGeneration)) return;
@@ -653,7 +702,7 @@ export function createLibraryStore(controller: Controller) {
             forget(catalog);
             catalog = null;
             supplementVisible = false;
-            return run(() => load(true));
+            return run(() => load(true, true));
         },
         previousPage(): Promise<void> {
             if (pending !== null || pageIndex === 0 || disposed || !connected)
@@ -664,7 +713,7 @@ export function createLibraryStore(controller: Controller) {
             forget(catalog);
             catalog = null;
             supplementVisible = false;
-            return run(() => load(true));
+            return run(() => load(true, true));
         },
         nextFacetPage(facet: LibraryFacet): Promise<void> {
             if (pending !== null || disposed || !connected)

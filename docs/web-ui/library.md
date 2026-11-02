@@ -87,8 +87,8 @@ without hierarchy or wildcard meaning. Never enter credentials in search or tags
 For example, the synthetic labels `team:research`, `task:chat` and `task:vision`
 can express “all of `team:research`, and any of `task:chat` or `task:vision`.”
 Enter each group as comma-separated tags, then choose **Apply filters**.
-**Clear filters** resets the filters; **Refresh library** repeats the current
-bounded reads. These names illustrate grammar only; they are not records or
+**Clear filters** resets the filters; **Refresh library** requests fresh current
+bounded catalog, facet and row-enrichment evidence. These names illustrate grammar only; they are not records or
 counts from an installed archive.
 
 Current configuration supplies tags for configured repositories, including a
@@ -178,6 +178,21 @@ from their total values. Use **Load more tags** when more tag facet values are
 available. Each action replaces the displayed facet page rather than building an unlimited
 combined list. Related inventory/status/revision reads cover only the loaded
 repository selectors; their own bounded pages can leave enrichment unknown.
+
+Ordinary **Next page** and **Previous page** freshly read the main catalog and
+row enrichment. They can reuse already loaded facet pages only when the fresh
+main proves the same authenticated archive/configuration, normalized filters and
+page size, catalog identity and whole scoped coverage. A normal compatible
+nonempty page uses at most four GETs instead of eight. Facets still describe the
+full qualified query, not the displayed rows. A manually loaded tag page retains
+its loaded extent and continuation when compatible.
+
+Initial loads, changed filters/page size and **Refresh library** obtain fresh
+facets. Refresh is an explicit request for new evidence even if identities match.
+Missing, failed or incompatible facet evidence triggers bounded fresh reads;
+changed curation/publications can invalidate it without changing the operational
+fingerprint. Row reads remain independent exact-publication joins, not an atomic
+global snapshot. No request/page/retention/concurrency limit is enlarged.
 
 Changing filters or page size resets affected continuations. A stale cursor can
 follow a tag-only edit even when the operational configuration fingerprint is

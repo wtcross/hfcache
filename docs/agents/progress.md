@@ -75,6 +75,29 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   Source/owned-fixture scope only, no deployment/live services/archive/tag/push.
   WEB-030 is next.
 
+- [x] WEB-030 Reuse compatible Library facets during pagination
+  (2026-11-02, this commit — [task](plans/tasks/web-030-library-pagination-reads.md),
+  [plan](plans/2026-11-02-plan-web-drafts-and-library.md)).
+  Fresh main proof gates reuse of existing charged decoded facet slots by exact
+  normalized intent/page size, auth/API authority, archive/configuration context,
+  catalog identity and whole coverage. Compatible Next/Previous use4TOTAL GETs
+  versus8, zero facets/other reads, fresh exact25-selector enrichment; explicit
+  Refresh8API GETs, changed identity bounded restart9, changed coverage/filters/
+  page size/Back/Forward fresh8. Manual tag pages/cycles and all lifecycle/budget
+  fences remain.191focused+22query/retention tests and11built Chromium workflows
+  pass, peak2API handlers, noPOST/Hub/CSP/external. Actual200%zoom and current-build
+  mobile/desktop first-viewport criteria pass; artificial-delay timings remain
+  qualified source-fixture evidence, never production latency.
+  Strict gate passes9,594backend/4,115combined web/16wheel, three locked profiles,
+  full browser/zoom and real API React fixture; all1,249 inputs/names unchanged,
+  95.17% lines/90.15% branches. LogSHA256`5ccb1c4e58dc9029eaa45a33dac24d17c202c0f69cf7dd30b34f5d897e40f602`.
+  INV018/021, ADR145, discovery and paging guide amended; no new architecture,
+  endpoint, dependency, durable format, backend cache or bound increase. Final
+  exact-owned test fixtures retire only after verified compressed inventories;
+  all logs/reports and prior complete failed archives remain. The approved plan
+  completes, current selector clears and allthree commits remain separate.
+  No deploy/live services/archive/replay/tag/push; root `node_modules/` preserved.
+
 ## Local web migration (2026-11-01)
 
 - [x] OPS-024 Replace the local deployment without archive changes
@@ -2773,6 +2796,17 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-02 the unsaved-configuration/Library source plan completes in three
+separate commits, with all acceptance criteria and strict gates passing. Current
+built Chromium fixtures prove viewport, keyboard/accessibility/actualzoom and
+four-total-GET compatible pagination. Installed0.3.0 remains unchanged; no new
+installed native/rootless or production latency acceptance is inferred. Preserve
+all existing boot, NAS/workload, confinement, original files/handles and migration
+holds. No backlog or rollout is activated. Failed raw evidence and complete
+archives plus successful-fixture inventories remain in `.scratch/`; ordinary
+source browser reports remain under `web/.artifacts/`.
+
 
 2026-11-02 WEB-029 source/owned-fixture acceptance compacts Library browsing and
 verifies actual Chromium200% zoom. Installed0.3.0 stays unchanged; new PNGs and
@@ -13615,3 +13649,14 @@ provenance while moving primary browsing into the initial viewport. Conditional
 form removal was rejected because it can omit hidden intent from FormData. This
 changes no predicate, authority, publication join or architectural rule; existing
 INV018/019/021 and ADR145 remain applicable without a new ADR.
+
+2026-11-02 WEB-030 refinement of decision145 and INV018/021: a fresh main catalog
+read may qualify existing charged finite facet pages only with unchanged
+normalized intent/page size, authenticated/API owner, archive/configuration,
+visible catalog identity and entire scoped coverage. Operational fingerprints
+alone were rejected because tags and publication membership can change without
+one. Always repeating four compatible facet GETs was rejected as unnecessary
+request amplification. Explicit Refresh, changed intent/context and incompatible
+facets still read freshly; exact enrichment joins and all existing bounds/fences
+stand. ADR145 and living contracts record this browser-only composition, without
+server metadata cache permission or a new architectural decision.

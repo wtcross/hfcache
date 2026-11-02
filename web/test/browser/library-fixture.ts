@@ -38,7 +38,14 @@ function wrapper(command: string, data: unknown, cursor: string | null = null) {
         },
     };
 }
-export function libraryFixtureResponse(url: URL): unknown {
+export interface LibraryFixtureEvidence {
+    readonly identity?: string;
+    readonly missing?: number;
+}
+export function libraryFixtureResponse(
+    url: URL,
+    evidence: LibraryFixtureEvidence = {},
+): unknown {
     const p = url.searchParams;
     const type = p.get("type") === "dataset" ? "dataset" : "model";
     const rows: CatalogEntry[] = Array.from({ length: 50 }, (_, index) => ({
@@ -62,7 +69,13 @@ export function libraryFixtureResponse(url: URL): unknown {
         "bits",
         "max_variant_bytes",
     ].some((key) => p.has(key));
-    const scopedCoverage = { ...coverage, technical_required: technical };
+    const missing = evidence.missing ?? coverage.missing;
+    const scopedCoverage = {
+        ...coverage,
+        usable: 50 - missing,
+        missing,
+        technical_required: technical,
+    };
     if (url.pathname === "/api/v1/catalog/search") {
         const limit = Number(p.get("limit") ?? "25");
         const offset = p.get("cursor") === "owned-page-2" ? 25 : 0;
@@ -74,7 +87,7 @@ export function libraryFixtureResponse(url: URL): unknown {
             "catalog.search",
             {
                 schema_version: 1,
-                catalog_identity: "a".repeat(64),
+                catalog_identity: evidence.identity ?? "a".repeat(64),
                 coverage: scopedCoverage,
                 total_matches: entries.length === 0 ? 0 : 50,
                 entries,
@@ -94,7 +107,7 @@ export function libraryFixtureResponse(url: URL): unknown {
                 : [];
         return wrapper("catalog.facets", {
             schema_version: 1,
-            catalog_identity: "a".repeat(64),
+            catalog_identity: evidence.identity ?? "a".repeat(64),
             coverage: scopedCoverage,
             facet,
             total_matches: entries.length,

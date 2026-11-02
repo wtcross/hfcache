@@ -2,13 +2,14 @@
 import { afterEach, expect, test, vi } from "vitest";
 import {
     createLibraryStore,
+    LIBRARY_FACETS,
     MAX_LIBRARY_PAGES,
 } from "../src/library/library-state";
 import type { LibraryStore } from "../src/library/library-state";
 import { normalizeLibraryFilters } from "../src/library/filters";
 import { createSessionController } from "../src/state/session-controller";
 import type { SessionController } from "../src/state/session-controller";
-import type { CatalogEntry } from "../src/wire/generated";
+import type { CatalogCoverage, CatalogEntry } from "../src/wire/generated";
 import {
     jsonResponse,
     readWire,
@@ -18,6 +19,7 @@ import {
 } from "./read-fixtures";
 import { uiBootstrapFixture } from "./ui-fixtures";
 import { deferred } from "./state-fixtures";
+import { isRecord } from "../src/wire/runtime";
 
 const fingerprint = "2".repeat(64),
     identity = "a".repeat(64);
@@ -803,4 +805,599 @@ test("superseding a read during supplemental work never republishes cached previ
     await replacing;
     expect(state.store.snapshot()).toMatchObject({ phase: "empty", rows: [] });
     expect(state.store.snapshot()).not.toBe(old);
+});
+
+const pagingCoverage: CatalogCoverage = {
+    ...coverage(entries),
+    repositories: 4,
+    tags_known: 4,
+};
+function pagingResponse(
+    url: URL,
+    options: {
+        identity?: string;
+        coverage?: CatalogCoverage;
+        fingerprint?: string;
+        tagCursor?: string | null;
+        tagValue?: string;
+        rows?: readonly CatalogEntry[];
+    } = {},
+): Response {
+    const common = {
+        schema_version: 1,
+        catalog_identity: options.identity ?? identity,
+        coverage: options.coverage ?? pagingCoverage,
+    };
+    if (url.pathname === "/api/v1/catalog/search")
+        return jsonResponse({
+            ...wrapper(
+                "catalog.search",
+                {
+                    ...common,
+                    total_matches: 4,
+                    entries: options.rows ?? entries,
+                },
+                url.searchParams.has("cursor") ? null : "main-next",
+            ),
+            config_fingerprint: options.fingerprint ?? fingerprint,
+        });
+    if (url.pathname === "/api/v1/catalog/facets") {
+        const tag = url.searchParams.get("facet") === "tag";
+        return jsonResponse({
+            ...wrapper(
+                "catalog.facets",
+                {
+                    ...common,
+                    facet: url.searchParams.get("facet"),
+                    total_matches: tag ? 3 : 0,
+                    entries: tag
+                        ? [
+                              {
+                                  value: options.tagValue ?? "historical",
+                                  repository_count: 1,
+                              },
+                          ]
+                        : [],
+                },
+                tag ? (options.tagCursor ?? null) : null,
+            ),
+            config_fingerprint: options.fingerprint ?? fingerprint,
+        });
+    }
+    return defaultResponse(url);
+}
+const pageReadPaths = [
+    "/api/v1/catalog/search",
+    "/api/v1/repositories",
+    "/api/v1/status",
+    "/api/v1/repositories/revisions",
+];
+function expectPageReads(
+    state: ReturnType<typeof setup>,
+    from: number,
+    facets: number,
+) {
+    const requested = state.requests.slice(from);
+    expect(requested).toHaveLength(4 + facets);
+    expect(requested.slice(0, 4).map((url) => url.pathname)).toEqual(
+        pageReadPaths,
+    );
+    expect(
+        requested.filter((url) => url.pathname === "/api/v1/catalog/facets"),
+    ).toHaveLength(facets);
+    expect(state.methods.slice(from).every((method) => method === "GET")).toBe(
+        true,
+    );
+    expect(
+        requested.every((url) => url.origin === "https://state.invalid"),
+    ).toBe(true);
+    expect(state.peak()).toBeLessThanOrEqual(2);
+}
+
+test("fresh main qualifies existing charged facet pages: initial8 Next4 Previous4 and explicit Refresh8", async () => {
+    const state = setup((url) => pagingResponse(url));
+    await state.store.refresh();
+    expectPageReads(state, 0, 4);
+    const first = state.store.snapshot();
+    expect(first.facets.tag.result).toMatchObject({
+        kind: "success",
+        payload: { total_matches: 3, entries: [{ repository_count: 1 }] },
+    });
+    let from = state.requests.length;
+    await state.store.nextPage();
+    expectPageReads(state, from, 0);
+    expect(state.store.snapshot().pageIndex).toBe(1);
+    for (const name of LIBRARY_FACETS)
+        expect(state.store.snapshot().facets[name]).toBe(first.facets[name]);
+    expect(state.store.snapshot().rows[0]?.currentRevision?.total_bytes).toBe(
+        17,
+    );
+    from = state.requests.length;
+    await state.store.previousPage();
+    expectPageReads(state, from, 0);
+    from = state.requests.length;
+    await state.store.refresh();
+    expectPageReads(state, from, 4);
+    expect(state.store.snapshot().facets.tag.result).not.toBe(
+        first.facets.tag.result,
+    );
+});
+
+test("no reuse decision starts before the fresh main response arrives", async () => {
+    const later = deferred<Response>();
+    let hold = false;
+    const state = setup((url) =>
+        hold && url.pathname === "/api/v1/catalog/search"
+            ? later.promise
+            : pagingResponse(url),
+    );
+    await state.store.refresh();
+    const first = state.store.snapshot().facets;
+    hold = true;
+    const from = state.requests.length;
+    const paging = state.store.nextPage();
+    await vi.waitFor(() => {
+        expect(state.requests).toHaveLength(from + 1);
+    });
+    expect(state.requests[from]?.pathname).toBe("/api/v1/catalog/search");
+    later.resolve(
+        pagingResponse(
+            new URL(
+                "https://state.invalid/api/v1/catalog/search?cursor=main-next",
+            ),
+        ),
+    );
+    await paging;
+    expectPageReads(state, from, 0);
+    for (const name of LIBRARY_FACETS)
+        expect(state.store.snapshot().facets[name]).toBe(first[name]);
+});
+
+test.each([
+    { q: "new literal" },
+    { limit: 50 },
+    { scope: "configured" },
+    { revision_scope: "retained" },
+    { tag_source: "current_only" },
+    { tag_all: ["historical"] },
+    { format: "parquet" },
+])(
+    "changed normalized filters %j obtain all fresh facets despite identical catalog evidence",
+    async (patch) => {
+        const state = setup((url) => pagingResponse(url));
+        await state.store.refresh();
+        const before = state.store.snapshot().facets.tag.result;
+        const from = state.requests.length;
+        await state.store.setFilters(normalizeLibraryFilters(patch));
+        expectPageReads(state, from, 4);
+        expect(state.store.snapshot().facets.tag.result).not.toBe(before);
+    },
+);
+
+test.each(LIBRARY_FACETS)(
+    "a failed %s facet alone is reread while three compatible pages are reused",
+    async (name) => {
+        let fail = true;
+        const state = setup((url) =>
+            fail &&
+            url.pathname === "/api/v1/catalog/facets" &&
+            url.searchParams.get("facet") === name
+                ? jsonResponse(problemWire("HFAPI005", 20), 503)
+                : pagingResponse(url),
+        );
+        await state.store.refresh();
+        const before = state.store.snapshot().facets;
+        expect(before[name].result).toMatchObject({
+            kind: "api_problem",
+            status: 503,
+        });
+        expect(state.store.snapshot().facetCompatible[name]).toBe(false);
+        fail = false;
+        const from = state.requests.length;
+        await state.store.nextPage();
+        expectPageReads(state, from, 1);
+        expect(state.requests.at(-1)?.searchParams.get("facet")).toBe(name);
+        for (const other of LIBRARY_FACETS)
+            if (other !== name)
+                expect(state.store.snapshot().facets[other]).toBe(
+                    before[other],
+                );
+        expect(state.store.snapshot().facetCompatible[name]).toBe(true);
+    },
+);
+
+test.each(LIBRARY_FACETS)(
+    "an invalidated %s facet is missing fresh evidence and must be reacquired",
+    async (name) => {
+        const state = setup((url) => pagingResponse(url));
+        await state.store.refresh();
+        state.controller.queries.invalidate(
+            (descriptor) =>
+                descriptor.routeId === "catalog_facets_default" &&
+                descriptor.predicates?.facet === name,
+        );
+        expect(state.store.snapshot().facetCompatible[name]).toBe(false);
+        const from = state.requests.length;
+        await state.store.nextPage();
+        expectPageReads(state, from, 1);
+        expect(state.requests.at(-1)?.searchParams.get("facet")).toBe(name);
+    },
+);
+
+const incompleteCoverage: CatalogCoverage = {
+    repositories: 50,
+    tags_known: 50,
+    tags_unknown: 0,
+    publications: 50,
+    usable: 25,
+    partial: 0,
+    unsupported: 0,
+    failed: 0,
+    missing: 25,
+    technical_required: false,
+    incomplete: true,
+};
+test.each([
+    ["repositories", { repositories: 51, tags_known: 51 }],
+    ["tag coverage", { tags_known: 49, tags_unknown: 1 }],
+    ["publications", { publications: 51, missing: 26 }],
+    ["usable", { usable: 24, missing: 26 }],
+    ["partial", { partial: 1, missing: 24 }],
+    ["unsupported", { unsupported: 1, missing: 24 }],
+    ["failed", { failed: 1, missing: 24 }],
+    ["missing", { missing: 24, usable: 26 }],
+    ["technical requirement", { technical_required: true }],
+    ["incomplete", { incomplete: false, missing: 0, usable: 50 }],
+] as const)(
+    "changed whole scoped %s evidence obtains all fresh facets even with the same catalog identity",
+    async (_name, patch) => {
+        let changed = false;
+        const state = setup((url) =>
+            pagingResponse(url, {
+                coverage: changed
+                    ? { ...incompleteCoverage, ...patch }
+                    : incompleteCoverage,
+            }),
+        );
+        await state.store.refresh();
+        changed = true;
+        const from = state.requests.length;
+        await state.store.nextPage();
+        expectPageReads(state, from, 4);
+        expect(
+            Object.values(state.store.snapshot().facetCompatible).every(
+                Boolean,
+            ),
+        ).toBe(true);
+        const main = state.store.snapshot().catalog.result;
+        expect(main).toMatchObject({
+            kind: "success",
+            payload: { coverage: { ...incompleteCoverage, ...patch } },
+        });
+    },
+);
+
+test("manual tag pages and continuation history survive compatible Next and Previous, then changed fingerprints retire them", async () => {
+    let changed = false;
+    const state = setup((url) =>
+        pagingResponse(url, {
+            fingerprint: changed ? "b".repeat(64) : fingerprint,
+            tagCursor: url.searchParams.has("cursor") ? "tag-last" : "tag-next",
+            tagValue:
+                url.searchParams.get("facet") === "tag" &&
+                url.searchParams.get("cursor") === "tag-next"
+                    ? "later"
+                    : "historical",
+        }),
+    );
+    await state.store.refresh();
+    await state.store.nextFacetPage("tag");
+    const manual = state.store.snapshot().facets.tag;
+    expect(manual.result).toMatchObject({
+        kind: "success",
+        payload: { entries: [{ value: "later", repository_count: 1 }] },
+        response: { next_cursor: "tag-last" },
+    });
+    let from = state.requests.length;
+    await state.store.nextPage();
+    expectPageReads(state, from, 0);
+    expect(state.store.snapshot().facets.tag).toBe(manual);
+    from = state.requests.length;
+    await state.store.previousPage();
+    expectPageReads(state, from, 0);
+    expect(state.store.snapshot().facets.tag).toBe(manual);
+    changed = true;
+    from = state.requests.length;
+    await state.store.nextPage();
+    expectPageReads(state, from, 4);
+    const rereadTag = state.requests
+        .slice(from)
+        .find((url) => url.searchParams.get("facet") === "tag");
+    expect(rereadTag?.searchParams.has("cursor")).toBe(false);
+    const newFrom = state.requests.length;
+    await state.store.nextFacetPage("tag");
+    expect(state.requests).toHaveLength(newFrom + 1);
+    expect(state.requests.at(-1)?.searchParams.get("cursor")).toBe("tag-next");
+});
+
+test("tag-only catalog identity drift with an unchanged policy fingerprint keeps the bounded restart and reacquires facets", async () => {
+    let changed = false;
+    const state = setup((url) =>
+        pagingResponse(url, {
+            identity: changed ? "b".repeat(64) : identity,
+            rows: changed
+                ? entries.map((entry) => ({
+                      ...entry,
+                      tags: entry.configured ? ["curated"] : entry.tags,
+                  }))
+                : entries,
+        }),
+    );
+    await state.store.refresh();
+    changed = true;
+    const from = state.requests.length;
+    await state.store.nextPage();
+    const requested = state.requests.slice(from);
+    expect(requested).toHaveLength(9);
+    expect(
+        requested.filter((url) => url.pathname === "/api/v1/catalog/search"),
+    ).toHaveLength(2);
+    expect(
+        requested.filter((url) => url.pathname === "/api/v1/catalog/facets"),
+    ).toHaveLength(4);
+    expect(state.store.snapshot()).toMatchObject({
+        pageIndex: 0,
+        notice: "catalog_changed",
+    });
+    expect(
+        state.store.snapshot().rows.find((row) => row.entry.configured)?.entry
+            .tags,
+    ).toEqual(["curated"]);
+    expect(
+        Object.values(state.store.snapshot().facetCompatible).every(Boolean),
+    ).toBe(true);
+});
+
+test("a changed facet wrapper fingerprint withholds its counts and retries finitely even when API scope has no pinned fingerprint", async () => {
+    let changed = true;
+    const state = setup((url) =>
+        pagingResponse(url, {
+            fingerprint:
+                changed && url.searchParams.get("facet") === "tag"
+                    ? "b".repeat(64)
+                    : fingerprint,
+        }),
+    );
+    expect(state.controller.apiReads.scope.configFingerprint).toBeNull();
+    await state.store.refresh();
+    expect(state.store.snapshot().notice).toBe("catalog_changed");
+    expect(state.store.snapshot().facetCompatible.tag).toBe(false);
+    expect(
+        state.requests.filter(
+            (url) => url.pathname === "/api/v1/catalog/search",
+        ),
+    ).toHaveLength(2);
+    changed = false;
+    const from = state.requests.length;
+    await state.store.nextPage();
+    expectPageReads(state, from, 1);
+    expect(state.store.snapshot().facetCompatible.tag).toBe(true);
+});
+
+test("a facet with foreign archive proof stays failed and is individually reacquired", async () => {
+    let foreign = true;
+    const state = setup(async (url) => {
+        if (foreign && url.searchParams.get("facet") === "tag") {
+            const wire: unknown = await pagingResponse(url).json();
+            if (!isRecord(wire)) throw new Error("Missing owned wire");
+            return jsonResponse({
+                ...wire,
+                archive_id: "00000000-0000-4000-8000-000000000000",
+            });
+        }
+        return pagingResponse(url);
+    });
+    await state.store.refresh();
+    expect(state.store.snapshot().facets.tag.result).toMatchObject({
+        kind: "protocol_failure",
+    });
+    expect(state.store.snapshot().facetCompatible.tag).toBe(false);
+    foreign = false;
+    const from = state.requests.length;
+    await state.store.nextPage();
+    expectPageReads(state, from, 1);
+});
+
+test("explicit Refresh rereads a compatible manually loaded tag page, while paging preserves its cursor-cycle fence", async () => {
+    const state = setup((url) =>
+        pagingResponse(url, {
+            tagCursor: "repeat-tag",
+            tagValue: url.searchParams.has("cursor") ? "later" : "historical",
+        }),
+    );
+    await state.store.refresh();
+    await state.store.nextFacetPage("tag");
+    const manual = state.store.snapshot().facets.tag;
+    let from = state.requests.length;
+    await state.store.nextPage();
+    expectPageReads(state, from, 0);
+    expect(state.store.snapshot().facets.tag).toBe(manual);
+    await state.store.nextFacetPage("tag");
+    expect(state.requests).toHaveLength(from + 4);
+    expect(state.store.snapshot().notice).toBe("cursor_cycle");
+    from = state.requests.length;
+    await state.store.refresh();
+    expectPageReads(state, from, 4);
+    expect(
+        state.requests
+            .slice(from)
+            .find((url) => url.searchParams.get("facet") === "tag")
+            ?.searchParams.get("cursor"),
+    ).toBe("repeat-tag");
+    expect(state.store.snapshot().facets.tag.result).not.toBe(manual.result);
+});
+
+async function replacedPublicationResponse(url: URL): Promise<Response> {
+    const wire: unknown = await defaultResponse(url).json();
+    if (
+        !isRecord(wire) ||
+        !isRecord(wire.envelope) ||
+        !isRecord(wire.envelope.data)
+    )
+        throw new Error("Missing owned enrichment wire");
+    const data = wire.envelope.data;
+    const key = url.pathname.endsWith("/revisions")
+        ? "revisions"
+        : "repositories";
+    const records = data[key];
+    if (!Array.isArray(records)) throw new Error("Missing owned records");
+    const next = records.map((row: unknown) => {
+        if (!isRecord(row)) throw new Error("Missing owned row");
+        if (row.repository_type !== "dataset") return row;
+        if (key === "revisions")
+            return {
+                ...row,
+                publication_id: "e".repeat(32),
+                publication_generation: 2,
+            };
+        if (url.pathname === "/api/v1/status")
+            return {
+                ...row,
+                current_publication_generation: 2,
+                retained_generations: [2],
+            };
+        return { ...row, current_publication_id: "e".repeat(32) };
+    });
+    return jsonResponse({
+        ...wire,
+        envelope: { ...wire.envelope, data: { ...data, [key]: next } },
+    });
+}
+test("same-SHA replacement publication changes catalog identity, obtains fresh facets and joins only the new publication generation", async () => {
+    let repaired = false;
+    const state = setup((url) => {
+        if (repaired && pageReadPaths.slice(1).includes(url.pathname))
+            return replacedPublicationResponse(url);
+        return pagingResponse(url, {
+            identity: repaired ? "b".repeat(64) : identity,
+        });
+    });
+    await state.store.refresh();
+    const original = state.store.snapshot().rows[0]?.currentRevision;
+    expect(original?.publication_id).toBe("d".repeat(32));
+    repaired = true;
+    const from = state.requests.length;
+    await state.store.nextPage();
+    expect(state.requests.slice(from)).toHaveLength(9);
+    expect(
+        state.requests
+            .slice(from)
+            .filter((url) => url.pathname === "/api/v1/catalog/facets"),
+    ).toHaveLength(4);
+    const current = state.store.snapshot().rows[0]?.currentRevision;
+    expect(current).toMatchObject({
+        commit_sha: "c".repeat(40),
+        publication_id: "e".repeat(32),
+        publication_generation: 2,
+        total_bytes: 17,
+    });
+    expect(current?.commit_sha).toBe(original?.commit_sha);
+    expect(current).not.toBe(original);
+});
+
+test.each(["disconnect", "departure", "dispose"] as const)(
+    "late main response on a reusable page cannot launch enrichment or facets after %s",
+    async (action) => {
+        const later = deferred<Response>();
+        let hold = false;
+        const state = setup((url) =>
+            hold && url.pathname === "/api/v1/catalog/search"
+                ? later.promise
+                : pagingResponse(url),
+        );
+        await state.store.refresh();
+        hold = true;
+        const from = state.requests.length;
+        const pending = state.store.nextPage();
+        await vi.waitFor(() => {
+            expect(state.requests).toHaveLength(from + 1);
+        });
+        if (action === "disconnect") state.controller.disconnect();
+        else if (action === "departure") state.store.setPageActive(false);
+        else state.store.dispose();
+        later.resolve(
+            pagingResponse(
+                new URL(
+                    "https://state.invalid/api/v1/catalog/search?cursor=main-next",
+                ),
+            ),
+        );
+        await pending;
+        expect(state.requests).toHaveLength(from + 1);
+        expect(state.store.snapshot().refreshing).toBe(false);
+        if (action !== "departure")
+            expect(state.store.snapshot().rows).toHaveLength(0);
+        else {
+            hold = false;
+            state.store.setPageActive(true);
+            const returned = state.requests.length;
+            await state.store.refresh();
+            expectPageReads(state, returned, 4);
+        }
+    },
+);
+
+test("new filter intent during a reusable-page main read replaces all facets and fences the late page", async () => {
+    const later = deferred<Response>();
+    let hold = false;
+    const state = setup((url) =>
+        hold &&
+        url.pathname === "/api/v1/catalog/search" &&
+        !url.searchParams.has("q")
+            ? later.promise
+            : pagingResponse(url),
+    );
+    await state.store.refresh();
+    hold = true;
+    const from = state.requests.length;
+    const pending = state.store.nextPage();
+    await vi.waitFor(() => {
+        expect(state.requests).toHaveLength(from + 1);
+    });
+    const changed = state.requests.length;
+    await state.store.setFilters(normalizeLibraryFilters({ q: "new" }));
+    expectPageReads(state, changed, 4);
+    const current = state.store.snapshot();
+    later.resolve(
+        pagingResponse(
+            new URL(
+                "https://state.invalid/api/v1/catalog/search?cursor=main-next",
+            ),
+        ),
+    );
+    await pending;
+    expect(state.store.snapshot()).toBe(current);
+    expect(state.requests).toHaveLength(changed + 8);
+    expect(state.store.snapshot().filters.q).toBe("new");
+});
+
+test("reconnect changes API port and authentication generation and obtains all facets freshly", async () => {
+    const state = setup((url) => pagingResponse(url));
+    await state.store.refresh();
+    const first = state.store.snapshot();
+    const port = state.controller.apiReads;
+    state.controller.disconnect();
+    state.setInstance();
+    await state.controller.reconnect();
+    expect(state.controller.apiReads).not.toBe(port);
+    const from = state.requests.length;
+    await state.store.refresh();
+    expectPageReads(state, from, 4);
+    expect(state.store.snapshot().authGeneration).not.toBe(
+        first.authGeneration,
+    );
+    for (const name of LIBRARY_FACETS)
+        expect(state.store.snapshot().facets[name].result).not.toBe(
+            first.facets[name].result,
+        );
 });

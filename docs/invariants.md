@@ -1043,7 +1043,13 @@ helper proof; Python-only installation remains independent of frontend inputs.
   coverage versus loaded extent. Incomplete zero matches never prove absence.
   Separately read current inventory cannot lend size/integrity to another exact
   publication; logical byte counts cannot become physical disk usage or hardware
-  suitability. Filtering and paging confer no writer/Hub capability.
+  suitability. Browser pagination may reuse only existing bounded decoded facets
+  after a fresh main read matches normalized intent/page size, authenticated
+  authority, archive/configuration context, catalog identity and whole scoped
+  coverage. Explicit Refresh and changed/incompatible evidence obtain fresh facets;
+  operational fingerprints alone cannot prove unchanged curation or publications.
+  Server metadata-read requirements remain fresh. Filtering and paging confer no
+  writer/Hub capability.
   Explicit tag editing uses the existing complete-entry managed configuration
   pipeline; it changes current curation, not a selected immutable publication.
   Unmanaged historical tags remain read-only until explicit reconfiguration.
@@ -1395,6 +1401,11 @@ old-reader/rollback refusals and unknown original state.
   pages and enrichment remain finite; stale or contradictory pages cannot become
   successful empty data. Joins use validated authority/type/ID and exact
   publication pairs rather than row positions or a presumed global snapshot.
+  Compatible pagination reuses only charged facet slots after fresh main proof;
+  facet continuations and independent failures remain scoped. Initial/filter/
+  page-size/explicit Refresh reads obtain fresh facets, while enrichment remains
+  fresh. No second unbounded cache or read/retention/concurrency bound increase
+  follows. Authentication, route departure and newer generations fence late work.
   Recognized type-aware detail routes accept only bounded paired publication/tab
   fragments. Selection changes invalidate late old responses. Whole manifest
   reads retain existing byte/integer bounds despite locally paged file tables.

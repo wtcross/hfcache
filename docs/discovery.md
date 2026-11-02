@@ -513,6 +513,21 @@ form value or read. Mounted hidden fields participate in explicit Apply; invalid
 hidden fields must be revealed for direct correction. Unsubmitted form edits
 remain distinguishable from applied evidence scope.
 
+Ordinary browser Next/Previous may reuse its existing bounded decoded facet
+pages only after a fresh main catalog response establishes compatibility. Require
+unchanged normalized filter intent including page size, authenticated generation
+and API authority, archive/configuration context, catalog identity and the entire
+scoped coverage. The operational fingerprint alone cannot establish unchanged
+curation or publication membership. Retain compatible manually loaded facet pages
+and their finite continuation meaning; missing, failed or incompatible facets
+need fresh bounded reads, with incompatible continuations retired. Initial reads,
+changed filters/page size, explicit Refresh and authentication/context changes
+obtain fresh facets. Explicit Refresh requests new evidence even when identities
+match. Row inventory/status/revisions remain fresh and exactly joined. Reuse
+neither creates a global snapshot nor expands two-reader batching, existing
+retention/response/page/retry/time limits. These browser evidence checks do not
+relax any server metadata-read or parser-memo requirement above.
+
 ## Transport and refresh boundary
 
 Authenticated REST reads are `/catalog/search`, `/catalog/facets`,

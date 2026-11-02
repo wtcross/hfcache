@@ -5,6 +5,7 @@
   recorded in the introducing task and commit.
 - Date: 2026-10-20.
 - Fresh-byte parsing amendment: [decision157](decision-157.md).
+- Compatible facet reuse: [2026-11-02 clarification](#compatible-library-facet-reuse-clarification-2026-11-02).
 - Introducing evidence: this commit; source acceptance is recorded separately.
 
 ## Context and decision
@@ -289,6 +290,24 @@ stale-continuation resets and explicit limit failures replace hidden all-page
 collection; existing response/retention limits are not enlarged. This is read
 composition, with no new wire schema, endpoint, dependency or writer capability.
 See [Library procedures](../web-ui/library.md) and [catalog semantics](../discovery.md#queries-coverage-and-pages).
+
+### Compatible Library facet reuse clarification (2026-11-02)
+
+Next/Previous reads the main catalog page freshly before reusing any existing
+charged facet slot. Reuse requires successfully decoded evidence with unchanged
+normalized intent/page size, authenticated generation/API authority, archive and
+configuration context, catalog identity and entire scoped coverage. Catalog
+identity covers visible curation and exact publication membership; an operational
+fingerprint alone is insufficient. Missing/failed/incompatible facets refresh
+within the existing two-reader batching, retiring incompatible continuations.
+Compatible manually loaded facet pages keep their loaded extent and continuation.
+Initial/filter/page-size/auth/context changes and explicit Refresh obtain fresh
+facets, even when a new read ultimately matches old identities. Main and all three
+row-enrichment reads remain fresh; exact joins and stale/cycle/page/lifecycle
+fences remain unchanged. Always rereading compatible facets was rejected because
+it repeats four GETs without improving this identity-bound evidence. No aggregate
+body copy, second cache, backend read bypass, global snapshot, dependency or bound
+increase is introduced. Server fresh-metadata requirements remain independent.
 
 ## Exact-publication detail composition amendment (2026-10-26)
 
