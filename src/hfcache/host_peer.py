@@ -242,13 +242,36 @@ def _read(path: Path, budget: _Budget, *, maximum: int, protected: bool = False)
         os.close(parent)
 
 
-def _environment(uid: int) -> dict[str, str]:
+_DEFAULT_ACCOUNT_HOME = "/var/lib/hfcache"
+_ROOTLESS_ACCOUNT_HOMES = frozenset({_DEFAULT_ACCOUNT_HOME, "/var/lib/hfcache/container-home"})
+
+
+def _account_home(deployment: dict[str, Any]) -> str:
+    """Choose one protected fixed account home; never discover an engine store."""
+    profile = deployment["profile"]
+    _need(profile in {"native", "rootless"})
+    principal = deployment["api_principal"]
+    uid, gid = principal["host_uid"], principal["host_gid"]
+    home = (
+        deployment.get("profile_evidence", {}).get("account_home", _DEFAULT_ACCOUNT_HOME)
+        if profile == "rootless"
+        else _DEFAULT_ACCOUNT_HOME
+    )
+    _need(type(home) is str and home in _ROOTLESS_ACCOUNT_HOMES)
+    account = pwd.getpwnam("hfcache")
+    _need((account.pw_uid, account.pw_gid, account.pw_dir) == (uid, gid, home))
+    return home
+
+
+def _environment(uid: int, *, home: str = _DEFAULT_ACCOUNT_HOME) -> dict[str, str]:
+    _need(type(home) is str and home in _ROOTLESS_ACCOUNT_HOMES)
+    _need(uid != 0 or home == _DEFAULT_ACCOUNT_HOME)
     environment = {
         "PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
         "LANG": "C",
         "LC_ALL": "C",
         "SYSTEMD_COLORS": "0",
-        "HOME": "/var/lib/hfcache",
+        "HOME": home,
         "XDG_RUNTIME_DIR": f"/run/user/{uid}",
         "DBUS_SESSION_BUS_ADDRESS": f"unix:path=/run/user/{uid}/bus",
     }
@@ -258,7 +281,9 @@ def _environment(uid: int) -> dict[str, str]:
     return environment
 
 
-def _command(argv: list[str], budget: _Budget, *, uid: int) -> bytes:
+def _command(
+    argv: list[str], budget: _Budget, *, uid: int, home: str = _DEFAULT_ACCOUNT_HOME
+) -> bytes:
     """The fixed observer owns and reaps its same-identity read-only CLI."""
     _need(os.getuid() == os.geteuid() == uid and uid >= 0)
     deadline = min(budget.deadline, time.monotonic() + 5.0)
@@ -268,7 +293,7 @@ def _command(argv: list[str], budget: _Budget, *, uid: int) -> bytes:
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
-        env=_environment(uid),
+        env=_environment(uid, home=home),
         cwd="/",
     ) as process:
         try:
@@ -371,12 +396,13 @@ def _engine_storage_file(budget: _Budget) -> dict[str, Any]:
         os.close(parent)
 
 
-def _engine_storage_override_paths(uid: int) -> list[Path]:
+def _engine_storage_override_paths(uid: int, home: str = _DEFAULT_ACCOUNT_HOME) -> list[Path]:
+    _need(type(home) is str and home in _ROOTLESS_ACCOUNT_HOMES)
     _need(type(uid) is int and 0 < uid < 2**32)
     result = [
         Path("/etc/containers/storage.conf"),
-        Path("/var/lib/hfcache/.config/containers/storage.conf"),
-        Path("/var/lib/hfcache/.config/containers/storage.conf.d"),
+        Path(home) / ".config/containers/storage.conf",
+        Path(home) / ".config/containers/storage.conf.d",
     ]
     for root in ("/etc/containers", "/usr/share/containers"):
         result.extend(
@@ -569,11 +595,15 @@ _ENGINE_LOCK_PATHS = (
 )
 
 
-def _engine_lock_specs(uid: int) -> tuple[tuple[Path, int], ...]:
+def _engine_lock_specs(uid: int, home: str = _DEFAULT_ACCOUNT_HOME) -> tuple[tuple[Path, int], ...]:
     """INV-020: two persistent locks and the stock alive/mountpoints locks."""
     _need(type(uid) is int and 0 < uid < 2**32)
+    _need(type(home) is str and home in _ROOTLESS_ACCOUNT_HOMES)
+    selected = tuple(
+        Path(home) / path.relative_to(_ENGINE_LOCK_HOME) for path in _ENGINE_LOCK_PATHS
+    )
     return (
-        *((path, _ENGINE_LOCK_BYTES) for path in _ENGINE_LOCK_PATHS),
+        *((path, _ENGINE_LOCK_BYTES) for path in selected),
         (_ENGINE_RUNTIME_ROOT / str(uid) / "libpod/tmp/alive.lck", _ENGINE_RUNTIME_LOCK_BYTES),
         (
             _ENGINE_RUNTIME_ROOT / str(uid) / "containers/overlay-layers/mountpoints.lock",
@@ -583,10 +613,10 @@ def _engine_lock_specs(uid: int) -> tuple[tuple[Path, int], ...]:
 
 
 def _engine_lock_parent(
-    path: Path, uid: int, gid: int, budget: _Budget
+    path: Path, uid: int, gid: int, budget: _Budget, home: str = _DEFAULT_ACCOUNT_HOME
 ) -> tuple[int, list[dict[str, int]]]:
     """Walk only a fixed lock path; never follow account-controlled aliases."""
-    _need(path in {fixed for fixed, _size in _engine_lock_specs(uid)})
+    _need(path in {fixed for fixed, _size in _engine_lock_specs(uid, home)})
     budget.consume()
     parent = os.open("/", os.O_PATH | os.O_DIRECTORY | os.O_CLOEXEC)
     current = Path("/")
@@ -623,12 +653,14 @@ def _engine_lock_parent(
     raise PeerError
 
 
-def _engine_storage_locks(uid: int, gid: int, budget: _Budget) -> list[dict[str, Any]]:
+def _engine_storage_locks(
+    uid: int, gid: int, budget: _Budget, home: str = _DEFAULT_ACCOUNT_HOME
+) -> list[dict[str, Any]]:
     """Capture four preprovisioned locks' metadata and labels, never bodies."""
     _need(type(uid) is int and type(gid) is int and 0 < uid < 2**32 and 0 < gid < 2**32)
     result = []
-    for path, expected_size in _engine_lock_specs(uid):
-        parent, ancestors = _engine_lock_parent(path, uid, gid, budget)
+    for path, expected_size in _engine_lock_specs(uid, home):
+        parent, ancestors = _engine_lock_parent(path, uid, gid, budget, home)
         descriptor = -1
         try:
             budget.consume()
@@ -656,7 +688,7 @@ def _engine_storage_locks(uid: int, gid: int, budget: _Budget) -> list[dict[str,
                 and fields[3] == "s0"
             )
             _need(_engine_storage_identity(os.fstat(descriptor)) == captured)
-            current, fresh = _engine_lock_parent(path, uid, gid, budget)
+            current, fresh = _engine_lock_parent(path, uid, gid, budget, home)
             try:
                 _need(fresh == ancestors)
                 _need(
@@ -779,7 +811,9 @@ def _engine_shared_memory(uid: int, gid: int, budget: _Budget) -> dict[str, Any]
         os.close(parent)
 
 
-def _engine_storage_config(uid: int, gid: int, budget: _Budget) -> dict[str, Any]:
+def _engine_storage_config(
+    uid: int, gid: int, budget: _Budget, home: str = _DEFAULT_ACCOUNT_HOME
+) -> dict[str, Any]:
     """Pinned stock main plus both exact vendor bundles; seven overrides absent."""
     _need(type(uid) is int and type(gid) is int and 0 < uid < 2**32 and 0 < gid < 2**32)
     _need(
@@ -792,7 +826,7 @@ def _engine_storage_config(uid: int, gid: int, budget: _Budget) -> dict[str, Any
         _engine_storage_vendor_directory(path, budget)
         if path in _ENGINE_STORAGE_VENDOR_DROPINS
         else _engine_storage_absent(path, budget)
-        for path in _engine_storage_override_paths(uid)
+        for path in _engine_storage_override_paths(uid, home)
     ]
     budget.remaining()
     return {
@@ -1047,11 +1081,10 @@ def _engine_prepare(deployment: dict[str, Any], budget: _Budget) -> dict[str, An
     """Fresh fixed authority, captured in the original host USER and masked MNT."""
     _need(deployment["profile"] == "rootless")
     uid, gid = deployment["api_principal"]["host_uid"], deployment["api_principal"]["host_gid"]
-    account = pwd.getpwnam("hfcache")
-    _need((account.pw_uid, account.pw_gid, account.pw_dir) == (uid, gid, "/var/lib/hfcache"))
+    home = _account_home(deployment)
     _engine_single_thread(budget)
-    storage = _engine_storage_config(uid, gid, budget)
-    engine_locks = _engine_storage_locks(uid, gid, budget)
+    storage = _engine_storage_config(uid, gid, budget, home)
+    engine_locks = _engine_storage_locks(uid, gid, budget, home)
     engine_shared_memory = _engine_shared_memory(uid, gid, budget)
     state = _engine_status(budget)
     _need(all(state[key] == 0 for key in ("CapEff", "CapPrm", "CapInh", "CapAmb")))
@@ -1112,6 +1145,7 @@ def _engine_prepare(deployment: dict[str, Any], budget: _Budget) -> dict[str, An
     return {
         "schema_version": 1,
         "keeper": keeper,
+        "account_home": home,
         "storage": storage,
         "engine_locks": engine_locks,
         "engine_shared_memory": engine_shared_memory,
@@ -1238,7 +1272,7 @@ def observe_engine(
         sys.stdout.buffer.flush()
         uid = deployment["api_principal"]["host_uid"]
         gid = deployment["api_principal"]["host_gid"]
-        environment = _environment(uid) | {
+        environment = _environment(uid, home=prepared["account_home"]) | {
             "_CONTAINERS_USERNS_CONFIGURED": "done",
             "_CONTAINERS_ROOTLESS_UID": str(uid),
             "_CONTAINERS_ROOTLESS_GID": str(gid),
@@ -1267,7 +1301,7 @@ def _engine_inspect(deployment: dict[str, Any], budget: _Budget) -> bytes:  # no
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
-            env=_environment(uid),
+            env=_environment(uid, home=prepared["account_home"]),
             cwd="/",
         ) as process:
             try:
@@ -1368,7 +1402,9 @@ def _engine_inspect(deployment: dict[str, Any], budget: _Budget) -> bytes:  # no
         os.close(keeperfd)
 
 
-def _show(profile: str, uid: int, budget: _Budget) -> dict[str, str]:
+def _show(
+    profile: str, uid: int, budget: _Budget, *, home: str = _DEFAULT_ACCOUNT_HOME
+) -> dict[str, str]:
     expected = _NATIVE_HARDENING if profile == "native" else _ROOTLESS_MANAGER
     properties = {*_BASE_PROPERTIES, *expected}
     if profile == "native":
@@ -1384,6 +1420,7 @@ def _show(profile: str, uid: int, budget: _Budget) -> dict[str, str]:
         ],
         budget,
         uid=0 if profile == "native" else uid,
+        home=home,
     )
     result = {}
     for line in body.decode("utf-8").splitlines():
@@ -1874,8 +1911,12 @@ def authenticate(
         _need(
             (peer.credentials.uid, peer.credentials.gid) == (uid, gid) and peer.credentials.pid > 1
         )
-        account = pwd.getpwnam("hfcache")
-        _need((account.pw_uid, account.pw_gid, account.pw_dir) == (uid, gid, "/var/lib/hfcache"))
+        if snapshot.profile == "rootless":
+            home = _account_home(snapshot.deployment)
+        else:
+            home = _DEFAULT_ACCOUNT_HOME
+            account = pwd.getpwnam("hfcache")
+            _need((account.pw_uid, account.pw_gid, account.pw_dir) == (uid, gid, home))
         budget = snapshot.budget
         available = min(
             remaining_seconds,
@@ -1889,7 +1930,7 @@ def authenticate(
             "maximum_files": budget.maximum_files - budget.files,
             "maximum_bytes": budget.maximum_bytes - budget.bytes,
         }
-        body = _observe_as_account(request, uid, gid, profile=snapshot.profile)
+        body = _observe_as_account(request, uid, gid, profile=snapshot.profile, home=home)
         value = _json(body)
         _need(
             set(value)
@@ -1922,6 +1963,8 @@ def authenticate(
         )
         _api_security(process, uid, gid)
         peer.check()
+        if snapshot.profile == "rootless":
+            _need(_account_home(snapshot.deployment) == home)
         budget.remaining()
         return PeerProof(
             snapshot.deployment_sha256,
@@ -1996,15 +2039,18 @@ def observe_peer(
             and os.getgid() == os.getegid() == observer_gid
             and os.getgroups() == []
         )
-        manager = _show(profile, uid, budget)
+        home = _account_home(deployment) if profile == "rootless" else _DEFAULT_ACCOUNT_HOME
+        manager = _show(profile, uid, budget, home=home)
         _manager_source(manager, deployment, budget)
         if profile == "native":
             process, container = _native_process(manager, deployment, budget), None
         else:
             process, container = _container(manager, deployment, budget)
-        _need(_show(profile, uid, budget) == manager)
+        _need(_show(profile, uid, budget, home=home) == manager)
         _need(_process(process["pid"], budget, namespaces=profile == "rootless") == process)
         _need(_read(DEPLOYMENT, budget, maximum=MAX_READ, protected=True) == before)
+        if profile == "rootless":
+            _need(_account_home(deployment) == home)
         budget.remaining()
         # An unrecognized argv is never serialized. The exact known argv is
         # represented only by its digest after all fixed-command checks pass.
@@ -2068,7 +2114,14 @@ def _drain_observer(
             return
 
 
-def _observe_as_account(request: dict[str, Any], uid: int, gid: int, *, profile: str) -> bytes:
+def _observe_as_account(
+    request: dict[str, Any],
+    uid: int,
+    gid: int,
+    *,
+    profile: str,
+    home: str = _DEFAULT_ACCOUNT_HOME,
+) -> bytes:
     """A late observer retains this worker's slot until its actual normal reap."""
     _need(profile in {"native", "rootless"})
     observer_uid, observer_gid = (0, 0) if profile == "native" else (uid, gid)
@@ -2083,7 +2136,7 @@ def _observe_as_account(request: dict[str, Any], uid: int, gid: int, *, profile:
         # in the helper's operator journal; fixed third-party CLI output remains
         # discarded by the observer's separate command/engine collectors.
         stderr=None,
-        env=_environment(observer_uid),
+        env=_environment(observer_uid, home=home),
         cwd="/",
         user=observer_uid,
         group=observer_gid,

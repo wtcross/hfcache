@@ -859,17 +859,24 @@ def _deployment(body: bytes) -> dict[str, Any]:
         _relative(evidence["python_target_relative"])
         _digest(evidence["python_target_sha256"])
     else:
+        raw_evidence = value["profile_evidence"]
+        _need(type(raw_evidence) is dict)
+        home_field = {"account_home"} if "account_home" in raw_evidence else set()
         evidence = _object(
-            value["profile_evidence"],
+            raw_evidence,
             {
                 "artifact_index_sha256",
                 "runtime_profile_sha256",
                 "app_image_sha256",
                 "caddy_image_sha256",
-            },
+            }
+            | home_field,
         )
-        for item in evidence.values():
-            _digest(item)
+        home = evidence.get("account_home", "/var/lib/hfcache")
+        _need(type(home) is str and home in {"/var/lib/hfcache", "/var/lib/hfcache/container-home"})
+        for name, item in evidence.items():
+            if name != "account_home":
+                _digest(item)
     return value
 
 
@@ -1422,6 +1429,14 @@ class _Inspection:
 
     def rootless(self) -> None:
         evidence = self.deployment["profile_evidence"]
+        principal = self.deployment["api_principal"]
+        expected_account = (
+            principal["host_uid"],
+            principal["host_gid"],
+            evidence.get("account_home", "/var/lib/hfcache"),
+        )
+        account = pwd.getpwnam("hfcache")
+        _need((account.pw_uid, account.pw_gid, account.pw_dir) == expected_account)
         raw = self.authority_read(self.selected / "artifact-index.json", 1048576)
         _need(hashlib.sha256(raw).hexdigest() == evidence["artifact_index_sha256"])
         index = _json(raw)
@@ -1527,6 +1542,8 @@ class _Inspection:
             hashlib.sha256(self.authority_read(self.selected / "rendered/runtime.json")).hexdigest()
             == evidence["runtime_profile_sha256"]
         )
+        account = pwd.getpwnam("hfcache")
+        _need((account.pw_uid, account.pw_gid, account.pw_dir) == expected_account)
 
     def configuration(self) -> None:
         try:
@@ -1751,6 +1768,17 @@ class _Inspection:
 
     def validate(self, *, observer_exited: bool = False) -> None:
         self.capture.budget.remaining()
+        if self.deployment["profile"] == "rootless":
+            principal = self.deployment["api_principal"]
+            account = pwd.getpwnam("hfcache")
+            _need(
+                (account.pw_uid, account.pw_gid, account.pw_dir)
+                == (
+                    principal["host_uid"],
+                    principal["host_gid"],
+                    self.deployment["profile_evidence"].get("account_home", "/var/lib/hfcache"),
+                )
+            )
         self.selinux()
         _need(
             self.capture.read(POLICY, maximum=4096, mode=0o600, gid=OWNER_GID) == self.policy_body
@@ -1982,8 +2010,13 @@ def observe_guard(
     principal = inspection.deployment["api_principal"]
     uid, gid = principal["host_uid"], principal["host_gid"]
     account = pwd.getpwnam("hfcache")
+    expected_home = (
+        inspection.deployment["profile_evidence"].get("account_home", "/var/lib/hfcache")
+        if inspection.deployment["profile"] == "rootless"
+        else "/var/lib/hfcache"
+    )
     _need(
-        (account.pw_uid, account.pw_gid, account.pw_dir) == (uid, gid, "/var/lib/hfcache"),
+        (account.pw_uid, account.pw_gid, account.pw_dir) == (uid, gid, expected_home),
         "facts-unavailable",
     )
     unit = _guard_unit(budget)

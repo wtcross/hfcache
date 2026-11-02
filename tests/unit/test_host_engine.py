@@ -535,7 +535,7 @@ def configure_engine_exec(storage, monkeypatch, case):
     module.os.close(descriptor)
     deployment = {"profile": "rootless", "api_principal": {"host_uid": UID, "host_gid": GID}}
     deployment_body = json.dumps(deployment).encode()
-    prepared = {"binary": identity}
+    prepared = {"binary": identity, "account_home": "/var/lib/hfcache"}
     entered = False
     reads = 0
     calls = []

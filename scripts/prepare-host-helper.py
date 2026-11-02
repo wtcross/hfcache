@@ -151,7 +151,15 @@ def prepare(policy, profile, commit, snapshot, dirty):  # noqa: PLR0915 - two cl
     require(type(snapshot) is str and re.fullmatch(r"[0-9a-f]{64}", snapshot))
     require(type(dirty) is bool)
     account = pwd.getpwnam("hfcache")
-    require(account.pw_dir == "/var/lib/hfcache" and account.pw_uid > 0 and account.pw_gid > 0)
+    require(account.pw_uid > 0 and account.pw_gid > 0)
+    require(
+        account.pw_dir
+        in (
+            {"/var/lib/hfcache", "/var/lib/hfcache/container-home"}
+            if profile == "rootless"
+            else {"/var/lib/hfcache"}
+        )
+    )
     labels = getattr(policy, "_host_labels", None)
     inspection = policy._Inspection(policy.InspectionBudget(), host_labels=labels)  # noqa: SLF001 - shared protected implementation
     capture = inspection.capture
@@ -237,6 +245,8 @@ def prepare(policy, profile, commit, snapshot, dirty):  # noqa: PLR0915 - two cl
             "app_image_sha256": release["app_image"].removeprefix("sha256:"),
             "caddy_image_sha256": release["caddy_image"].removeprefix("sha256:"),
         }
+        if account.pw_dir != "/var/lib/hfcache":
+            evidence["account_home"] = account.pw_dir
     files = {}
     for name in sorted(names):
         body = read(root / name)
@@ -268,6 +278,11 @@ def prepare(policy, profile, commit, snapshot, dirty):  # noqa: PLR0915 - two cl
         "profile_evidence": evidence,
         "selinux_installation_sha256": hashlib.sha256(selinux_body).hexdigest(),
     }
+    current_account = pwd.getpwnam("hfcache")
+    require(
+        (current_account.pw_uid, current_account.pw_gid, current_account.pw_dir)
+        == (account.pw_uid, account.pw_gid, account.pw_dir)
+    )
     encoded = json.dumps(proposed, sort_keys=True).encode()
     require(len(encoded) <= policy.MAX_METADATA_BYTES)
     inspection.deployment = policy._deployment(encoded)  # noqa: SLF001 - shared closed schema

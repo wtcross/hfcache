@@ -8,6 +8,7 @@ remain governed by their current contracts.
 - Status: Amended; [decision151](decision-151.md) supersedes only the
   SYS_ADMIN-only engine capability-retention rule. [Decision159](decision-159.md)
   adds a dedicated rootless archive-lock type and preserved API/worker binds.
+  [Decision162](decision-162.md) binds one of two preserved rootless account homes.
 - Date: 2026-10-21.
 
 ## Context and decision
@@ -699,3 +700,11 @@ The 2026-10-30 amendment to decision156 permits only the exact captured native S
 credential mount's disappearance after proven original-pidfd exit. All other
 mount observations and protected authority remain unchanged; it adds no payload,
 mount, cleanup or process-control right and cannot reconcile an unknown Stop.
+
+## Closed rootless account-home compatibility amendment (2026-11-01)
+
+[Decision162](decision-162.md) additionally binds one of two fixed rootless
+account homes in the independent protected index. Existing namespace,
+capability, original-lock, payload-denial and fifteen-role receipt constraints
+remain unchanged. Native remains fixed to its original home. This amendment
+does not establish installed compatibility or authorize account/store migration.

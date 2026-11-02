@@ -138,3 +138,11 @@ are [the indexed peer module](../../src/hfcache/host_peer.py),
 [engine runtime tests](../../tests/unit/test_host_engine_runtime.py) and
 [SELinux policy tests](../../tests/unit/test_host_selinux_policy.py). Acceptance
 of this design is not evidence that those changes or an installed cohort pass.
+
+## Closed rootless account-home compatibility amendment (2026-11-01)
+
+[Decision162](decision-162.md) additionally binds one of two fixed rootless
+account homes in the independent protected index. Existing namespace,
+capability, original-lock, payload-denial and fifteen-role receipt constraints
+remain unchanged. Native remains fixed to its original home. This amendment
+does not establish installed compatibility or authorize account/store migration.

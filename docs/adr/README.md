@@ -221,3 +221,4 @@ status and current-contract links before applying a historical choice.
 | 158 | [Copy a separate native interpreter for each immutable web release](decision-158.md) |
 | 159 | [Preserve a dedicated rootless archive-lock label for metadata-only guard proof](decision-159.md) |
 | 161 | [Remove the superseded interface and its documentation](decision-161.md) |
+| 162 | [Bind a preserved rootless service-account home to the protected index](decision-162.md) |

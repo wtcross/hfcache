@@ -388,3 +388,25 @@ def test_label_bootstrap_must_be_protected_before_the_policy_module_executes(
         os.link(labels, labels.with_name("alias.py"))
     with pytest.raises((ValueError, OSError)):
         tool.load_policy()
+
+
+def test_readonly_rootless_proposal_binds_preserved_alternate_home(rootless, monkeypatch):
+    account = configure(rootless, monkeypatch)
+    account.pw_dir = "/var/lib/hfcache/container-home"
+    before = {
+        name: (rootless.selected / name).read_bytes() for name in rootless.index["authority_files"]
+    }
+    proposed = tool.prepare(policy, "rootless", "c" * 40, "d" * 64, dirty=True)
+    assert proposed["profile_evidence"]["account_home"] == account.pw_dir
+    assert (
+        proposed["profile_evidence"]["runtime_profile_sha256"]
+        == rootless.index["profile_evidence"]["runtime_profile_sha256"]
+    )
+    assert before == {name: (rootless.selected / name).read_bytes() for name in before}
+
+
+def test_native_proposal_refuses_rootless_alternate_account_home(native, monkeypatch):
+    account = configure(native, monkeypatch)
+    account.pw_dir = "/var/lib/hfcache/container-home"
+    with pytest.raises(ValueError, match="protected host index preparation refused"):
+        tool.prepare(policy, "native", "c" * 40, "d" * 64, dirty=True)

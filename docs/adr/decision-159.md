@@ -73,3 +73,11 @@ requirements. See [host administration](../host-administration.md),
 [the launcher](../../scripts/container-service.py),
 [the fixed observer](../../src/hfcache/host_policy.py) and
 [the SELinux policy](../../packaging/selinux/hfcache-host-helper.cil).
+
+## Closed rootless account-home compatibility amendment (2026-11-01)
+
+[Decision162](decision-162.md) additionally binds one of two fixed rootless
+account homes in the independent protected index. Existing namespace,
+capability, original-lock, payload-denial and fifteen-role receipt constraints
+remain unchanged. Native remains fixed to its original home. This amendment
+does not establish installed compatibility or authorize account/store migration.

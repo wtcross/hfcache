@@ -45,6 +45,13 @@ def digest(body):
 @pytest.fixture
 def host(tmp_path, monkeypatch):
     profile = PROFILE | {"service_uid": os.geteuid() or 983, "service_gid": os.getegid() or 983}
+    account = SimpleNamespace(
+        pw_uid=profile["service_uid"], pw_gid=profile["service_gid"], pw_dir="/var/lib/hfcache"
+    )
+    monkeypatch.setattr(
+        runtime.pwd, "getpwnam", lambda name: account if name == "hfcache" else None
+    )
+    monkeypatch.setenv("HOME", account.pw_dir)
     prefix = tmp_path / "opt"
     selected = prefix / "releases/0.2.0"
     configuration = selected / "rendered/server.toml"
@@ -113,6 +120,7 @@ def host(tmp_path, monkeypatch):
         monkeypatch.setattr(runtime, name, item)
     return SimpleNamespace(
         profile=profile,
+        account=account,
         prefix=prefix,
         selected=selected,
         configuration=configuration,
@@ -770,3 +778,31 @@ def test_disabled_launch_never_observes_lock_or_helper_authority(host, monkeypat
     monkeypatch.setattr(runtime.sys, "argv", ["container-service", role])
     with pytest.raises(Executed):
         runtime.main()
+
+
+def test_bound_alternate_home_requires_matching_measured_account_and_effective_home(
+    host, monkeypatch
+):
+    home = "/var/lib/hfcache/container-home"
+    host.account.pw_dir = home
+    host.index["profile_evidence"]["account_home"] = home
+    write(host.deployment, encoded(host.index))
+    host.binding["deployment_sha256"] = digest(host.deployment.read_bytes())
+    write(host.binding_file, encoded(host.binding), 0o440)
+    monkeypatch.setenv("HOME", home)
+    assert runtime.host_helper_projection(host.profile)["deployment_sha256"] == digest(
+        host.deployment.read_bytes()
+    )
+    monkeypatch.setenv("HOME", "/var/lib/hfcache")
+    with pytest.raises(ValueError, match="protected host helper projection refused"):
+        runtime.host_helper_projection(host.profile)
+
+
+@pytest.mark.parametrize("home", ["/tmp/alternate", "/var/lib/hfcache/container-home/", True])
+def test_projection_rejects_unreviewed_or_alias_home_before_podman(host, home):
+    host.index["profile_evidence"]["account_home"] = home
+    write(host.deployment, encoded(host.index))
+    host.binding["deployment_sha256"] = digest(host.deployment.read_bytes())
+    write(host.binding_file, encoded(host.binding), 0o440)
+    with pytest.raises(ValueError, match="protected host helper projection refused"):
+        runtime.host_helper_projection(host.profile)

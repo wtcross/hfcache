@@ -164,6 +164,15 @@ def configure(  # noqa: PLR0915 - one explicit protected profile adapter
 
     monkeypatch.setattr(policy, "binding_paths", binding_paths)
     index = authority(profile, selected)
+    if profile == "rootless":
+        account = SimpleNamespace(
+            pw_uid=index["api_principal"]["host_uid"],
+            pw_gid=index["api_principal"]["host_gid"],
+            pw_dir="/var/lib/hfcache",
+        )
+        monkeypatch.setattr(
+            policy.pwd, "getpwnam", lambda name: account if name == "hfcache" else None
+        )
     for name, (host, relative) in policy.binding_paths(profile).items():
         if profile == "rootless" and name in policy.ROOTLESS_BINDINGS:
             continue

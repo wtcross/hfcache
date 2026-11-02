@@ -8,6 +8,7 @@ argv, environment or the protected profile; Podman supplies explicit file mounts
 import hashlib
 import json
 import os
+import pwd
 import re
 import selectors
 import stat
@@ -732,17 +733,33 @@ def host_helper_projection(profile):  # noqa: PLR0915 - one fixed protected star
     _helper_need(
         principal == {"host_uid": profile["service_uid"], "host_gid": profile["service_gid"]}
     )
+    raw_evidence = deployment["profile_evidence"]
+    _helper_need(type(raw_evidence) is dict)
+    home_field = {"account_home"} if "account_home" in raw_evidence else set()
     evidence = _helper_object(
-        deployment["profile_evidence"],
+        raw_evidence,
         {
             "artifact_index_sha256",
             "runtime_profile_sha256",
             "app_image_sha256",
             "caddy_image_sha256",
-        },
+        }
+        | home_field,
     )
-    for value in evidence.values():
-        _helper_digest(value)
+    home = evidence.get("account_home", "/var/lib/hfcache")
+    _helper_need(
+        type(home) is str and home in {"/var/lib/hfcache", "/var/lib/hfcache/container-home"}
+    )
+    # The protected index chooses a finite home; ambient HOME cannot select a store.
+    account = pwd.getpwnam("hfcache")
+    _helper_need(
+        (account.pw_uid, account.pw_gid, account.pw_dir)
+        == (profile["service_uid"], profile["service_gid"], home)
+    )
+    _helper_need(os.environ.get("HOME") == home)
+    for name, value in evidence.items():
+        if name != "account_home":
+            _helper_digest(value)
     runtime = capture.read(PROFILE_DIRECTORY / "runtime.json", MAX_PROFILE_BYTES)
     _helper_need(
         _inspection_json(runtime) == profile

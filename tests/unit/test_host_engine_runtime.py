@@ -27,6 +27,7 @@ def child_fixture(tmp_path, monkeypatch, *, change="", exit_code=0, delay=0):
     deployment_body = json.dumps(deployment).encode()
     prepared: dict[str, Any] = {
         "schema_version": 1,
+        "account_home": "/var/lib/hfcache",
         "keeper": {"pid": os.getpid(), "user_inode": 100},
         "namespaces": dict.fromkeys(module._NAMESPACES, 1),
         "storage": {"original_options": ["overlay.mountopt=nodev"]},
@@ -163,6 +164,8 @@ def test_repeated_preparation_and_child_reads_share_one_cumulative_budget(
         "value['process']['start_ticks']+=1",
         "value['prepared']['keeper']['user_inode']+=1",
         "value['prepared']['storage']['original_options']=[]",
+        "value['prepared']['account_home']='/var/lib/hfcache/container-home'",
+        "value['prepared'].pop('account_home')",
         "value['entered']['namespaces']['mnt']+=1",
         "value['entered']['namespaces']['mnt']=True",
         "value['entered']['namespaces']['user']+=1",

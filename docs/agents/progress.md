@@ -35,6 +35,26 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Local web migration (2026-11-01)
 
+- [x] OPS-025 Bind the preserved rootless account home
+  (2026-11-01, this commit — [task](plans/tasks/ops-025-preserved-rootless-account-home.md)).
+  Protected rootless index binds only the original default or preserved
+  container-home; all helper/launcher/engine/guard consumers rejoin the measured
+  principal, HOME, override and original-lock paths. Native remains unchanged;
+  both exact secret roots stay masked, with no fallback store or new privilege.
+  Decision 162, affected ADRs/register and human index/storage/rollback contracts
+  align. Focused 857 checks, host Python 3.12 compilation, lint/types and 16 actual
+  previous/current parser observations pass; released 0.2.2 has no helper reader
+  and is honestly unavailable. Strict full gate passes inner 0/1625.620s and
+  outer 0/1626.500s: 9,590 backend/4,051 web/16 wheel, three locked profiles,
+  two Chromium checks and real API fixture; 95.02% lines/90.13% branches.
+  All 1,233 staged/tracked inputs and names stay unchanged. Log SHA256
+  `bd5d8d30e1a41318b9eea5ed81a959d02d72f826dc224d9435eada845d5d7d71`;
+  earlier focused failures and all results remain retained. No runtime dependency
+  or archive/operation/outcome/receipt format changes. Actual Podman 6.0.2
+  enforcing compatibility and deployment remain OPS-024, with existing account,
+  store/configuration and all NAS/calendar holds preserved. No live selection,
+  credential, archive workload, tag or publication occurs in this source package.
+
 - [x] REL-016 Prepare fresh full-web release source
   (2026-11-01, this commit — [task](plans/tasks/rel-016-web-release-source.md)).
   Assign unused0.3.0 metadata while preserving all94 locked packages; README and
@@ -13465,3 +13485,18 @@ rollout or establish WEB-022's full functional matrix.
    The same instruction permits a normal commit and branch-only push to both
    `github` and `forgejo` after validation. No production service or archive
    change, tag, main-branch push or history rewrite follows.
+
+162. **Bind the preserved rootless account home to protected deployment evidence**
+   (2026-11-01, OPS-025, this commit). Production's existing account and store
+   use `/var/lib/hfcache/container-home`, while the new helper's earlier fixed
+   `/var/lib/hfcache` assumption refuses them. [Decision 162](../adr/decision-162.md)
+   permits only those two rootless homes, binds the alternate in the independent
+   protected host index and rechecks the principal/home throughout observation.
+   Native keeps its original fixed home. Engine environment, overrides and locks
+   use only the selected home; missing or drifted evidence refuses without
+   another store search. Both secret roots remain masked and all original
+   capability, namespace, SELinux and guard constraints stand. Moving persistent
+   state or accepting arbitrary/ambient homes was rejected. This additive
+   host-index field requires actual previous-reader refusal and retained matching
+   rollback authority. No runtime/archive/operation/receipt format, dependency,
+   category grant or live-host acceptance is implied by source implementation.

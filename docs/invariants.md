@@ -1222,6 +1222,15 @@ old-reader/rollback refusals and unknown original state.
   grant, automatic creation/repair/relabel, new receipt role, worker authority
   projection or native label prerequisite follows. Recreated locks require
   independent root provisioning and fresh bound policy receipts.
+  [Decision162](adr/decision-162.md) additionally binds one of exactly two
+  rootless account homes in the protected deployment index: `/var/lib/hfcache`
+  (also the legacy omission default), or `/var/lib/hfcache/container-home`.
+  Measured passwd UID/GID/home must match the indexed principal/home and original
+  runtime/engine authority throughout observation. Derive fixed HOME, override
+  and lock paths from that choice; no arbitrary path, fallback store search,
+  account/store migration or cleanup follows. Mask both fixed secret roots and
+  retain exact lock/SHM labels, original namespaces/capabilities and fifteen-role
+  receipt. Native keeps its original home; older helpers refuse extended indexes.
   Image payload/JSON files and image directories remain helper-mutation-denied.
   Only the two independently provisioned existing rootless64B image/layer locks
   and the fixed stock runtime alive/mountpoints locks of0B/64B use the separate

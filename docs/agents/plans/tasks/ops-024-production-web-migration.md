@@ -4,7 +4,7 @@
 | --- | --- |
 | Status | in_progress |
 | Plan | [Production web migration](../2026-11-01-plan-production-web-migration.md) |
-| Depends on | [REL-016](rel-016-web-release-source.md) for build/stage/selection; independent preflight/backup may run in parallel |
+| Depends on | [REL-016](rel-016-web-release-source.md) and [OPS-025](ops-025-preserved-rootless-account-home.md) for build/stage/selection; independent preflight/backup may run in parallel |
 
 ## Scope and acceptance
 
@@ -39,8 +39,26 @@ operation observation and final strict gate. Tag only the accepted deployment.
 Initial actual configuration has 165 enabled model entries and zero dataset
 entries; preserve the complete actual bytes and any private retired candidates.
 The independent guard is inactive and bridge readiness dependency is absent,
-although the NFS mount remains ro. Historical guard evidence is stale and cannot
-authorize assuming readiness. No host mutation has occurred.
+although the NFS mount remains ro. Retained root-private October 22 evidence
+establishes this was the user's deliberate setting. Preserve it by default after
+temporary guarded migration. Historical active-guard evidence is stale and
+cannot authorize assuming readiness or permanent restoration.
+
+Verified protected backup: `/opt/hfcache/deployment/20261101-web-0.3.0`, 48 local
+files/514,987 bytes, original configuration flock held throughout; ledger SHA256
+`c15401645b5e2d965db3bd9bec9b09112be80fd35c7aa756af3701bbf38537c9`.
+All original configuration/candidate/backup files, lock identities, both stores
+and handles recompare unchanged. Source parser 0.3.0 accepts all 165 entries.
+The original five API receipts are terminal and never replayed.
+
+Existing account home/store requires OPS-025's reviewed compatibility correction.
+Actual Podman is 6.0.2 and exact stock configuration hashes match; confined
+installed compatibility remains unproved. Existing network-state child already
+has its required label. No package update, account/store relocation or label
+weakening is planned. Explained generated build environments were retired only
+after complete inventories, no live references and retained artifact/hash proof;
+all source, lock, wheel/UI/OCI and audit records remain. No production service,
+archive or installed configuration has changed.
 
 ## Completion evidence
 

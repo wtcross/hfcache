@@ -21,6 +21,11 @@ Keep a compatible observer for any newer unresolved outcome and never remove
 archive or private records to force an older reader to accept them. See
 [observed compatibility](docs/web-ui/migration-and-rollback.md#compatibility-and-backups).
 
+The protected rootless helper binds either supported fixed account home to its
+deployment index, preserving existing container stores during migration. Older
+strict helpers refuse the added home field; retain their matching bootstrap and
+index for rollback. Runtime and archive formats remain unchanged.
+
 - Remove the superseded interface source and documentation from the repository;
   keep shared runtime safety and retained-code attribution. Installed services
   and production state remain unchanged.

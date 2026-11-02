@@ -247,6 +247,28 @@ configuration path selector, graphroot, backend, daemon setting or MNT
 permission follows. These fixed options require actual engine read proof before
 installed adoption.
 
+The protected rootless deployment index may additionally bind `account_home`
+inside `profile_evidence`. Its only accepted values are `/var/lib/hfcache` and
+`/var/lib/hfcache/container-home`; omission retains the first value. This is a
+closed compatibility choice, not a path or engine-store selector. Native remains
+fixed to `/var/lib/hfcache`. The measured `hfcache` passwd UID, GID and home must
+match the protected principal/home and indexed runtime principal before bootstrap,
+peer observation, engine preparation and fixed execution; the original observer
+rechecks the same home after its owned child drains. Unknown, mismatched or changed
+account inputs refuse before another store or Podman fallback is attempted.
+
+The fixed clean `HOME`, two user override paths and two persistent engine-lock
+paths derive only from that bound value. Four engine locks retain their exact
+owner, mode, size, inode and dedicated label checks. The helper masks both exact
+possible secret-store directories and permits only the two fixed optional engine
+coordination roots; it never grants all of HOME. Independently provision the
+existing secret/lock labels on the selected store without moving, rewriting,
+cleaning or probing an unselected store. Preserve current account/store data.
+The fifteen-role receipt and runtime/container-release schema remain unchanged.
+Older helpers refuse the additional protected index field; rollback requires
+preserving/restoring the exact predecessor index/bootstrap and its compatible
+account home, not dropping the field to make an incompatible account pass.
+
 The initial supported storage configuration is the independently measured
 Podman6.1 stock `/usr/share/containers/storage.conf`, SHA256
 `322dffd5a543bb9e1ca9c67cc56999c62b746118674d004180fe60dddfc21979`,
@@ -258,6 +280,12 @@ bundle also requires both measured vendor directories from
 | --- | --- | --- | --- |
 | `/usr/share/containers/storage.conf.d` | `00-vendor.conf` | 29 | `358b7ba3201aea7dba1d8e0e42c8a11e21acdff1b2ca71a4f8b826f41ae5bc80` |
 | `/usr/share/containers/storage.rootless.conf.d` | `00-vendor-rootless.conf` | 186 | `f346071a81b5fdb96796397b08f9dc40c9f450166c7f041ddcaa92f115e92ca8` |
+
+The preserved production host currently uses Podman6.0.2 with all three exact
+stock hashes above. Actual confined engine/helper acceptance for that version
+remains pending production migration; matching configuration bytes alone do not
+establish it. No package update, broader version guarantee or relaxed source
+check follows from this observed match.
 
 Both directories must be root0:0/0755, each with exactly its named root0:0/0644,
 single-link leaf. Fresh bounded no-follow capture checks every entry, exact
@@ -658,7 +686,7 @@ Labels has exactly these role/type entries; it contains no path selector:
 | `api_credentials` | `hfcache_host_helper_secret_t` | `/etc/hfcache/credentials` |
 | `hub_home` | `hfcache_host_helper_hub_state_t` | `/var/lib/hfcache/hf-home` and all Hub-state leaves |
 | `hub_cache` | `hfcache_host_helper_hub_state_t` | Entire `/var/cache/hfcache` root and subtree, including `xet` |
-| `container_secrets` | `hfcache_host_helper_secret_t` | `/var/lib/hfcache/.local/share/containers/storage/secrets` |
+| `container_secrets` | `hfcache_host_helper_secret_t` | Selected bound account home's `.local/share/containers/storage/secrets` tree; both fixed paths are masked |
 | `engine_locks` | `hfcache_host_helper_engine_lock_t` | Only the existing rootless image/layer locks under the fixed graphroot, `/run/user/<protected host UID>/libpod/tmp/alive.lck` and `/run/user/<protected host UID>/containers/overlay-layers/mountpoints.lock`;64B/64B/0B/64B, unused for native |
 | `engine_shared_memory` | `hfcache_host_helper_engine_shm_t` | Only the existing stock2048-lock0600/82488B `/dev/shm/libpod_rootless_lock_<protected host UID>` segment; unused for native |
 | `archive` | `nfs_t` or `hfcache_archive_t` | `/srv/hfcache` |
@@ -785,8 +813,9 @@ Authenticate installed entry
 point, pyvenv.cfg, Python pin/lock/project metadata and units/helper sources too;
 layout classification alone is insufficient. This authenticates application
 authority and the interpreter executable, not the complete dependency/stdlib
-tree. Rootless profile_evidence has exactly artifact_index_sha256,
-runtime_profile_sha256, app_image_sha256 and caddy_image_sha256. Rootless
+tree. Rootless profile_evidence requires exactly artifact_index_sha256,
+runtime_profile_sha256, app_image_sha256 and caddy_image_sha256, with only the
+optional closed `account_home` compatibility field described above. Rootless
 retains the captured indexed original stage verification and all nine execution
 bindings, in addition to new helper bindings. Exact branch schemas are validated
 before any grants and documented with provisioning examples.
