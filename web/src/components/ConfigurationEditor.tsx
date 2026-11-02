@@ -11,6 +11,7 @@ import { ChoiceControl } from "./ChoiceControl";
 import type {
     ConfigurationSnapshot,
     ConfigurationStore,
+    ReloadReview,
 } from "../configuration/configuration-state";
 import { MAX_DRAFT_BYTES } from "../configuration/draft";
 import { normalizeManagedTags } from "../wire/config-semantics";
@@ -267,7 +268,7 @@ export function ConfigurationEditor({ store }: { store: ConfigurationStore }) {
                 key={
                     String(state.authGeneration) +
                     ":" +
-                    (state.base?.base_revision ?? "unloaded")
+                    String(state.editorRevision)
                 }
                 store={store}
                 state={state}
@@ -286,6 +287,23 @@ function EditorSession({
     const [form, setForm] = useState<LocalForm | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [showTagSuggestions, setShowTagSuggestions] = useState(false);
+    const [reloadReview, setReloadReview] = useState<ReloadReview | null>(null);
+    const keepEditing = useRef<HTMLButtonElement>(null);
+    const replaceDraft = useRef<HTMLButtonElement>(null);
+    const reloadButton = useRef<HTMLButtonElement>(null);
+    const activeReloadReview =
+        reloadReview !== null &&
+        reloadReview.generation === state.generation &&
+        reloadReview.authGeneration === state.authGeneration
+            ? reloadReview
+            : null;
+    useEffect(() => {
+        if (reloadReview === null) return;
+        if (activeReloadReview === null) {
+            store.cancelReload(reloadReview);
+            reloadButton.current?.focus();
+        } else keepEditing.current?.focus();
+    }, [reloadReview, activeReloadReview, store]);
     const live = useRef(true);
     useEffect(() => {
         live.current = true;
@@ -345,6 +363,11 @@ function EditorSession({
     function close() {
         setForm(null);
         setError(null);
+    }
+    function cancelReload() {
+        if (reloadReview !== null) store.cancelReload(reloadReview);
+        setReloadReview(null);
+        reloadButton.current?.focus();
     }
     function repository(
         entry: RepositoryConfig | null,
@@ -442,6 +465,60 @@ function EditorSession({
     }
     return (
         <div className="panel">
+            {activeReloadReview !== null && (
+                <div className="draft-navigation-overlay">
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby={id + "-reload-title"}
+                        aria-describedby={id + "-reload-description"}
+                        className="draft-navigation-dialog"
+                        onKeyDown={(event) => {
+                            if (event.key === "Escape") {
+                                event.preventDefault();
+                                cancelReload();
+                            } else if (event.key === "Tab") {
+                                event.preventDefault();
+                                if (
+                                    document.activeElement ===
+                                    keepEditing.current
+                                )
+                                    replaceDraft.current?.focus();
+                                else keepEditing.current?.focus();
+                            }
+                        }}
+                    >
+                        <h2 id={id + "-reload-title"}>
+                            Replace unsaved configuration?
+                        </h2>
+                        <p id={id + "-reload-description"}>
+                            Reload replaces your draft and form edits only after
+                            a successful read. A failed read keeps them
+                            available for editing. Validation and preview
+                            readiness retire when the read starts; original
+                            operation handles remain.
+                        </p>
+                        <button
+                            ref={keepEditing}
+                            type="button"
+                            onClick={cancelReload}
+                        >
+                            Keep editing
+                        </button>
+                        <button
+                            ref={replaceDraft}
+                            type="button"
+                            onClick={() => {
+                                const reviewed = activeReloadReview;
+                                setReloadReview(null);
+                                request(() => store.reload(reviewed));
+                            }}
+                        >
+                            Reload and replace draft
+                        </button>
+                    </div>
+                </div>
+            )}
             <header className="panel-heading">
                 <h2>Configuration and tags</h2>
             </header>
@@ -473,11 +550,13 @@ function EditorSession({
                         Compare installed configuration
                     </button>
                     <button
+                        ref={reloadButton}
                         type="button"
                         disabled={!state.canRead || busy || state.base === null}
                         onClick={() => {
-                            close();
-                            request(() => store.load(true));
+                            if (state.dirty)
+                                setReloadReview(store.reviewReload());
+                            else request(() => store.reload());
                         }}
                     >
                         Reload installed configuration
@@ -529,7 +608,7 @@ function EditorSession({
                                 : "The editable draft matches its installed base."}{" "}
                             Raw draft text is not stored in localStorage.
                         </p>
-                        {!state.canEdit && (
+                        {!state.canEdit && state.pending !== "read" && (
                             <Notice>
                                 Configuration is read-only for this session.
                                 Host-read permission does not grant
@@ -1230,9 +1309,9 @@ function EditorSession({
                                         state.comparison.editable.repositories
                                             .length
                                     }{" "}
-                                    currently configured entries. Reload
-                                    installed configuration discards this
-                                    browser draft.
+                                    currently configured entries. A confirmed
+                                    successful reload replaces this browser
+                                    draft.
                                 </p>
                             </div>
                         )}

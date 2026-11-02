@@ -1,4 +1,4 @@
-/** Built startup refusal/fallback only; no API/Caddy/host acceptance. */
+/** Built startup and owned synthetic UI workflows; no installed/API/host acceptance. */
 import { spawn } from "node:child_process";
 import type { BrowserServer } from "@playwright/test";
 import { createServer } from "node:http";
@@ -17,7 +17,7 @@ const options = process.argv.slice(2);
 if (options.length > 0) {
     if (options.length === 1 && options[0] === "--help")
         console.log(
-            "Usage: pnpm --dir web run test:browser\nChecks the built startup refusal and missing-script fallback on an owned loopback fixture; requires separately provisioned Chromium. Connected UI acceptance requires the installed shared-Caddy functional runner.",
+            "Usage: pnpm --dir web run test:browser\nChecks built startup refusal, missing-script fallback and owned synthetic UI workflows; requires separately provisioned Chromium. Connected UI acceptance requires the installed shared-Caddy functional runner.",
         );
     else {
         console.error("Unrecognized browser smoke argument.");
@@ -215,7 +215,7 @@ if (options.length > 0) {
                 throw new Error("Browser report exceeds its bounds.");
             const parsed: unknown = JSON.parse(raw.toString("utf8"));
             console.log(
-                `Built startup refusal/fallback Chromium checks: ${String(requirePassingBrowserReport(parsed))} passed; no skipped tests. No connected UI/Caddy/API acceptance claimed.`,
+                `Built startup and source-fixture Chromium checks: ${String(requirePassingBrowserReport(parsed))} passed; no skipped tests. No installed/Caddy/API/production acceptance claimed.`,
             );
         }
     } finally {

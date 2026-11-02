@@ -348,8 +348,13 @@ History: `synchronization` (`54e4671`), decision 94.
   or uncertain cleanup. The narrow host writer adds no archive/credential authority.
   Structured browser editing keeps one RAM-only supported projection and exact-base
   local intent diff. Every edit or stale base retires validation/preview readiness;
-  protected values and raw TOML never become browser replacement inputs. Existing
-  configuration-read/write grants stand independently of host-status read.
+  Manual reload requires a generation-bound dirty-draft decision, retains original
+  base/intent/raw forms through pending or failed same-authority reads, and replaces
+  them atomically only after successful decoding, including same-base responses.
+  Confirmed reload retires readiness; authentication invalidation still clears
+  private evidence. Protected values and raw TOML never become browser replacement
+  inputs. Existing configuration-read/write grants stand independently of
+  host-status read.
 - **`INV-002` — Credentials have only explicit sources and never become
   evidence.** Accept only an explicit token file or systemd credential, with
   the documented precedence and file validation. Disable ambient discovery;

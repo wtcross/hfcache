@@ -18,7 +18,7 @@ import {
     statusPayload,
     versionPayload,
 } from "./read-fixtures";
-import { operationResponse } from "./state-fixtures";
+import { deferred, operationResponse } from "./state-fixtures";
 import { uiBootstrapFixture } from "./ui-fixtures";
 
 const raw: unknown = configFixture;
@@ -254,4 +254,50 @@ test("dirty unload veto retains the exact configuration draft, saved original ID
     expect(
         fixture.fetcher.mock.calls.every(([, init]) => init?.method === "GET"),
     ).toBe(true);
+});
+
+test("Stay preserves a pending dirty reload, while explicit discard-and-leave fences its late reply", async () => {
+    const { store, user, fetcher } = await setup();
+    const late = deferred<Response>();
+    fetcher.mockImplementationOnce(() => late.promise);
+    const reviewed = store.reviewReload();
+    if (reviewed === null) throw new Error("Missing reload review");
+    let loading: Promise<void> = Promise.resolve();
+    act(() => {
+        loading = store.reload(reviewed);
+    });
+    await waitFor(() => {
+        expect(fetcher).toHaveBeenCalledTimes(2);
+    });
+    const original = store.snapshot().prepared;
+    await user.click(screen.getByRole("link", { name: "Operations" }));
+    await user.click(screen.getByRole("button", { name: "Stay" }));
+    expect(store.snapshot().pending).toBe("read");
+    expect(store.snapshot().prepared).toBe(original);
+    expect(store.snapshot().dirty).toBe(true);
+    await user.click(screen.getByRole("link", { name: "Operations" }));
+    await user.click(
+        screen.getByRole("button", { name: "Discard draft and leave" }),
+    );
+    expect(window.location.pathname).toBe("/ui/operations");
+    expect(store.snapshot().pending).toBeNull();
+    expect(store.snapshot().dirty).toBe(false);
+    const discarded = store.snapshot();
+    await act(async () => {
+        late.resolve(
+            jsonResponse({
+                ...operationResponse("config read", {
+                    ...config,
+                    base_revision: "d".repeat(64),
+                }),
+                config_fingerprint: null,
+            }),
+        );
+        await loading;
+    });
+    expect(store.snapshot()).toBe(discarded);
+    expect(store.snapshot().base?.base_revision).toBe(config.base_revision);
+    expect(fetcher.mock.calls.every(([, init]) => init?.method === "GET")).toBe(
+        true,
+    );
 });

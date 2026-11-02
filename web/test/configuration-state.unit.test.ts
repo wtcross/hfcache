@@ -235,7 +235,9 @@ test("fresh compare preserves exact original base and draft; only explicit reloa
     expect(store.snapshot().prepared?.editable.sync.max_workers).toBe(3);
     await store.load();
     expect(fetcher).toHaveBeenCalledTimes(2);
-    await store.load(true);
+    const reviewed = store.reviewReload();
+    if (reviewed === null) throw new Error("Missing reload review");
+    await store.reload(reviewed);
     expect(store.snapshot().base?.base_revision).toBe(newer.base_revision);
     expect(store.snapshot().dirty).toBe(false);
 });
@@ -666,4 +668,223 @@ test("starting another original outcome read never labels the previous confirmed
             .registry.records.find((row) => row.recordId === second.recordId)
             ?.handles.operationId,
     ).toBe(otherId);
+});
+
+test.each(["transport", "api", "domain", "protocol", "identity"] as const)(
+    "failed same-authority reload (%s) preserves the exact base, prepared intent and admitted buffer",
+    async (kind) => {
+        const fetcher = transport();
+        const { store } = setup(fetcher);
+        await store.load();
+        store.replaceEditable({
+            ...config.editable,
+            sync: { ...config.editable.sync, max_workers: 3 },
+        });
+        store.setEditing(true, { kind: "settings", raw: "003-invalid" });
+        const original = store.snapshot();
+        const late = deferred<Response>();
+        fetcher.mockImplementationOnce(() =>
+            late.promise.then((response) => {
+                if (kind === "transport") throw new TypeError("Owned offline");
+                return response;
+            }),
+        );
+        const reviewed = store.reviewReload();
+        if (reviewed === null) throw new Error("Missing reload review");
+        const loading = store.reload(reviewed);
+        expect(store.snapshot().pending).toBe("read");
+        expect(store.snapshot().base).toBe(original.base);
+        expect(store.snapshot().prepared).toBe(original.prepared);
+        expect(store.snapshot().dirty).toBe(true);
+        expect(store.snapshot().editing).toBe(true);
+        expect(store.snapshot().canEdit).toBe(false);
+        expect(store.setEditing(true, { raw: "newer" })).toBe(false);
+        expect(store.replaceJson("{}")).toBe(false);
+        expect(store.replaceEditable(config.editable)).toBe(false);
+        const repository = config.editable.repositories[0];
+        if (repository === undefined)
+            throw new Error("Missing fixture repository");
+        expect(store.upsert(repository)).toBe(false);
+        expect(store.remove("model", "organization/model-name")).toBe(false);
+        late.resolve(
+            kind === "api"
+                ? jsonResponse(problemWire(), 500)
+                : kind === "domain"
+                  ? jsonResponse(operationResponse("config read", {}, true))
+                  : kind === "protocol"
+                    ? jsonResponse({ schema_version: 99 })
+                    : jsonResponse(
+                          configReadResponse({
+                              ...config,
+                              archive_id:
+                                  "00000000-0000-4000-8000-000000000000",
+                          }),
+                      ),
+        );
+        await loading;
+        expect(store.snapshot().base).toBe(original.base);
+        expect(store.snapshot().prepared).toBe(original.prepared);
+        expect(store.snapshot().dirty).toBe(true);
+        expect(store.snapshot().editing).toBe(true);
+        expect(store.snapshot().pending).toBeNull();
+        expect(store.snapshot().canEdit).toBe(true);
+        expect(store.snapshot().editorRevision).toBe(original.editorRevision);
+        expect(store.snapshot().notice).toContain("reload failed");
+        expect(store.snapshot().validation).toBeNull();
+        expect(store.snapshot().assessment).toBeNull();
+        expect(
+            fetcher.mock.calls.every(([, init]) => init?.method === "GET"),
+        ).toBe(true);
+    },
+);
+
+test("reload review is one-use and cannot admit a stale decision after edits, discard or authentication change", async () => {
+    const fetcher = transport();
+    const { store, controller } = setup(fetcher);
+    await store.load();
+    store.setEditing(true, { raw: "first" });
+    const reviewed = store.reviewReload();
+    if (reviewed === null) throw new Error("Missing reload review");
+    store.setEditing(true, { raw: "newer" });
+    await store.reload(reviewed);
+    await store.reload();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(store.snapshot().dirty).toBe(true);
+    store.discard();
+    await store.reload(reviewed);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    store.setEditing(true, { raw: "current" });
+    const current = store.reviewReload();
+    if (current === null) throw new Error("Missing reload review");
+    controller.disconnect();
+    await store.reload(current);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(store.snapshot().prepared).toBeNull();
+});
+
+test.each(["same", "different"] as const)(
+    "successful %s-base replacement resets all draft state in one publication and increments the editor revision",
+    async (kind) => {
+        const fetcher = transport();
+        const { store } = setup(fetcher);
+        await store.load();
+        store.replaceEditable({
+            ...config.editable,
+            sync: { ...config.editable.sync, max_workers: 3 },
+        });
+        store.setEditing(true, { kind: "json", text: "{ unfinished" });
+        const revision = store.snapshot().editorRevision;
+        const next = {
+            ...config,
+            base_revision:
+                kind === "same" ? config.base_revision : "e".repeat(64),
+        };
+        fetcher.mockResolvedValueOnce(jsonResponse(configReadResponse(next)));
+        const reviewed = store.reviewReload();
+        if (reviewed === null) throw new Error("Missing reload review");
+        const observations: ReturnType<typeof store.snapshot>[] = [];
+        store.subscribe(() => observations.push(store.snapshot()));
+        await store.reload(reviewed);
+        expect(store.snapshot().base).toEqual(next);
+        expect(store.snapshot().prepared?.editable).toEqual(config.editable);
+        expect(store.snapshot().editing).toBe(false);
+        expect(store.snapshot().dirty).toBe(false);
+        expect(store.snapshot().editorRevision).toBe(revision + 1);
+        for (const observed of observations) {
+            if (observed.editorRevision > revision) {
+                expect(observed.prepared?.managed.base_revision).toBe(
+                    next.base_revision,
+                );
+                expect(observed.prepared?.editable).toEqual(config.editable);
+                expect(observed.editing).toBe(false);
+            }
+        }
+        const reads = fetcher.mock.calls.length;
+        await store.reload(reviewed);
+        expect(fetcher).toHaveBeenCalledTimes(reads);
+    },
+);
+
+test.each(["disconnect", "dispose"] as const)(
+    "late replacement after %s cannot restore private values or overwrite the invalidation notice",
+    async (action) => {
+        const fetcher = transport();
+        const { store, controller } = setup(fetcher);
+        await store.load();
+        store.setEditing(true, { raw: "private" });
+        const late = deferred<Response>();
+        fetcher.mockImplementationOnce(() => late.promise);
+        const reviewed = store.reviewReload();
+        if (reviewed === null) throw new Error("Missing reload review");
+        const loading = store.reload(reviewed);
+        await vi.waitFor(() => {
+            expect(fetcher).toHaveBeenCalledTimes(2);
+        });
+        if (action === "disconnect") controller.disconnect();
+        else store.dispose();
+        const invalidated = store.snapshot();
+        late.resolve(jsonResponse(configReadResponse(config)));
+        await loading;
+        expect(store.snapshot()).toBe(invalidated);
+        expect(store.snapshot().base).toBeNull();
+        expect(store.snapshot().prepared).toBeNull();
+        expect(store.snapshot().dirty).toBe(false);
+        const calls = fetcher.mock.calls.length;
+        await store.load();
+        await store.reload();
+        expect(fetcher).toHaveBeenCalledTimes(calls);
+    },
+);
+
+test("replacement retention capacity refusal preserves the admitted original draft and buffer", async () => {
+    const fetcher = transport();
+    const { store, controller } = setup(fetcher);
+    await store.load();
+    store.setEditing(true, { kind: "json", text: "{ private raw" });
+    const original = store.snapshot();
+    const tags = Array.from(
+        { length: 64 },
+        (_, index) => "tag-" + String(index).padStart(3, "0") + "x".repeat(57),
+    );
+    const next = {
+        ...config,
+        base_revision: "d".repeat(64),
+        editable: {
+            ...config.editable,
+            repositories: Array.from({ length: 430 }, (_, index) => ({
+                type: "model",
+                id: "owned/entry-" + String(index),
+                revision: "main",
+                enabled: false,
+                tags,
+                declared_dependencies: [],
+            })),
+        },
+    };
+    const checked = decodeConfigRead(parseWireJson(JSON.stringify(next)));
+    expect(checked.editable.repositories).toHaveLength(430);
+    const late = deferred<Response>();
+    fetcher.mockImplementationOnce(() => late.promise);
+    const reviewed = store.reviewReload();
+    if (reviewed === null) throw new Error("Missing reload review");
+    const loading = store.reload(reviewed);
+    await vi.waitFor(() => {
+        expect(fetcher).toHaveBeenCalledTimes(2);
+    });
+    const held = Array.from({ length: 3 }, () =>
+        controller.createPrivateSlot(),
+    );
+    const chunk = "x".repeat(31 * 256 * 1024 - 2);
+    for (const slot of held) expect(slot.set(chunk)).toBe(true);
+    late.resolve(jsonResponse(configReadResponse(next)));
+    await loading;
+    expect(store.snapshot().notice).toContain("reload failed");
+    expect(store.snapshot().notice).toContain("capacity is unavailable");
+    expect(store.snapshot().base).toBe(original.base);
+    expect(store.snapshot().prepared).toBe(original.prepared);
+    expect(store.snapshot().editing).toBe(true);
+    expect(store.snapshot().dirty).toBe(true);
+    expect(store.snapshot().editorRevision).toBe(original.editorRevision);
+    expect(store.snapshot().canEdit).toBe(true);
+    for (const slot of held) slot.clear();
 });

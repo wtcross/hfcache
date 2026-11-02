@@ -36,9 +36,9 @@ editable projection, never the installed document or private candidate.
 The draft and assessed candidate are not saved in browser storage. The current
 authenticated session owns one draft; navigating away with unsaved changes
 requires the **Unsaved configuration changes** decision: **Stay** or **Discard
-draft and leave**. Reloading, replacing the authenticated session or closing the
-browser can discard unsaved edits. Copy original operation handles before
-changing a session after submission; losing a draft does not cancel accepted work.
+draft and leave**. Reloading the browser document, replacing the authenticated
+session or closing the browser can discard unsaved edits. Copy original operation
+handles before changing a session after submission; losing a draft does not cancel accepted work.
 Draft/form input is bounded to 2 MiB and participates in shared encoded-retention
 limits. The managed request still permits at most256 edits and the server's
 private reconstructed candidate remains limited to1MiB. Repository and diff
@@ -124,10 +124,18 @@ trusted result.
 
 Use **Compare installed configuration** to read the current editable projection
 while retaining your intended draft. Compare it with the original base and
-re-edit deliberately. **Reload installed configuration** explicitly discards the
-old draft and captures a new base. Never substitute a fresh token into unseen
-old edits, automatically merge tags, or reuse the old preview. If a conflict is
-reported after submission, keep the original key and any known operation ID or
+re-edit deliberately. With unsaved prepared or raw form edits, **Reload installed
+configuration** opens **Keep editing** or **Reload and replace draft**. Keep editing
+issues no request and preserves readiness. Confirming retires validation/preview
+readiness and disables editing while the bounded read runs. Original base,
+prepared intent and visible raw repository/settings/JSON text stay in memory.
+Only a successful decoded, scope-checked read replaces them together, even when
+the base revision is unchanged. A same-authority failed read retains them for
+editing with a failed-reload notice; retired readiness stays retired. Session
+invalidation still clears private values and fences late responses. A changed
+draft/session dismisses an old decision. Never substitute a fresh token into
+unseen old edits, automatically merge tags, or reuse the old preview. If a conflict
+is reported after submission, keep the original key and any known operation ID or
 receipt. A refusal before admission may have no receipt. Compare the installed
 configuration and separately observe any accepted application's host effects;
 a generic receipt cannot establish rollback.
@@ -353,8 +361,9 @@ tag-only edit or a change to comments, whitespace or table order. On a stale-bas
 conflict, choose **Compare installed configuration** to retain and compare the
 original base and intended draft. Apply readiness is retired when that read
 finds a changed base. When ready to discard the old draft, choose **Reload
-installed configuration** and re-edit from the new revision. **Read installed
-configuration** is unavailable while the draft is dirty. Do not replace the
+installed configuration**, confirm replacement if dirty, and re-edit after a
+successful read. A failed same-authority read preserves the original draft and
+raw editor text. **Read installed configuration** is unavailable while the draft is dirty. Do not replace the
 token on an old draft without reviewing that comparison.
 Queue waiting also rechecks the base, permission and protected authority before
 Hub work.

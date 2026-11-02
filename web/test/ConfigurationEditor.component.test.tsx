@@ -22,7 +22,7 @@ import type {
 } from "../src/wire/generated";
 import { parseWireJson } from "../src/wire/json";
 import { jsonResponse, problemWire, readWire } from "./read-fixtures";
-import { operationResponse, receipt } from "./state-fixtures";
+import { deferred, operationResponse, receipt } from "./state-fixtures";
 import { uiBootstrapFixture } from "./ui-fixtures";
 import fixtures from "../../tests/fixtures/web_wire/config.json";
 
@@ -284,6 +284,210 @@ afterEach(() => {
     }
     window.localStorage.clear();
     vi.restoreAllMocks();
+});
+
+test.each([
+    [
+        "repository",
+        "Edit model organization/model-name",
+        "Tags (one per line)",
+        " Raw TAGS \n unfinished,",
+    ],
+    ["settings", "Edit global settings", "Maximum sync workers", "003-invalid"],
+    [
+        "json",
+        "Supported JSON view",
+        "Editable configuration JSON",
+        "{ unfinished JSON\n",
+    ],
+] as const)(
+    "%s raw values and prepared intent survive reload cancellation, pending and failure; same-base success resets both",
+    async (_kind, opener, label, rawValue) => {
+        const fixture = mount();
+        const user = userEvent.setup();
+        await fixture.loaded();
+        act(() => {
+            fixture.store.replaceEditable({
+                ...base().editable,
+                sync: { ...base().editable.sync, max_workers: 3 },
+            });
+        });
+        await user.click(screen.getByRole("button", { name: opener }));
+        fireEvent.change(screen.getByLabelText(label), {
+            target: { value: rawValue },
+        });
+        const original = fixture.store.snapshot();
+        const calls = fixture.fetcher.mock.calls.length;
+        const reload = screen.getByRole("button", {
+            name: "Reload installed configuration",
+        });
+        await user.click(reload);
+        const dialog = screen.getByRole("dialog", {
+            name: "Replace unsaved configuration?",
+        });
+        const keep = within(dialog).getByRole("button", {
+            name: "Keep editing",
+        });
+        const replace = within(dialog).getByRole("button", {
+            name: "Reload and replace draft",
+        });
+        expect(keep).toHaveFocus();
+        await user.tab({ shift: true });
+        expect(replace).toHaveFocus();
+        await user.tab();
+        expect(keep).toHaveFocus();
+        await user.keyboard("{Escape}");
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+        expect(reload).toHaveFocus();
+        expect(fixture.fetcher).toHaveBeenCalledTimes(calls);
+        expect(fixture.store.snapshot().generation).toBe(original.generation);
+        expect(screen.getByLabelText(label)).toHaveValue(rawValue);
+        await user.click(reload);
+        await user.click(screen.getByRole("button", { name: "Keep editing" }));
+        expect(fixture.fetcher).toHaveBeenCalledTimes(calls);
+        const failed = deferred<Response>();
+        fixture.fetcher.mockImplementationOnce(() => failed.promise);
+        await user.click(reload);
+        await user.click(
+            screen.getByRole("button", { name: "Reload and replace draft" }),
+        );
+        expect(screen.getByLabelText(label)).toHaveValue(rawValue);
+        expect(screen.getByLabelText(label)).toBeDisabled();
+        expect(fixture.store.snapshot().prepared).toBe(original.prepared);
+        expect(fixture.store.snapshot().base).toBe(original.base);
+        expect(fixture.store.snapshot().dirty).toBe(true);
+        for (const name of [
+            "Validate draft",
+            "Preview sizing",
+            "Apply reviewed changes",
+        ])
+            expect(screen.getByRole("button", { name })).toBeDisabled();
+        await act(async () => {
+            failed.resolve(jsonResponse(problemWire("HFAPI005", 20), 503));
+            await failed.promise;
+        });
+        await waitFor(() => {
+            expect(fixture.store.snapshot().pending).toBeNull();
+        });
+        expect(
+            screen.getByText(/Configuration reload failed/u),
+        ).toBeInTheDocument();
+        expect(screen.getByLabelText(label)).toHaveValue(rawValue);
+        expect(screen.getByLabelText(label)).toBeEnabled();
+        expect(fixture.store.snapshot().prepared).toBe(original.prepared);
+        expect(fixture.store.snapshot().base).toBe(original.base);
+        const sameBase = fixture.store.snapshot().base?.base_revision;
+        await user.click(reload);
+        await user.click(
+            screen.getByRole("button", { name: "Reload and replace draft" }),
+        );
+        await waitFor(() => {
+            expect(screen.queryByLabelText(label)).not.toBeInTheDocument();
+        });
+        expect(fixture.store.snapshot().base?.base_revision).toBe(sameBase);
+        expect(fixture.store.snapshot().prepared?.editable).toEqual(
+            base().editable,
+        );
+        expect(fixture.store.snapshot().dirty).toBe(false);
+        expect(fixture.posts()).toEqual([]);
+    },
+);
+
+test("a changed draft dismisses a reload decision and a stale confirmation cannot replace newer edits", async () => {
+    const fixture = mount();
+    await fixture.loaded();
+    await userEvent.click(
+        screen.getByRole("button", { name: "Edit global settings" }),
+    );
+    await userEvent.click(
+        screen.getByRole("button", { name: "Reload installed configuration" }),
+    );
+    const confirm = screen.getByRole("button", {
+        name: "Reload and replace draft",
+    });
+    act(() => {
+        fixture.store.setEditing(true, { kind: "settings", raw: "newer" });
+    });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    fireEvent.click(confirm);
+    expect(fixture.fetcher).toHaveBeenCalledTimes(1);
+    expect(fixture.store.snapshot().dirty).toBe(true);
+});
+
+test("cancelling a reload decision preserves ready validation and the exact accepted preview", async () => {
+    const fixture = mount();
+    await fixture.loaded();
+    act(() => {
+        fixture.store.replaceEditable({
+            ...base().editable,
+            sync: { ...base().editable.sync, max_workers: 3 },
+        });
+    });
+    await userEvent.click(
+        screen.getByRole("button", { name: "Validate draft" }),
+    );
+    await userEvent.click(
+        screen.getByRole("button", { name: "Preview sizing" }),
+    );
+    await waitFor(() => {
+        expect(fixture.store.snapshot().canApply).toBe(true);
+    });
+    const ready = fixture.store.snapshot();
+    const calls = fixture.fetcher.mock.calls.length;
+    await userEvent.click(
+        screen.getByRole("button", { name: "Reload installed configuration" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Keep editing" }));
+    expect(fixture.store.snapshot()).toBe(ready);
+    expect(fixture.fetcher).toHaveBeenCalledTimes(calls);
+    expect(
+        screen.getByRole("button", { name: "Apply reviewed changes" }),
+    ).toBeEnabled();
+});
+
+test("manual reload preserves original application and preview handles and cannot clear uncertain effects", async () => {
+    const fixture = mount();
+    await fixture.loaded();
+    await userEvent.click(
+        screen.getByRole("button", { name: "Validate draft" }),
+    );
+    await userEvent.click(
+        screen.getByRole("button", { name: "Preview sizing" }),
+    );
+    await waitFor(() => {
+        expect(fixture.store.snapshot().canApply).toBe(true);
+    });
+    await userEvent.click(
+        screen.getByRole("button", { name: "Apply reviewed changes" }),
+    );
+    await waitFor(() => {
+        expect(fixture.store.snapshot().applicationObservation?.phase).toBe(
+            "unknown",
+        );
+    });
+    const original = fixture.store.snapshot();
+    const records = fixture.controller.snapshot().registry.records;
+    const posts = fixture.posts().length;
+    expect(fixture.controller.snapshot().canSubmit).toBe(false);
+    await userEvent.click(
+        screen.getByRole("button", { name: "Reload installed configuration" }),
+    );
+    await waitFor(() => {
+        expect(fixture.store.snapshot().pending).toBeNull();
+    });
+    expect(fixture.store.snapshot().applicationRecordId).toBe(
+        original.applicationRecordId,
+    );
+    expect(fixture.store.snapshot().applicationObservation).toBe(
+        original.applicationObservation,
+    );
+    expect(fixture.store.snapshot().previewRecordId).toBe(
+        original.previewRecordId,
+    );
+    expect(fixture.controller.snapshot().registry.records).toEqual(records);
+    expect(fixture.controller.snapshot().canSubmit).toBe(false);
+    expect(fixture.store.snapshot().canApply).toBe(false);
+    expect(fixture.posts()).toHaveLength(posts);
 });
 
 test("initial render is read-free, then the real projection exposes descriptors without protected-value inputs", async () => {
@@ -614,6 +818,9 @@ test("compare preserves the original dirty base until explicit reload, and disca
     ).toBeInTheDocument();
     await userEvent.click(
         screen.getByRole("button", { name: "Reload installed configuration" }),
+    );
+    await userEvent.click(
+        screen.getByRole("button", { name: "Reload and replace draft" }),
     );
     await waitFor(() => {
         expect(fixture.store.snapshot().base?.base_revision).toBe(
@@ -990,8 +1197,13 @@ test.each([
             ).toBeInTheDocument();
         if (failAfterOutcomeRead) {
             await waitFor(() => {
-                expect(fixture.store.snapshot().phase).toBe("unavailable");
+                expect(fixture.store.snapshot().pending).toBeNull();
+                expect(fixture.store.snapshot().readResult?.kind).toBe(
+                    "api_problem",
+                );
             });
+            expect(fixture.store.snapshot().phase).toBe("ready");
+            expect(fixture.store.snapshot().base).toEqual(base());
             expect(
                 screen.getByText(/The exact host outcome is independent/u),
             ).toBeInTheDocument();

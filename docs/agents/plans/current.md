@@ -2,13 +2,18 @@
 
 | Field | Value |
 | --- | --- |
-| State | inactive |
-| Active plan | None |
-| Current task | None |
+| State | active |
+| Active plan | [Protect unsaved configuration and streamline Library browsing](2026-11-02-plan-web-drafts-and-library.md) |
+| Current task | [WEB-029](tasks/web-029-compact-library-browsing.md) |
 | Last completed plan | [Production web migration](2026-11-01-plan-production-web-migration.md) (completed 2026-11-02) |
 | Last completed task | [OPS-024](tasks/ops-024-production-web-migration.md) (this commit) |
 | Branch | main |
 | Updated | 2026-11-02 |
+
+The user authorized implementation and activation on 2026-11-02. Execute
+WEB-028, WEB-029 and WEB-030 sequentially, each with its own gate and commit.
+Source and owned-fixture scope only; no deployment, live services/archive,
+dependencies, draft persistence, operation replay, release/tag or push.
 
 The authorized migration selects 0.3.0 from exact clean source `3d6670d`, with
 local annotated `v0.3.0`. Web UI, REST, MCP and confined helper read acceptance

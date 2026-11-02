@@ -36,10 +36,15 @@ export interface ConfigurationIntent {
     readonly repositoryId: string;
     readonly historical: boolean;
 }
+export interface ReloadReview {
+    readonly generation: number;
+    readonly authGeneration: number;
+}
 export interface ConfigurationSnapshot {
     readonly phase: "idle" | "loading" | "ready" | "unavailable";
     readonly generation: number;
     readonly authGeneration: number;
+    readonly editorRevision: number;
     readonly base: ConfigRead | null;
     readonly prepared: PreparedDraft | null;
     readonly dirty: boolean;
@@ -74,6 +79,8 @@ export function createConfigurationStore(controller: SessionController) {
     let session = controller.snapshot();
     let authGeneration = session.generation;
     let generation = 0;
+    let editorRevision = 0;
+    let reloadReview: ReloadReview | null = null;
     let disposed = false;
     let base: ConfigRead | null = null;
     let prepared: PreparedDraft | null = null;
@@ -109,21 +116,27 @@ export function createConfigurationStore(controller: SessionController) {
     const listeners = new Set<() => void>();
     let snapshot: ConfigurationSnapshot;
     const permitted = (capability: "config-read" | "config-write") =>
+        !disposed &&
         session.connection === "connected" &&
         session.bootstrap.user.admin_permissions.some(
             (permission) =>
                 permission.capability === capability && permission.effective,
         );
-    function publish() {
-        if (disposed) return;
+    function publish(final = false) {
+        if (disposed && !final) return;
         const canRead = permitted("config-read");
-        const canEdit = canRead && permitted("config-write") && base !== null;
+        const canEdit =
+            canRead &&
+            permitted("config-write") &&
+            base !== null &&
+            pending !== "read";
         const available =
             canEdit && pending === null && !editing && prepared !== null;
         snapshot = Object.freeze({
             phase,
             generation,
             authGeneration,
+            editorRevision,
             base,
             prepared,
             dirty: editing || prepared?.dirty === true,
@@ -187,6 +200,7 @@ export function createConfigurationStore(controller: SessionController) {
     }
     function retireReadiness(preserveComparison = false) {
         generation++;
+        reloadReview = null;
         abort?.abort();
         abort = null;
         validation = null;
@@ -198,6 +212,7 @@ export function createConfigurationStore(controller: SessionController) {
     }
     function clearPrivate() {
         retireReadiness();
+        editorRevision++;
         unsubscribeRead();
         unsubscribeCompare();
         unsubscribePreview();
@@ -228,6 +243,9 @@ export function createConfigurationStore(controller: SessionController) {
                   ? "The response or draft does not match the required configuration proof. No Apply is ready."
                   : "Configuration observation is unavailable. Preserve original operation handles; no submission was retried.";
     }
+    function currentAuthority(expected: number) {
+        return !disposed && expected === authGeneration;
+    }
     function readQuery() {
         const api = controller.apiReads;
         return controller.queries.query(
@@ -235,18 +253,15 @@ export function createConfigurationStore(controller: SessionController) {
             (options) => api.readConfiguration(options),
         );
     }
-    async function load(
-        discard = false,
-        preserveApplication = false,
-    ): Promise<void> {
+    async function load(replaceDraft = false): Promise<void> {
         if (
             !permitted("config-read") ||
             pending !== null ||
-            (snapshot.dirty && !discard)
+            (snapshot.dirty && !replaceDraft)
         ) {
             notice =
-                snapshot.dirty && !discard
-                    ? "Discard the unsaved draft explicitly before reloading."
+                snapshot.dirty && !replaceDraft
+                    ? "Review the unsaved draft decision explicitly before reloading."
                     : "Configuration read permission or connection is unavailable.";
             publish();
             return;
@@ -255,29 +270,21 @@ export function createConfigurationStore(controller: SessionController) {
         const ownGeneration = generation;
         unsubscribeRead();
         readHandle?.invalidate();
-        if (!preserveApplication) {
-            unsubscribeApplication();
-            applicationRecordId = null;
-            applicationObservation = null;
-            applicationExpected = undefined;
-            outcome = null;
-            outcomeRecordId = null;
-        }
-        base = null;
-        prepared = null;
+        const original = { base, prepared, editing, editBuffer };
+        let detachRead = () => {};
         readResult = null;
-        editing = false;
-        editBuffer = null;
         pending = "read";
-        phase = "loading";
+        phase = base === null ? "loading" : "ready";
         notice = null;
+        retain();
         publish();
         try {
             const handle = readQuery();
             readHandle = handle;
-            unsubscribeRead = handle.subscribe(() => {
+            detachRead = handle.subscribe(() => {
                 publish();
             });
+            unsubscribeRead = detachRead;
             await handle.refresh();
             if (
                 disposed ||
@@ -285,35 +292,50 @@ export function createConfigurationStore(controller: SessionController) {
                 authGeneration !== controller.snapshot().generation
             )
                 return;
-            readResult = handle.snapshot().result;
-            if (readResult?.kind === "success") {
+            const result = handle.snapshot().result;
+            if (result?.kind === "success") {
                 if (
-                    readResult.payload.archive_id !==
+                    result.payload.archive_id !==
                     session.bootstrap.configured_archive_id
                 )
                     throw new WireError("semantic");
-                base = readResult.payload;
-                prepared = prepareDraft(base, base.editable);
-                phase = "ready";
+                const next = prepareDraft(
+                    result.payload,
+                    result.payload.editable,
+                );
+                base = result.payload;
+                prepared = next;
+                editing = false;
+                editBuffer = null;
+                readResult = result;
                 if (!retain()) {
-                    base = null;
-                    prepared = null;
+                    ({ base, prepared, editing, editBuffer } = original);
                     readResult = null;
-                    slot.clear();
-                    phase = "unavailable";
-                }
+                    notice =
+                        "Configuration reload failed because browser draft capacity is unavailable. The original draft, base and form values are preserved; return to editing.";
+                } else editorRevision++;
+                phase = base === null ? "unavailable" : "ready";
             } else {
-                phase = "unavailable";
+                readResult = result;
+                phase = base === null ? "unavailable" : "ready";
+                notice =
+                    "Configuration reload failed. The original draft, base and form values are preserved; return to editing or reload explicitly.";
                 if (!retain()) {
                     readResult = null;
-                    slot.clear();
                 }
             }
         } catch (error) {
+            if (disposed || ownGeneration !== generation) return;
             failure(error);
-            phase = "unavailable";
+            notice =
+                "Configuration reload failed. " +
+                (notice ?? "") +
+                (base === null
+                    ? ""
+                    : " The original draft, base and form values are preserved; return to editing.");
+            phase = base === null ? "unavailable" : "ready";
         } finally {
-            unsubscribeRead();
+            detachRead();
             if (ownGeneration === generation) {
                 pending = null;
                 publish();
@@ -426,7 +448,27 @@ export function createConfigurationStore(controller: SessionController) {
                 listeners.delete(listener);
             };
         },
-        load,
+        load: () => load(),
+        reviewReload(): ReloadReview | null {
+            if (!snapshot.canRead || pending !== null || !snapshot.dirty)
+                return null;
+            reloadReview = Object.freeze({ generation, authGeneration });
+            return reloadReview;
+        },
+        cancelReload(review: ReloadReview) {
+            if (reloadReview === review) reloadReview = null;
+        },
+        async reload(review?: ReloadReview) {
+            if (
+                review !== undefined &&
+                (review !== reloadReview ||
+                    review.generation !== generation ||
+                    review.authGeneration !== authGeneration)
+            )
+                return;
+            if (snapshot.dirty && review === undefined) return;
+            await load(true);
+        },
         async compare() {
             if (!snapshot.canRead || pending !== null) return;
             const ownGeneration = generation;
@@ -476,6 +518,10 @@ export function createConfigurationStore(controller: SessionController) {
             }
         },
         discard() {
+            if (pending === "read") {
+                unsubscribeRead();
+                readHandle?.invalidate();
+            }
             retireReadiness();
             editing = false;
             editBuffer = null;
@@ -485,6 +531,7 @@ export function createConfigurationStore(controller: SessionController) {
             publish();
         },
         replaceEditable(input: unknown) {
+            if (pending === "read") return false;
             try {
                 editAllowed();
                 if (base !== null) return replace(prepareDraft(base, input));
@@ -496,6 +543,7 @@ export function createConfigurationStore(controller: SessionController) {
             return false;
         },
         replaceJson(text: string) {
+            if (pending === "read") return false;
             try {
                 editAllowed();
                 if (base !== null) return replace(prepareDraftJson(base, text));
@@ -507,6 +555,7 @@ export function createConfigurationStore(controller: SessionController) {
             return false;
         },
         upsert(entry: RepositoryConfig) {
+            if (pending === "read") return false;
             try {
                 editAllowed();
                 if (base !== null && prepared !== null)
@@ -524,6 +573,7 @@ export function createConfigurationStore(controller: SessionController) {
             return false;
         },
         remove(type: "model" | "dataset", id: string) {
+            if (pending === "read") return false;
             try {
                 editAllowed();
                 if (base !== null && prepared !== null)
@@ -541,6 +591,7 @@ export function createConfigurationStore(controller: SessionController) {
             return false;
         },
         setEditing(value: boolean, buffer?: unknown) {
+            if (pending === "read") return false;
             const previous = editBuffer;
             retireReadiness();
             editing = value;
@@ -740,7 +791,8 @@ export function createConfigurationStore(controller: SessionController) {
                                 !editing)
                         ) {
                             pending = null;
-                            await load(true, true);
+                            await load(true);
+                            if (!currentAuthority(ownAuth)) return;
                             notice =
                                 "Installed configuration confirmed. Fresh editable settings were requested; the original API receipt remains independent.";
                         } else {
@@ -778,6 +830,7 @@ export function createConfigurationStore(controller: SessionController) {
         dispose() {
             clearPrivate();
             disposed = true;
+            publish(true);
             unsubscribeSession();
             listeners.clear();
         },

@@ -117,3 +117,18 @@ compare/reload/re-edit is explicit, with no silent tag merge or base-token swap.
 Configuration-read/write affordances use their respective grants and protected
 policy, without host-read as an extra gate. This adds no endpoint, schema,
 dependency or new authority. See [editing procedures](../web-ui/configuration-and-tags.md).
+
+## Manual draft replacement clarification (2026-11-02)
+
+Manual installed-configuration reload requires an explicit accessible decision
+for prepared or raw unsaved edits, bound to the reviewed draft/auth generation.
+Cancellation preserves readiness and issues no read. Confirmation retires
+validation/preview readiness but retains the original base, prepared intent and
+mounted raw editor through pending and failed same-authority reads. Only a fully
+decoded, scope-checked success replaces all three together, including same-base
+responses. This prevents failed reads from losing admitted work without storing
+drafts, merging edits or attaching a new base to old intent. Authentication loss,
+disposal and newer generations fence stale decisions/responses. Original preview/
+application handles and unknown-effect blocks survive independently; configuration
+reads establish no protected outcome. Internal post-Apply reload retains its newer-
+draft safeguard. See [configuration guidance](../web-ui/configuration-and-tags.md#compare-concurrent-changes-without-losing-intent).

@@ -33,6 +33,27 @@ The startup paragraph above is the build-out record, superseded by
 changes and plan implementations also review the affected invariants and ADRs
 using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
+## Unsaved configuration and Library browsing (2026-11-02)
+
+- [x] WEB-028 Preserve unsaved configuration through reload
+  (2026-11-02, this commit — [task](plans/tasks/web-028-preserve-drafts-on-reload.md),
+  [plan](plans/2026-11-02-plan-web-drafts-and-library.md)).
+  Generation-bound accessible reload decisions preserve base/prepared/raw forms
+  during pending and failed reads; admitted success resets all together, including
+  same-base responses. Authentication/disposal, navigation, original handles and
+  uncertain-effect blocks remain fenced.64 focused tests and five final built
+  Chromium checks pass, with exact raw buffers, cancellation1GET/failure2/success3
+  and zero POST/external/CSP/page errors. Strict gate2 passes9,590backend,
+  4,069combined web/16wheel, three locked profiles, built browser and real API
+  React fixture;1,240 source inputs/names unchanged;95.07% lines/90.07% branches.
+  Log SHA256`77f8a4c104792c74767af1e5422ec37b60a09af3dc4dd723591718ba7cc90fe9`. First long-temp gate1
+  fails on Unix socket paths; all123 affected-group probes and full short-temp
+  retry pass without product/test changes. Complete failed fixture archive and
+  member manifest verify before exact owned-temp retirement; original failures
+  remain. INV001/021, ADR145/153/154 and guides reviewed/amended, with no new
+  architecture/dependency/format/authority. No deployment, live services/archive,
+  persisted draft, replay, tag or push. WEB-029 is next.
+
 ## Local web migration (2026-11-01)
 
 - [x] OPS-024 Replace the local deployment without archive changes
@@ -2731,6 +2752,13 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-02 WEB-028 source/owned-fixture acceptance protects manual configuration
+reload drafts. The selected installed0.3.0 deployment remains unchanged; this
+source/browser evidence establishes no installed native/rootless or production
+acceptance. Retain all existing boot, NAS, workload, confinement and original-
+handle holds. No deployment or live action is authorized by this plan.
+
 
 2026-11-02 the completed migration selects 0.3.0 from source `3d6670d` and all
 three application roles plus the confined host helper are ready. Automated
@@ -13544,3 +13572,11 @@ rollout or establish WEB-022's full functional matrix.
    host-index field requires actual previous-reader refusal and retained matching
    rollback authority. No runtime/archive/operation/receipt format, dependency,
    category grant or live-host acceptance is implied by source implementation.
+
+2026-11-02 WEB-028 refinement of decisions145/153/154: retain one RAM-only exact
+base/intent/raw editor through replacement reads and require an explicit dirty
+review before retiring readiness. Successful retention admission replaces all
+state together even on unchanged base; immediate discard before GET was rejected
+because failed reads lost admitted work. Original handles, private invalidation
+and unknown-effect authority remain independent. Dated ADR amendments and INV001
+record this browser composition; no new architectural decision is introduced.

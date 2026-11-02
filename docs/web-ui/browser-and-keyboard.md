@@ -38,6 +38,14 @@ Tab and Shift+Tab stay within the dialog. Escape or the keep-editing action
 returns to the form; the discard action leaves it. Read the review before the
 separate Apply/submit confirmation. Validation errors do not submit an effect.
 
+The configuration editor's **Reload installed configuration** opens a separate
+decision when prepared or raw form edits are unsaved. **Keep editing** receives
+initial focus; Escape cancels without a request. Tab stays within the dialog,
+and cancellation returns focus to Reload. **Reload and replace draft** retains
+visible edits while the read runs and replaces them only after success. A failed
+same-authority read returns to editing without restoring old preview readiness.
+Changing the draft or authenticated session dismisses an outdated decision.
+
 Your browser also asks before closing or reloading a dirty form. Choosing Stay
 keeps its draft and reads usable. Leaving ends that document's active reads;
 returning through browser history revalidates the current workspace. Submitted
