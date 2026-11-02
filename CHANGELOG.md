@@ -4,11 +4,22 @@ Annotated release tags identify reviewed deployed states; application source and
 deployment commits may differ. This file summarizes user-visible changes and
 rollback constraints. Installation targets 0.1.0 and 0.1.1 were not releases.
 
-## Unreleased — web interface source
+## 0.3.0 — release candidate for local migration
 
-Source-ready web interface changes, with separately recorded disposable native
-and rootless acceptance. The existing recorded production release and workload
-holds remain unchanged; see [deployment scope](docs/deployment-status.md).
+This candidate packages the completed web interface, REST API and read-only MCP
+server under a fresh immutable version. Disposable native/rootless acceptance
+and source validation remain distinct from the authorized production migration.
+The recorded installation remains 0.2.2 until guarded selection and actual host
+acceptance; see [deployment scope](docs/deployment-status.md).
+
+Migration preserves the complete installed model/dataset configuration and local
+operation evidence, retains the predecessor and keeps NFS read-only, writers
+masked and calendars disabled. No archive transformation or workload is part of
+this release. Rollback to 0.2.2 requires its preserved server configuration:
+that strict server rejects the newer `basic`, `web` and `host_helper` fields.
+Keep a compatible observer for any newer unresolved outcome and never remove
+archive or private records to force an older reader to accept them. See
+[observed compatibility](docs/web-ui/migration-and-rollback.md#compatibility-and-backups).
 
 - Remove the superseded interface source and documentation from the repository;
   keep shared runtime safety and retained-code attribution. Installed services

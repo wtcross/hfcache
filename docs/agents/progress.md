@@ -33,6 +33,27 @@ The startup paragraph above is the build-out record, superseded by
 changes and plan implementations also review the affected invariants and ADRs
 using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
+## Local web migration (2026-11-01)
+
+- [x] REL-016 Prepare fresh full-web release source
+  (2026-11-01, this commit — [task](plans/tasks/rel-016-web-release-source.md)).
+  Assign unused0.3.0 metadata while preserving all94 locked packages; README and
+  changelog distinguish this candidate from installed0.2.2 and retain exact
+  configuration/state/rollback/NFS/calendar boundaries. Strict web/build gate
+  passes inner0/1819.604s and outer0/1820.207s under a private empty read-only
+  NFS shadow as login UID1000. All1227 tracked inputs/names stay unchanged.
+  Passed9562 backend/4051 unique combined frontend/16 wheel tests, three locked
+  installs, two built Chromium checks and real API read fixture; no required
+  frontend skips,95.02% lines/90.13% branches. Log SHA256
+  `8a083348ffb2b8c42f3b10e0a59c774ce1d4a427f2d61ce109a182f40321e0d1`;
+  raw results/freeze/logs remain in `.scratch/rel016-validation`.
+  Post-evidence checks pass212 human docs/29 helpers,9 plan tests and whitespace.
+  Existing invariants/ADRs reviewed; no architecture, runtime dependency or
+  durable format change. Initial migration plan/tasks record current authority.
+  Source compatibility correction, clean immutable construction and actual host
+  acceptance remain subsequent work; no production-ready, selection, tag,
+  credential, archive workload or remote-publication claim follows.
+
 ## Source interface removal (2026-11-01)
 
 - [x] WEB-027 Remove obsolete interface source and documentation
@@ -2665,6 +2686,17 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-01 REL-016 prepares source0.3.0 and passes the complete strict web/build
+gate, with all original source inputs unchanged and production archive shadowed.
+The user authorizes replacing this host's deployment with web UI, REST and MCP
+and retiring its installed obsolete plugin, while preserving configuration and
+NFS data. That host migration remains pending under the selected plan. Retain
+actual current configuration, stores, handles, secrets, original locks, previous
+releases, read-only NFS and disabled writer calendars. The newly found existing
+rootless account-home/helper compatibility issue needs a separate reviewed
+source package before helper rollout. No production readiness or new installed
+behavior is inferred from this metadata/source gate.
 
 2026-11-01 WEB-027 completes source removal and strict source/build acceptance.
 The local feature branch is ready for the explicitly authorized normal push to

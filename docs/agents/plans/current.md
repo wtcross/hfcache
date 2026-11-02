@@ -2,16 +2,19 @@
 
 | Field | Value |
 | --- | --- |
-| State | none |
-| Active plan | None |
-| Current task | None |
+| State | active |
+| Active plan | [Production web migration](2026-11-01-plan-production-web-migration.md) |
+| Current task | [OPS-024](tasks/ops-024-production-web-migration.md) — independent preflight; build blocked on account-home compatibility |
 | Last completed plan | [Remove the obsolete interface](2026-11-01-plan-legacy-interface-removal.md) (completed 2026-11-01) |
-| Last completed task | [WEB-027](tasks/web-027-remove-obsolete-interface.md) (this commit) |
-| Branch | feat/web-ui |
+| Last completed task | [REL-016](tasks/rel-016-web-release-source.md) (this commit) |
+| Branch | main |
 | Updated | 2026-11-01 |
 
-Repository removal and strict web/build acceptance are complete. The user
-explicitly authorizes committing and normally pushing `feat/web-ui` to `github`
-and `forgejo`; actual remote outcomes are verified after commit and reported
-separately. Production, archive, service, credential and calendar changes remain
-excluded. No historical backlog is activated.
+The user authorizes local replacement including web UI, REST, MCP and installed
+plugin removal. Preserve configuration and NFS data; keep NFS read-only, writer
+masks and disabled schedules. REL-016 prepares distinct version 0.3.0 and passes
+the full strict gate. OPS-024's preflight found the host's preserved account home
+requires a narrowly reviewed helper compatibility correction before the immutable
+build. That source task is activated after the REL-016 commit. OPS-024 owns
+guarded installation, current-host guard reconciliation and acceptance.
+No archive workload, remote publication or historical backlog is activated.

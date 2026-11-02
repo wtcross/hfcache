@@ -71,14 +71,16 @@ See [discovery](docs/discovery.md) for provenance, incomplete coverage and rollb
 
 ## Status
 
-The independent [web interface](docs/web-ui/README.md) is available in unreleased
-source with installed native/rootless test-release evidence. Repository removal
-of the superseded interface does not alter installed services.
-See [migration and rollback](docs/web-ui/migration-and-rollback.md) before a
-separately authorized production transition.
+Source version **0.3.0** prepares the independent
+[web interface](docs/web-ui/README.md), REST API and read-only MCP server for the
+authorized local migration. Installed native/rootless test-release evidence
+supports the completed interface; this source release candidate is not yet
+selected on the production host. See
+[migration and rollback](docs/web-ui/migration-and-rollback.md) for preservation
+and compatibility requirements.
 
-The source package and recorded local deployment are **0.2.2**. Clean application
-source `1c68501` is identified by local annotated `v0.2.2`. This release combines
+The recorded local deployment remains **0.2.2**. Clean application source
+`1c68501` is identified by local annotated `v0.2.2`. That release combines
 configured tags and evidence-backed discovery with classified client error handling,
 original-operation recovery, guarded configuration validation/confirmation, manual
 REST jobs and report/read views.
