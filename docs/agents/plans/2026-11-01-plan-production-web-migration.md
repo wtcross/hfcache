@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | active |
+| Status | completed |
 | Created | 2026-11-01 |
 | Authorization | User requests replacing this host's deployment with the completed version, including web UI, REST API, MCP and removal of the installed Cockpit plugin; preserve sync configuration and NFS data. |
 | Tracker | `docs/agents/plans/current.md` |
@@ -91,3 +91,29 @@ passes for the final evidence commit.
   Current selects OPS-024 for immutable build and actual migration. Its enabled
   web startup still requires the user's protected administrator hash. No
   production selection, archive mutation, tag or publication has occurred.
+- 2026-11-01: OPS-024 completes all seven clean immutable construction phases,
+  final-image/worker/Caddy proofs, configuration-preserving render comparison
+  and protected root captures. It is blocked on the user's missing protected
+  administrator record before downtime/activation. Current 0.2.2 services,
+  plugin, configuration, original stores/locks and read-only NFS remain intact.
+  Plan stays active with no completion, pause, tag or remote publication claim.
+- 2026-11-02: The user reports successful administrator provisioning and requests
+  continuation. Resume OPS-024 with fresh baseline reconciliation and protected
+  record validation; existing artifact construction is not repeated.
+- 2026-11-02: Actual drain, guarded selection and startup now select 0.3.0;
+  automated installed acceptance passes. All-false human Basic/helper status
+  acceptance precedes independent permission preservation; positive configuration
+  reads follow that grant. Plugin retirement and final closeout follow. The
+  temporary guard remains held; no archive
+  file I/O/workload, calendar enablement or remote publication occurs.
+- 2026-11-02: Qualified all-false authentication recovery, fresh preserved-policy
+  ten-GET human acceptance and final post-restart automated acceptance pass.
+  Original plugin inode is retired, and a complete separate executor/helper drain
+  restores the user's intentional inactive guard setting without selector or
+  policy changes. NFS-ro/masks/original files/stores/handles remain. Final source
+  gate and local release-record closeout remain before plan completion.
+- 2026-11-02: Final strict source/web/build gate passes with all1234 tracked
+  files/names, symlink targets and HEAD frozen. Local annotated `v0.3.0` targets
+  exact clean artifact source `3d6670d`. Close the current-boot read-only migration
+  and reviewed restart scope; preserve the explicit manual post-boot provisioning
+  and remaining workload/confinement companion holds. No old backlog is activated.

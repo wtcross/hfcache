@@ -71,15 +71,15 @@ See [discovery](docs/discovery.md) for provenance, incomplete coverage and rollb
 
 ## Status
 
-Source version **0.3.0** prepares the independent
-[web interface](docs/web-ui/README.md), REST API and read-only MCP server for the
-authorized local migration. Installed native/rootless test-release evidence
-supports the completed interface; this source release candidate is not yet
-selected on the production host. See
+The local host now selects **0.3.0** with the independent
+[web interface](docs/web-ui/README.md), REST API and read-only MCP server.
+Installed read-only acceptance passes for TLS, administrator login, UI assets,
+managed configuration, REST, MCP and the private worker. The old Cockpit
+entrypoint is retired, and local annotated `v0.3.0` identifies the selected source. See
 [migration and rollback](docs/web-ui/migration-and-rollback.md) for preservation
 and compatibility requirements.
 
-The recorded local deployment remains **0.2.2**. Clean application source
+The retained predecessor is **0.2.2**. Clean application source
 `1c68501` is identified by local annotated `v0.2.2`. That release combines
 configured tags and evidence-backed discovery with classified client error handling,
 original-operation recovery, guarded configuration validation/confirmation, manual

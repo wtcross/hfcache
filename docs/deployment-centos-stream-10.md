@@ -1,8 +1,8 @@
 # Deploying hfcache on CentOS Stream 10
 
 Choose a deployment profile before selecting tools, paths or service managers.
-The [recorded local deployment](deployment-status.md) is rootless 0.2.1 and remains
-guarded/read-only. This guide describes supported provisioning and acceptance;
+The [recorded local deployment](deployment-status.md) is rootless 0.3.0 with NFS
+read-only and its separately recorded guard setting. This guide describes supported provisioning and acceptance;
 it does not authorize changing that installation, running NAS workloads, enabling
 calendars or initializing its existing archive. Historical observed output is not
 an acceptance result for a different profile or release.
@@ -24,18 +24,18 @@ records actual UID/network/mount/state/secret boundaries.
 
 ## Prerequisites and identities
 
-The unreleased replacement UI's [administrator provisioning guide](web-ui/deployment.md)
+The web UI's [administrator provisioning guide](web-ui/deployment.md)
 describes its optional protected hash source, exact HTTPS origin, explicit
-`[web]` asset selection and separate native/rootless delivery. Unreleased source
-now serves authenticated `/ui/` only when enabled with a matching protected
+`[web]` asset selection and separate native/rootless delivery. Version 0.3.0
+serves authenticated `/ui/` only when enabled with a matching protected
 artifact and manifest hash. Static assets belong in the existing pinned UBI 10
 micro API image behind the same existing Caddy and Unix upstream; no frontend
 image/server or runtime Node is introduced. Caddy must not acquire a global
 Basic gate or administrator record. These source requirements do not alter the
 installed release or authorize credential/service changes. Basic and web remain
-disabled when unconfigured. The unreleased indexed native/rootless installers
+disabled when unconfigured. The indexed native/rootless installers
 stage paired UI/backend/helper artifacts only when explicitly selected; the
-recorded production 0.2.2 installation remains unchanged. See
+actual production selection and acceptance are recorded separately. See
 [indexed construction and staging](web-ui/deployment.md#build-and-select-a-clean-release).
 
 For a reviewed candidate, use a local immutable artifact disjoint from archive,

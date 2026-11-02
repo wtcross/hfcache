@@ -1,6 +1,6 @@
 # Protected host administration contract
 
-The host reader is being implemented in unreleased source. Installed support
+The host reader ships in 0.3.0. Installed support
 requires the native and rootless acceptance described here. Status is a bounded
 administrative observation; it does not establish archive health, writable
 storage, workload permission or operation completion. Human setup and use are
@@ -281,11 +281,13 @@ bundle also requires both measured vendor directories from
 | `/usr/share/containers/storage.conf.d` | `00-vendor.conf` | 29 | `358b7ba3201aea7dba1d8e0e42c8a11e21acdff1b2ca71a4f8b826f41ae5bc80` |
 | `/usr/share/containers/storage.rootless.conf.d` | `00-vendor-rootless.conf` | 186 | `f346071a81b5fdb96796397b08f9dc40c9f450166c7f041ddcaa92f115e92ca8` |
 
-The preserved production host currently uses Podman6.0.2 with all three exact
-stock hashes above. Actual confined engine/helper acceptance for that version
-remains pending production migration; matching configuration bytes alone do not
-establish it. No package update, broader version guarantee or relaxed source
-check follows from this observed match.
+The preserved production host uses Podman6.0.2 with all three exact stock hashes
+above. Its 0.3.0 migration passes actual confined API-origin HostStatus and managed
+configuration reads with the bound existing home/store. This qualifies that
+observed fixed profile; matching configuration bytes alone would not establish it.
+No package update, broader version guarantee or relaxed source check follows.
+New-host all-phase IP/inode-alias negative companion acceptance remains separate;
+see the [recorded deployment scope](deployment-status.md).
 
 Both directories must be root0:0/0755, each with exactly its named root0:0/0644,
 single-link leaf. Fresh bounded no-follow capture checks every entry, exact

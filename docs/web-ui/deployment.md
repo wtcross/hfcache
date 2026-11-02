@@ -562,7 +562,11 @@ configuration rather than modifying them to bypass an unavailable read.
 
 Rootless engine inspection initially supports only the measured Podman6.1 stock
 storage configuration described in the
-[engine configuration contract](../host-administration.md). It verifies the
+[engine configuration contract](../host-administration.md). The recorded 0.3.0
+host additionally passes confined HostStatus/configuration reads on Podman6.0.2
+with that same exact bundle and its bound existing home; this is qualified
+installed read acceptance, with the remaining limits in
+[deployment status](../deployment-status.md). It verifies the
 stock main file and both exact RPM vendor drop-in bundles afresh, preserving
 the original overlay/`nodev` configuration and skipping only private-mount
 housekeeping. Each vendor directory must contain exactly its pinned leaf with

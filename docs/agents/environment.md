@@ -23,6 +23,22 @@ apply wherever the archive mount exists.
 
 ## The deployment, in facts
 
+As of 2026-11-02 the authorized migration now selects rootless 0.3.0 from clean
+source `3d6670d`. API/worker/Caddy and the confined host helper are ready;
+automated installed read-only and human administrator/helper/configuration checks
+pass. The old plugin entrypoint is retired. See the current
+[deployment checkpoint](../deployment-status.md#current-migration-checkpoint--2026-11-02)
+and active task before acting. Complete executor/helper drain and original-lock
+handoff restore the user's October22 deliberate inactive guard setting after
+acceptance; no domain-lock holder is intentionally retained. NFS remains read-only
+and writers/calendars masked. Historical facts below
+describe the predecessor and cannot establish current guard or permission state.
+Current-boot operation and a graceful restart pass; automatic reboot recovery is
+not configured. After reboot/runtime-object recreation, an operator must perform
+the documented independent root provisioning, then helper READY before bridge/API.
+The helper remains disabled and the bridge supplies no helper ordering. Keep that
+boot hold explicit rather than infer readiness from persistent fcontext rules.
+
 The selected recorded deployment is guarded rootless 0.2.2 from clean source
 `1c685018803a365bbb8b0c1aad4b94709f60e7d7`. Actual host TLS/authentication,
 API-origin worker PROBE and confinement checks passed; the

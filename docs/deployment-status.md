@@ -1,5 +1,51 @@
 # Recorded deployment status
 
+## Current migration checkpoint — 2026-11-02
+
+The host now selects rootless **0.3.0** from clean application source `3d6670d`,
+app image `bcfccd85…`, unchanged Caddy `fa2a5634…`, physical release index
+`251958ef…` and all 77 indexed files. The API, verification worker, Caddy and
+confined protected host helper are ready. Automated installed read-only checks
+pass verified TLS, authentication separation, the fourteen-tool MCP listing, API-origin
+worker PROBE, fixed client server version and original operation observation.
+
+Trusted-terminal administrator login, document/bootstrap/six UI asset reads,
+actual API-origin helper status and managed configuration reads pass. The first
+all-false pass is recovered from its durable HostStatus and the exact validator's
+write order after a final-report collision; the original failed report is retained.
+A later complete ten-GET receipt proves the independently preserved configuration
+and Hub permissions, with archive/control/schedule/observer still denied.
+
+The Cockpit entrypoint is removed from public discovery by retaining its original
+symlink inode in the protected migration backup; old release assets and the shared
+Cockpit installation/CA remain. A second API-first/helper/worker drain proves all
+actual executor cohorts ended before restoring the user's deliberately inactive
+guard setting under the original noncreating lock. Helper READY precedes the final
+application restart; installed automated checks pass again in that final state.
+The NFS share remains read-only,
+writers/calendars masked, and all 165 enabled model selections, original stores,
+receipts, handles and local lock inodes are preserved. No NAS file I/O or archive
+workload has run. Immutable 0.2.2/0.2.1 and root-private coordinated backup remain.
+
+Exact artifacts and acceptance limits remain in the protected local migration
+evidence; retain it with the predecessor and rollback configuration.
+The full strict source/web/build gate passes; local annotated `v0.3.0` targets
+exact artifact source `3d6670d`. No production browser
+JavaScript workflows, candidate Apply, NAS workload, reboot, other-host use or
+new-host all-phase IP/inode-alias denial companion is claimed. Current process,
+module/label/capability/mount checks and authenticated helper reads establish their
+recorded boundaries; historical owned-fixture proof remains separately scoped.
+
+Current-boot operation and the reviewed graceful restart are accepted.
+Automatic boot recovery is not configured: the helper remains disabled, and the
+bridge supplies no helper startup ordering. After reboot or runtime-object
+recreation, an operator must perform the documented independent root provisioning
+of existing runtime lock/shared-memory labels and helper runtime parents, then
+start the helper to READY before starting the bridge/API. Persistent fcontext
+rules alone are insufficient. Unattended boot recovery remains an operator hold.
+
+## Historical 0.2.2 acceptance — 2026-10-20
+
 Recorded on 2026-10-20 after the local rootless 0.2.2 deployment and installed
 acceptance. The selected release uses clean application source `1c68501` on
 pinned UBI 10 micro, app image `fec39364…`, unchanged Caddy image `fa2a5634…`,

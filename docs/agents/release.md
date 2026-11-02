@@ -21,6 +21,22 @@ compatibility evidence must not be relabelled as a deployed previous release.
 
 ## Selected-profile boundary
 
+The authorized 2026-11-02 migration has selected rootless 0.3.0 from source `3d6670d`
+and started the web/API/MCP stack with the confined host helper. Automated
+installed read-only and human administrator/helper/configuration acceptance pass.
+The old plugin entrypoint is retired, and complete separate executor/helper drain
+restores the user's inactive guard setting. The final strict gate passes and local
+annotated `v0.3.0` identifies exact artifact source `3d6670d`.
+The [current checkpoint](../deployment-status.md#current-migration-checkpoint--2026-11-02)
+owns those actual facts. Preserve the user's intentional inactive setting and
+the original local lock identities. No NFS write,
+workload, timer enablement or remote publication follows. The following 0.2.2
+record is predecessor evidence, not the actual selected version or guard state.
+Current-boot operation and a graceful restart are accepted. Unattended boot is
+not configured: disabled helper and bridge ordering require the documented root
+runtime-object provisioning, then helper READY before bridge/API after reboot.
+This explicit operator hold is not waived by the local tag.
+
 The recorded selected deployment is guarded rootless 0.2.2 from clean artifact
 source `1c685018803a365bbb8b0c1aad4b94709f60e7d7`. Use the rootless
 installer, fixed host client, user-manager services and protected Podman file

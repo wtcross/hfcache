@@ -4,13 +4,15 @@ Annotated release tags identify reviewed deployed states; application source and
 deployment commits may differ. This file summarizes user-visible changes and
 rollback constraints. Installation targets 0.1.0 and 0.1.1 were not releases.
 
-## 0.3.0 — release candidate for local migration
+## 0.3.0 — 2026-11-02, local release with workload holds
 
-This candidate packages the completed web interface, REST API and read-only MCP
+This version packages the completed web interface, REST API and read-only MCP
 server under a fresh immutable version. Disposable native/rootless acceptance
 and source validation remain distinct from the authorized production migration.
-The recorded installation remains 0.2.2 until guarded selection and actual host
-acceptance; see [deployment scope](docs/deployment-status.md).
+The local host now selects 0.3.0. Installed TLS, administrator/UI/helper and
+configuration reads, REST, MCP and private-worker acceptance pass. The public
+Cockpit plugin entrypoint is retired with its original inode and old assets retained;
+see [deployment scope](docs/deployment-status.md).
 
 Migration preserves the complete installed model/dataset configuration and local
 operation evidence, retains the predecessor and keeps NFS read-only, writers

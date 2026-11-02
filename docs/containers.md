@@ -303,7 +303,7 @@ values. API alone receives Hub plus distinct REST/optional MCP authority, Caddy 
 only, client API only. Worker/client additionally mask /run/credentials,
 /etc/credstore, /etc/credstore.encrypted and /etc/hfcache/credentials with empty
 inaccessible read-only mounts; custom sources need explicit review/masking.
-The optional Basic provider in unreleased source can read its protected hash
+The optional Basic provider in 0.3.0 can read its protected hash
 record at `/etc/hfcache/credentials/ui-administrator.json` through the API's
 existing policy-directory bind. Provision its actual mapped service owner and
 mode0400/0600; it is not a plaintext password or bearer. Worker/client masks hide

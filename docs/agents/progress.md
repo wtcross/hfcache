@@ -35,6 +35,31 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Local web migration (2026-11-01)
 
+- [x] OPS-024 Replace the local deployment without archive changes
+  (2026-11-02, this commit — [task](plans/tasks/ops-024-production-web-migration.md)).
+  Clean0.3.0 source`3d6670d`, wheel`ca3cf2bd…`, app`bcfccd85…`, UI`60c2cf94…`
+  and installed77-file index`251958ef…` match protected immutable receipts.
+  Coordinated root backup, actual API-first/helper/worker drains, original-inode
+  handoffs, guarded official selection and final restart preserve165 selections,
+  all original files/stores/handles/secrets and locks with NFSro/masks continuous.
+  Basic/UI/helper all-false checks are qualified recovered success after report
+  collision; the original failure remains. Fresh ten-GET Basic/UI/helper/config
+  receipt passes after independent configuration/Hub-only grants. TLS, MCP
+  initialize/fourteen-tool listing, API-worker PROBE and exact five original
+  operation/result observations pass before/after restart within their stated
+  scope. Exact Cockpit entrypoint inode is retired into protected backup, with old
+  assets/shared CA retained. Complete second zero-executor handoff restores the
+  user's intentionally inactive guard setting. Strict gate passes inner0/1539.304s,
+  outer0/1539.637s:9590backend/4051web/16wheel, three locked profiles, two Chromium
+  checks and real HTTP/API React fixture; all1234 bodies/names/symlinks/HEAD frozen.
+  Log`19a6def18e0d4270bc6662cc823a0150e4143304fc9524b80bd19aa26e18cc7d`.
+  Local annotated`v0.3.0` object`013d982e…` targets exact artifact source`3d6670d`;
+  operational evidence intentionally belongs to this separate commit. Relevant
+  invariants/ADRs/contracts reviewed; no new runtime dependency, schema or
+  privilege. Current-boot/restart scope only: manual root post-boot provisioning,
+  broader NAS/browser/other-host and all-phase IP/inode-alias companion holds
+  remain explicit. No NAS workload, reboot, forced cleanup or remote publication.
+
 - [x] OPS-025 Bind the preserved rootless account home
   (2026-11-01, this commit — [task](plans/tasks/ops-025-preserved-rootless-account-home.md)).
   Protected rootless index binds only the original default or preserved
@@ -2706,6 +2731,25 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-02 the completed migration selects 0.3.0 from source `3d6670d` and all
+three application roles plus the confined host helper are ready. Automated
+installed read-only acceptance passes, including 29 HTTP checks, the fourteen-tool
+MCP listing, API-origin private worker PROBE and exact five original operation/result
+observations. The selected task retains exact artifacts and original-state
+preservation evidence. Human Basic/UI/helper and configuration reads now pass,
+including qualified all-false recovery and a fresh ten-GET preserved-policy
+receipt. Configuration/Hub-only grants are independently preserved, original
+plugin inode retired, and complete separate executor/helper drain restores the
+user's inactive guard setting. Final automated acceptance passes again after
+restart. Strict final source gate passes and local annotated `v0.3.0` targets the
+exact artifact source. Preserve the current-boot/reviewed-restart acceptance scope:
+helper remains disabled and bridge has no helper ordering. After reboot or runtime
+object recreation, independent root label/parent/binding provisioning followed by
+helper READY before bridge/API is required; unattended boot is not configured.
+Keep NFS read-only, masks, original files/stores/handles/secrets and that deliberate
+guard setting.
+No archive file I/O/workload, timer enablement or remote publication occurs.
 
 2026-11-01 REL-016 prepares source0.3.0 and passes the complete strict web/build
 gate, with all original source inputs unchanged and production archive shadowed.
