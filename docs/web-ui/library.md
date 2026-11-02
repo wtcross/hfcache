@@ -10,13 +10,34 @@ is a separate explicit workflow; filtering never stages an edit. Use
 [Operations](operations.md#choose-a-job-and-its-effects) to review and submit a
 job deliberately.
 
-The [desktop Library screenshot](images/library-desktop.png) and
-[mobile Library screenshot](images/library-mobile.png) show the actual built
-interface from test build 0.2.20 with synthetic repositories in an isolated
-test deployment. Their
-counts, labels and identities illustrate the interface; they are not records
-from a production archive. The deployment used real Caddy and the installed API
-with explicitly simulated local storage metadata.
+The current [desktop source-fixture screenshot](images/library-source-fixture-after-1440x1000.png)
+and [mobile source-fixture screenshot](images/library-source-fixture-after-390x844.png)
+show the built source interface at 1440×1000 and 390×844 CSS pixels. The fixed
+synthetic fixture loads25 rows,50 known matches and incomplete technical coverage;
+these are illustrative owned fixtures, not installed or production measurements.
+Matching [desktop before](images/library-source-fixture-before-1440x1000.png) and
+[mobile before](images/library-source-fixture-before-390x844.png) captures preserve
+the earlier layout on that same default fixture. Search and the first repository
+identity now fit in both initial viewports with filters collapsed.
+
+The earlier [desktop](images/library-desktop.png) and
+[mobile](images/library-mobile.png) screenshots remain historical build0.2.20
+images from an isolated deployment with real Caddy/API and simulated storage
+metadata. They are not relabelled as the current layout.
+
+Search, repository type/scope, known matches and results lead the Library.
+**Filters and page size**, **Scope and coverage** and **Operator tags** use
+labelled disclosures.
+Open a disclosure with Enter or Space on its summary; closing it keeps its form
+values and makes no request. A compact **Applied** summary describes the
+submitted query even when technical filters are closed. Unsubmitted form edits
+are marked separately; they do not describe the loaded result scope. **Clear
+filters** resets both the query and form deliberately.
+
+Hidden fields remain part of **Apply filters**. If a hidden value is invalid,
+Apply opens its group and focuses the field or associated error so it can be
+corrected. Closing a group returns keyboard focus to its summary when needed.
+Changing disclosure state never changes bookmarks, selections or query meaning.
 
 ## Choose the scope before searching
 
@@ -126,8 +147,9 @@ just the loaded page. Coverage describes the candidate repository/publication
 scope before search and technical predicates narrow it. Loaded rows describe
 only the current page. Do not use one of these counts as another's denominator.
 
-The **Know your coverage** panel distinguishes usable, partial, unsupported, failed and missing
-observations. Unknown tag coverage is separate. Zero known matches under
+The coverage disclosure distinguishes usable, partial, unsupported, failed and
+missing observations. Its collapsed state retains a visible incomplete-coverage
+warning, including zero known matches. Unknown tag coverage is separate. Zero known matches under
 incomplete coverage is not proof of absence; inspect the visible coverage and
 `HFWRN011` warning. Even 0 publications / 0 usable observations does not mean 100%
 technical coverage. Unavailable, malformed or refused reads never become a

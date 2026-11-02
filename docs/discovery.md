@@ -507,6 +507,11 @@ form an atomic global snapshot. A retained representative cannot borrow current
 publication size or integrity. Logical bytes are not physical disk use and cannot
 be summed into storage savings or hardware-fit claims. Bounded fragment filters
 are browser navigation only; actual API requests use the existing allowlist.
+Compact Library presentation keeps the applied query and incomplete-coverage
+qualification visible. Disclosure state changes no predicate, fragment, selection,
+form value or read. Mounted hidden fields participate in explicit Apply; invalid
+hidden fields must be revealed for direct correction. Unsubmitted form edits
+remain distinguishable from applied evidence scope.
 
 ## Transport and refresh boundary
 

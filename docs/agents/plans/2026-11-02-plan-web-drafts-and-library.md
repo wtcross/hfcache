@@ -123,3 +123,9 @@ progress entry is claimed by this draft.
 - 2026-11-02: WEB-028 completes with64 focused regressions, five built Chromium
   checks and the full strict gate. Failed long-temp gate and verified preserved
   fixtures remain separate from the passing short-temp retry. Select WEB-029.
+
+- 2026-11-02: WEB-029 completes with matched before/after source-fixture images,
+  measured first-viewport results,87 focused/19 driver tests,9 built-browser
+  workflows, actual200% zoom plus keyboard-choice supplement, and the full strict
+  gate. Failed gate-harness run and complete fixture archive remain separate;
+  strengthened67-case harness and full retry pass. Select WEB-030.

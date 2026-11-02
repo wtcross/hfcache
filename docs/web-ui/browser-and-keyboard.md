@@ -15,7 +15,9 @@ page. Wide tables have a labelled scroll area so their controls remain reachable
 Repository captions and small evidence text use the same readable foreground as
 other secondary text; captions still describe the evidence's loaded scope.
 Primary repository actions retain a dark background and readable text when
-hovered.
+hovered. **Session and interface** keeps session/software controls in a compact disclosure; their
+connection, recovery and update-required notices remain visible when relevant.
+Opening it does not reconnect, refresh versions or discard a draft.
 
 ## Navigate without a pointer
 
@@ -23,6 +25,13 @@ Use Tab and Shift+Tab to move between controls. The first **Skip to content**
 link bypasses the navigation. Focus has a visible outline. Activate buttons with
 Enter or Space and links with Enter. A disabled action remains unavailable until
 its displayed prerequisites are satisfied; keyboard use grants no extra authority.
+
+Library disclosure summaries open and close with Enter or Space. Collapsing
+filters preserves unsubmitted text and the applied query without requests.
+The applied-filter summary remains visible; unsubmitted edits are labelled
+separately. Invalid hidden fields reveal their group and receive correction
+focus when Apply is attempted. Focus stays outside a closed group. Wide Library
+tables retain their labelled, keyboard-focusable horizontal scroll area.
 
 Filter choice lists support arrow keys and Home/End. Enter chooses
 the active option, Escape closes the list, and Tab leaves it. Repository evidence

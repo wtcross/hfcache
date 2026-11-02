@@ -23,6 +23,7 @@ WEB_CHECKS = (
     "test:component",
     "build",
     "test:browser",
+    "test:library-zoom",
 )
 WEB_FILES = (
     "package.json",
@@ -32,6 +33,7 @@ WEB_FILES = (
     "src/wire/generated.ts",
     "src/wire/unicode-data.json",
     "scripts/generate-wire.ts",
+    "scripts/check-library-zoom.ts",
     "scripts/check-auth-sandbox-tests.ts",
     "scripts/check-functional-driver-tests.ts",
     "test/functional-api/driver.test.mjs",
@@ -190,7 +192,15 @@ def test_required_contract_and_real_api_fixture_failure_stops_gate(tmp_path, sta
 
 
 @pytest.mark.parametrize(
-    "removed", ["package.json", "src/wire/generated.ts", *WEB_HELPERS, "node", "pnpm"]
+    "removed",
+    [
+        "package.json",
+        "src/wire/generated.ts",
+        "scripts/check-library-zoom.ts",
+        *WEB_HELPERS,
+        "node",
+        "pnpm",
+    ],
 )
 def test_required_web_rechecks_late_source_and_tool_disappearance(tmp_path, removed):
     script, environment, calls = web_gate_fixture(tmp_path)
@@ -249,7 +259,7 @@ def test_help_is_safe_even_without_web_prerequisites(tmp_path, help_flag):
     result = invoke(script, environment, "--require-web", help_flag)
     assert result.returncode == 0, result.stderr
     assert "--require-web" in result.stdout
-    assert "preliminary browser smoke" in result.stdout
+    assert "source browser workflows" in result.stdout
     assert not calls.exists()
 
 

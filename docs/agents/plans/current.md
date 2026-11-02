@@ -4,9 +4,9 @@
 | --- | --- |
 | State | active |
 | Active plan | [Protect unsaved configuration and streamline Library browsing](2026-11-02-plan-web-drafts-and-library.md) |
-| Current task | [WEB-029](tasks/web-029-compact-library-browsing.md) |
+| Current task | [WEB-030](tasks/web-030-library-pagination-reads.md) |
 | Last completed plan | [Production web migration](2026-11-01-plan-production-web-migration.md) (completed 2026-11-02) |
-| Last completed task | [OPS-024](tasks/ops-024-production-web-migration.md) (this commit) |
+| Last completed task | [WEB-029](tasks/web-029-compact-library-browsing.md) (this commit) |
 | Branch | main |
 | Updated | 2026-11-02 |
 

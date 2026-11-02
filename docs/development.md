@@ -73,7 +73,11 @@ Python contract export after locked Python synchronization, then retains every
 backend check above. Its web stage runs frozen
 installation, then `check:wire`, lint, types, deliberately
 invalid strictness fixtures, `test:auth-sandbox`, `test:functional-metadata`, unit tests, component tests,
-a production build and the preliminary real-browser smoke in that order.
+a production build, the built source-fixture browser workflows and an actual
+200% Chromium zoom workflow in that order. The zoom workflow uses a temporary
+owned profile and extension with the provisioned full Chromium binary; it
+confirms browser zoom through the browser API and closes its exact owned process.
+It changes no product read bound, persistent preference or user browser profile.
 The real API React read fixture follows those checks.
 Any failed stage or missing required browser fails the gate. Backend-only mode
 prints an explicit web omission; that result does not validate the web interface.
@@ -181,6 +185,7 @@ pnpm --dir web run test:unit
 pnpm --dir web run test:component
 pnpm --dir web run build
 pnpm --dir web run test:browser
+pnpm --dir web run test:library-zoom
 uv run --locked --extra server --extra mcp python scripts/check-web-read-fixture.py
 scripts/check.sh --require-web
 ```

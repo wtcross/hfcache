@@ -330,6 +330,146 @@ test("Clear filters replaces optional fields and All repositories really removes
     expect(fixture.store.snapshot().filters.type).toBeUndefined();
     expect(fixture.searches().at(-1)?.searchParams.has("type")).toBe(false);
 });
+
+test("disclosures preserve exact hidden form values, applied predicates, fragment and selection without reads", async () => {
+    const fixture = mount("#type=model&bits=4&format=gguf");
+    await fixture.loaded();
+    const disclosure = screen
+        .getByText("Filters and page size")
+        .closest("details");
+    if (disclosure === null) throw new Error("Missing advanced disclosure");
+    expect(disclosure).not.toHaveAttribute("open");
+    const applied = screen.getByRole("group", {
+        name: "Applied Library filters",
+    });
+    expect(applied).toHaveTextContent("Bits: 4");
+    expect(applied).toHaveTextContent("Format: gguf");
+    await userEvent.click(
+        screen.getByRole("checkbox", { name: "Select model owner/shared" }),
+    );
+    await userEvent.click(screen.getByText("Filters and page size"));
+    const raw = " GPU ,team:Draft ";
+    fireEvent.change(screen.getByLabelText("Require all tags"), {
+        target: { value: raw },
+    });
+    fireEvent.change(screen.getByLabelText("Bits"), {
+        target: { value: "08-invalid" },
+    });
+    const original = fixture.store.snapshot();
+    const calls = fixture.fetcher.mock.calls.length;
+    const fragment = window.location.hash;
+    expect(screen.getByText(/Unsubmitted form edits/u)).toBeInTheDocument();
+    expect(applied).not.toHaveTextContent("team:Draft");
+    await userEvent.click(screen.getByText("Filters and page size"));
+    expect(disclosure).not.toHaveAttribute("open");
+    expect(screen.getByLabelText("Require all tags")).toHaveValue(raw);
+    expect(screen.getByLabelText("Require all tags")).toBeEnabled();
+    expect(screen.getByLabelText("Bits")).toHaveValue("08-invalid");
+    const filterForm = screen.getByRole("form", { name: "Library filters" });
+    if (!(filterForm instanceof HTMLFormElement))
+        throw new Error("Missing filter form");
+    expect(new FormData(filterForm).get("tag_all")).toBe(raw);
+    for (const label of ["Operator tags", "Scope and coverage"]) {
+        await userEvent.click(screen.getByText(label));
+        await userEvent.click(screen.getByText(label));
+    }
+    expect(fixture.store.snapshot()).toBe(original);
+    expect(fixture.fetcher).toHaveBeenCalledTimes(calls);
+    expect(window.location.hash).toBe(fragment);
+    expect(
+        screen.getByRole("checkbox", { name: "Select model owner/shared" }),
+    ).toBeChecked();
+});
+
+test.each([
+    ["Bits", "4.5"],
+    ["Bits", "65"],
+    ["Maximum variant bytes", "9007199254740993"],
+])(
+    "Apply reveals and focuses invalid hidden %s=%s without changing the applied query",
+    async (label, value) => {
+        const fixture = mount();
+        await fixture.loaded();
+        const input = screen.getByLabelText(label);
+        fireEvent.change(input, { target: { value } });
+        const before = fixture.fetcher.mock.calls.length;
+        const filters = fixture.store.snapshot().filters;
+        await userEvent.click(
+            screen.getByRole("button", { name: "Apply filters" }),
+        );
+        expect(
+            screen.getByText("Filters and page size").closest("details"),
+        ).toHaveAttribute("open");
+        expect(input).toHaveFocus();
+        expect(input).toHaveValue(value);
+        expect(screen.getByRole("alert")).toHaveTextContent(
+            "exact whole numbers",
+        );
+        expect(fixture.store.snapshot().filters).toBe(filters);
+        expect(fixture.fetcher).toHaveBeenCalledTimes(before);
+        fireEvent.change(input, {
+            target: { value: label === "Bits" ? "4" : "17" },
+        });
+        await userEvent.click(
+            screen.getByRole("button", { name: "Apply filters" }),
+        );
+        await fixture.loaded();
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+        expect(
+            screen.queryByText(/Unsubmitted form edits/u),
+        ).not.toBeInTheDocument();
+    },
+);
+
+test("non-numeric invalid hidden predicates reveal the group and focus their associated error", async () => {
+    const fixture = mount();
+    await fixture.loaded();
+    fireEvent.change(screen.getByLabelText("Format"), {
+        target: { value: "not a format" },
+    });
+    const before = fixture.fetcher.mock.calls.length;
+    await userEvent.click(
+        screen.getByRole("button", { name: "Apply filters" }),
+    );
+    await waitFor(() => {
+        expect(screen.getByRole("alert")).toHaveFocus();
+    });
+    expect(
+        screen.getByText("Filters and page size").closest("details"),
+    ).toHaveAttribute("open");
+    expect(screen.getByLabelText("Format")).toHaveValue("not a format");
+    expect(fixture.fetcher).toHaveBeenCalledTimes(before);
+});
+
+test("collapsing a disclosure moves interior keyboard focus to its summary", async () => {
+    const fixture = mount();
+    await fixture.loaded();
+    const summary = screen.getByText("Filters and page size");
+    const disclosure = summary.closest("details");
+    if (disclosure === null) throw new Error("Missing disclosure");
+    await userEvent.click(summary);
+    screen.getByLabelText("Bits").focus();
+    fireEvent(disclosure, new Event("toggle"));
+    disclosure.open = false;
+    fireEvent(disclosure, new Event("toggle"));
+    expect(summary).toHaveFocus();
+});
+
+test("dataset selection announces clearing unsubmitted model fields and keeps them disabled", async () => {
+    const fixture = mount();
+    await fixture.loaded();
+    fireEvent.change(screen.getByLabelText("Bits"), { target: { value: "4" } });
+    await userEvent.click(screen.getByRole("button", { name: "Datasets" }));
+    await fixture.loaded();
+    expect(
+        screen.getByText(
+            "Model-only variant filters were cleared for datasets.",
+        ),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Bits")).toHaveValue("");
+    expect(screen.getByLabelText("Bits")).toBeDisabled();
+    expect(fixture.searches().at(-1)?.searchParams.has("bits")).toBe(false);
+});
 test("invalid bookmarked filters make zero GETs until explicitly cleared", async () => {
     const fixture = mount("#unreviewed=private-fragment");
     await waitFor(() => {

@@ -27,7 +27,51 @@ import {
     basicReadHeaders,
     basicReadRefusal,
     richCardRead,
+    openLibraryDisclosure,
 } from "./driver.mjs";
+
+test("Library disclosure access stays within the named region and preserves an already open group", async () => {
+    let open = false,
+        clicks = 0;
+    const page = {
+        getByRole(role, options) {
+            assert.equal(role, "region");
+            assert.deepEqual(options, {
+                name: "Repository library",
+                exact: true,
+            });
+            return {
+                getByText(label, options) {
+                    assert.equal(label, "Filters and page size");
+                    assert.deepEqual(options, { exact: true });
+                    return {
+                        evaluate: async (predicate) =>
+                            predicate({
+                                closest(selector) {
+                                    assert.equal(selector, "details");
+                                    return { open };
+                                },
+                            }),
+                        async click() {
+                            open = true;
+                            clicks++;
+                        },
+                    };
+                },
+            };
+        },
+    };
+    await openLibraryDisclosure(page, "Filters and page size");
+    assert.equal(open, true);
+    assert.equal(clicks, 1);
+    await openLibraryDisclosure(page, "Filters and page size");
+    assert.equal(open, true);
+    assert.equal(
+        clicks,
+        1,
+        "Reusing the helper must not close the entered form",
+    );
+});
 
 test("internal engine selection preserves all engines by default and refuses malformed selectors", () => {
     assert.deepEqual(selectedEngines({}), ["chromium", "firefox", "webkit"]);

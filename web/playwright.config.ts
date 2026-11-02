@@ -16,7 +16,7 @@ export default defineConfig({
     retries: 0,
     workers: 1,
     timeout: 15000,
-    globalTimeout: 60000,
+    globalTimeout: 120000,
     reporter: [
         ["list"],
         ["json", { outputFile: join(evidence, "report.json") }],

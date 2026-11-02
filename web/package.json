@@ -22,6 +22,7 @@
     "test:component": "node scripts/test-suite.ts component",
     "build": "node scripts/build-artifact.ts",
     "test:browser": "node scripts/browser-smoke.ts",
+    "test:library-zoom": "node scripts/check-library-zoom.ts",
     "licenses": "node scripts/licenses.ts"
   },
   "dependencies": {

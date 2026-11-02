@@ -30,7 +30,7 @@ for arg in "$@"; do
       printf '%s\n' \
         'Usage: scripts/check.sh [--with-build] [--require-web] [--with-web-functional]' \
         '  --with-build       additionally smoke-test the installed wheel' \
-        '  --require-web      require frozen web/contracts, preliminary browser smoke and real API read fixture' \
+        '  --require-web      require frozen web/contracts, source browser workflows and real API read fixture' \
         '  --with-web-functional require all installed shared-Caddy functional cases in all profiles' \
         '                       requires explicit HFCACHE_WEB_FUNCTIONAL_MANIFEST; implies --require-web' \
         '  -h, --help         show this help without running checks' \
@@ -56,7 +56,7 @@ require_web() {
   local required
   for required in web/package.json web/pnpm-lock.yaml web/tsconfig.json \
     web/src/wire/contracts.json web/src/wire/generated.ts web/src/wire/unicode-data.json \
-    web/scripts/generate-wire.ts \
+    web/scripts/generate-wire.ts web/scripts/check-library-zoom.ts \
     web/scripts/check-auth-sandbox-tests.ts web/test/auth-api/sandbox.test.mjs \
     web/scripts/check-functional-driver-tests.ts web/test/functional-api/driver.test.mjs \
     web/test/auth-api/sandbox.mjs \
@@ -127,7 +127,7 @@ if [[ $REQUIRE_WEB -eq 1 ]]; then
   require_web
   step 'web frozen install'
   "$PNPM_BIN" --dir web install --frozen-lockfile
-  for web_check in check:wire lint typecheck test:strict-fixtures test:auth-sandbox test:functional-metadata test:unit test:component build test:browser; do
+  for web_check in check:wire lint typecheck test:strict-fixtures test:auth-sandbox test:functional-metadata test:unit test:component build test:browser test:library-zoom; do
     step "web $web_check"
     "$PNPM_BIN" --dir web run "$web_check"
   done

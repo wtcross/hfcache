@@ -714,7 +714,11 @@ export function App({
                 </div>
             </aside>
             <div className="main-column">
-                <div className="preview-banner">
+                <div
+                    className="preview-banner"
+                    role="region"
+                    aria-label="Session identity"
+                >
                     <strong>
                         {bootstrap === undefined
                             ? "Development preview"
@@ -745,88 +749,140 @@ export function App({
                         <span aria-hidden="true">›</span>
                         <strong>{title}</strong>
                     </div>
-                    <span className="connection-state">
-                        <span aria-hidden="true" />
-                        {bootstrap === undefined
-                            ? "Not connected"
-                            : session === undefined
-                              ? "Authenticated"
-                              : session.connection === "connected"
-                                ? "Authenticated"
-                                : session.connection.replaceAll("_", " ")}
-                    </span>
-                </header>
-                <main id="main-content" ref={main} tabIndex={-1}>
-                    {controller !== undefined && session !== undefined && (
-                        <div className="session-recovery">
-                            <button
-                                type="button"
-                                disabled={
-                                    session.connection === "reconnecting" ||
-                                    session.connection === "update_required"
-                                }
-                                onClick={() => {
-                                    void controller.reconnect();
-                                }}
-                            >
-                                Reconnect
-                            </button>
-                            {session.notice !== null && (
-                                <Notice>{session.notice}</Notice>
-                            )}
-                            {session.connection === "update_required" && (
-                                <p role="status">
-                                    Copy original recovery handles, then reload
-                                    the interface.
-                                </p>
-                            )}
-                        </div>
-                    )}
-                    {bootstrap !== undefined &&
-                        onCheckRelease !== undefined && (
-                            <div>
-                                <button
-                                    type="button"
-                                    disabled={versionCheck === "checking"}
-                                    onClick={() => {
-                                        void checkInterfaceVersion();
-                                    }}
-                                >
-                                    Check interface version
-                                </button>
-                                {versionCheck === "unavailable" && (
-                                    <p role="status">
-                                        The interface version could not be
-                                        checked. Existing operation handles are
-                                        preserved.
-                                    </p>
+                    <details
+                        className="session-tools"
+                        onToggle={(event) => {
+                            const details = event.currentTarget;
+                            if (
+                                !details.open &&
+                                details.contains(document.activeElement)
+                            )
+                                details.querySelector("summary")?.focus();
+                        }}
+                    >
+                        <summary>
+                            <span>Session and interface</span>
+                            <span className="connection-state">
+                                <span aria-hidden="true" />
+                                {bootstrap === undefined
+                                    ? "Not connected"
+                                    : session === undefined
+                                      ? "Authenticated"
+                                      : session.connection === "connected"
+                                        ? "Authenticated"
+                                        : session.connection.replaceAll(
+                                              "_",
+                                              " ",
+                                          )}
+                            </span>
+                        </summary>
+                        <div className="session-tools-content">
+                            {controller !== undefined &&
+                                session !== undefined && (
+                                    <div className="session-recovery">
+                                        <button
+                                            type="button"
+                                            disabled={
+                                                session.connection ===
+                                                    "reconnecting" ||
+                                                session.connection ===
+                                                    "update_required"
+                                            }
+                                            onClick={() => {
+                                                void controller.reconnect();
+                                            }}
+                                        >
+                                            Reconnect
+                                        </button>
+                                    </div>
                                 )}
-                            </div>
+                            {bootstrap !== undefined &&
+                                onCheckRelease !== undefined && (
+                                    <div>
+                                        <button
+                                            type="button"
+                                            disabled={
+                                                versionCheck === "checking"
+                                            }
+                                            onClick={() => {
+                                                void checkInterfaceVersion();
+                                            }}
+                                        >
+                                            Check interface version
+                                        </button>
+                                    </div>
+                                )}
+                            <p>
+                                Configured identity is separate from archive
+                                health. Original operation handles are preserved
+                                separately from private observations. Open
+                                Operations or Administration for recovery.
+                            </p>
+                        </div>
+                    </details>
+                </header>
+                <main
+                    id="main-content"
+                    ref={main}
+                    tabIndex={-1}
+                    className={
+                        workspace === "library" ? "library-page" : undefined
+                    }
+                >
+                    {session?.connection === "connected" &&
+                        !session.canSubmit && (
+                            <Notice>
+                                New submissions are blocked. Preserve original
+                                operation handles and review Operations or
+                                Administration before continuing.
+                            </Notice>
                         )}
-                    <div className="page-heading">
-                        <span className="eyebrow">Your archive workspace</span>
-                        <h1>{title}</h1>
-                        <p>
-                            {route.kind === "repository"
-                                ? "Inspect one exact publication, its attributed metadata and independent integrity evidence."
-                                : (WORKSPACES.find(
-                                      (item) => item.id === workspace,
-                                  )?.description ??
-                                  "This address does not identify an available workspace.")}
+                    {session?.notice !== null &&
+                        session?.notice !== undefined && (
+                            <Notice>{session.notice}</Notice>
+                        )}
+                    {session?.connection === "update_required" && (
+                        <p role="status">
+                            Copy original recovery handles, then reload the
+                            interface.
                         </p>
+                    )}
+                    {versionCheck === "unavailable" && (
+                        <p role="status">
+                            The interface version could not be checked. Existing
+                            operation handles are preserved.
+                        </p>
+                    )}
+                    <div className="page-heading">
+                        {workspace !== "library" && (
+                            <span className="eyebrow">
+                                Your archive workspace
+                            </span>
+                        )}
+                        <h1>{title}</h1>
+                        {workspace !== "library" && (
+                            <p>
+                                {route.kind === "repository"
+                                    ? "Inspect one exact publication, its attributed metadata and independent integrity evidence."
+                                    : (WORKSPACES.find(
+                                          (item) => item.id === workspace,
+                                      )?.description ??
+                                      "This address does not identify an available workspace.")}
+                            </p>
+                        )}
                     </div>
-                    <Notice>
-                        <strong>
+                    {controller === undefined && (
+                        <Notice>
+                            <strong>
+                                {bootstrap === undefined
+                                    ? "Archive information is unavailable."
+                                    : "Configured identity loaded."}
+                            </strong>{" "}
                             {bootstrap === undefined
-                                ? "Archive information is unavailable."
-                                : "Configured identity loaded."}
-                        </strong>{" "}
-                        {bootstrap === undefined
-                            ? "This source preview makes no API requests and submits no operations."
-                            : controller === undefined
-                              ? "Archive health and repository data have not been requested. No operation has been submitted."
-                              : "Original operation handles are preserved separately from private observations. Open Operations or Administration for recovery."}
-                    </Notice>
+                                ? "This source preview makes no API requests and submits no operations."
+                                : "Archive health and repository data have not been requested. No operation has been submitted."}
+                        </Notice>
+                    )}
                     {(updateRequired ||
                         session?.connection === "update_required") && (
                         <Notice>

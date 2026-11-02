@@ -5,7 +5,7 @@ import {
     useState,
     useSyncExternalStore,
 } from "react";
-import type { FormEvent, MouseEvent } from "react";
+import type { FormEvent, MouseEvent, SyntheticEvent } from "react";
 import { Notice, Panel } from "../primitives";
 import { ChoiceControl } from "./ChoiceControl";
 import {
@@ -60,6 +60,60 @@ function numeric(value: FormDataEntryValue | null): number | undefined {
         throw new Error("Unsafe numeric filter.");
     return parsed;
 }
+function formValues(filters: LibraryFilters): Readonly<Record<string, string>> {
+    return {
+        q: filters.q ?? "",
+        tag_all: (filters.tag_all ?? []).join(", "),
+        tag_any: (filters.tag_any ?? []).join(", "),
+        format: filters.format ?? "",
+        quantization: filters.quantization ?? "",
+        quantization_method: filters.quantization_method ?? "",
+        bits: filters.bits === undefined ? "" : String(filters.bits),
+        max_variant_bytes:
+            filters.max_variant_bytes === undefined
+                ? ""
+                : String(filters.max_variant_bytes),
+    };
+}
+function appliedSummary(filters: LibraryFilters): string {
+    const labels = [
+        ["type", "Type"],
+        ["q", "Text"],
+        ["tag_all", "All tags"],
+        ["tag_any", "Any tags"],
+        ["format", "Format"],
+        ["quantization", "Scheme"],
+        ["quantization_method", "Method"],
+        ["bits", "Bits"],
+        ["max_variant_bytes", "Maximum variant bytes"],
+    ] as const;
+    const predicates = labels.flatMap(([name, label]) => {
+        const value = filters[name];
+        return value === undefined
+            ? []
+            : [
+                  label +
+                      ": " +
+                      (Array.isArray(value) ? value.join(", ") : String(value)),
+              ];
+    });
+    if (filters.scope !== "all")
+        predicates.push("Repository scope: " + filters.scope);
+    if (filters.revision_scope !== "current")
+        predicates.push("Retained publications");
+    if (filters.tag_source !== "current_or_last_observed")
+        predicates.push("Current tags only");
+    if (filters.limit !== 25)
+        predicates.push(String(filters.limit) + " rows per page");
+    return predicates.length === 0
+        ? "No text, tag or technical predicates."
+        : predicates.join(" · ");
+}
+function disclosureFocus(event: SyntheticEvent<HTMLDetailsElement>) {
+    const details = event.currentTarget;
+    if (!details.open && details.contains(document.activeElement))
+        details.querySelector("summary")?.focus();
+}
 const notices: Readonly<
     Record<Exclude<LibrarySnapshot["notice"], null>, string>
 > = {
@@ -87,6 +141,10 @@ function Coverage({ coverage }: { coverage: CatalogCoverage }) {
                 They do not establish archive integrity.
             </p>
             <dl className="coverage-facts">
+                <dt>Scoped repositories</dt>
+                <dd>{count(coverage.repositories)}</dd>
+                <dt>Scoped publications</dt>
+                <dd>{count(coverage.publications)}</dd>
                 <dt>Usable observations</dt>
                 <dd>{count(coverage.usable)}</dd>
                 <dt>Partial observations</dt>
@@ -102,15 +160,6 @@ function Coverage({ coverage }: { coverage: CatalogCoverage }) {
                 <dt>Repositories with unknown tags</dt>
                 <dd>{count(coverage.tags_unknown)}</dd>
             </dl>
-            <p
-                className={
-                    coverage.incomplete ? "library-warning" : "library-muted"
-                }
-            >
-                {coverage.incomplete
-                    ? "Coverage is incomplete. Zero known matches does not prove absence."
-                    : "Coverage is complete for this read scope."}
-            </p>
         </Panel>
     );
 }
@@ -407,6 +456,9 @@ export function Library({
 }) {
     const state = useSyncExternalStore(store.subscribe, store.snapshot);
     const form = useRef<HTMLFormElement>(null);
+    const advanced = useRef<HTMLDetailsElement>(null);
+    const errorNotice = useRef<HTMLDivElement>(null);
+    const [entered, setEntered] = useState(() => formValues(state.filters));
     const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [filterError, setFilterError] = useState<string | null>(null);
     const [announcement, setAnnouncement] = useState<string | null>(null);
@@ -432,23 +484,12 @@ export function Library({
         searchTimer.current = null;
     }
     function syncForm(next: LibraryFilters) {
-        const values: Readonly<Record<string, string>> = {
-            q: next.q ?? "",
-            tag_all: (next.tag_all ?? []).join(", "),
-            tag_any: (next.tag_any ?? []).join(", "),
-            format: next.format ?? "",
-            quantization: next.quantization ?? "",
-            quantization_method: next.quantization_method ?? "",
-            bits: next.bits === undefined ? "" : String(next.bits),
-            max_variant_bytes:
-                next.max_variant_bytes === undefined
-                    ? ""
-                    : String(next.max_variant_bytes),
-        };
+        const values = formValues(next);
         for (const [key, value] of Object.entries(values)) {
             const field = form.current?.elements.namedItem(key);
             if (field instanceof HTMLInputElement) field.value = value;
         }
+        setEntered(values);
     }
     const readFilters = useCallback(
         (next: LibraryFilters): Promise<void> => {
@@ -572,6 +613,22 @@ export function Library({
                 const value = text(name);
                 return value === undefined ? [] : value.split(",");
             };
+            for (const name of ["bits", "max_variant_bytes"]) {
+                try {
+                    const value = numeric(data.get(name));
+                    if (
+                        name === "bits" &&
+                        value !== undefined &&
+                        (value < 1 || value > 64)
+                    )
+                        throw new Error("Bits bounds");
+                } catch {
+                    if (advanced.current !== null) advanced.current.open = true;
+                    const invalid = form.current?.elements.namedItem(name);
+                    if (invalid instanceof HTMLInputElement) invalid.focus();
+                    throw new Error("Invalid numeric filter");
+                }
+            }
             const next = apply({
                 q: text("q"),
                 tag_all: tags("tag_all"),
@@ -583,6 +640,10 @@ export function Library({
                 max_variant_bytes: numeric(data.get("max_variant_bytes")),
             });
             if (next !== null) syncForm(next);
+            else {
+                if (advanced.current !== null) advanced.current.open = true;
+                queueMicrotask(() => errorNotice.current?.focus());
+            }
         } catch {
             setFilterError(
                 "Bits and maximum variant bytes must be exact whole numbers within the supported bounds. The last valid filters remain in effect.",
@@ -591,13 +652,27 @@ export function Library({
     }
     function chooseType(type: "model" | "dataset" | undefined) {
         cancelSearch();
+        const clearingRawModelFields =
+            type === "dataset" &&
+            [
+                "quantization",
+                "quantization_method",
+                "bits",
+                "max_variant_bytes",
+            ].some((name) => entered[name] !== "");
         const field = form.current?.elements.namedItem("q");
         const q =
             field instanceof HTMLInputElement
                 ? field.value
                 : (store.snapshot().filters.q ?? "");
         const next = apply({ type, q: q === "" ? undefined : q });
-        if (next !== null) syncForm(next);
+        if (next !== null) {
+            syncForm(next);
+            if (clearingRawModelFields)
+                setAnnouncement(
+                    "Model-only variant filters were cleared for datasets.",
+                );
+        }
     }
     function clearFilters() {
         cancelSearch();
@@ -646,88 +721,20 @@ export function Library({
 
     return (
         <section className="library" aria-label="Repository library">
-            <div className="library-toolbar">
-                <p>
-                    Find retained models and datasets using local metadata. No
-                    Hub requests are made by filtering.
-                </p>
-                <button
-                    type="button"
-                    onClick={() => {
-                        void store.refresh().catch(() => {
-                            setFilterError(
-                                "The Library read could not be started. Check the current connection and filters.",
-                            );
-                        });
-                    }}
-                    disabled={
-                        !state.connected ||
-                        state.refreshing ||
-                        filterError !== null
-                    }
-                >
-                    Refresh library
-                </button>
-            </div>
-            <div
-                className="library-summaries"
-                role="group"
-                aria-label="Library read scope"
-            >
-                <div>
-                    <span>Known matching repositories</span>
-                    <strong>
-                        {catalog === null
-                            ? "Not loaded"
-                            : count(catalog.total_matches)}
-                    </strong>
-                    <small>
-                        {catalog === null
-                            ? "Awaiting validated catalog evidence"
-                            : `${String(state.rows.length)} rows loaded on this page`}
-                    </small>
-                </div>
-                <div>
-                    <span>Scoped repositories</span>
-                    <strong>
-                        {catalog === null
-                            ? "Not loaded"
-                            : count(catalog.coverage.repositories)}
-                    </strong>
-                    <small>Before text, tag and technical matching</small>
-                </div>
-                <div>
-                    <span>Scoped publications</span>
-                    <strong>
-                        {catalog === null
-                            ? "Not loaded"
-                            : count(catalog.coverage.publications)}
-                    </strong>
-                    <small>
-                        {filters.revision_scope === "current"
-                            ? "Current publication evidence"
-                            : "Retained publication evidence"}
-                    </small>
-                </div>
-                <div>
-                    <span>Technical metadata</span>
-                    <strong>
-                        {catalog === null
-                            ? "Not loaded"
-                            : `${count(catalog.coverage.usable)} / ${count(catalog.coverage.publications)}`}
-                    </strong>
-                    <small>
-                        {catalog?.coverage.incomplete === true
-                            ? "Incomplete coverage; unknown evidence remains"
-                            : catalog === null
-                              ? "Availability is separate from integrity"
-                              : "Usable observations in this read scope"}
-                    </small>
-                </div>
-            </div>
             <form
                 ref={form}
                 onSubmit={submitFilters}
+                onChange={(event) => {
+                    const target = event.target;
+                    if (
+                        target instanceof HTMLInputElement &&
+                        Object.hasOwn(formValues(filters), target.name)
+                    )
+                        setEntered((previous) => ({
+                            ...previous,
+                            [target.name]: target.value,
+                        }));
+                }}
                 className="library-filters"
                 aria-label="Library filters"
             >
@@ -784,150 +791,242 @@ export function Library({
                         </button>
                     ))}
                 </div>
-                <div className="library-filter-grid">
-                    <ChoiceControl
-                        key={"publication:" + String(state.authGeneration)}
-                        label="Publication scope"
-                        value={filters.revision_scope}
-                        options={[
-                            { value: "current", label: "Current publications" },
-                            {
-                                value: "retained",
-                                label: "Retained publications",
-                            },
-                        ]}
-                        onChange={(revision_scope) => {
-                            apply({ revision_scope });
-                        }}
-                    />
-                    <ChoiceControl
-                        key={"provenance:" + String(state.authGeneration)}
-                        label="Tag provenance"
-                        value={filters.tag_source}
-                        options={[
-                            {
-                                value: "current_or_last_observed",
-                                label: "Current or last observed",
-                            },
-                            {
-                                value: "current_only",
-                                label: "Current configuration only",
-                            },
-                        ]}
-                        onChange={(tag_source) => {
-                            apply({ tag_source });
-                        }}
-                    />
-                    <label>
-                        Require all tags
-                        <input
-                            name="tag_all"
-                            defaultValue={(filters.tag_all ?? []).join(", ")}
-                            placeholder="task:chat, team:research"
+                <details
+                    ref={advanced}
+                    className="library-disclosure"
+                    onToggle={disclosureFocus}
+                >
+                    <summary>Filters and page size</summary>
+                    <div className="library-filter-grid">
+                        <ChoiceControl
+                            key={"publication:" + String(state.authGeneration)}
+                            label="Publication scope"
+                            value={filters.revision_scope}
+                            options={[
+                                {
+                                    value: "current",
+                                    label: "Current publications",
+                                },
+                                {
+                                    value: "retained",
+                                    label: "Retained publications",
+                                },
+                            ]}
+                            onChange={(revision_scope) => {
+                                apply({ revision_scope });
+                            }}
                         />
-                    </label>
-                    <label>
-                        Match any tags
-                        <input
-                            name="tag_any"
-                            defaultValue={(filters.tag_any ?? []).join(", ")}
-                            placeholder="stage:evaluation, tier:prod"
+                        <ChoiceControl
+                            key={"provenance:" + String(state.authGeneration)}
+                            label="Tag provenance"
+                            value={filters.tag_source}
+                            options={[
+                                {
+                                    value: "current_or_last_observed",
+                                    label: "Current or last observed",
+                                },
+                                {
+                                    value: "current_only",
+                                    label: "Current configuration only",
+                                },
+                            ]}
+                            onChange={(tag_source) => {
+                                apply({ tag_source });
+                            }}
                         />
-                    </label>
-                    <label>
-                        Format
-                        <input
-                            name="format"
-                            defaultValue={filters.format ?? ""}
-                            list="library-formats"
-                        />
-                        <datalist id="library-formats">
-                            {facet("format")?.entries.map((entry) => (
-                                <option key={entry.value} value={entry.value} />
-                            ))}
-                        </datalist>
-                    </label>
-                    <label>
-                        Quantization method
-                        <input
-                            name="quantization_method"
-                            defaultValue={filters.quantization_method ?? ""}
-                            disabled={filters.type === "dataset"}
-                            list="library-methods"
-                        />
-                        <datalist id="library-methods">
-                            {facet("quantization_method")?.entries.map(
-                                (entry) => (
+                        <label>
+                            Require all tags
+                            <input
+                                name="tag_all"
+                                defaultValue={(filters.tag_all ?? []).join(
+                                    ", ",
+                                )}
+                                placeholder="task:chat, team:research"
+                            />
+                        </label>
+                        <label>
+                            Match any tags
+                            <input
+                                name="tag_any"
+                                defaultValue={(filters.tag_any ?? []).join(
+                                    ", ",
+                                )}
+                                placeholder="stage:evaluation, tier:prod"
+                            />
+                        </label>
+                        <label>
+                            Format
+                            <input
+                                name="format"
+                                defaultValue={filters.format ?? ""}
+                                list="library-formats"
+                            />
+                            <datalist id="library-formats">
+                                {facet("format")?.entries.map((entry) => (
                                     <option
                                         key={entry.value}
                                         value={entry.value}
                                     />
-                                ),
-                            )}
-                        </datalist>
-                    </label>
-                    <label>
-                        Quantization scheme
-                        <input
-                            name="quantization"
-                            defaultValue={filters.quantization ?? ""}
-                            disabled={filters.type === "dataset"}
-                            list="library-schemes"
+                                ))}
+                            </datalist>
+                        </label>
+                        <label>
+                            Quantization method
+                            <input
+                                name="quantization_method"
+                                defaultValue={filters.quantization_method ?? ""}
+                                disabled={filters.type === "dataset"}
+                                list="library-methods"
+                            />
+                            <datalist id="library-methods">
+                                {facet("quantization_method")?.entries.map(
+                                    (entry) => (
+                                        <option
+                                            key={entry.value}
+                                            value={entry.value}
+                                        />
+                                    ),
+                                )}
+                            </datalist>
+                        </label>
+                        <label>
+                            Quantization scheme
+                            <input
+                                name="quantization"
+                                defaultValue={filters.quantization ?? ""}
+                                disabled={filters.type === "dataset"}
+                                list="library-schemes"
+                            />
+                            <datalist id="library-schemes">
+                                {facet("quantization")?.entries.map((entry) => (
+                                    <option
+                                        key={entry.value}
+                                        value={entry.value}
+                                    />
+                                ))}
+                            </datalist>
+                        </label>
+                        <label>
+                            Bits
+                            <input
+                                name="bits"
+                                inputMode="numeric"
+                                defaultValue={filters.bits}
+                                disabled={filters.type === "dataset"}
+                            />
+                        </label>
+                        <label>
+                            Maximum variant bytes
+                            <input
+                                name="max_variant_bytes"
+                                inputMode="numeric"
+                                defaultValue={filters.max_variant_bytes}
+                                disabled={filters.type === "dataset"}
+                            />
+                        </label>
+                        <ChoiceControl
+                            key={"page-size:" + String(state.authGeneration)}
+                            label="Rows per page"
+                            value={filters.limit}
+                            options={[...new Set([25, 50, 100, filters.limit])]
+                                .sort((a, b) => a - b)
+                                .map((limit) => ({
+                                    value: limit,
+                                    label: String(limit),
+                                }))}
+                            onChange={(limit) => {
+                                apply({ limit });
+                            }}
                         />
-                        <datalist id="library-schemes">
-                            {facet("quantization")?.entries.map((entry) => (
-                                <option key={entry.value} value={entry.value} />
-                            ))}
-                        </datalist>
-                    </label>
-                    <label>
-                        Bits
-                        <input
-                            name="bits"
-                            inputMode="numeric"
-                            defaultValue={filters.bits}
-                            disabled={filters.type === "dataset"}
-                        />
-                    </label>
-                    <label>
-                        Maximum variant bytes
-                        <input
-                            name="max_variant_bytes"
-                            inputMode="numeric"
-                            defaultValue={filters.max_variant_bytes}
-                            disabled={filters.type === "dataset"}
-                        />
-                    </label>
-                    <ChoiceControl
-                        key={"page-size:" + String(state.authGeneration)}
-                        label="Rows per page"
-                        value={filters.limit}
-                        options={[...new Set([25, 50, 100, filters.limit])]
-                            .sort((a, b) => a - b)
-                            .map((limit) => ({
-                                value: limit,
-                                label: String(limit),
-                            }))}
-                        onChange={(limit) => {
-                            apply({ limit });
-                        }}
-                    />
-                </div>
-                <p className="library-muted">
-                    Text search is debounced. Apply tag and technical fields
-                    together. Tags use commas; groups combine with AND.
-                    Technical predicates must match one complete primary
-                    variant.
-                </p>
+                    </div>
+                    <p className="library-muted">
+                        Text search is debounced. Apply tag and technical fields
+                        together. Tags use commas; groups combine with AND.
+                        Technical predicates must match one complete primary
+                        variant.
+                    </p>
+                </details>
                 <div className="library-filter-actions">
                     <button type="submit">Apply filters</button>
                     <button type="button" onClick={clearFilters}>
                         Clear filters
                     </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            void store.refresh().catch(() => {
+                                setFilterError(
+                                    "The Library read could not be started. Check the current connection and filters.",
+                                );
+                            });
+                        }}
+                        disabled={
+                            !state.connected ||
+                            state.refreshing ||
+                            filterError !== null
+                        }
+                    >
+                        Refresh library
+                    </button>
                 </div>
             </form>
+            <div
+                className="library-applied"
+                role="group"
+                aria-label="Applied Library filters"
+            >
+                <strong>Applied:</strong> {appliedSummary(filters)}
+            </div>
+            {Object.entries(formValues(filters)).some(
+                ([key, value]) => entered[key] !== value,
+            ) && (
+                <p className="library-unsubmitted" role="status">
+                    Unsubmitted form edits. Apply tag and technical changes;
+                    text search applies after its delay.
+                </p>
+            )}
+            <div
+                className="library-read-summary"
+                role="group"
+                aria-label="Library read scope"
+            >
+                <p>
+                    <strong>
+                        Known matching repositories:{" "}
+                        {catalog === null
+                            ? "Not loaded"
+                            : count(catalog.total_matches)}
+                    </strong>
+                    {catalog === null
+                        ? ""
+                        : ` · ${String(state.rows.length)} rows loaded`}
+                    .{" "}
+                    {filters.revision_scope === "current"
+                        ? "Current publication evidence"
+                        : "Retained publication evidence"}
+                    .
+                </p>
+            </div>
+            {catalog !== null && (
+                <p
+                    className={
+                        catalog.coverage.incomplete
+                            ? "library-coverage-warning library-warning"
+                            : "library-muted"
+                    }
+                >
+                    {catalog.coverage.incomplete
+                        ? "Coverage is incomplete. Zero known matches does not prove absence."
+                        : "Coverage is complete for this read scope."}
+                </p>
+            )}
             {filterError !== null && (
-                <div role="alert" className="library-warning">
+                <div
+                    ref={errorNotice}
+                    tabIndex={-1}
+                    role="alert"
+                    className="library-warning"
+                >
                     {filterError}
                 </div>
             )}
@@ -1136,95 +1235,125 @@ export function Library({
                     className="library-sidebar"
                     aria-label="Library evidence and tag suggestions"
                 >
-                    <Panel title="Operator tags">
-                        <p>
-                            Your configuration labels are separate from upstream
-                            metadata. Historical labels remain attributed.
-                        </p>
-                        <ChoiceControl
-                            key={"tag-group:" + String(state.authGeneration)}
-                            label="Facet selection group"
-                            value={tagGroup}
-                            options={[
-                                {
-                                    value: "tag_all",
-                                    label: "Require all selected tags",
-                                },
-                                {
-                                    value: "tag_any",
-                                    label: "Match any selected tags",
-                                },
-                            ]}
-                            onChange={setTagGroup}
-                        />
-                        {tagFacet === null ? (
+                    <details
+                        className="library-disclosure"
+                        onToggle={disclosureFocus}
+                    >
+                        <summary>Operator tags</summary>
+                        <Panel title="Tag suggestions">
                             <p>
-                                Tag suggestions are unavailable. Manual tag
-                                filters remain available.
+                                Your configuration labels are separate from
+                                upstream metadata. Historical labels remain
+                                attributed.
                             </p>
-                        ) : (
-                            <>
-                                <div className="library-facet-tags">
-                                    {tagFacet.entries.map((entry) => (
-                                        <label key={entry.value}>
-                                            <input
-                                                type="checkbox"
-                                                checked={(
-                                                    filters[tagGroup] ?? []
-                                                ).includes(entry.value)}
-                                                onChange={(event) => {
-                                                    const current =
-                                                        filters[tagGroup] ?? [];
-                                                    const next = apply({
-                                                        [tagGroup]: event.target
-                                                            .checked
-                                                            ? [
-                                                                  ...current,
-                                                                  entry.value,
-                                                              ]
-                                                            : current.filter(
-                                                                  (tag) =>
-                                                                      tag !==
-                                                                      entry.value,
-                                                              ),
-                                                    });
-                                                    if (next !== null)
-                                                        syncForm(next);
-                                                }}
-                                            />
-                                            <span>{entry.value}</span>
-                                            <small>
-                                                {count(entry.repository_count)}
-                                            </small>
-                                        </label>
-                                    ))}
-                                </div>
-                                <p className="library-muted">
-                                    {tagFacet.entries.length} values on this
-                                    page of {count(tagFacet.total_matches)}{" "}
-                                    known matching values. Counts are matching
-                                    repositories, not archive-wide totals.
+                            <ChoiceControl
+                                key={
+                                    "tag-group:" + String(state.authGeneration)
+                                }
+                                label="Facet selection group"
+                                value={tagGroup}
+                                options={[
+                                    {
+                                        value: "tag_all",
+                                        label: "Require all selected tags",
+                                    },
+                                    {
+                                        value: "tag_any",
+                                        label: "Match any selected tags",
+                                    },
+                                ]}
+                                onChange={setTagGroup}
+                            />
+                            {tagFacet === null ? (
+                                <p>
+                                    Tag suggestions are unavailable. Manual tag
+                                    filters remain available.
                                 </p>
-                                <button
-                                    type="button"
-                                    disabled={
-                                        state.facets.tag.result?.kind !==
-                                            "success" ||
-                                        state.facets.tag.result.response
-                                            .next_cursor === null ||
-                                        state.refreshing
-                                    }
-                                    onClick={() => {
-                                        void store.nextFacetPage("tag");
-                                    }}
-                                >
-                                    Load more tags
-                                </button>
-                            </>
-                        )}
-                    </Panel>
+                            ) : (
+                                <>
+                                    <div className="library-facet-tags">
+                                        {tagFacet.entries.map((entry) => (
+                                            <label key={entry.value}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={(
+                                                        filters[tagGroup] ?? []
+                                                    ).includes(entry.value)}
+                                                    onChange={(event) => {
+                                                        const current =
+                                                            filters[tagGroup] ??
+                                                            [];
+                                                        const next = apply({
+                                                            [tagGroup]: event
+                                                                .target.checked
+                                                                ? [
+                                                                      ...current,
+                                                                      entry.value,
+                                                                  ]
+                                                                : current.filter(
+                                                                      (tag) =>
+                                                                          tag !==
+                                                                          entry.value,
+                                                                  ),
+                                                        });
+                                                        if (next !== null)
+                                                            syncForm(next);
+                                                    }}
+                                                />
+                                                <span>{entry.value}</span>
+                                                <small>
+                                                    {count(
+                                                        entry.repository_count,
+                                                    )}
+                                                </small>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <p className="library-muted">
+                                        {tagFacet.entries.length} values on this
+                                        page of {count(tagFacet.total_matches)}{" "}
+                                        known matching values. Counts are
+                                        matching repositories, not archive-wide
+                                        totals.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        disabled={
+                                            state.facets.tag.result?.kind !==
+                                                "success" ||
+                                            state.facets.tag.result.response
+                                                .next_cursor === null ||
+                                            state.refreshing
+                                        }
+                                        onClick={() => {
+                                            void store.nextFacetPage("tag");
+                                        }}
+                                    >
+                                        Load more tags
+                                    </button>
+                                </>
+                            )}
+                        </Panel>
+                    </details>
                     {catalog !== null && (
-                        <Coverage coverage={catalog.coverage} />
+                        <details
+                            className="library-disclosure"
+                            onToggle={disclosureFocus}
+                        >
+                            <summary>Scope and coverage</summary>
+                            <p>
+                                {filters.revision_scope === "current"
+                                    ? "Current publication evidence"
+                                    : "Retained publication evidence"}
+                                ;{" "}
+                                {filters.tag_source === "current_only"
+                                    ? "current configuration tags only"
+                                    : "current or last-observed tags"}
+                                . Counts describe the entire scope before text,
+                                tag and technical matching.
+                            </p>
+                            <Coverage coverage={catalog.coverage} />
+                        </details>
                     )}
                 </aside>
             </div>

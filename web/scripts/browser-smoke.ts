@@ -189,7 +189,7 @@ if (options.length > 0) {
             forcedShutdown = setTimeout(() => {
                 signalCli("SIGKILL");
             }, 5000);
-        }, 90000);
+        }, 150000);
         let status: number;
         try {
             status = await new Promise<number>((resolve, reject) => {

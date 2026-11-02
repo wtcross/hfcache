@@ -54,6 +54,27 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   architecture/dependency/format/authority. No deployment, live services/archive,
   persisted draft, replay, tag or push. WEB-029 is next.
 
+- [x] WEB-029 Bring Library search and results into view
+  (2026-11-02, this commit — [task](plans/tasks/web-029-compact-library-browsing.md),
+  [plan](plans/2026-11-02-plan-web-drafts-and-library.md)).
+  Compact native disclosures preserve hidden raw fields and recover invalid
+  controls; applied/unsubmitted summaries, scope/provenance, visible incomplete
+  warnings and session/recovery notices retain their meanings. Matching25-row
+  source-fixture captures measure mobile search209.438/identity820.922–838.922
+  within390×844; desktop search182.719/identity636.125–654.125 within1440×1000.
+  Initial8GETs unchanged.87focused/19driver tests,9built Chromium workflows and
+  actual200%/320CSS zoom pass; supplemental keyboard-choice/active-summary checks,
+  full axe0/CSP0, noPOST/Hub and exact browser closure are recorded. Strictgate2
+  passes9,594backend/4,077combined web/16wheel, three locked profiles, real API
+  React and all new browser/zoom stages,1,248 inputs/names unchanged;
+  95.12% lines/90.10% branches. LogSHA256`d27b36d6c7cf6563da05b2e53bb35205280658e6710d834fd1337bfba4958913`.
+  First gate's28 fake-harness declaration/help failures remain with complete
+  verified fixture archive; expanded67-case controls and fullretry pass without
+  UI changes. Invariants/ADR145 reviewed, contracts/guides/four new PNGs current,
+  historical images unchanged; no new architecture/dependency/durable preference.
+  Source/owned-fixture scope only, no deployment/live services/archive/tag/push.
+  WEB-030 is next.
+
 ## Local web migration (2026-11-01)
 
 - [x] OPS-024 Replace the local deployment without archive changes
@@ -2752,6 +2773,12 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-02 WEB-029 source/owned-fixture acceptance compacts Library browsing and
+verifies actual Chromium200% zoom. Installed0.3.0 stays unchanged; new PNGs and
+all timing/count/layout evidence are labelled source fixtures. Existing boot,
+NAS/workload, confinement and original-handle holds remain; no rollout follows.
+
 
 2026-11-02 WEB-028 source/owned-fixture acceptance protects manual configuration
 reload drafts. The selected installed0.3.0 deployment remains unchanged; this
@@ -13580,3 +13607,11 @@ state together even on unchanged base; immediate discard before GET was rejected
 because failed reads lost admitted work. Original handles, private invalidation
 and unknown-effect authority remain independent. Dated ADR amendments and INV001
 record this browser composition; no new architectural decision is introduced.
+
+2026-11-02 WEB-029 presentation refinement of decision145: native disclosures
+keep mounted form values, reveal invalid hidden controls and distinguish applied
+scope from unsubmitted text. Compact summaries retain incomplete coverage and
+provenance while moving primary browsing into the initial viewport. Conditional
+form removal was rejected because it can omit hidden intent from FormData. This
+changes no predicate, authority, publication join or architectural rule; existing
+INV018/019/021 and ADR145 remain applicable without a new ADR.

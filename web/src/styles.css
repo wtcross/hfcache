@@ -807,6 +807,96 @@ main:focus {
     gap: 0.75rem;
     margin: 1rem 0;
 }
+.session-tools {
+    max-width: 28rem;
+    min-width: 0;
+    color: #425876;
+    font-size: 0.8rem;
+}
+.session-tools > summary {
+    min-height: 44px;
+    cursor: pointer;
+    padding: 0.35rem;
+}
+.session-tools > summary > .connection-state {
+    display: inline-flex;
+    margin-left: 0.6rem;
+}
+.session-tools-content {
+    padding: 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 0.4rem;
+    background: #f8faff;
+}
+.session-tools-content button {
+    min-height: 44px;
+    max-width: 100%;
+    padding: 0.5rem 0.75rem;
+    white-space: normal;
+}
+.session-tools summary:focus-visible,
+.library summary:focus-visible,
+.library [tabindex="-1"]:focus {
+    outline: 3px solid #86a5ff;
+    outline-offset: 3px;
+}
+main.library-page {
+    padding-top: 12px;
+}
+.library-page .page-heading {
+    margin-bottom: 8px;
+}
+.library-page .page-heading h1 {
+    font-size: 1.65rem;
+    margin: 0;
+}
+.library-disclosure {
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: 0.4rem;
+    background: #fff;
+}
+.library-disclosure > summary {
+    min-height: 44px;
+    padding: 0.6rem 0.8rem;
+    cursor: pointer;
+    font-weight: 600;
+    color: #253c62;
+}
+.library-disclosure > :not(summary) {
+    margin-inline: 0.8rem;
+}
+.library-disclosure .panel {
+    border: 0;
+    box-shadow: none;
+}
+.library-read-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+}
+.library-read-summary p {
+    flex: 1 1 12rem;
+    margin: 0;
+}
+.library-applied,
+.library-unsubmitted,
+.library-coverage-warning {
+    margin: 0.5rem 0;
+    font-size: 0.8rem;
+    overflow-wrap: anywhere;
+}
+.library-coverage-warning {
+    padding: 0.4rem 0.65rem;
+    border-left: 3px solid #a36c20;
+    background: #fff6e7;
+}
+.library-unsubmitted {
+    font-weight: 600;
+}
 .recovery-import {
     display: grid;
     gap: 0.75rem;
@@ -933,8 +1023,9 @@ main:focus {
 }
 .library-tabs {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.75rem;
-    padding: 1rem 0;
+    padding: 0.45rem 0;
 }
 .library-tabs button {
     background: transparent;
@@ -955,6 +1046,8 @@ main:focus {
 }
 .library-filter-actions {
     justify-content: flex-start;
+    gap: 0.5rem;
+    margin: 0.35rem 0;
 }
 .library-filter-actions button[type="submit"] {
     background: #315fe9;
@@ -965,7 +1058,7 @@ main:focus {
     grid-template-columns: minmax(0, 1fr) 15.5rem;
     gap: 1.25rem;
     align-items: start;
-    margin: 1.5rem 0;
+    margin: 0.75rem 0;
 }
 .library-content > div,
 .library-sidebar {

@@ -9,8 +9,9 @@ import {
     readWire,
     statusPayload,
     versionPayload,
-} from "../read-fixtures";
+} from "../read-fixtures.ts";
 import config from "../../../tests/fixtures/web_wire/config.json" with { type: "json" };
+import { libraryFixtureResponse } from "./library-fixture.ts";
 
 declare global {
     interface Window {
@@ -33,7 +34,10 @@ function text(value: unknown): string {
     return value;
 }
 
-export async function sourceFixture(page: Page) {
+export async function sourceFixture(
+    page: Page,
+    options: { library?: boolean } = {},
+) {
     const root = fileURLToPath(new URL("../../", import.meta.url));
     const manifestBytes = readFileSync(join(root, "dist/manifest.json"));
     const manifest = object(JSON.parse(manifestBytes.toString("utf8")));
@@ -150,6 +154,12 @@ export async function sourceFixture(page: Page) {
             });
         };
         if (request.method() === "GET") {
+            const library =
+                options.library === true ? libraryFixtureResponse(url) : null;
+            if (library !== null) {
+                await json(library);
+                return;
+            }
             if (path === "/ui/bootstrap.json") {
                 await json(bootstrap);
                 return;
@@ -191,7 +201,7 @@ export async function sourceFixture(page: Page) {
                 );
                 return;
             }
-            if (["/ui/", "/ui/administration"].includes(path)) {
+            if (["/ui/", "/ui/administration", "/ui/library"].includes(path)) {
                 await route.fulfill({
                     contentType: "text/html",
                     body: index,

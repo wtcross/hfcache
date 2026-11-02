@@ -114,6 +114,30 @@ test("mobile navigation is explicitly labelled and closes on navigation or histo
     ).toBeInTheDocument();
 });
 
+test("session disclosure preserves deliberate controls and makes no request when opened or closed", async () => {
+    const fixture = mountReadOwners();
+    try {
+        const summary = screen
+            .getByText("Session and interface")
+            .closest("summary");
+        if (summary === null) throw new Error("Missing session summary");
+        const details = summary.closest("details");
+        expect(details).not.toHaveAttribute("open");
+        expect(summary).toHaveTextContent("Authenticated");
+        const before = fixture.fetcher.mock.calls.length;
+        await userEvent.click(summary);
+        expect(details).toHaveAttribute("open");
+        expect(screen.getByRole("button", { name: "Reconnect" })).toBeEnabled();
+        await userEvent.click(summary);
+        expect(details).not.toHaveAttribute("open");
+        expect(summary).toHaveFocus();
+        expect(fixture.fetcher).toHaveBeenCalledTimes(before);
+        expect(fixture.controller.snapshot().registry.records).toHaveLength(1);
+    } finally {
+        fixture.dispose();
+    }
+});
+
 test("the mount boundary validates deployment metadata and supports owned cleanup", async () => {
     const bootstrap = uiBootstrapFixture();
     vi.stubGlobal("location", new URL(bootstrap.configured_origin + "/ui/"));

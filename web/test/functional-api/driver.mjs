@@ -57,6 +57,19 @@ const UI_CSP =
 let activeServer;
 let interrupted = false;
 
+/** WEB029: presentation-only disclosure access never substitutes for read evidence. */
+export async function openLibraryDisclosure(page, label) {
+    const summary = page
+        .getByRole("region", { name: "Repository library", exact: true })
+        .getByText(label, { exact: true });
+    if (
+        !(await summary.evaluate(
+            (node) => node.closest("details")?.open === true,
+        ))
+    )
+        await summary.click();
+}
+
 export function certificateRefusal(error) {
     return /ERR_CERT_AUTHORITY_INVALID|SEC_ERROR_UNKNOWN_ISSUER|Unacceptable TLS certificate/u.test(
         String(error?.message),
@@ -854,6 +867,8 @@ export async function libraryTagProvenanceSplit({
         return response;
     }
     async function choose(label, option) {
+        if (label !== "Repository scope")
+            await openLibraryDisclosure(page, "Filters and page size");
         await filters
             .getByRole("button", { name: new RegExp("^" + label + ": ", "u") })
             .click();
@@ -923,11 +938,24 @@ export async function libraryTagProvenanceSplit({
             .map((entry) => repoPath(entry) + "#tab=overview");
         await page.waitForFunction(
             ({ ui, hrefs, total, publications }) => {
-                const values = [
+                const knownMatches = document
+                        .querySelector(
+                            '[aria-label="Library read scope"] > p > strong',
+                        )
+                        ?.textContent.trim(),
+                    scopedPublications = [
                         ...document.querySelectorAll(
-                            '[aria-label="Library read scope"] > div > strong',
+                            ".library .coverage-facts dt",
                         ),
-                    ].map((node) => node.textContent.trim()),
+                    ]
+                        .filter(
+                            (node) =>
+                                node.textContent.trim() ===
+                                "Scoped publications",
+                        )
+                        .map((node) =>
+                            node.nextElementSibling?.textContent.trim(),
+                        ),
                     rows = [
                         ...document.querySelectorAll(".library-table tbody tr"),
                     ],
@@ -941,8 +969,12 @@ export async function libraryTagProvenanceSplit({
                                 value.endsWith("#tab=overview"),
                         );
                 return (
-                    values[0] === total.toLocaleString("en-US") &&
-                    values[2] === publications.toLocaleString("en-US") &&
+                    knownMatches ===
+                        "Known matching repositories: " +
+                            total.toLocaleString("en-US") &&
+                    scopedPublications.length === 1 &&
+                    scopedPublications[0] ===
+                        publications.toLocaleString("en-US") &&
                     rows.length === hrefs.length &&
                     JSON.stringify(links) === JSON.stringify(hrefs)
                 );
@@ -1041,6 +1073,7 @@ export async function libraryTagProvenanceSplit({
                 ),
             );
             await rows("default-current-scope", all, async () => {});
+            await openLibraryDisclosure(page, "Filters and page size");
         });
         await step(TAG_FILTER_ASSERTIONS[1], async () => {
             matching = (await search({ tag_all: ["functional"] })).value;
@@ -1497,6 +1530,7 @@ export async function libraryTechnicalFilterCases({
                 name: "Library filters",
                 exact: true,
             });
+            await openLibraryDisclosure(page, "Filters and page size");
             for (const [key, label] of Object.entries(fields))
                 await filters
                     .getByLabel(label, { exact: true })
@@ -1552,9 +1586,11 @@ export async function libraryTechnicalFilterCases({
                     ) &&
                     document
                         .querySelector(
-                            '[aria-label="Library read scope"] > div > strong',
+                            '[aria-label="Library read scope"] > p > strong',
                         )
-                        ?.textContent.trim() === String(total) &&
+                        ?.textContent.trim() ===
+                        "Known matching repositories: " +
+                            total.toLocaleString("en-US") &&
                     document.querySelectorAll(".library-table tbody tr")
                         .length === total,
                 { identity, total, path: ui + "library" },
@@ -1706,6 +1742,8 @@ export async function libraryPublicationReadCases({
         return response;
     }
     async function choose(label, option) {
+        if (label !== "Repository scope")
+            await openLibraryDisclosure(page, "Filters and page size");
         await filters
             .getByRole("button", { name: new RegExp("^" + label + ": ", "u") })
             .click();
@@ -1721,11 +1759,19 @@ export async function libraryPublicationReadCases({
             .map((entry) => repoPath(entry) + "#tab=overview");
         await page.waitForFunction(
             ({ ui, hrefs, total, publications }) => {
-                const values = [
-                    ...document.querySelectorAll(
-                        '[aria-label="Library read scope"] > div > strong',
-                    ),
-                ].map((node) => node.textContent.trim());
+                const knownMatches = document
+                    .querySelector(
+                        '[aria-label="Library read scope"] > p > strong',
+                    )
+                    ?.textContent.trim();
+                const scopedPublications = [
+                    ...document.querySelectorAll(".library .coverage-facts dt"),
+                ]
+                    .filter(
+                        (node) =>
+                            node.textContent.trim() === "Scoped publications",
+                    )
+                    .map((node) => node.nextElementSibling?.textContent.trim());
                 const rows = [
                     ...document.querySelectorAll(".library-table tbody tr"),
                 ];
@@ -1739,8 +1785,12 @@ export async function libraryPublicationReadCases({
                             value.endsWith("#tab=overview"),
                     );
                 return (
-                    values[0] === total.toLocaleString("en-US") &&
-                    values[2] === publications.toLocaleString("en-US") &&
+                    knownMatches ===
+                        "Known matching repositories: " +
+                            total.toLocaleString("en-US") &&
+                    scopedPublications.length === 1 &&
+                    scopedPublications[0] ===
+                        publications.toLocaleString("en-US") &&
                     rows.length === hrefs.length &&
                     JSON.stringify(links) === JSON.stringify(hrefs)
                 );
@@ -1945,14 +1995,14 @@ export async function libraryPublicationReadCases({
             );
             await page
                 .getByRole("group", { name: "Library read scope", exact: true })
-                .getByText("Retained publication evidence", { exact: true })
+                .getByText(/Retained publication evidence\./u)
                 .waitFor();
             await rows("current", all, () =>
                 choose("Publication scope", "Current publications"),
             );
             await page
                 .getByRole("group", { name: "Library read scope", exact: true })
-                .getByText("Current publication evidence", { exact: true })
+                .getByText(/Current publication evidence\./u)
                 .waitFor();
         });
         await libraryTagProvenanceSplit({
@@ -1999,6 +2049,7 @@ export async function libraryPublicationReadCases({
             await rows("retained-coverage", retained, () =>
                 choose("Publication scope", "Retained publications"),
             );
+            await openLibraryDisclosure(page, "Scope and coverage");
             const coverage = page.getByRole("region", {
                 name: "Know your coverage",
                 exact: true,
@@ -2013,7 +2064,11 @@ export async function libraryPublicationReadCases({
                     label,
                     retained.coverage[key].toLocaleString("en-US"),
                 );
-            await coverage
+            await page
+                .getByRole("region", {
+                    name: "Repository library",
+                    exact: true,
+                })
                 .getByText(
                     "Coverage is incomplete. Zero known matches does not prove absence.",
                     { exact: true },
