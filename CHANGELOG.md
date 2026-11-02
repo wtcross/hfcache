@@ -4,6 +4,29 @@ Annotated release tags identify reviewed deployed states; application source and
 deployment commits may differ. This file summarizes user-visible changes and
 rollback constraints. Installation targets 0.1.0 and 0.1.1 were not releases.
 
+## 0.3.1 — 2026-11-02, release source awaiting local deployment
+
+This source prepares a fresh immutable release for the configuration and Library
+changes below. The local host still selects 0.3.0; source and owned-fixture checks
+do not establish installed acceptance. Deployment retains the existing read-only
+archive, workload and scheduling holds. No archive, configuration, API, operation
+or receipt format changes; retain the existing artifacts and state for guarded
+rollback. Browser drafts remain in memory and are never persisted or replayed.
+
+- Require an explicit decision before reloading a dirty configuration draft.
+  Preserve prepared edits and visible form values during pending or failed reads;
+  replace the complete draft only after a successful current response, including
+  responses with the same base. Stale confirmations and responses cannot discard
+  newer edits or override authentication invalidation and uncertain outcomes.
+- Bring Library search and results into the initial desktop and mobile viewport
+  with accessible disclosures and compact summaries. Preserve hidden filter
+  values, validation recovery, applied versus unsubmitted filters, bookmarks,
+  keyboard access and incomplete-coverage warnings.
+- Reuse compatible facets only after a fresh main catalog read proves the
+  required authority, archive, policy and generation bindings. Ordinary compatible
+  pagination uses at most four GETs; initial loads, changed filters, Refresh and
+  incompatible evidence still obtain fresh facets. Bounds and exact joins remain.
+
 ## 0.3.0 — 2026-11-02, local release with workload holds
 
 This version packages the completed web interface, REST API and read-only MCP

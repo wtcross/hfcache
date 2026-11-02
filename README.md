@@ -71,6 +71,10 @@ See [discovery](docs/discovery.md) for provenance, incomplete coverage and rollb
 
 ## Status
 
+Source **0.3.1** prepares draft-safe configuration reloads, a more compact Library
+and compatible facet reuse during pagination. It awaits local deployment and
+installed acceptance; see [release notes](CHANGELOG.md).
+
 The local host now selects **0.3.0** with the independent
 [web interface](docs/web-ui/README.md), REST API and read-only MCP server.
 Installed read-only acceptance passes for TLS, administrator login, UI assets,

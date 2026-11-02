@@ -12,6 +12,14 @@ tagged that is not running, and nothing stays deployed that is not tagged.
 `docs/deployment-centos-stream-10.md` §13–§14 is the operator authority this
 checklist compresses.
 
+**2026-11-02 local rollout exception.** The user authorizes main publication to
+Forgejo/GitHub and this host's 0.3.1 deployment while retaining the explicit
+instruction not to tag releases. For this rollout only, preserve all existing
+tags, create/publish no tag, and record the exact clean artifact-source commit,
+release/UI/image/index hashes, actual acceptance and remaining holds. Main's
+later evidence commit does not replace the artifact source. This user-scope
+exception does not change the normal policy for future releases.
+
 The [API-017 rollout checklist](../deployment-centos-stream-10.md#acceptance-checklist)
 is the current API/private-worker/state acceptance companion. Feature completion
 alone does not cut or deploy a release, create a tag or authorize any step below.

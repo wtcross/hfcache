@@ -33,6 +33,29 @@ The startup paragraph above is the build-out record, superseded by
 changes and plan implementations also review the affected invariants and ADRs
 using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
+## Publication and local Library rollout (2026-11-02)
+
+- [x] REL-017 Publish and prepare 0.3.1 source
+  (2026-11-02, this commit — [task](plans/tasks/rel-017-web-drafts-library-release.md),
+  [plan](plans/2026-11-02-plan-web-drafts-library-rollout.md)).
+  WEB-028/029/030 remain separate main commits and both remotes verify exact
+  `02f2827`. Only project version metadata changes among all 94 locked packages;
+  README/changelog distinguish candidate source from actual installed 0.3.0.
+  Strict web/build gate passes 9,594 backend / 4,115 combined web / 16 wheel
+  tests, three locked profiles, 11 built browser workflows, actual 200% zoom
+  and real API React fixture. All 1,252 inputs/names are unchanged; 95.17% lines /
+  90.15% branches. Raw log SHA256
+  `a75e865acda3979de99234ad12b00771f56a9ceb92c9402a5e55531c5f9a2683`.
+  This commit supplies immutable clean artifact source; OPS-026 owns the build
+  and actual guarded installation. INV001–003/018–022, FS19/21–23 and applicable
+  release/helper/browser ADRs reviewed; no new invariant, architecture, runtime
+  dependency or durable format. Decision 163 records the user's retained no-tag
+  boundary; branch publication is authorized without changing future release policy.
+  Successful exact-owned gate fixtures retire only after a complete verified
+  179,583-entry compressed inventory and owner/mount/inode proofs; raw logs and
+  earlier failures remain. No deployment, service/archive effect, operation
+  replay or new tag occurs here.
+
 ## Unsaved configuration and Library browsing (2026-11-02)
 
 - [x] WEB-028 Preserve unsaved configuration through reload
@@ -13660,3 +13683,13 @@ request amplification. Explicit Refresh, changed intent/context and incompatible
 facets still read freshly; exact enrichment joins and all existing bounds/fences
 stand. ADR145 and living contracts record this browser-only composition, without
 server metadata cache permission or a new architectural decision.
+
+163. **Honor the retained no-tag boundary for the local 0.3.1 rollout**
+   (2026-11-02, REL-017, this commit). The newer user instruction authorizes
+   main publication and this host's deployment, while the earlier explicit
+   no-release-tag instruction remains. For this rollout only, identify the
+   immutable deployed artifact through exact clean source and hash evidence
+   and publish main without tags. Inferring tag permission from deployment
+   was rejected because it would exceed the stated scope. Existing tags and
+   the normal future release rule remain. This user-scope process exception
+   introduces no architectural choice, runtime authority or placeholder ADR.
