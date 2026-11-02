@@ -1,12 +1,13 @@
 # Rootless container runtime
 
 The selected local profile uses rootless Caddy, an API server and a separately
-confined private verifier. It remains guarded/read-only. See the dated
+confined private verifier. The archive remains read-only. See the dated
 [deployment status](deployment-status.md) before any operational change; source
 and fixture checks do not authorize NAS workloads or lifting the host guard.
 [Runtime rationale](adr/decision-127.md) explains the isolation/lifecycle choices.
-The selected installed release is 0.2.2 from clean source
-`1c685018803a365bbb8b0c1aad4b94709f60e7d7`.
+The selected physical release is 0.3.1 from clean source
+`c23abba45f8967d058983043b96843bef62e899a`. Runtime readiness, current guard
+state and positive administrator acceptance are separate recorded observations.
 
 ## Roles and lifecycle
 

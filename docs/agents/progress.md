@@ -56,6 +56,30 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   earlier failures remain. No deployment, service/archive effect, operation
   replay or new tag occurs here.
 
+- [x] OPS-026 Replace the local rootless web release
+  (2026-11-02, this commit — [task](plans/tasks/ops-026-local-web-refresh.md),
+  [plan](plans/2026-11-02-plan-web-drafts-library-rollout.md)).
+  Clean source `c23abba` supplies immutable0.3.1 image716/UIbca/index93772b;
+  coordinated backup, actual API-first/helper/executor drains, original-lock
+  handoff, guarded official stage/switch and preserved helper binding pass.
+  Final helper-first restart restores the intentional inactive guard. Installed
+  automated checks pass29 HTTP,14 MCP tools/private PROBE/five original operations
+  and preservation/confinement. Genuine administrator receipt `b3622261` passes
+  eleven GETs with indexed assets, stable session and actual helper/configuration
+  reads; HostStatus `010fc59d` and independent review `b966c86d` bind the same clean
+  source, six grants, running identities and original state. No authentication,
+  job or domain operation is replayed. Original failures/recoveries remain scoped.
+  Strict gate passes9594 backend/4115 combined web/11 browser/actual200% zoom/
+  real API React/16 wheel/three locked profiles;1253 inputs unchanged,95.17% lines/
+  90.15% branches. Log `ca3bc290e49d9b7994853e22378b066d37d0d4cdf7ee9fb71ebcb481464e9a88`.
+  Owned179583-entry gate fixtures retire only after complete manifest376f6662 and
+  fresh no-owner proofs; source/reports/failures/old artifacts/root node_modules
+  remain. INV001–003/018–022, FS19/21–23 and relevant release/helper/browser ADRs
+  reviewed; no new architecture/dependency/durable format. Decision163's no-tag
+  exception remains; main-only publication is verified on both remotes. Plan
+  closes and active selector clears. Independent boot/NAS/workload/production-JS/
+  other-host/all-phase companion holds remain.
+
 ## Unsaved configuration and Library browsing (2026-11-02)
 
 - [x] WEB-028 Preserve unsaved configuration through reload
@@ -2819,6 +2843,48 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-02 completion: the genuine administrator eleven-GET receiptb3622261
+and HostStatus010fc59d resolve the earlier credential prerequisite. Protected
+reviewb966c86d confirms the same running0.3.1/source`c23abba` identities, original
+state, six grants and intentional inactive guard after all strict/installed
+checks. OPS-026 and the rollout plan complete in this commit; the active selector
+is cleared. The deployed source stays separate from the later operational Git
+commit. Preserve the protected backup, old releases/artifacts/handles, NFS-ro,
+writer/calendar masks and manual-boot/helper-ordering requirements. No JavaScript/
+Apply, NAS workload, reboot, other-host or new all-phase acceptance is inferred.
+Main publication suppresses tags under decision163; no old backlog is selected.
+
+Earlier gate-close checkpoint (the prerequisite below is now resolved):
+
+2026-11-02 current local selection is0.3.1/source`c23abba`, image716/UIbca,
+physical index93772b, with0.3.0 retained. Guarded deployment and the final
+helper-first restart pass; installed inactive-state checks cover29 HTTP,
+14 MCP tools, private API-origin PROBE, five original operations and original
+state/confinement. The strict web/build gate passes in1605.718740940094s with
+9594 backend/3757 web unit/4115 combined web/11 built browser/actual zoom/real API
+React/16 wheel/three locked profiles and1253 names/hashes unchanged. Inner log
+`ca3bc290e49d9b7994853e22378b066d37d0d4cdf7ee9fb71ebcb481464e9a88`;
+shadow `13263d5b69112224b104c14b89149082f68eb6730aba557a4aea940829e3c486`.
+Source-fixture viewport/paging evidence remains separate from production browser
+JavaScript/Apply and NAS acceptance. Journal supplementc0e8a265 observes one
+preserved original label denial/zero other matching AVCs in its stated scope;
+earlier empty-query/diagnostic qualifications and all-phase companion holds stand.
+
+OPS-026 remains blocked on the genuine trusted-terminal administrator receipt.
+The agent has no existing administrator password; no authentication attempt or
+failed-password claim is made. Protected inactive1 human/host-status outputs are
+absent at gate close. The [task](plans/tasks/ops-026-local-web-refresh.md#final-strict-gate-and-remaining-prerequisite)
+records the exact pinned command and expected sanitized pass receipt. Keep the
+[rollout plan](plans/2026-11-02-plan-web-drafts-library-rollout.md) active and
+selector pointing at this prerequisite; preserve the uncommitted OPS package,
+not a completed progress entry/implementation commit. WEB028/029/030 and REL017
+are already separately committed/published; exact deployed artifact source stays
+`c23abba` despite any later OPS documentation commit. Preserve all165 model
+entries, original files/stores/handles/secrets/locks, NFS-ro and writer/calendar
+masks. The intentional inactive guard is restored; helper-disabled/manual boot
+provisioning and helper READY-before-bridge requirements remain. No new tag,
+archive workload, replay, other-host work or old backlog activation follows.
 
 2026-11-02 the unsaved-configuration/Library source plan completes in three
 separate commits, with all acceptance criteria and strict gates passing. Current

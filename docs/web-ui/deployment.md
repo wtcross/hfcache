@@ -1,8 +1,9 @@
 # Deploy the optional web interface
 
-This describes optional authentication and immutable asset serving in unreleased
-source. Installed systems still use their recorded release. A source
-build does not install assets, select a release or enable `[web]`. Do not change a
+This describes optional authentication and immutable asset serving in matching
+reviewed releases. The local host selects 0.3.1; actual readiness and acceptance
+remain in the deployment record. A source build does not install assets, select
+a release or enable `[web]`. Do not change a
 running installation merely to try the developer preview. See
 [current installed scope](../deployment-status.md) before planning a migration.
 
@@ -715,7 +716,9 @@ Confirm actual dedicated process SID, original pidfd stop and surviving accepted
 backend work in that acceptance. Missing observer proof must deny stop before
 admission while an independently proved schedule grant remains usable.
 
-## Operate the unreleased web interface
+<a id="operate-the-unreleased-web-interface"></a>
+
+## Operate the web interface
 
 Use the [clean immutable build and staging procedure](deployment.md#build-and-select-a-clean-release)
 with the reviewed source, release index and UI manifest. Stage without selecting
@@ -749,7 +752,8 @@ bootstrap or protected bindings.
 
 Source and disposable fixture acceptance grant no production migration authority.
 The [production checklist](migration-and-rollback.md#production-migration-checklist)
-remains operator work; all boxes below are unchecked:
+remains operator work. The boxes below are a procedure template; actual completed
+observations and outstanding holds are in the [deployment record](../deployment-status.md):
 
 - [ ] Authorize the production profile, target identities and migration scope.
 - [ ] Verify a coordinated protected backup and preserve original handles,

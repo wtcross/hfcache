@@ -2,6 +2,49 @@
 
 ## Current migration checkpoint — 2026-11-02
 
+The selected local rootless release is **0.3.1**, clean source `c23abba45f8967d058983043b96843bef62e899a`,
+app image `716cb3c6aeb267b439c12ba6ca70e1d43c48ca89327623c4938a26a76ba0e6cb`, unchanged Caddy `fa2a5634…`.
+Physical release index: `93772b5c2189e202aae279ba6f628f19f18d8e8cf66c7cb1702d499d5c13eb78`;
+UI manifest: `bca416c4e29febb2ce26b03e6344a7c0d6056f513b37e8d63626d2fe80586bf0`.
+Artifact source and the later operational evidence commit are separate.
+
+The API, private worker, Caddy and confined host helper are ready.
+Automated installed read-only checks pass verified TLS, REST/MCP credential
+separation and the fourteen-tool listing, API-origin worker PROBE, fixed
+client version, original-operation observation and recorded confinement.
+
+Genuine trusted-terminal administrator Basic, indexed UI assets, stable bootstrap
+identity, API-origin helper status and managed configuration reads pass in
+11 GETs, all HTTP 200, over verified TLS with the original permissions preserved.
+This validation runs no browser JavaScript, Apply, job or NAS workload. Protected
+human receipt `b362226107286e8f78adb8ae5fbe9162a6a7ad614f06849ba92bb9e2a6111876`
+binds the exact host-status result
+`010fc59dbba0208bd445499a5940a51e7dee3a0e2346e3b3409bd57d46f138e7`.
+
+The deliberate inactive guard setting is restored through reviewed
+zero-executor handoff; no domain-lock holder is intentionally retained.
+The reviewed graceful restart and repeated automated checks pass.
+
+The first activation refusal is retained. Required narrow physical-release
+unit/launcher labels follow the existing provisioning contract; no module,
+permission, byte or inode change is implied by label provisioning.
+The preserved 0.3.0 release remains the immediate rollback target.
+
+NFS remains read-only, legacy writers masked and calendars disabled. Preserve
+all 165 configured model selections, original candidates/backups, stores,
+handles, secret identities and local lock inodes. Production JavaScript/Apply,
+NAS workloads, reboot, other-host and independent confinement companion
+acceptance remain separate. Automatic boot recovery is unconfigured: root
+must provision runtime objects and helper parents after recreation, then
+establish helper READY before bridge/API. Persistent labels alone are not
+startup ordering or boot acceptance.
+
+The explicit local publication scope retains the no-tag instruction: 0.3.1
+has no new release tag. Exact source/artifact identities identify this
+selection; existing tags remain unchanged.
+
+## Historical 0.3.0 migration checkpoint — 2026-11-02
+
 The host now selects rootless **0.3.0** from clean application source `3d6670d`,
 app image `bcfccd85…`, unchanged Caddy `fa2a5634…`, physical release index
 `251958ef…` and all 77 indexed files. The API, verification worker, Caddy and

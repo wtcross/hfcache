@@ -23,23 +23,39 @@ apply wherever the archive mount exists.
 
 ## The deployment, in facts
 
-As of 2026-11-02 the authorized migration now selects rootless 0.3.0 from clean
-source `3d6670d`. API/worker/Caddy and the confined host helper are ready;
-automated installed read-only and human administrator/helper/configuration checks
-pass. The old plugin entrypoint is retired. See the current
-[deployment checkpoint](../deployment-status.md#current-migration-checkpoint--2026-11-02)
-and active task before acting. Complete executor/helper drain and original-lock
-handoff restore the user's October22 deliberate inactive guard setting after
-acceptance; no domain-lock holder is intentionally retained. NFS remains read-only
-and writers/calendars masked. Historical facts below
-describe the predecessor and cannot establish current guard or permission state.
-Current-boot operation and a graceful restart pass; automatic reboot recovery is
-not configured. After reboot/runtime-object recreation, an operator must perform
-the documented independent root provisioning, then helper READY before bridge/API.
-The helper remains disabled and the bridge supplies no helper ordering. Keep that
-boot hold explicit rather than infer readiness from persistent fcontext rules.
+As of 2026-11-02 the selected physical release is rootless 0.3.1, clean source
+`c23abba45f8967d058983043b96843bef62e899a`, app image `716cb3c6…`, UI `bca416c4…` and physical index `93772b5c…`.
+The API, private worker, Caddy and confined host helper are ready.
+Automated installed read-only checks pass verified TLS, REST/MCP credential
+separation and the fourteen-tool listing, API-origin worker PROBE, fixed
+client version, original-operation observation and recorded confinement.
 
-The selected recorded deployment is guarded rootless 0.2.2 from clean source
+Genuine trusted-terminal administrator Basic, indexed UI assets, stable bootstrap
+identity, API-origin helper status and managed configuration reads pass in
+11 GETs, all HTTP 200, over verified TLS with the original permissions preserved.
+This validation runs no browser JavaScript, Apply, job or NAS workload.
+
+The deliberate inactive guard setting is restored through reviewed
+zero-executor handoff; no domain-lock holder is intentionally retained.
+The reviewed graceful restart and repeated automated checks pass.
+
+NFS remains read-only, legacy writers masked and calendars disabled. Preserve
+all 165 configured model selections, original candidates/backups, stores,
+handles, secret identities and local lock inodes. Production JavaScript/Apply,
+NAS workloads, reboot, other-host and independent confinement companion
+acceptance remain separate. Automatic boot recovery is unconfigured: root
+must provision runtime objects and helper parents after recreation, then
+establish helper READY before bridge/API. Persistent labels alone are not
+startup ordering or boot acceptance.
+
+The explicit local publication scope retains the no-tag instruction: 0.3.1
+has no new release tag. Exact source/artifact identities identify this
+selection; existing tags remain unchanged.
+The current [deployment checkpoint](../deployment-status.md#current-migration-checkpoint--2026-11-02)
+and selected task own current scope. Historical facts below cannot establish
+current guard, runtime or permission state.
+
+The historical 0.2.2 deployment was guarded rootless 0.2.2 from clean source
 `1c685018803a365bbb8b0c1aad4b94709f60e7d7`. Actual host TLS/authentication,
 API-origin worker PROBE and confinement checks passed; the
 [rollout evidence](plans/support/host-rollout/acceptance-record.md) records

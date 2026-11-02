@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | active |
+| Status | completed |
 | Created | 2026-11-02 |
 | Authorization | User instruction on 2026-11-02: commit changes on main, push Forgejo/GitHub, then deploy this host |
 | Tracker | [Current plan](current.md) |
@@ -80,3 +80,28 @@ replayed: old scripts are references for new reviewed, exclusively named outputs
   strict source/web/build gate; this commit is the immutable build source.
   OPS-026 starts with fresh read-only host inventory and reviewed new recipes.
   Actual construction, deployment and installed acceptance remain pending.
+
+- 2026-11-02: Canonical construction, owned runtime proofs, preserved guarded
+  production deployment, final helper-first restart and complete installed
+  inactive-state automated checks pass for clean source`c23abba`, image716/UIbca.
+  The final strict web/build gate passes with1253 names/hashes unchanged. Original
+  failures and scoped recovery/audit qualifications remain in the task evidence;
+  no new application source, architecture, dependency or durable format changes.
+  OPS-026 is blocked on the required genuine trusted-terminal administrator
+  receipt: existing credentials are not available to the agent, no authentication
+  is attempted, and the human `inactive1` output is absent. Keep this plan active
+  and current selector at that prerequisite. The uncommitted OPS documentation
+  package is preserved; no completed task/plan/OPS commit or new tag is inferred.
+  All prior source commits are already separately published. Complete the
+  remaining acceptance before package closure and final main publication.
+
+- 2026-11-02: The user completes the protected administrator validator. The
+  genuine eleven-GET receipt `b3622261` and HostStatus `010fc59d` pass verified
+  TLS, indexed assets, stable session and actual helper/configuration reads with
+  preserved grants. Independent protected review `b966c86d` confirms receipt and
+  artifact bindings, unchanged running identities and original state without
+  replaying authentication or services. The former blocker is resolved. All
+  scoped acceptance and strict gates pass; this OPS-026 commit records completed
+  evidence/progress and clears the active selector. Main-only publication is
+  verified against both remotes in the retained publication receipt. Existing
+  tags, predecessor releases, root node_modules and independent holds remain.

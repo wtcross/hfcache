@@ -71,38 +71,35 @@ See [discovery](docs/discovery.md) for provenance, incomplete coverage and rollb
 
 ## Status
 
-Source **0.3.1** prepares draft-safe configuration reloads, a more compact Library
-and compatible facet reuse during pagination. It awaits local deployment and
-installed acceptance; see [release notes](CHANGELOG.md).
+The local host selects **0.3.1**, clean source `c23abba`, with draft-safe
+configuration reloads, compact Library browsing and compatible facet reuse.
+See [release notes](CHANGELOG.md) for user-visible behavior.
 
-The local host now selects **0.3.0** with the independent
-[web interface](docs/web-ui/README.md), REST API and read-only MCP server.
-Installed read-only acceptance passes for TLS, administrator login, UI assets,
-managed configuration, REST, MCP and the private worker. The old Cockpit
-entrypoint is retired, and local annotated `v0.3.0` identifies the selected source. See
-[migration and rollback](docs/web-ui/migration-and-rollback.md) for preservation
-and compatibility requirements.
+The API, private worker, Caddy and confined host helper are ready.
+Automated installed read-only checks pass verified TLS, REST/MCP credential
+separation and the fourteen-tool listing, API-origin worker PROBE, fixed
+client version, original-operation observation and recorded confinement.
 
-The retained predecessor is **0.2.2**. Clean application source
-`1c68501` is identified by local annotated `v0.2.2`. That release combines
-configured tags and evidence-backed discovery with classified client error handling,
-original-operation recovery, guarded configuration validation/confirmation, manual
-REST jobs and report/read views.
+Genuine trusted-terminal administrator Basic, indexed UI assets, stable bootstrap
+identity, API-origin helper status and managed configuration reads pass in
+11 GETs, all HTTP 200, over verified TLS with the original permissions preserved.
+This validation runs no browser JavaScript, Apply, job or NAS workload.
 
-The installation uses pinned UBI images and a worker-created private listener with
-readiness before API startup. Installed TLS, authentication, private-worker and
-fixed host-client checks passed. Configuration, candidate, predecessor, original
-locks, receipts, handles and secret identities are preserved; immutable 0.2.1
-remains available for guarded rollback. The archive remains read-only, legacy
-writers masked and verification scheduling disabled. See
-[recorded deployment scope](docs/deployment-status.md)
-and [release notes](CHANGELOG.md), including guarded rollback requirements and the
-private-worker connection limitation that returns on rollback to 0.2.0.
+The retained predecessor is **0.3.0**, clean source `3d6670d`; older immutable
+rollback artifacts and original operation evidence remain preserved. No
+archive, configuration, API, operation or receipt format changes in 0.3.1.
 
-Installed-wheel/private-socket tests and isolated rootless acceptance passed for
-the repair source. Original operation and candidate evidence remains preserved;
-an unexplained historical browser symptom is not retroactively resolved by later
-fixture success. Live NAS/workload and other-host acceptance remain separate.
+The deliberate inactive guard setting is restored through reviewed
+zero-executor handoff; no domain-lock holder is intentionally retained.
+The reviewed graceful restart and repeated automated checks pass.
+The explicit local publication scope retains the no-tag instruction: 0.3.1
+has no new release tag. Exact source/artifact identities identify this
+selection; existing tags remain unchanged.
+
+The archive remains read-only with writers and calendars disabled. See
+[recorded deployment scope](docs/deployment-status.md) and
+[migration and rollback](docs/web-ui/migration-and-rollback.md) for actual
+acceptance, preserved state and remaining boot/NAS/other-host holds.
 
 ## Repository layout
 

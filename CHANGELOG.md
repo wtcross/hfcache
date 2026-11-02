@@ -4,14 +4,25 @@ Annotated release tags identify reviewed deployed states; application source and
 deployment commits may differ. This file summarizes user-visible changes and
 rollback constraints. Installation targets 0.1.0 and 0.1.1 were not releases.
 
-## 0.3.1 — 2026-11-02, release source awaiting local deployment
+## 0.3.1 — 2026-11-02, local release with workload holds
 
-This source prepares a fresh immutable release for the configuration and Library
-changes below. The local host still selects 0.3.0; source and owned-fixture checks
-do not establish installed acceptance. Deployment retains the existing read-only
-archive, workload and scheduling holds. No archive, configuration, API, operation
-or receipt format changes; retain the existing artifacts and state for guarded
-rollback. Browser drafts remain in memory and are never persisted or replayed.
+The local host selects immutable release 0.3.1 from source `c23abba`, retaining 0.3.0 and
+all original state. Installed automated read-only acceptance passes.
+Genuine trusted-terminal administrator Basic, indexed UI assets, stable bootstrap
+identity, API-origin helper status and managed configuration reads pass in
+11 GETs, all HTTP 200, over verified TLS with the original permissions preserved.
+This validation runs no browser JavaScript, Apply, job or NAS workload.
+
+The explicit local publication scope retains the no-tag instruction: 0.3.1
+has no new release tag. Exact source/artifact identities identify this
+selection; existing tags remain unchanged.
+No archive, configuration, API, operation or receipt format changes. Preserve
+existing artifacts, target-compatible configuration/helper bindings and
+original handles for guarded rollback. Browser drafts remain in memory; no
+draft persistence or operation replay is added. NFS/workload/calendar/boot
+holds remain. Measured viewport and four-GET pagination evidence uses the
+exact canonical bundle on owned fixtures; it is not production latency or
+production browser/Apply acceptance.
 
 - Require an explicit decision before reloading a dirty configuration draft.
   Preserve prepared edits and visible form values during pending or failed reads;

@@ -55,6 +55,22 @@ obtain a clean-looking migration.
 
 ## Compatibility and backups
 
+The current local selection is 0.3.1 from source `c23abba`, physical index
+`93772b5c…`, with retained immediate predecessor 0.3.0 from source `3d6670d`. This update changes
+browser behavior and package version metadata, with byte-identical backend,
+helper/bootstrap, container templates and runtime dependency pins. Archive,
+configuration, API, operation, receipt and helper formats remain unchanged;
+no cross-format transformation or production rollback drill is claimed.
+Preserve the exact 0.3.0 artifacts, original configuration/state and matching
+deployment/index/policy bindings. A rollback still requires actual executor
+and helper drain, the original locks and independently verified target
+confinement. Never copy an old UI into the running release or replay an
+operation to prove compatibility. The current 0.3.1 selection is intentionally
+untagged under the explicit local publication scope; source/index hashes
+identify it. Existing tags and older rollback artifacts remain.
+
+### Historical 0.2.2 compatibility evidence
+
 Displayed package versions are insufficient to identify a rollback target.
 The previous released application is source `1c68501` / version `0.2.2`; the
 retained wheel SHA-256 is

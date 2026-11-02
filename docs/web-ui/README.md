@@ -3,14 +3,15 @@
 For read errors, see [troubleshooting](troubleshooting.md), including the
 difference between a failed domain read and unavailable or unsupported evidence.
 
-The replacement interface is implemented in unreleased source and can be enabled
-explicitly with a matching protected asset release. Installed systems retain
-their recorded release; repository source changes do not migrate live services.
-These guides do not install a release, enable a schedule or grant archive write
-permission.
+The independent interface ships with a matching protected backend/asset release.
+The local host selects 0.3.1; check [current installed scope](../deployment-status.md)
+for actual service readiness and administrator acceptance. Repository source or
+fixture success does not migrate services, enable schedules or grant archive
+write permission.
 
 Use the independent web interface described here. The superseded interface has
-been removed from the repository; installed services remain unchanged.
+been removed from the repository; its old public entrypoint was retired during
+the earlier authorized migration. Current selection and acceptance remain explicit.
 The [migration guide](migration-and-rollback.md) covers original handles and
 rollback evidence for a separately authorized transition.
 
@@ -26,7 +27,7 @@ require administrator authentication. REST bearer and read-only MCP access remai
 separate on the same Caddy endpoint.
 
 For a reviewed build and operator transition, use the
-[operator handoff](deployment.md#operate-the-unreleased-web-interface).
+[operator handoff](deployment.md#operate-the-web-interface).
 
 For an interface transition or release rollback, follow the
 [migration and compatibility guide](migration-and-rollback.md). Preserve original
@@ -95,15 +96,15 @@ A publication identifies one immutable file tree by repository type, repository
 ID, full commit SHA and publication ID. Repairs can create a different publication
 at the same SHA. Current configuration tags describe operator curation; they do
 not prove publication membership or verification. [README capture](readme-cards.md)
-now retains bounded, sanitized upstream presentation in unreleased source through
-the existing writer workflow. Its exact read API is available in that source;
+supports bounded, sanitized upstream presentation through the existing writer
+workflow in matching releases. The exact read API preserves publication identity;
 the interface adds a bounded Rendered README and Sanitized source
 view in Overview. Check the release before using it. Neither view loads external media.
 
 Installed functional and compatibility checks pass on the disposable native and
 rootless candidates described in the [acceptance summary](test-release-acceptance.md).
-The new interface remains unreleased source; these checks do not change an
-installed production release or its legacy plugin. Production migration and
-rollback require separate operator authorization. See [deployment profiles](../deployment-centos-stream-10.md),
+Those fixtures do not establish production JavaScript/Apply, NAS workload or
+current installed administrator acceptance. Production selection and rollback
+require separate operator authorization. See [deployment profiles](../deployment-centos-stream-10.md),
 [current installed scope](../deployment-status.md), and the
 [documentation index](../README.md) for supported procedures today.
