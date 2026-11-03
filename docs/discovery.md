@@ -653,3 +653,15 @@ labels normalized to lowercase and technical identifiers normalized by case.
 Opaque curation hashes remain withheld from read projections. Hidden-value
 substitutions cannot become observable through counts or continuation identity;
 this does not claim recognition of unregistered arbitrary secrets.
+
+## Manual refresh readiness and recovery
+
+The accepted [job recovery contract](job-recovery.md) changes refresh admission
+explanations and original-intent observation, pending implementation and installed
+acceptance. It does not change extractor fields, publication bindings, budgets
+or integrity confidence. Readiness GETs never refresh metadata. An explicit
+writer-authorized refresh retains the 256-repository/512-publication limits and
+shared extraction/write budgets. Current-publication backfill is an enumerated
+bounded operator job, not automatic recovery or recurring browser work. No Hub
+model-info enrichment, model execution, parameter counts or context-length
+extraction is added.

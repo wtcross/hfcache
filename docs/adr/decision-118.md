@@ -2,7 +2,7 @@
 
 - Decision identity: 118.
 
-- Status: Accepted; current scope includes the amendments referenced below.
+- Status: Amended; current scope includes the amendments referenced below.
 - Date: 2026-10-17.
 Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
@@ -61,3 +61,10 @@ Recorded installed scope and remaining acceptance are described in
 - [environment discovery controls](https://www.python-httpx.org/environment_variables/)
 
 - [streaming responses](https://www.python-httpx.org/quickstart/#streaming-responses)
+
+## Original-intent and writer amendment (2026-11-03)
+
+Accepted design in [decision 164](decision-164.md); implementation and installed conformance remain
+pending. Visible freshly authenticated browser pages may automatically reconcile preserved original intent through bounded GETs. No client job POST retry, key replay or implicit retirement follows. CLI behavior and legacy conservative problems remain unchanged.
+See the [executable recovery contract](../job-recovery.md). Original rationale
+and unrelated requirements above remain in force.

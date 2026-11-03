@@ -64,3 +64,10 @@ See [deployment status](../deployment-status.md) for recorded scope and remainin
 
 [Decision 141](decision-141.md) amends this record for the accepted
 replacement design. Accepted future narrow host helper preserves unprivileged API and protected rootless bindings. Unproved rootless schedule/observer permissions remain denied; no manager/control-socket fallback is accepted.
+
+## Original-intent and writer amendment (2026-11-03)
+
+Accepted design in [decision 165](decision-165.md); implementation and installed conformance remain
+pending. A closed runtime schema-2 archive mode, immutable rendering/index and independently protected helper binding select fixed API/worker writer mounts and dedicated confined writer process domains. Schema 1 remains guarded-readonly; other roles, stores, images, account mappings and isolation remain unchanged.
+See the [executable recovery contract](../job-recovery.md). Original rationale
+and unrelated requirements above remain in force.

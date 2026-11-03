@@ -278,3 +278,13 @@ available when host proof is down. A failed observation does not cancel accepted
 work. Retain its original handle and reconcile read-only; do not submit another
 operation to test whether the first one ran. See
 [troubleshooting](troubleshooting.md) and [API recovery](../api.md#reconnect-after-lost-acknowledgement).
+
+## Job readiness remains separate from host administration
+
+The accepted [job recovery contract](../job-recovery.md) provides independently
+authorized action-readiness and Basic-own-key retirement without requiring
+optional host-read or enabling archive/control/schedule/observer grants. These
+are design requirements pending installed acceptance. An original request's
+retirement cannot settle unknown configuration or host effects. Administration
+continues to require their separate original-key outcomes. Writer mode is a
+protected deployment operation, never an administration-page permission toggle.

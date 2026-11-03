@@ -487,6 +487,23 @@ records; admission fails closed while healthy IDs remain observable. Delete only
 validated owned succeeded/failed history after expiry. See [control-state schemas](schemas.md)
 and the [recovery runbook](recovery.md#preserve-four-kinds-of-authority).
 
+## Original-intent dispositions and readiness
+
+The accepted [job recovery contract](job-recovery.md) adds bounded advisory
+`GET /api/v1/jobs/readiness`, original-key `GET /api/v1/operations/intent` and
+explicit Basic-own-key `POST /api/v1/operations/intent/retire`. These are design
+requirements pending implementation and installed acceptance. Existing receipt,
+acceptance, problem and lookup wire schemas remain unchanged. Durable
+pre-admission refusals hint closure with `Hfcache-Intent: closed`; only a fresh
+validated intent GET proves it. Ordinary problems and missing history remain
+unknown. Exact admitted retries preserve their original receipt before any
+fresh effect authorization. Retirement requires independent actual-executor and
+protected-effect proof, never archive/control/schedule/observer or host-read
+permission, and never grants execution authority. Historical retirement retains
+the original handles and labels the old outcome unknown. See
+[decision 164](adr/decision-164.md) and
+[disposition schemas](schemas.md#133-original-intent-dispositions-schema-1).
+
 ## Wire validation and errors
 
 Wire models are independently strict and versioned. Shared sanitization removes

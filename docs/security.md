@@ -822,6 +822,22 @@ control only. Application containers still get no host PID/proc authority.
 The bridge requires guard readiness and the user default target cannot start the
 app target. No generic paths/commands or app imports are added to the guard.
 
+## Protected manual writer authority
+
+The accepted [writer decision](adr/decision-165.md) narrowly amends the earlier
+read-only-only rootless scope for an independently selected manual-writer
+profile. Default guarded deployments and installation windows remain read-only.
+Writer mode requires matching immutable runtime/index/helper evidence, fresh
+archive permission, actual NFS identity/capacity/ownership, original lock and
+Enforcing policy. Only API/worker fixed archive binds and a dedicated confined
+writer process type gain required archive writes; generic `container_t` and
+helper/observer archive/Hub/secret payload neverallows stay unchanged. Source
+and local synthetic archives cannot qualify production NFS. No boolean, relabel,
+privileged container, schedule activation or weaker systemd confinement substitutes
+for actual installed proof. Manual startup is current-boot only until separately
+qualified. [Original-intent closure](job-recovery.md) independently requires
+actual executor and protected-effect proof and never grants archive authority.
+
 ## Confined private listener ownership
 
 [Decision 128](adr/decision-128.md) qualifies the rootless worker-created listener’s

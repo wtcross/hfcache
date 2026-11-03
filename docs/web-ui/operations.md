@@ -10,10 +10,13 @@ release and [access guidance](README.md) before following these procedures.
 ## Choose a job and its effects
 
 In **Jobs**, choose **Job**, review **Selected job effects**, then choose
-**Submit job** only for the intended scope. **Job permissions** offers an optional
-**Read job permission evidence** read when host-read is available. It shows the
+**Submit job** only for the intended scope. The currently installed behavior
+offers an optional **Read job permission evidence** read in **Job permissions**
+when host-read is available. It shows the
 observed effective archive/Hub permissions, refusal reasons and guard state;
-opening the workspace does not read it automatically. That cached observation
+opening the workspace does not yet read it automatically. The accepted
+[readiness changes below](#accepted-readiness-and-recovery-changes) replace that
+optional-only behavior when implemented and accepted. That cached observation
 is informational, never authorization or an extra prerequisite for a job. The displayed REST capability is an
 explanation, not a grant: Basic jobs also require a fresh protected host binding
 and the relevant permission at admission and again before execution. An
@@ -289,3 +292,27 @@ Use a dedicated trusted profile and follow [access guidance](README.md). Closing
 the profile is not backend cancellation. For a problem, share safe codes and
 validated handles; never share Authorization headers, tokens or configuration
 contents. See [troubleshooting](troubleshooting.md#original-operation-recovery).
+
+## Accepted readiness and recovery changes
+
+The [original-intent contract](../job-recovery.md) specifies the next behavior;
+this section supersedes the optional-only permission read and deliberate-only
+restored-job observation above once that behavior is installed and accepted.
+Jobs reads bounded advisory action readiness on entry/change and offers Recheck.
+Known archive denial or read-only storage explains an unavailable Sync/refresh
+beside its disabled button. Unknown readiness is labelled unknown, and optional
+host-read denial cannot become an extra job permission. Every submission still
+receives fresh server authorization.
+
+Visible authenticated pages reconcile original jobs with bounded GETs only.
+Hidden pages stop reads and reject late proof. Ordinary labels distinguish
+Submitted, Running, Completed, Failed, Not admitted and Needs review. A durable
+Not admitted result stays visible without becoming a phantom running job. For
+a missing original key, the explicit Review original request action explains
+historical uncertainty and asks the server for reviewed retirement. If proof
+is unavailable, keep the original handle and follow its concrete operator step.
+A confirmed retirement says Historical outcome unknown; request retired. A new
+job is a separate deliberate action; recovery never repeats the old request.
+Keys, JSON and raw receipt states stay in advanced diagnostics. Schema-1 handles
+are preserved by atomic versioned migration. Configuration/host unknown effects
+retain their independent original-key confirmation rules.

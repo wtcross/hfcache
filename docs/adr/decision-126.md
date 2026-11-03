@@ -2,7 +2,7 @@
 
 - Decision identity: 126.
 
-- Status: Accepted; current profile is qualified by the recorded deployment scope.
+- Status: Amended; current profile is qualified by the recorded deployment scope.
 - Date: 2026-10-18.
 
 ## Context, decision and rationale
@@ -50,3 +50,10 @@ NAS access-time behavior.
 - [decision 128](decision-128.md)
 
 See [deployment status](../deployment-status.md) for recorded scope and remaining acceptance.
+
+## Original-intent and writer amendment (2026-11-03)
+
+Accepted design in [decision 165](decision-165.md); implementation and installed conformance remain
+pending. A separately protected manual-writer profile may authorize fixed-role archive writes after fresh actual NFS and Enforcing qualification. Default guarded deployment and drained installer selection stay NFS-read-only, with original-lock handoff, independent guard and preserving rollback.
+See the [executable recovery contract](../job-recovery.md). Original rationale
+and unrelated requirements above remain in force.

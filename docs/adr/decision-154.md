@@ -5,7 +5,7 @@ The superseded browser interface has been removed under
 remain governed by their current contracts.
 
 - Decision identity: 154.
-- Status: Accepted; implemented with scoped guarded Apply and original-outcome acceptance.
+- Status: Amended; implemented with scoped guarded Apply and original-outcome acceptance.
 - Date: 2026-10-25.
 - Introducing change: this commit.
 - Amends [decision122](decision-122.md), [decision141](decision-141.md),
@@ -207,3 +207,10 @@ disposal and newer generations fence stale decisions/responses. Original preview
 application handles and unknown-effect blocks survive independently; configuration
 reads establish no protected outcome. Internal post-Apply reload retains its newer-
 draft safeguard. See [configuration guidance](../web-ui/configuration-and-tags.md#compare-concurrent-changes-without-losing-intent).
+
+## Original-intent and writer amendment (2026-11-03)
+
+Accepted design in [decision 164](decision-164.md); implementation and installed conformance remain
+pending. Generic original-intent retirement cannot confirm or clear unknown configuration effects. Fresh reviewed retirement refuses pending/corrupt/unknown protected outcomes; original-key configuration outcome confirmation remains separate and never becomes automatic.
+See the [executable recovery contract](../job-recovery.md). Original rationale
+and unrelated requirements above remain in force.

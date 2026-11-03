@@ -61,3 +61,10 @@ authority and is explicitly excluded.
 
 Recorded installed scope and remaining acceptance are described in
 [deployment status](../deployment-status.md).
+
+## Original-intent and writer amendment (2026-11-03)
+
+Accepted design in [decision 164](decision-164.md); implementation and installed conformance remain
+pending. Permanent separately versioned original-intent fences use the existing store flock without changing strict receipts. Existing admissions precede fresh refusal; missing history remains unknown. Retention cannot revive closed keys; the exact predecessor refuses admission on the retained new filename.
+See the [executable recovery contract](../job-recovery.md). Original rationale
+and unrelated requirements above remain in force.

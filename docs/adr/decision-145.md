@@ -1,7 +1,7 @@
 # Derive precise browser contracts and preserve numeric source before decoding
 
 - Decision identity: 145.
-- Status: Accepted; source implementation is present. Executable acceptance is
+- Status: Amended; source implementation is present. Executable acceptance is
   recorded in the introducing task and commit.
 - Date: 2026-10-20.
 - Fresh-byte parsing amendment: [decision157](decision-157.md).
@@ -446,3 +446,10 @@ disposal and newer generations fence stale decisions/responses. Original preview
 application handles and unknown-effect blocks survive independently; configuration
 reads establish no protected outcome. Internal post-Apply reload retains its newer-
 draft safeguard. See [configuration guidance](../web-ui/configuration-and-tags.md#compare-concurrent-changes-without-losing-intent).
+
+## Original-intent and writer amendment (2026-11-03)
+
+Accepted design in [decision 164](decision-164.md); implementation and installed conformance remain
+pending. Visible authenticated restored/reconnected records may reconcile automatically through bounded GETs, narrowly superseding deliberate-only return observation. Hidden pages still abort/fence reads; late acknowledgements save handles only. Versioned atomic schema-1-to-2 migration preserves original evidence; no POST replay or generic protected-outcome clearance follows.
+See the [executable recovery contract](../job-recovery.md). Original rationale
+and unrelated requirements above remain in force.

@@ -511,3 +511,50 @@ The [dated deployment status](deployment-status.md) records the narrower local
 0.2.1 evidence and outstanding acceptance. No repository gate substitutes for
 those host checks. [Web deployment](web-ui/deployment.md) and
 [operations](operations.md) use the same profile distinctions and safety rules.
+
+## Manual writer transition
+
+The accepted [protected writer design](adr/decision-165.md) keeps installation
+and selection NFS-read-only. It is not current writer acceptance. Before any
+authorized transition, back up/inventory configuration, candidates, credentials'
+identities, both stores, dispositions, helper outcomes, browser handles, prior
+artifacts and original locks. Stop API admission, drain actual API work while
+worker/helper remain available, then drain worker/helper/inspector cohorts and
+prove real cgroup/libpod/process quiescence. Retain the original noncreating
+archive flock throughout protected selection and mount/guard handoff.
+
+Provision original-intent state offline only through the installer's explicit
+prepare-intent-state step; normal startup must refuse missing state. Preserve
+predecessor data. Bind new immutable runtime mode, independent helper index,
+bootstrap, policy and exact Enforcing policy receipt before helper READY. The
+writer mode is a separate protected selection, never a browser or ambient flag.
+
+Stage both immutable manifest2 release IDs `<version>-guarded-readonly` and
+`<version>-manual-writer`, with identical source/app-image/UI and distinct
+runtime/index hashes. Initial deployment and historical-key review run in the
+guarded sibling. Before the write transition drain again and select the staged
+writer sibling, still NFS-read-only under the original flock. Bind current,
+physical release, index, runtime and helper selector_target to that release_id;
+never rewrite rendered artifacts in a shared version directory. Compatible
+rollback selects the retained guarded sibling with matching helper bindings.
+
+Only then may root change the local persistent mount override and bridge/guard
+dependencies and remount the existing connection read/write. Prove exact writer
+host/export, mapped ownership, sentinel UUID, reserve/capacity and application
+preflight. No archive initialization, manual probe, NAS change, disconnection,
+relabel/chown/copyup or confinement relaxation is permitted. Missing prerequisites
+stop the transition. Preserve deliberate inactive guard state; a running writer
+cannot share its original flock with the lock-holding guard. Calendars remain
+disabled and legacy writers masked. Rootless schedule/observer/control grants
+remain denied. Startup is current-boot manual: provision runtime parents/lock
+labels, verify mode/mount/guard, start helper to READY, then bridge/worker/API/
+Caddy and verify actual role rights. Do not claim unattended boot support.
+
+Rollback drains real executors and detached helper cohorts, retains the original
+flock, restores NFS-read-only and reviewed mount/bridge/guard settings, and
+selects a compatible retained release. Preserve dispositions and a capable
+recovery reader; 0.3.1 cannot regain admission by removing new state. Runtime
+schema 2 and browser recovery schema 2 must be tested against exact predecessor
+source c23abba45f8967d058983043b96843bef62e899a. Unknown effects forbid automatic
+rollback/replay. Application rollback cannot undo archive writes or normal Sync
+retention. See the [original-intent protocol](job-recovery.md).

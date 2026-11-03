@@ -292,3 +292,17 @@ with reviewed backups, alongside both operation stores and scheduled handles.
 distinguish strict old configuration/client refusals from readable generic stores
 and ordinary inventory. Drain actual executors and retain exact handles before
 any separately authorized switch; no evidence deletion or automatic replay.
+
+## Retire historical original intent
+
+The accepted [original-intent protocol](job-recovery.md) adds a narrowly reviewed
+Basic-own-key retirement path, pending implementation and installed acceptance.
+A missing receipt still means unknown. Only fresh actual-executor, worker,
+protected-effect and original-lock proof can fence an old key; unavailable or
+ambiguous proof remains Needs review with a concrete operator next step. A
+durable retirement says Historical outcome unknown; request retired, preserving
+original handles and all archive/configuration evidence. It never proves that
+the old job did not run, clears pending protected outcomes, or repeats work.
+Fresh typed Not admitted proof is likewise distinct from an admitted failed job.
+Do not delete browser records, lock inodes or the permanent disposition file to
+restore submission. Keep a compatible enforcing reader through rollback.

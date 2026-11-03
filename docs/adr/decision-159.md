@@ -1,7 +1,7 @@
 # Preserve a dedicated rootless archive-lock label for metadata-only guard proof
 
 - Decision identity: 159.
-- Status: Accepted; installed conformance remains separately required.
+- Status: Amended; installed conformance remains separately required.
 - Date: 2026-10-29.
 - Introducing change: this commit.
 
@@ -81,3 +81,10 @@ account homes in the independent protected index. Existing namespace,
 capability, original-lock, payload-denial and fifteen-role receipt constraints
 remain unchanged. Native remains fixed to its original home. This amendment
 does not establish installed compatibility or authorize account/store migration.
+
+## Original-intent and writer amendment (2026-11-03)
+
+Accepted design in [decision 164](decision-164.md), [decision 165](decision-165.md); implementation and installed conformance remain
+pending. The fixed companion interlock uses the existing dedicated coordination type with helper getattr only, preserving the original archive lock inode and metadata-only boundary. Independent writer mode changes fixed API/worker archive binds, never helper payload rights or automatic lock provisioning.
+See the [executable recovery contract](../job-recovery.md). Original rationale
+and unrelated requirements above remain in force.

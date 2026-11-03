@@ -429,7 +429,7 @@ History: `synchronization` (`54e4671`), decision 94.
   [probe fixtures](../tests/unit/test_hardening_probe.py), decision
   [121](adr/decision-121.md); installed acceptance remains separate.
   **guarded deployment scoped rollout (2026-10-18, [decision 126](adr/decision-126.md)).**
-  Current local-host deployment authority requires a persistent client read-only
+  That earlier local-host rollout required a persistent client read-only
   NAS guard, blocked legacy writers and retained actual-executor/local-flock
   quiescence proof. NAS content/metadata writes, relabel/chown/copyup and other-
   host changes are forbidden; sync remains stopped and verify scheduling disabled.
@@ -440,7 +440,13 @@ History: `synchronization` (`54e4671`), decision 94.
   no-init/no-auto-remove persistent-role commands, infinite non-killing drain and actual libpod
   cgroup/peer/secret proof preserve unknown execution. No rootful/privileged/
   label-disable/control-socket fallback; shared original local lock and read-only
-  NAS/policy-directory boundaries remain. Actual disposable container proof binds
+  NAS/policy-directory boundaries remain for the default guarded profile.
+  [Decision 165](adr/decision-165.md) accepts a separately protected manual-writer
+  mode for fixed API/worker archive writes, dedicated confined writer domains,
+  unchanged helper/observer neverallows and a still-read-only installation window.
+  Runtime/index/helper/mount/guard facts must agree; unknown facts refuse. This
+  design does not establish actual NFS or unattended-boot acceptance.
+  Actual disposable container proof binds
   no NAS; packaging cannot clear installed or full storage acceptance holds.
   Finite stateless observer containers alone may auto-remove without canceling
   server execution or discarding receipts/handles. Exact protected execution
@@ -798,7 +804,11 @@ separate protected verifier only after REST acceptance. independent REST client'
   before runnable/202, bind principal/key/request, fail stale policies closed,
   retain ambiguous history, and never infer success or replay from missing
   history. One bounded lane retains the cross-process archive flock.
-  The receipt itself is the durable key binding; only derived indexes rebuild.
+  The receipt itself is the durable admission binding; only derived indexes
+  rebuild. The accepted [original-intent contract](job-recovery.md) adds a
+  separate permanent pre-admission/retirement fence, under the same store flock,
+  without changing receipt states or granting replay. INV-023 governs its
+  cross-process interlock, preservation and predecessor refusal.
   Key digests never expose raw keys. Bearer class namespaces and digest bytes
   survive rotation unchanged; Basic uses the versioned subject/key preimage from
   decision146, preserving handles across same-subject username/password rotation
@@ -1367,8 +1377,11 @@ old-reader/rollback refusals and unknown original state.
   owned retries, aborts its observation GETs and fences late callbacks. It also
   gates explicit original configuration/host-outcome reads; hiding cannot donate
   fresh protected-outcome proof after return. Original keys and accepted POSTs
-  survive independently. Returning visible requires deliberate observation;
-  neither visibility nor a late admission acknowledgement restarts polling.
+  survive independently. The accepted [original-intent amendment](job-recovery.md)
+  permits bounded GET-only reconciliation on visible authenticated restore,
+  reconnect and return. Hidden or superseded responses cannot supply fresh proof;
+  a late admission acknowledgement only preserves handles. Explicit retirement,
+  job POST and protected-effect confirmation remain deliberate actions.
   Shared32MiB encoded retention, route-clamped8MiB responses,
   finite concurrency/retry/time/cycle/event bounds and advisory cross-tab notices
   never manufacture outcomes or execution authority. API interruption cannot
@@ -1437,6 +1450,31 @@ Detailed required behavior and fixed bounds: [server](server.md#web-ui-design-an
 [record families](schemas.md#18-web-ui-and-administration-design-records).
 No enforcement or acceptance is claimed from these new register entries alone.
 
+
+## Original intent closure
+
+- **`INV-023` — Retired original keys cannot regain execution authority.**
+  Separately versioned permanent dispositions bind archive and existing
+  authenticated key namespace under the admission store flock. A durable
+  admitted receipt cannot be redefined by a later denial. Fresh validated
+  pre-admission refusals may close keys; missing history or ordinary errors
+  remain unknown. Explicit Basic-own-key historical retirement requires fresh
+  whole-worker/helper protected-effect proof, exclusive cross-process
+  admission/executor interlock, original archive flock and final store rescan.
+  Independent shared open-file-description leases overlap queue/worker handoffs;
+  helper exchanges never run under store/runner/domain/config locks. Prior
+  uninterlocked executors require actual reviewed deployment drain. Retirement
+  preserves historical uncertainty and handles; no job replay, cleanup or
+  protected-effect confirmation follows. Fences never expire; quotas refuse
+  rather than discard them. Normal effect readiness requires explicitly
+  provisioned state and never recreates missing fences. Safely pinned degraded
+  stores may serve compatible exact-ID observations with admission/review closed;
+  unsafe parent/store-lock opening refuses startup. Rollback retains a compatible
+  enforcing reader/admission binary; the exact predecessor must refuse new
+  admission on the retained new state. Browser schema-1 migration preserves
+  all original evidence and remains unverified until fresh bounded GETs.
+  See [decision 164](adr/decision-164.md), [protocol](job-recovery.md) and
+  [schemas](schemas.md#133-original-intent-dispositions-schema-1).
 
 ## Fixed host effects
 

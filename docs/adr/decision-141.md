@@ -5,7 +5,7 @@ The superseded browser interface has been removed under
 remain governed by their current contracts.
 
 - Decision identity: 141.
-- Status: Accepted; implemented with scoped owned native/rootless fixture acceptance.
+- Status: Amended; implemented with scoped owned native/rootless fixture acceptance.
 - Date: 2026-10-20.
 
 ## Recorded implementation scope (2026-11-01)
@@ -137,3 +137,10 @@ original-process observer stop, independent durable outcomes and finite diagnost
 reads. It preserves archive serialization, original operation identity and this
 record's unrelated requirements. Implementation and actual installed conformance
 are separately required.
+
+## Original-intent and writer amendment (2026-11-03)
+
+Accepted design in [decision 164](decision-164.md), [decision 165](decision-165.md); implementation and installed conformance remain
+pending. One fixed read-only intent-review opcode observes detached helper cohorts and protected pending effects without effect-category or optional host-read grants. A separately protected manual-writer runtime is recognized only with matching mode/mount/guard proof; helper payload neverallows and fresh execution authorization remain.
+See the [executable recovery contract](../job-recovery.md). Original rationale
+and unrelated requirements above remain in force.

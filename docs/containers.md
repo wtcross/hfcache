@@ -131,6 +131,46 @@ recorded separately from that companion.
 
 ## Protected runtime profile
 
+### Protected manual writer profile
+
+[Decision 165](adr/decision-165.md) accepts a closed `manual-writer` mode beside
+the default `guarded-readonly`. This is design pending executable and installed
+acceptance; the selected deployment facts above remain read-only. Existing
+runtime schema 1 means guarded-readonly. Writer runtime schema 2 requires
+`archive_mode:"manual-writer"`, with the same fixed image/UID/GID fields and
+no generic paths/options. The immutable release/index/rendered profile and
+independently protected helper index bind the same mode; old strict readers
+refuse schema 2. Guarded schema 2 may explicitly select `guarded-readonly`.
+Only fixed API/worker archive mounts become read/write in writer mode. Their
+existing role paths, original flock, secret/network isolation and domain guards
+remain; Caddy/client have no archive. A dedicated confined writer process type
+allows required actual NFS operations without generic container-domain writes.
+Helper/observer payload neverallows remain mandatory. No NAS relabel, chown,
+copyup, label-disable, privileged mode or assumed policy boolean is permitted.
+
+Manifest schema 2 also requires `release_id` exactly `<version>-<archive_mode>`.
+Stage immutable sibling directories `releases/0.3.2-guarded-readonly` and
+`releases/0.3.2-manual-writer` with the same source/app-image/UI bytes and distinct
+rendered runtime/index hashes. `current`, helper `selector_target`, physical
+root and index joins use release_id; package/UI version stays semver. Schema-1
+version-only paths remain readable. Run initial read-only acceptance in the
+guarded sibling; drain/select the already staged writer sibling under the
+original flock while NFS is still read-only before the separate write transition.
+Rollback selects the compatible guarded sibling and matching helper authority;
+never edit immutable release files to change modes.
+
+The selected runtime never chooses writable installation: stage/switch/rollback
+retain the original flock, actual drained cohorts and host NFS-read-only window.
+Root separately transitions protected mount/bridge/guard policy after explicit
+authorization and fresh storage proof. Running writer mode cannot require or
+start the lock-holding read-only guard. Preserve a deliberately inactive guard
+outside transitions. Current-boot manual provisioning and helper-READY-before-
+bridge/API is the supported startup scope; unattended boot remains unproved.
+The [transition](deployment-centos-stream-10.md#manual-writer-transition) and
+[recovery](job-recovery.md) contracts govern preserving rollback.
+
+### Guarded runtime schema 1
+
 The selected release's rendered/runtime.json is independent deployment schema 1,
 visible inside containers as /etc/hfcache/containers/runtime.json, with exactly
 these fields:

@@ -1028,6 +1028,62 @@ consult it with a compatible server before retrying. Absent predecessor commands
 of nonexecution. See [rollback](deployment-centos-stream-10.md#rollback-compatibility)
 and [receipt rationale](adr/decision-114.md).
 
+### 13.3 Original-intent dispositions schema 1
+
+This accepted independent local family is pending implementation; existing
+receipt/event/result schema 1 is unchanged. Fixed `intent-dispositions.json`
+lives in the API operation store, under its original flock, service ownership,
+0700 parent and no-follow regular single-link 0600 file rules. It has exactly
+`schema_version:1`, `archive_id` and `entries`. Each entry has exactly:
+
+| Field | Constraint |
+| --- | --- |
+| `disposition_id` | Server-minted lowercase32hex; distinct across entries |
+| `principal`, `key_digest` | Existing credential class and unchanged namespaced SHA256 digest; never raw keys or credentials |
+| `state` | `not_admitted` or `retired_unknown` |
+| `route`, `request_digest` | Canonical supported route and SHA256 for a validated fresh refusal; both null for key-wide unknown retirement |
+| `created_at` | Server UTC microsecond timestamp |
+| `reason` | Closed refusal reason from the [protocol](job-recovery.md#durable-key-closure), otherwise null |
+| `review` | Null for refusal; bounded exact review evidence below for unknown retirement |
+
+Entries sort by `(principal,key_digest)` and never change or expire. Reject
+duplicate namespace/key or IDs and contradictory receipt/fence bindings. Bound
+the complete file to 1 MiB and 1024 entries, each review to 4096 encoded bytes.
+Account this file within the existing operation-store byte budget as well.
+`review` contains exactly `schema_version:1`, `review_id` (lowercase32hex),
+`observed_at`, `deployment_sha256`, `policy_sha256`, `receipt_set_sha256`,
+`worker_state_sha256`, `helper_effects_sha256`, `instances_sha256`,
+`intent_lock:{device,inode}`, `archive_lock:{device,inode}` and `sha256` of the
+canonical review mapping excluding its own digest. IDs/digests use existing
+grammars; device/inode are nonnegative strict integers. Instance evidence hashes
+bind exact API/worker/helper identities, not caller-supplied assertions. The
+review authority is live exclusive interlock ownership, not this saved digest.
+No replayable payload or protected configuration bytes are retained.
+
+The public intent projection has exactly `schema_version:1`, `archive_id`,
+`state`, nullable `operation` and nullable `disposition`. State `admitted`
+requires the existing OperationView and null disposition; `not_admitted` and
+`retired_unknown` require null operation and a matching disposition projection;
+`unknown` requires both null. Disposition exposes only `disposition_id`, `state`,
+`archive_id`, nullable `route`, `created_at`, nullable `reason` and nullable
+`review_sha256`. Unknown fields/coercion/versions and inconsistent nulls refuse.
+Receipt fingerprints remain on admitted receipts; current readiness does not
+rewrite them. Bound intent and readiness responses to 64 KiB and charge existing
+metadata work. This family adds no receipt state or archive format.
+
+Only an explicit offline release-installer activation step provisions the empty
+file. Normal effect readiness requires it and never recreates missing authority.
+A safely pinned store may serve compatible exact-ID observations in degraded
+mode with admission/review closed; unsafe parent/store-lock opening refuses
+startup for protected operator review. Preserve
+unsafe/future/partial state and refuse admission/retirement. An atomic update
+uses the common serializer, sibling fsync/rename/parent-fsync under the store
+flock. Capacity refuses fresh work; no cleanup/compaction removes entries.
+Release 0.3.1 from `c23abba45f8967d058983043b96843bef62e899a` rejects this unknown
+filename in `_scan` (lookup/list/admit/expire) even when empty; its compatible
+exact-ID receipt/result reader remains usable. Preserve the file through
+rollback and retain a binary capable of enforcing it before reopening admission.
+
 ## 14. Scheduled client observation handle
 
 This private local format is independent of archive schemas, API receipts and
@@ -1829,6 +1885,22 @@ never trigger automatic record cleanup. Passwords, tokens, request/result bodies
 configuration drafts and raw logs are forbidden. See [browser recovery](web-ui/operations.md).
 
 
+### Browser recovery metadata schema 2
+
+The accepted [reconciliation protocol](job-recovery.md#browser-reconciliation-and-compatibility)
+migrates the same `hfcache.web.operations.v1` storage key atomically to top-level
+and record `schemaVersion:2`. Preserve all schema-1 fields and values except the
+explicit format versions, add required nullable `disposition` and extend local
+state with `not_admitted` and `retired_unknown`. Disposition is the exact safe
+public projection from §13.3; it contains no raw digest/key or private review.
+Existing handles remain untouched. Restored records, including closed ones,
+require fresh GET verification; persisted state never supplies fresh proof.
+The 32-record/64KiB/growth-reserve limits remain. Precompute/validate the entire
+migration before one storage replacement; failure preserves original bytes and
+blocks submission. Schema-1 readers must reject schema 2 without rewriting it.
+Both formats remain exportable; cross-tab edits invalidate current proof. No
+saved bodies, drafts, credentials, replay or automatic retirement is added.
+
 ### 18.7 Fixed host-action projections schema 1
 
 
@@ -1981,3 +2053,23 @@ archive, API-receipt, configuration or browser persisted schemas. Native host
 labels are optional protected provisioning for the new capabilities; old read/
 configuration-only evidence remains valid without new grants. See
 [decision156](adr/decision-156.md).
+
+## Protected writer runtime schema 2
+
+The accepted [writer decision](adr/decision-165.md) requires independent runtime
+schema 2 with exactly `schema_version`, `service_uid`, `service_gid`, `app_image`,
+`caddy_image` and `archive_mode`. Existing field constraints remain; mode is
+exactly `guarded-readonly` or `manual-writer`. Existing runtime schema 1 remains
+readable only as guarded-readonly. The matching container-release manifest
+schema 2 retains every existing field and adds required `archive_mode` and
+`release_id`, the latter exactly `<version>-<archive_mode>` with no arbitrary
+suffix. Physical release directory/current selector/helper selector_target use
+release_id; package/UI version remains the original semver. Schema-1 version-only
+release identities remain supported. Both mode siblings are immutable and share
+source/image/UI while binding their own rendered runtime bytes. The artifact
+index schema 1 remains unchanged and covers exact new rendered bytes. The
+independent helper index binds `profile_evidence.archive_mode` to the same closed
+value; omission is guarded-readonly only. Prior strict runtime/manifest/helper
+readers must refuse writer state. No upgrade of archive, receipt or SELinux
+installation-receipt formats follows. These are design requirements pending
+implementation, golden fixtures and exact 0.3.1 reader/rollback drills.

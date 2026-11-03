@@ -1006,12 +1006,14 @@ configuration validation preserve their existing capability rules. An unmapped
 Basic effect denies by default. Bearer/MCP behavior is unchanged. The new internal
 administration capabilities do not widen public credential/capability schemas.
 
-Check fresh helper/policy before metadata offload/admission, and again at queue
+Check fresh helper/policy before new metadata offload/admission, and again at queue
 dispatch before domain lock or verifier handoff. Pure snapshot comparison binds
 the observed archive UUID and selected deployment; no helper I/O runs under the
 store, runner-condition, archive or configuration locks. Existing installed-policy
-fingerprint and final domain guard checks remain. Duplicate Basic POSTs perform
-fresh admission checks; GET original-key/ID/result recovery remains available
+fingerprint and final domain guard checks remain. The accepted
+[original-intent amendment](job-recovery.md) observes an exact admitted duplicate
+before fresh effect checks and durably fences validated fresh refusals;
+implementation and installed acceptance remain pending. GET original-key/ID/result recovery remains available
 when policy/helper is down. Body conflicts and at-most-once enqueue retain their
 original rules. Checks are not an atomic revocation lease across lock waiting.
 
@@ -1150,3 +1152,27 @@ MESSAGE prose, credentials, exception text, argv or environments. The two fixed
 sources are system sync and verification observers; no user-manager control or
 unbounded journal follower is introduced. Journal evidence cannot settle an API
 operation. See [schemas](schemas.md) for exact required fields and coherence.
+
+## Original-intent review and writer binding
+
+[Decision 164](adr/decision-164.md) accepts one read-only fixed intent-review
+opcode for the actual Basic API peer. It requires none of the six effect
+categories or optional host-read, but must independently prove the current
+runtime, actual worker/helper cohorts and absence of pending/corrupt protected
+effects. The API holds exclusive companion interlock ownership; no helper exchange
+runs under operation-store, runner, archive or configuration locks. The helper's
+internal short pending/history guards remain its own authority. No arbitrary
+selector, archive payload access, effect, cleanup or stored credential is added.
+Unproven facts return an actionable refusal. The detailed freshness, bounds and
+review sequence are fixed by the [protocol](job-recovery.md). Source and installed
+conformance remain pending.
+
+[Decision 165](adr/decision-165.md) accepts an independent protected
+profile_evidence.archive_mode binding. Existing absent fields mean only
+guarded-readonly; manual-writer requires the explicit value and matching runtime
+schema 2. The host inspector may recognize nfs-rw only with this exact bound
+mode, inactive guard, protected archive grant and fixed writer-domain/mount
+proof. It does not gain NFS payload access or grant rootless schedule/observer
+controls. Previous strict helpers refuse the new field; retain matching rollback
+bootstrap/index/policy and a capable recovery reader. Source design alone does
+not qualify the actual nfs_t mount, writer process labels or Enforcing writes.

@@ -2,7 +2,7 @@
 
 - Decision identity: 115.
 
-- Status: Accepted; execution policy retained, with client identity configuration amended by [decision 148](decision-148.md).
+- Status: Amended; execution policy retained, with client identity configuration amended by [decision 148](decision-148.md).
 - Command-route integration: [decision 116](decision-116.md), command routes.
 - Activated-service/observer packaging: [decision 121](decision-121.md), scheduled observation.
 - Date: 2026-10-17.
@@ -72,3 +72,10 @@ original-process observer stop, independent durable outcomes and finite diagnost
 reads. It preserves archive serialization, original operation identity and this
 record's unrelated requirements. Implementation and actual installed conformance
 are separately required.
+
+## Original-intent and writer amendment (2026-11-03)
+
+Accepted design in [decision 164](decision-164.md); implementation and installed conformance remain
+pending. Independent shared companion-flock leases span durable admission, queue and actual API/private-worker execution with overlapping handoff. Exclusive reviewed retirement serializes all processes while retaining the original domain flock and exact-worker reconciliation. This is not a resumable queue.
+See the [executable recovery contract](../job-recovery.md). Original rationale
+and unrelated requirements above remain in force.

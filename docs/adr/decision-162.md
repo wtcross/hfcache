@@ -68,3 +68,10 @@ none of those installed outcomes.
 
 Amends decisions150/151/159 only for closed home binding; no capability, label
 policy, archive authority or native execution rule is relaxed.
+
+## Original-intent and writer amendment (2026-11-03)
+
+Accepted design in [decision 165](decision-165.md); implementation and installed conformance remain
+pending. Closed rootless account-home selection and existing mapped identities remain unchanged. The independent writer archive-mode binding is additional protected authority, not a new home, engine selector or permission to migrate an account/store.
+See the [executable recovery contract](../job-recovery.md). Original rationale
+and unrelated requirements above remain in force.

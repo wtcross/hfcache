@@ -33,6 +33,31 @@ The startup paragraph above is the build-out record, superseded by
 changes and plan implementations also review the affected invariants and ADRs
 using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
+## Job recovery and manual archive writes (2026-11-03)
+
+- [x] WEB-031 Specify executable readiness, original-intent recovery and writer authority
+  (2026-11-03, this commit — [task](plans/tasks/web-031-job-readiness-and-recovery-contracts.md),
+  [plan](plans/2026-11-03-plan-job-recovery-and-archive-writes.md)).
+  Activates the authorized eight-task plan, preserving exact draft bytes/hash.
+  ADR164/165 and INV023 choose permanent bounded dispositions, cross-process
+  shared execution/admission leases, explicit own-key historical retirement,
+  visible bounded GET recovery and independent immutable writer-mode siblings.
+  Existing receipt schemas, Basic/bearer namespaces, original domain lock,
+  helper neverallows, guarded install window and current-boot manual startup
+  remain. Reviewed/amended FS02/19/21–23, AD16/17, INV003–005/010/013–015/018–022
+  and applicable ADR114/115/118/126/127/141/145/146/150/154/159/162. Finite owner-
+  specific acceptance matrix stops design and hands source work to API-019.
+  Default gate passes9594 tests/build/three locked profiles with1268 frozen
+  names/hashes, log88f546da and shadow2ce8936f. Post-gate reviewed sibling-ID/
+  degraded-reader clarifications and completion metadata pass focused docs
+  checks; those edits are not claimed inside the frozen gate manifest. No web
+  or installed behavior acceptance is inferred. Original docs failures remain;
+  exact draft moves to .txt solely to preserve bytes without invalid relocated
+  Markdown links. Only new successful temp fixtures retire after159824-entry
+  manifest25d7622c, stable inventories and fresh all-UID no-owner proofs,
+  receiptfc6fe3b5. No product source, dependency, production service, archive,
+  permission, mount or original application lock changes. API-019 is next.
+
 ## Repository hygiene (2026-11-02)
 
 - [x] DOC-020 Ignore root Node dependencies
@@ -2858,6 +2883,21 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-03: WEB-031 completes accepted design and selects API-019. All eight
+packages are authorized in the active job-recovery/manual-writes plan, including
+later protected deployment and scoped production jobs only after its safety
+prerequisites. No push/tag/registry publication, schedule activation, other-host
+work, reboot, NFS disconnect/NAS change, manual archive writes or init. Current
+installed0.3.1/sourcec23abba remains unchanged with archive=false/NFS-ro and
+intentional inactive guard; coordinator fresh read-only preflight5b72d873 is
+baseline evidence, not actual executor drain or legacy retirement proof. Preserve
+original state/locks/handles/credentials/artifacts and existing independent holds.
+Runtime/manifest2 sibling identities and disposition1/browser2 drills must precede
+later installed recovery/write acceptance. Root free after reviewed exact-owned
+gate fixture retirement is1214545920B; home remains tight (~124MB). No old fixture
+or failure cleanup is authorized by this completed documentation package.
+
 
 2026-11-02 completion: the genuine administrator eleven-GET receiptb3622261
 and HostStatus010fc59d resolve the earlier credential prerequisite. Protected
@@ -13774,3 +13814,31 @@ server metadata cache permission or a new architectural decision.
    was rejected because it would exceed the stated scope. Existing tags and
    the normal future release rule remain. This user-scope process exception
    introduces no architectural choice, runtime authority or placeholder ADR.
+
+
+164. **Close original intent without inventing historical execution**
+   (2026-11-03, WEB-031, this commit; accepted design, conformance pending).
+   [Decision164](../adr/decision-164.md) selects one bounded permanent disposition
+   file under the existing store flock, cross-process shared executor/admission
+   leases and exclusive Basic-own-key reviewed retirement after fresh actual
+   worker/helper/protected-effect proof. Missing receipts remain unknown;
+   original admitted receipts cannot be redefined by denial. Visible authenticated
+   automatic reconciliation uses bounded GETs only and preserves schema1 handles
+   through atomic browser2 migration. Deletion, free-lock inference, process-only
+   mutexes, replay, compaction and key revival were rejected. Exact predecessor
+   0.3.1 c23abba refuses new state admission while compatible exact-ID reads
+   survive; retain a capable reader through rollback. INV023 and explicit
+   ADR114/115/118/141/145/146/150/154/159 amendments capture the boundary.
+
+165. **Select manual rootless writes through independent protected authority**
+   (2026-11-03, WEB-031, this commit; accepted design, conformance pending).
+   [Decision165](../adr/decision-165.md) selects closed manual-writer runtime2/
+   manifest2 plus independent helper archive-mode binding, fixed API/worker
+   mounts and dedicated confined writer domains. Generic container_t grants,
+   browser/ambient switches, timers and confinement weakening were rejected.
+   Default guarded mode and drained install/switch/rollback windows remain
+   NFS-ro with original-lock handoff and preserved deliberate guard state.
+   Current-boot helper-first manual startup is explicit; actual nfs_t Enforcing
+   proof and separately authorized pilots remain with later tasks. Existing
+   worker storage/preflight contracts are retained to avoid a separate verifier
+   redesign. ADR126/127/141/150/159/162 and INV003 are explicitly amended.

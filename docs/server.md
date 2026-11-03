@@ -476,6 +476,19 @@ lane and strict route matrix preserve these boundaries.
 
 ## Bounded execution and private verification
 
+The accepted [original-intent protocol](job-recovery.md) adds permanent bounded
+key closure under the existing store flock and a fixed local companion flock
+shared by API and worker. Independent shared leases cover admission, queue and
+real execution; exclusive reviewed retirement cannot race either process.
+Normal effect readiness requires explicitly provisioned disposition state. A
+safely pinned store with missing/corrupt/future dispositions runs observation-
+only, preserving authenticated exact-ID reads; an unsafe parent/store lock
+refuses startup for operator review. Neither path recreates authority. Helper IPC
+occurs outside store/runner/domain/config locks. Existing operation schemas and
+the single service-owned archive flock remain unchanged. This design does not
+claim implementation or installed acceptance; [decision 164](adr/decision-164.md)
+defines compatibility and explicit first-activation/drain requirements.
+
 One heavyweight FIFO lane is separate from the bounded metadata pool. Admission
 must be durable before an item becomes runnable. Matching idempotent retries
 return the original operation and never add another queue item. The pending

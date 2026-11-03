@@ -708,3 +708,10 @@ account homes in the independent protected index. Existing namespace,
 capability, original-lock, payload-denial and fifteen-role receipt constraints
 remain unchanged. Native remains fixed to its original home. This amendment
 does not establish installed compatibility or authorize account/store migration.
+
+## Original-intent and writer amendment (2026-11-03)
+
+Accepted design in [decision 164](decision-164.md), [decision 165](decision-165.md); implementation and installed conformance remain
+pending. The closed intent-review read checks actual helper cohorts and protected pending/history without archive payload access. Independent profile_evidence.archive_mode binds manual-writer to matching runtime schema 2, actual fixed role mounts, dedicated writer process labels and guard state. Default read-only behavior, metadata-only helper/observer authority and neverallows survive.
+See the [executable recovery contract](../job-recovery.md). Original rationale
+and unrelated requirements above remain in force.
