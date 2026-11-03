@@ -5,6 +5,7 @@ offline mode before importing this module; API-014 owns OS sandbox enforcement.
 """
 
 import os
+import secrets
 import socket
 import stat
 import threading
@@ -14,6 +15,7 @@ from typing import TYPE_CHECKING
 from pydantic import ValidationError
 
 from hfcache.api.auth import CredentialClass, Principal
+from hfcache.api.intents import IntentInterlock, IntentLease
 from hfcache.api.lifecycle import open_directory
 from hfcache.errors import HfcacheError, OperationError
 from hfcache.locking import CommandLockControl, scoped_command_lock
@@ -25,6 +27,7 @@ from hfcache.verification_protocol import (
     ROUTE,
     WorkerReply,
     WorkerRequest,
+    WorkerReview,
     check_peer,
     receive_frame,
     send_frame,
@@ -54,6 +57,12 @@ class VerificationWorker:
     ) -> None:
         if store.root.is_relative_to(policy.root) or policy.root.is_relative_to(store.root):
             raise unavailable()
+        from hfcache.locking import lock_path  # noqa: PLC0415 - fixed configured runtime
+
+        self.interlock = IntentInterlock(
+            getattr(store, "intent_lock_path", lock_path().with_name(lock_path().name + ".intent"))
+        )
+        self.instance_id = secrets.token_hex(16)
         self.policy, self.store = policy, store
         self._execute = execute or (
             lambda snapshot, context, request: CommandServices(snapshot.config, context).verify(
@@ -93,6 +102,20 @@ class VerificationWorker:
         return WorkerReply(schema_version=1, outcome="found", receipt=receipt, envelope=result)
 
     def handle(self, request: WorkerRequest) -> WorkerReply:
+        # A new open description overlaps the API's shared admission lease.
+        # Never wait for this lease while holding the worker/store mutex.
+        if request.action != "submit":
+            return self._handle(request)
+        lease = self.interlock.acquire()
+        try:
+            return self._handle(request, lease=lease)
+        finally:
+            # A created thread owns its lease until result publication. Duplicate
+            # submit does not transfer the new descriptor.
+            if getattr(lease, "transferred", False) is not True:
+                lease.close()
+
+    def _handle(self, request: WorkerRequest, *, lease: IntentLease | None = None) -> WorkerReply:
         with self._mutex:
             if request.action == "status":
                 return self._status(request)
@@ -100,6 +123,26 @@ class VerificationWorker:
                 raise unavailable()
             if request.action == "probe":
                 return WorkerReply(schema_version=1, outcome="available")
+            if request.action == "intent-review":
+                if self._active is not None and self._active.is_alive():
+                    raise unavailable()
+                records = self.store.list()
+                if any(record.state not in {"succeeded", "failed"} for record in records):
+                    raise unavailable()
+                snapshot = self.policy.snapshot()
+                return WorkerReply(
+                    schema_version=1,
+                    outcome="reviewed",
+                    review=WorkerReview(
+                        schema_version=1,
+                        instance_id=self.instance_id,
+                        archive_id=snapshot.config.storage.archive_id,
+                        config_fingerprint=snapshot.fingerprint,
+                        receipt_set_sha256=self.store.receipt_set_digest(records),
+                        intent_device=self.interlock.identity.device,
+                        intent_inode=self.interlock.identity.inode,
+                    ),
+                )
             if request.scope is None or request.operation_id is None:
                 raise unavailable()
             frozen: list[PolicySnapshot] = []
@@ -127,17 +170,32 @@ class VerificationWorker:
             if admission.created:
                 self._active_operation_id = request.operation_id
                 self._active = threading.Thread(
-                    target=self._run,
-                    args=(request, frozen[0]),
+                    target=self._run_leased,
+                    args=(request, frozen[0], lease),
                     name="hfcache-isolated-verification",
                     daemon=False,
                 )
+                if lease is None:
+                    raise unavailable()
+                lease.transferred = True
                 try:
                     self._active.start()
                 except RuntimeError:
+                    lease.transferred = False
                     self.store.transition(request.operation_id, "interrupted")
                     raise unavailable() from None
             return self._status(request)
+
+    def _run_leased(
+        self, request: WorkerRequest, snapshot: PolicySnapshot, lease: IntentLease | None
+    ) -> None:
+        try:
+            if lease is None:
+                raise unavailable()
+            self._run(request, snapshot)
+        finally:
+            if lease is not None:
+                lease.close()
 
     def _run(self, request: WorkerRequest, snapshot: PolicySnapshot) -> None:
         operation_id, scope = request.operation_id, request.scope

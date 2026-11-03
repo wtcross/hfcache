@@ -13,12 +13,12 @@ import pytest
 from typer.testing import CliRunner
 
 from hfcache import server as bootstrap
-from hfcache.api.app import create_app
 from hfcache.cli import app as cli
 from hfcache.errors import HfcacheError
 from hfcache.logging import reset
 from hfcache.server import build_server, listeners
 from hfcache.server_config import validate_server_config_mapping
+from tests.intent_fixtures import create_app
 
 TOKEN = "writer_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
 ARCHIVE_ID = "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90"

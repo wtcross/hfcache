@@ -7,12 +7,12 @@ import sys
 
 import pytest
 
-from hfcache.api.app import create_app
 from hfcache.client import ApiClient
 from hfcache.client_config import ClientConfig
 from hfcache.client_errors import ClientConnectionError, ClientProtocolError, RemoteApiError
 from hfcache.server import build_server, listeners
 from hfcache.server_config import validate_server_config_mapping
+from tests.intent_fixtures import create_app
 from tests.unit.test_server_bootstrap import (
     ARCHIVE_ID,
     exercise,

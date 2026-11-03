@@ -654,6 +654,18 @@ async def run(  # noqa: PLR0912, PLR0915 - closed actual API/browser/drain lifec
                     },
                 }
             )
+            from hfcache import locking
+            from hfcache.api.operations import OperationStore
+
+            # Explicit offline activation of this new owned fixture before any API starts.
+            # Keep real product startup noncreating and all original browser/API assertions.
+            locking.LOCK_DIRECTORY = profile.parent / "intent-runtime"
+            locking.LOCK_DIRECTORY.mkdir(mode=0o700, exist_ok=True)
+            companion = locking.lock_path().with_name(locking.lock_path().name + ".intent")
+            if not companion.exists():
+                companion.touch(mode=0o600, exist_ok=False)
+            with OperationStore(settings.state_directory) as fixture_store:
+                fixture_store.prepare_intent_state(ARCHIVE_ID)
             app = create_app(settings, instance_lock_path=profile / "instance.lock")
             app.add_middleware(Observe, observations=observations, profile=name)
             server = build_server(app, settings)

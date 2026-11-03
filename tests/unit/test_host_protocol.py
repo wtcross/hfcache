@@ -530,3 +530,11 @@ def test_projected_pidfd_mode_has_no_uid_or_pid_wildcard(monkeypatch, peer):
     )
     with channels() as (server, _), pytest.raises(protocol.HostProtocolError, match="peer-refused"):
         protocol.LivePeer(server, allow_projected_root=True)
+
+
+def test_intent_review_is_one_readonly_opcode_with_no_caller_assertions():
+    valid = protocol.HostRequest("a" * 32, "intent-review").wire()
+    assert protocol.HostRequest.parse(valid).body == {}
+    for body in ({"pid": 1}, {"path": "/srv/hfcache"}, {"key": "original"}):
+        with pytest.raises(protocol.HostProtocolError):
+            protocol.HostRequest.parse(valid | {"body": body})

@@ -7,9 +7,9 @@ import httpx2
 import pytest
 from fastmcp.utilities.asgi_transport import StreamingASGITransport
 
-from hfcache.api.app import create_app
 from hfcache.catalog_query_models import CatalogQuery
 from hfcache.services.catalog_queries import CatalogQueries
+from tests.intent_fixtures import create_app
 from tests.unit.test_mcp_catalog import archive as archive  # noqa: PLC0414 - fixture
 from tests.unit.test_mcp_catalog import catalog as catalog  # noqa: PLC0414 - fixture
 from tests.unit.test_mcp_concurrency import settled

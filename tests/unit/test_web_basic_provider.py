@@ -23,11 +23,11 @@ from hfcache.api.basic import (
     create_administrator_record,
     load_basic_provider,
 )
-from hfcache.api.operations import OperationStore
 from hfcache.config import ApplicationConfig
 from hfcache.errors import AuthenticationError, ConfigurationError
 from hfcache.server_config import BasicConfig, PolicySnapshot, validate_server_config_mapping
 from tests.fixtures import examples
+from tests.intent_fixtures import OperationStore
 
 
 @pytest.fixture(scope="module")

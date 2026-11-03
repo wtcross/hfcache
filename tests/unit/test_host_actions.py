@@ -961,3 +961,13 @@ def test_journal_capacity_and_unrecognized_prose_never_expose_payload(writer, mo
     HostJournalPage.model_validate(page)
     assert not page["entries"]
     assert page["truncated"]
+
+
+def test_intent_review_validates_whole_history_and_refuses_pending_without_action_grants(writer):
+    writer.state.permissions = dict.fromkeys(writer.state.permissions, False)
+    baseline = actions.review_intent_history(writer.policy, writer.snapshot())
+    assert len(baseline) == 64
+    actions.PENDING.write_bytes(b"unclassified preserved pending effect")
+    with pytest.raises(ValueError, match="protected"):
+        actions.review_intent_history(writer.policy, writer.snapshot())
+    assert actions.PENDING.read_bytes() == b"unclassified preserved pending effect"

@@ -9,7 +9,6 @@ from datetime import timedelta
 import httpx
 import pytest
 
-from hfcache.api.app import create_app
 from hfcache.api.lifecycle import MetadataPool
 from hfcache.archive import initialize_archive
 from hfcache.config import load_config
@@ -22,6 +21,7 @@ from hfcache.services.context import ServiceResult
 from hfcache.services.queries import ALL_REPOSITORIES, LocalQueries, PublicationQuery
 from hfcache.storage import parse_mount_table
 from tests.fixtures import examples
+from tests.intent_fixtures import create_app
 
 WRITER = "writer_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
 READER = "reader_9876543210zyxwvutsrqponmlkjihgfedcbaZYXWVU"

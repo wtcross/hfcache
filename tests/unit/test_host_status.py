@@ -11,13 +11,13 @@ import threading
 import httpx
 import pytest
 
-from hfcache.api.app import create_app
 from hfcache.api.host_status import UnavailableHostHelper, open_host_helper
 from hfcache.errors import HostAdministrationUnavailableError
 from hfcache.host_models import HostStatus
 from hfcache.host_protocol import HostProtocolError
 from tests.fixtures.examples import ARCHIVE_ID
 from tests.fixtures.host_examples import host_status
+from tests.intent_fixtures import create_app
 
 pytest_plugins = ("tests.unit.test_host_action_routes",)
 

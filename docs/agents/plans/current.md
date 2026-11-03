@@ -4,8 +4,8 @@
 | --- | --- |
 | State | active |
 | Active plan | [Job recovery and archive writes](2026-11-03-plan-job-recovery-and-archive-writes.md) |
-| Current task | [API-019](tasks/api-019-original-intent-dispositions.md) |
-| Blocker | WEB-031 complete; no known source blocker. Production prerequisites need fresh proof |
+| Current task | [WEB-032](tasks/web-032-job-readiness-and-automatic-recovery.md) |
+| Blocker | API-019 complete; WEB-032 ready. Installed prerequisites remain separate |
 | Last completed plan | [Ignore root Node dependencies](2026-11-02-plan-root-node-ignore.md) |
 | Branch | main |
 | Updated | 2026-11-03 |

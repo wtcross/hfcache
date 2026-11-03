@@ -16,10 +16,10 @@ import pytest
 
 from hfcache import host_configuration as configuration
 from hfcache import host_policy, host_protocol
-from hfcache.api.app import create_app
 from hfcache.config import load_config
 from hfcache.errors import OperationError
 from hfcache.host_helper_client import HostHelperClient
+from tests.intent_fixtures import create_app
 from tests.unit.test_api_configuration_applications import ROUTE, _preview
 from tests.unit.test_api_managed_configuration import _settings
 from tests.unit.test_host_action_routes import ORIGIN

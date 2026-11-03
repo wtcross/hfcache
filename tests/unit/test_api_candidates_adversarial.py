@@ -19,7 +19,6 @@ with warnings.catch_warnings():
     )
     from fastapi.testclient import TestClient
 
-from hfcache.api.app import create_app
 from hfcache.api.auth import authenticate_bearer, load_credentials
 from hfcache.config import load_config
 from hfcache.hub import DownloadEstimate, RepositoryFacts, TreeEntry
@@ -28,6 +27,7 @@ from hfcache.logging import reset
 from hfcache.server_config import validate_server_config_mapping
 from hfcache.services.context import ServiceResult
 from tests.fixtures import examples
+from tests.intent_fixtures import create_app
 
 if TYPE_CHECKING:
     from pathlib import Path

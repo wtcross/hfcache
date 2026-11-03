@@ -10,9 +10,9 @@ from pathlib import Path
 
 import pytest
 
-from hfcache.api.app import create_app
 from hfcache.server import build_server
 from hfcache.server_config import validate_server_config_mapping
+from tests.intent_fixtures import create_app
 from tests.unit.test_mcp_client_security import FakeClient, Reply, publication_frames
 from tests.unit.test_mcp_tools import archive as archive_base  # noqa: F401 - fixture
 from tests.unit.test_mcp_tools import (

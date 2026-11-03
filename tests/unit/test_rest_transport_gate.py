@@ -8,12 +8,12 @@ from typing import TYPE_CHECKING
 import httpx
 import pytest
 
-from hfcache.api.app import create_app
 from hfcache.client import ApiClient
 from hfcache.client_config import ClientConfig
 from hfcache.server import build_server, listeners
 from hfcache.server_config import validate_server_config_mapping
 from hfcache.unix_http import UnixHTTPTransport
+from tests.intent_fixtures import create_app
 from tests.unit.test_server_bootstrap import (
     ARCHIVE_ID,
     TOKEN,

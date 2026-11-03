@@ -41,6 +41,7 @@ PREFIX = Path("/opt/hfcache")
 OBSERVER = "/usr/local/libexec/hfcache-host-helper"
 API_UNIT = "hfcache-api.service"
 API_CONTAINER = "hfcache-api"
+_MAX_PROCESSES = 4096
 HELPER_PARENT = "/run/hfcache-host-helper/api"
 MAX_OUTPUT = 262144
 MAX_READ = 1048576
@@ -1213,15 +1214,13 @@ def _engine_enter(prepared: dict[str, Any], budget: _Budget) -> dict[str, Any]:
     }
 
 
-def _engine_argv() -> list[str]:
+def _engine_argv(*, review: bool = False) -> list[str]:
     return [
         str(_ENGINE),
         "--remote=false",
         "--storage-opt=overlay.mountopt=nodev",
         "--storage-opt=overlay.skip_mount_home=true",
-        "container",
-        "inspect",
-        API_CONTAINER,
+        *(["ps", "--format=json"] if review else ["container", "inspect", API_CONTAINER]),
     ]
 
 
@@ -1234,6 +1233,8 @@ def observe_engine(
         type(request.get("remaining_seconds")) in (float, int)
         and request["remaining_seconds"] <= _ENGINE_SECONDS
     )
+    review = request.pop("intent_review", False)
+    _need(type(review) is bool)
     budget = _observer_budget(request, bootstrap_work, started_at)
     signal.signal(signal.SIGALRM, lambda _signal, _frame: (_ for _ in ()).throw(PeerError()))
     signal.setitimer(signal.ITIMER_REAL, budget.remaining())
@@ -1277,12 +1278,12 @@ def observe_engine(
             "_CONTAINERS_ROOTLESS_UID": str(uid),
             "_CONTAINERS_ROOTLESS_GID": str(gid),
         }
-        os.execve(binary, _engine_argv(), environment)  # noqa: S606 - fixed pinned ELF FD only
+        os.execve(binary, _engine_argv(review=review), environment)  # noqa: S606 - fixed pinned ELF FD only
     finally:
         os.close(binary)
 
 
-def _engine_inspect(deployment: dict[str, Any], budget: _Budget) -> bytes:  # noqa: PLR0915 - exact owned child and proof validation
+def _engine_inspect(deployment: dict[str, Any], budget: _Budget, *, review: bool = False) -> bytes:  # noqa: PLR0915 - exact owned child and proof validation
     """Keep the original host observer separate from the typed engine child."""
     prepared = _engine_prepare(deployment, budget)
     keeperfd = _engine_pidfd(prepared["keeper"]["pid"])
@@ -1293,6 +1294,8 @@ def _engine_inspect(deployment: dict[str, Any], budget: _Budget) -> bytes:  # no
         "maximum_files": budget.maximum_files - budget.files,
         "maximum_bytes": budget.maximum_bytes - budget.bytes,
     }
+    if review:
+        request["intent_review"] = True
     uid = deployment["api_principal"]["host_uid"]
     body = bytearray()
     try:
@@ -1642,7 +1645,7 @@ def _cap_drop(value: object) -> bool:
 
 
 def _expected_container(
-    manager: dict[str, str], deployment: dict[str, Any], budget: _Budget
+    manager: dict[str, str], deployment: dict[str, Any], budget: _Budget, *, role: str = "api"
 ) -> list[str]:
     """Execute only authenticated installed launcher code, as its ordinary owner."""
     selected = _selected(deployment)
@@ -1658,9 +1661,14 @@ def _expected_container(
         and profile["service_gid"] == principal["host_gid"]
     )
     _need(profile["app_image"] == "sha256:" + deployment["profile_evidence"]["app_image_sha256"])
-    projection = _helper_projection(deployment, budget)
+    _need(role in {"api", "worker", "caddy"})
+    projection = _helper_projection(deployment, budget) if role == "api" else None
     argv = module.command(
-        profile, "api", invocation_id=manager["InvocationID"], helper_projection=projection
+        profile,
+        role,
+        invocation_id=manager["InvocationID"],
+        helper_projection=projection,
+        preserve_archive_lock=role in {"api", "worker"},
     )
     _need(type(argv) is list and all(type(item) is str for item in argv))
     _need(argv[:3] == ["/usr/bin/podman", "--remote=false", "run"])
@@ -2008,6 +2016,356 @@ def _observer_budget(
     return budget
 
 
+def _intent_inert(process: dict[str, Any], executable: str, keeper: dict[str, Any] | None) -> bool:
+    """Only the existing verified namespace keeper and protected user manager."""
+    if keeper is not None and (process["pid"], process["start_ticks"]) == (
+        keeper["pid"],
+        keeper["start_ticks"],
+    ):
+        return executable == "/usr/libexec/catatonit/catatonit" and process["argv"] in (
+            ["catatonit", "-P"],
+            [executable, "-P"],
+        )
+    argv = process["argv"]
+    return (
+        executable == "/usr/lib/systemd/systemd"
+        and argv[:2] == [executable, "--user"]
+        and (
+            len(argv) == 2  # noqa: PLR2004 - fixed manager argv grammar
+            or (len(argv) == 3 and re.fullmatch(r"--deserialize=[0-9]{1,10}", argv[2]) is not None)  # noqa: PLR2004 - closed descriptor flag grammar
+        )
+    )
+
+
+def _intent_auxiliary(deployment: dict[str, Any], budget: _Budget) -> dict[str, Any]:
+    """Bind the fixed vendor manager/broker units; no arbitrary unit selectors."""
+    uid = deployment["api_principal"]["host_uid"]
+    home = _account_home(deployment)
+    result: dict[str, Any] = {}
+    for name, user, fragment in (
+        (f"user@{uid}.service", False, "/usr/lib/systemd/system/user@.service"),
+        ("dbus-broker.service", True, "/usr/lib/systemd/user/dbus-broker.service"),
+    ):
+        properties = {
+            "Id",
+            "LoadState",
+            "ActiveState",
+            "SubState",
+            "MainPID",
+            "ControlPID",
+            "ControlGroup",
+            "FragmentPath",
+            "DropInPaths",
+        }
+        raw = _command(
+            [
+                "/usr/bin/systemctl",
+                "--user" if user else "--system",
+                "show",
+                name,
+                "--no-pager",
+                "--property=" + ",".join(sorted(properties)),
+            ],
+            budget,
+            uid=uid,
+            home=home,
+        )
+        value = dict(line.split("=", 1) for line in raw.decode().splitlines())
+        _need(
+            set(value) == properties
+            and value["Id"] == name
+            and value["LoadState"] == "loaded"
+            and value["ActiveState"] == "active"
+            and value["SubState"] == "running"
+            and value["ControlPID"] == "0"
+            and value["FragmentPath"] == fragment
+        )
+        _read(Path(fragment), budget, maximum=MAX_READ, protected=True)
+        drops = value["DropInPaths"].split()
+        _need(len(drops) <= _MAX_MAPS)
+        for drop in drops:
+            path = Path(drop)
+            _need(path.parent == Path(fragment + ".d") and path.name.endswith(".conf"))
+            _read(path, budget, maximum=MAX_READ, protected=True)
+        pid = int(value["MainPID"])
+        _need(pid > 1)
+        result["broker" if user else "manager"] = {
+            "pid": pid,
+            "start_ticks": _process(pid, budget, namespaces=False)["start_ticks"],
+            "group": value["ControlGroup"],
+        }
+    machine = _read(Path("/etc/machine-id"), budget, maximum=128, protected=True).decode().strip()
+    _need(_HEX32.fullmatch(machine) is not None)
+    result["machine_id"] = machine
+    return result
+
+
+def _intent_auxiliary_kind(  # noqa: PLR0913, PLR0917 - complete observed process identity
+    process: dict[str, Any],
+    executable: str,
+    context: str,
+    parent: int,
+    keeper: dict[str, Any],
+    auxiliary: dict[str, Any],
+) -> str | None:
+    """Closed inert cohort grammar; all identities are freshly observed locally."""
+    manager, broker = auxiliary["manager"], auxiliary["broker"]
+    identity = process["pid"], process["start_ticks"]
+    argv, group = process["argv"], process["cgroup"]
+    kind = context.split(":")[2] if len(context.split(":")) >= _CREDENTIAL_FIELDS else ""
+    if identity == (keeper["pid"], keeper["start_ticks"]):
+        return (
+            "keeper"
+            if parent == manager["pid"]
+            and kind == "container_runtime_t"
+            and _intent_inert(process, executable, keeper)
+            else None
+        )
+    if identity == (manager["pid"], manager["start_ticks"]):
+        return (
+            "manager"
+            if parent == 1 and kind == "unconfined_t" and _intent_inert(process, executable, None)
+            else None
+        )
+    if (
+        parent == manager["pid"]
+        and group == manager["group"] + "/init.scope"
+        and executable == "/usr/lib/systemd/systemd-executor"
+        and argv == ["(sd-pam)"]
+        and kind == "init_t"
+    ):
+        return "pam"
+    if identity == (broker["pid"], broker["start_ticks"]):
+        return (
+            "broker-launch"
+            if parent == manager["pid"]
+            and group == broker["group"]
+            and kind == "unconfined_dbusd_t"
+            and executable == "/usr/bin/dbus-broker-launch"
+            and argv == [executable, "--scope", "user"]
+            else None
+        )
+    if (
+        parent == broker["pid"]
+        and group == broker["group"]
+        and kind == "unconfined_dbusd_t"
+        and executable == "/usr/bin/dbus-broker"
+    ):
+        flags = [
+            "--log",
+            "--controller",
+            "--machine-id",
+            "--max-bytes",
+            "--max-fds",
+            "--max-matches",
+        ]
+        if (
+            len(argv) == 1 + len(flags) * 2
+            and argv[0] in {"dbus-broker", executable}
+            and argv[1::2] == flags
+            and argv[6] == auxiliary["machine_id"]
+            and all(
+                re.fullmatch(r"[0-9]{1,15}", argv[index]) is not None for index in (2, 4, 8, 10, 12)
+            )
+        ):
+            return "broker"
+    return None
+
+
+def _intent_executors(deployment: dict[str, Any], budget: _Budget) -> dict[str, Any]:  # noqa: PLR0915 - fixed bounded role/cgroup proof
+    """Closed read-only review of all selected role cgroups and running libpods.
+
+    Uses the same bounded manager/engine observer and kernel accounting. Unknown
+    service-account processes and unknown running containers refuse review.
+    """
+    uid = deployment["api_principal"]["host_uid"]
+    profile = deployment["profile"]
+    home = _account_home(deployment) if profile == "rootless" else _DEFAULT_ACCOUNT_HOME
+    units = ["hfcache-api.service", "hfcache-verification.service"]
+    if profile == "rootless":
+        units.append("hfcache-caddy.service")
+    groups = set()
+    facts = {}
+    commands = {}
+    keeper = _engine_prepare(deployment, budget)["keeper"] if profile == "rootless" else None
+    auxiliary = _intent_auxiliary(deployment, budget) if profile == "rootless" else None
+    for unit in units:
+        properties = {
+            "Id",
+            "LoadState",
+            "ActiveState",
+            "SubState",
+            "MainPID",
+            "ControlPID",
+            "ControlGroup",
+            "InvocationID",
+            "FragmentPath",
+            "DropInPaths",
+        }
+        raw = _command(
+            [
+                "/usr/bin/systemctl",
+                "--user" if profile == "rootless" else "--system",
+                "show",
+                unit,
+                "--no-pager",
+                "--property=" + ",".join(sorted(properties)),
+            ],
+            budget,
+            uid=uid if profile == "rootless" else 0,
+            home=home,
+        )
+        rows = dict(line.split("=", 1) for line in raw.decode().splitlines())
+        _need(
+            set(rows) == properties
+            and rows["Id"] == unit
+            and rows["LoadState"] == "loaded"
+            and rows["ActiveState"] == "active"
+            and rows["SubState"] == "running"
+            and rows["ControlPID"] == "0"
+            and not rows["DropInPaths"]
+        )
+        _need(_HEX32.fullmatch(rows["InvocationID"]) is not None)
+        group = rows["ControlGroup"]
+        _need(group.startswith("/") and ".." not in group.split("/") and len(group) <= _MAX_TEXT)
+        groups.add(group)
+        role = unit.removeprefix("hfcache-").removesuffix(".service")
+        relative = ("rendered/" if profile == "rootless" else "packaging/systemd/") + unit
+        _need(
+            rows["FragmentPath"]
+            in {
+                str(PREFIX / "current" / relative),
+                str(_selected(deployment) / relative),
+                ("/etc/systemd/user/" if profile == "rootless" else "/etc/systemd/system/") + unit,
+            }
+        )
+        _indexed(_selected(deployment), relative, deployment, budget)
+        pid = int(rows["MainPID"])
+        _need(pid > 1)
+        process = _process(pid, budget, namespaces=False)
+        _need(process["cgroup"] == group)
+        if profile == "rootless":
+            command_role = "worker" if role == "verification" else role
+            expected = _expected_container(rows, deployment, budget, role=command_role)
+            _need(process["argv"] == expected)
+            commands[command_role] = expected
+        facts[role] = {
+            "pid": pid,
+            "start_ticks": process["start_ticks"],
+            "invocation": rows["InvocationID"],
+            "cgroup": group,
+        }
+    containers = []
+    if profile == "rootless":
+        containers = _json_array(_engine_inspect(deployment, budget, review=True))
+        expected_names = {"hfcache-api", "hfcache-verification", "hfcache-caddy"}
+        _need(len(containers) == len(expected_names))
+        _need({item.get("Names", [None])[0] for item in containers} == expected_names)
+        for item in containers:
+            identifier = item["Id"]
+            _need(type(identifier) is str and _HEX64.fullmatch(identifier) is not None)
+            _need(
+                item.get("State") == "running"
+                and item.get("Labels", {}).get("io.hfcache.stack") == "rootless"
+            )
+            name = item["Names"][0]
+            role = "worker" if name == "hfcache-verification" else name.removeprefix("hfcache-")
+            _need(item.get("Labels", {}).get("io.hfcache.role") == role)
+            expected_image = deployment["profile_evidence"][
+                "caddy_image_sha256" if role == "caddy" else "app_image_sha256"
+            ]
+            _need(item.get("ImageID") in {expected_image, "sha256:" + expected_image})
+            command = commands[role]
+            position = command.index("sha256:" + expected_image)
+            _need(item.get("Command") == command[position + 1 :])
+            groups.add(
+                "/user.slice/user-"
+                + str(uid)
+                + ".slice/user@"
+                + str(uid)
+                + ".service/user.slice/libpod-"
+                + identifier
+                + ".scope"
+            )
+
+    count = 0
+    inert_counts: dict[str, int] = {}
+    for item in Path("/proc").iterdir():
+        if not item.name.isdecimal() or int(item.name) == os.getpid():
+            continue
+        count += 1
+        _need(count <= _MAX_PROCESSES)
+        try:
+            status = _read(item / "status", budget, maximum=65536).decode()
+            owner = next(line for line in status.splitlines() if line.startswith("Uid:")).split()[
+                1:
+            ]
+            if str(uid) not in owner:
+                continue
+            cgroup_raw = _read(item / "cgroup", budget, maximum=MAX_PROC).decode().strip()
+            _need(cgroup_raw.startswith("0::") and "\n" not in cgroup_raw)
+            group = cgroup_raw[3:]
+            if any(group == allowed or group.startswith(allowed + "/") for allowed in groups):
+                continue
+            if keeper is None or auxiliary is None:
+                raise PeerError
+            process = _process(int(item.name), budget, namespaces=False)
+            executable = os.readlink(item / "exe")  # noqa: PTH115 - exact kernel executable link
+            _read(Path(executable), budget, maximum=MAX_READ, protected=True)
+            context = (
+                _read(item / "attr/current", budget, maximum=4096).decode().strip().rstrip("\0")
+            )
+            raw_stat = _read(item / "stat", budget, maximum=MAX_PROC).decode()
+            parent = int(raw_stat.rsplit(") ", 1)[1].split()[1])
+            kind = _intent_auxiliary_kind(process, executable, context, parent, keeper, auxiliary)
+            if kind is None:
+                raise PeerError
+            inert_counts[kind] = inert_counts.get(kind, 0) + 1
+            _need(inert_counts[kind] == 1)
+        except FileNotFoundError:
+            raise PeerError from None
+    return {
+        "roles": facts,
+        "inert_counts": inert_counts,
+        "containers_sha256": hashlib.sha256(
+            json.dumps(containers, sort_keys=True).encode()
+        ).hexdigest(),
+    }
+
+
+def _json_array(body: bytes) -> list[dict[str, Any]]:
+    value = json.loads(body)
+    _need(type(value) is list and all(type(item) is dict for item in value))
+    return value
+
+
+def intent_review(snapshot: AuthoritySnapshot, *, remaining_seconds: float) -> dict[str, Any]:
+    """Fresh fixed observer; no caller paths or executor assertions are accepted."""
+    uid, gid = snapshot.api_principal
+    budget = snapshot.budget
+    request = {
+        "schema_version": 1,
+        "intent_review": True,
+        "remaining_seconds": min(remaining_seconds, budget.remaining()),
+        "maximum_files": budget.maximum_files - budget.files,
+        "maximum_bytes": budget.maximum_bytes - budget.bytes,
+    }
+    raw = _observe_as_account(
+        request,
+        uid,
+        gid,
+        profile=snapshot.profile,
+        home=_account_home(snapshot.deployment)
+        if snapshot.profile == "rootless"
+        else _DEFAULT_ACCOUNT_HOME,
+    )
+    value = _json(raw)
+    _need("executors" in value and value["deployment_sha256"] == snapshot.deployment_sha256)
+    work = value["work"]
+    budget.consume(files=work["files"], size=work["bytes"])
+    return value
+
+
 def observe_peer(
     *, bootstrap_work: dict[str, int] | None = None, started_at: float | None = None
 ) -> dict[str, Any]:
@@ -2018,6 +2376,8 @@ def observe_peer(
     by a timer not installed yet; its parent retains actual ownership on timeout.
     """
     request = _json(sys.stdin.buffer.read(4097))
+    review = request.pop("intent_review", False)
+    _need(type(review) is bool)
     budget = _observer_budget(request, bootstrap_work, started_at)
 
     def expired(_signal: int, _frame: object) -> None:
@@ -2051,6 +2411,7 @@ def observe_peer(
         _need(_read(DEPLOYMENT, budget, maximum=MAX_READ, protected=True) == before)
         if profile == "rootless":
             _need(_account_home(deployment) == home)
+        executor_set = _intent_executors(deployment, budget) if review else None
         budget.remaining()
         # An unrecognized argv is never serialized. The exact known argv is
         # represented only by its digest after all fixed-command checks pass.
@@ -2066,6 +2427,8 @@ def observe_peer(
             "container": container,
             "work": {"files": budget.files, "bytes": budget.bytes},
         }
+        if review:
+            result["executors"] = executor_set
         _need(len(json.dumps(result).encode()) <= MAX_OUTPUT)
     except _CATCH:
         raise PeerError from None

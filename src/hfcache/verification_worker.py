@@ -130,7 +130,7 @@ def _run(
             validate_listener(listener, options.socket)
         with (
             instance_lock(root.with_name(root.name + ".instance.lock")),
-            OperationStore(root) as store,
+            OperationStore(root, private=True) as store,
         ):
             scope = (
                 owned_listener(listener, options.socket)

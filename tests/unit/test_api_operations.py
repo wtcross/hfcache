@@ -7,14 +7,14 @@ import threading
 import httpx
 import pytest
 
-from hfcache.api.app import create_app
 from hfcache.api.auth import CredentialClass, Principal
-from hfcache.api.operations import OperationLimits, OperationStore
+from hfcache.api.operations import OperationLimits
 from hfcache.errors import ConfigurationError, Problem, SafetyError
 from hfcache.logging import reset
 from hfcache.server_config import InstalledPolicy, validate_server_config_mapping
 from hfcache.services.context import ExecutionContext, ServiceResult
 from tests.fixtures import examples
+from tests.intent_fixtures import OperationStore, create_app
 
 WRITER = "writer_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
 READER = "reader_9876543210zyxwvutsrqponmlkjihgfedcbaZYXWVU"

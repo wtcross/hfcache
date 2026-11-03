@@ -11,7 +11,7 @@ from starlette.routing import Route
 
 from hfcache import wire_schema
 from hfcache.api import app as application_module
-from hfcache.api.app import create_app
+from hfcache.api.app import create_app as unactivated_app
 from hfcache.api.auth import AdminCapability, AuthenticationMethod, CredentialClass, Principal
 from hfcache.api.ui_serving import UI_CSP, UiResponse, bootstrap_bytes
 from hfcache.errors import ConfigurationError, SafetyError
@@ -20,6 +20,7 @@ from hfcache.server_config import WebConfig
 from hfcache.url_paths import uri_path
 from tests.fixtures.host_examples import host_status
 from tests.fixtures.web_ui import WIRE_DIGEST, WRITER, make_profile
+from tests.intent_fixtures import create_app
 
 
 @pytest.fixture(autouse=True)
@@ -376,7 +377,7 @@ def test_invalid_capture_precedes_store_construction_or_runner_admission(monkeyp
         "OperationStore",
         lambda *_a, **_kw: pytest.fail("store constructed before capture"),
     )
-    app = create_app(profile.server, instance_lock_path=profile.lock)
+    app = unactivated_app(profile.server, instance_lock_path=profile.lock)
 
     async def exercise():
         with pytest.raises(ConfigurationError, match="enabled UI artifact"):
@@ -406,7 +407,7 @@ def test_later_store_failure_closes_the_captured_root_and_clears_state(monkeypat
 
     monkeypatch.setattr(application_module, "capture_assets", capture)
     monkeypatch.setattr(application_module, "OperationStore", failed_store)
-    app = create_app(profile.server, instance_lock_path=profile.lock)
+    app = unactivated_app(profile.server, instance_lock_path=profile.lock)
 
     async def exercise():
         with pytest.raises(RuntimeError, match="owned store startup failure"):

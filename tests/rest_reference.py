@@ -83,6 +83,42 @@ HOST_HTTP_REFERENCE = (
     ),
 )
 
+INTENT_HTTP_REFERENCE = (
+    (
+        "GET /jobs/readiness",
+        "default",
+        "browser / HTTP",
+        "R",
+        "bounded helper/worker observation",
+        "none",
+        "no",
+        "none",
+        "none",
+    ),
+    (
+        "GET /operations/intent",
+        "default",
+        "browser / HTTP",
+        "R + original key",
+        "bounded original namespace read",
+        "none",
+        "no",
+        "none",
+        "none",
+    ),
+    (
+        "POST /operations/intent/retire",
+        "default",
+        "browser / HTTP",
+        "Basic + original key",
+        "exclusive executor/effect review",
+        "archive",
+        "no",
+        "none",
+        "permanent original-intent disposition",
+    ),
+)
+
 REFERENCE: tuple[tuple[str, ...], ...] = (
     (
         "GET /version",
@@ -579,6 +615,7 @@ REFERENCE: tuple[tuple[str, ...], ...] = (
         "none",
         "none",
     ),
+    *INTENT_HTTP_REFERENCE,
     ("GET /health", "default", "SDK / HTTP", "R", "synchronous", "none", "no", "none", "none"),
     (
         "GET /openapi.json",

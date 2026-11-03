@@ -2,6 +2,7 @@
 
 import json
 from contextlib import suppress
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Protocol
 
 from fastapi import Request  # noqa: TC002 - FastAPI resolves endpoint annotations at runtime
@@ -23,6 +24,7 @@ from hfcache.api.host_authorization import (
     require_admission,
     required_actions,
 )
+from hfcache.api.intents import AdmissionUncertainError, IntentRefusalError
 from hfcache.api.models import OperationView, ReadResponse
 from hfcache.credentials import resolve_token
 from hfcache.errors import HfcacheError, RequestError
@@ -37,6 +39,7 @@ from hfcache.services.candidates import (
 from hfcache.services.commands import CommandServices, DoctorRequest, SelectionRequest
 from hfcache.services.context import ServiceResult
 from hfcache.services.queries import validate_config
+from hfcache.storage import describe_mount
 from hfcache.url_paths import uri_path
 
 if TYPE_CHECKING:
@@ -155,10 +158,20 @@ def admit_command(  # noqa: PLR0913 - explicit trusted route execution policy
     _no_query(request)
     key = _key(request)
     require_admission(request, route, body, authorization)
+    original = getattr(request.state, "original_admission", None)
+    if original is not None:
+        from hfcache.api.operations import Admission  # noqa: PLC0415 - original observation
+
+        return _accepted(request, Admission(original, created=False), server)
 
     def budget(snapshot: PolicySnapshot) -> float:
         if authorization is not None:
             authorization.check_snapshot(snapshot)
+        if requires_lock or delegated:
+            mount = describe_mount(snapshot.config.storage.archive_root)
+            if mount.entry is not None and mount.entry.read_only:
+                message = "Archive storage is read-only; no operation was admitted"
+                raise IntentRefusalError(reason="storage_read_only", message=message)
         if prepare is not None:
             prepare(snapshot)
         return (
@@ -167,19 +180,56 @@ def admit_command(  # noqa: PLR0913 - explicit trusted route execution policy
             else snapshot.config.sync.lock_wait_seconds
         )
 
-    admitted = request.app.state.runner.submit(
-        request.state.principal,
-        key,
-        route,
-        body.canonical_body(),
-        command=command,
-        execute=execute,
-        wait_seconds=budget,
-        requires_lock=requires_lock,
-        delegated=delegated,
-        context=request.state.execution_context,
-        authorize=authorization.recheck if authorization is not None else None,
-    )
+    try:
+        admitted = request.app.state.runner.submit(
+            request.state.principal,
+            key,
+            route,
+            body.canonical_body(),
+            command=command,
+            execute=execute,
+            wait_seconds=budget,
+            requires_lock=requires_lock,
+            delegated=delegated,
+            context=request.state.execution_context,
+            authorize=authorization.recheck if authorization is not None else None,
+        )
+    except AdmissionUncertainError:
+        raise
+    except HfcacheError as error:
+        from hfcache.errors import (  # noqa: PLC0415
+            AuthenticationError,
+            AuthorizationError,
+            ConfigurationError,
+            OperationError,
+        )
+
+        if isinstance(error, (OperationError, ConfigurationError)) and not isinstance(
+            error, (RequestError, AuthenticationError)
+        ):
+            reason = (
+                "permission_denied"
+                if isinstance(error, AuthorizationError)
+                else error.reason
+                if isinstance(error, IntentRefusalError)
+                else "invalid_policy"
+                if isinstance(error, ConfigurationError)
+                else "admission_unavailable"
+            )
+            record, _ = request.app.state.operations.refuse(
+                request.state.principal,
+                key,
+                route,
+                body.canonical_body(),
+                request.app.state.policy.archive_id,
+                reason,
+            )
+            if record is not None:
+                from hfcache.api.operations import Admission  # noqa: PLC0415
+
+                return _accepted(request, Admission(record, created=False), server)
+            error.headers = MappingProxyType({"Hfcache-Intent": "closed"})
+        raise
     return _accepted(request, admitted, server)
 
 
@@ -190,7 +240,9 @@ def install_command_routes(app: FastAPI, server: ServerConfig, render: Render) -
     @app.post(PREFIX + "/syncs", response_model=AcceptanceResponse, status_code=202)
     async def sync(request: Request, body: SyncSubmission) -> Response:
         require_capability(request.state.principal, Capability.WRITE)
-        authorization = await authorize_request(request, required_actions(PREFIX + "/syncs", body))
+        authorization = await authorize_request(
+            request, required_actions(PREFIX + "/syncs", body), body=body
+        )
         return await offload_command(
             request,
             lambda: admit_command(
@@ -219,7 +271,9 @@ def install_command_routes(app: FastAPI, server: ServerConfig, render: Render) -
             request.state.principal,
             Capability.WRITE if body.candidate is not None else Capability.READ,
         )
-        authorization = await authorize_request(request, required_actions(PREFIX + "/plans", body))
+        authorization = await authorize_request(
+            request, required_actions(PREFIX + "/plans", body), body=body
+        )
         prepared: list[CandidateAssessment | ServiceResult] = []
 
         def prepare(snapshot: PolicySnapshot) -> None:
@@ -265,7 +319,7 @@ def install_command_routes(app: FastAPI, server: ServerConfig, render: Render) -
             request.state.principal, Capability.READ if body.read_only else Capability.WRITE
         )
         authorization = await authorize_request(
-            request, required_actions(PREFIX + "/diagnostics", body)
+            request, required_actions(PREFIX + "/diagnostics", body), body=body
         )
         return await offload_command(
             request,
@@ -287,7 +341,7 @@ def install_command_routes(app: FastAPI, server: ServerConfig, render: Render) -
     async def verify(request: Request, body: VerificationSubmission) -> Response:
         require_capability(request.state.principal, Capability.WRITE)
         authorization = await authorize_request(
-            request, required_actions(PREFIX + "/verifications", body)
+            request, required_actions(PREFIX + "/verifications", body), body=body
         )
         verification = body.service_request()
 

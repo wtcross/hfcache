@@ -449,6 +449,15 @@ class HostHelperClient:
                 peer.close()
             self._release(job)
 
+    def intent_review_identity(self) -> dict[str, object]:
+        """Pure pinned runtime binding read; no helper exchange or lock wait."""
+        return self.binding._runtime_binding()  # noqa: SLF001 - same-module pinned reader
+
+    def intent_review(self, *, deadline: float) -> dict[str, object]:
+        job = self._reserve()
+        job.deadline = min(job.deadline, deadline)
+        return self._execute(job, "intent-review")
+
     def status(self) -> dict[str, object]:
         return self._execute(self._reserve(), "status")
 

@@ -8,13 +8,13 @@ import httpx
 import pytest
 
 from hfcache import locking
-from hfcache.api.app import create_app
 from hfcache.logging import reset
 from hfcache.paths import RepositoryLayout
 from hfcache.server_config import validate_server_config_mapping
 from hfcache.services.commands import CommandServices
 from hfcache.services.context import ServiceResult
 from tests.fixtures import examples
+from tests.intent_fixtures import create_app
 from tests.unit.test_api_command_adversarial import MCP, READER, WRITER, _raw
 from tests.unit.test_api_commands import (
     configured as command_archive,  # noqa: F401 - real archive fixture
@@ -90,7 +90,13 @@ def test_every_maintenance_surface_authenticates_before_receiving_body(configure
     assert payload["code"] == "HFAPI001"
     assert received == 0
     assert not archive.exists()
-    assert not list(app.state.operations.root.glob("*.json"))
+    assert sorted(path.name for path in app.state.operations.root.glob("*.json")) == [
+        "intent-dispositions.json"
+    ]
+    assert (
+        json.loads((app.state.operations.root / "intent-dispositions.json").read_bytes())["entries"]
+        == []
+    )
 
 
 @pytest.mark.parametrize("route", APPLY_ROUTES)
@@ -103,7 +109,13 @@ def test_every_apply_route_requires_writer_before_receiving_body(configured, rou
     assert payload["code"] == "HFAPI002"
     assert received == 0
     assert not archive.exists()
-    assert not list(app.state.operations.root.glob("*.json"))
+    assert sorted(path.name for path in app.state.operations.root.glob("*.json")) == [
+        "intent-dispositions.json"
+    ]
+    assert (
+        json.loads((app.state.operations.root / "intent-dispositions.json").read_bytes())["entries"]
+        == []
+    )
 
 
 def test_initialization_is_disabled_before_body_or_receipt(configured):
@@ -115,7 +127,13 @@ def test_initialization_is_disabled_before_body_or_receipt(configured):
     assert payload["code"] == "HFAPI002"
     assert received == 0
     assert not archive.exists()
-    assert not list(app.state.operations.root.glob("*.json"))
+    assert sorted(path.name for path in app.state.operations.root.glob("*.json")) == [
+        "intent-dispositions.json"
+    ]
+    assert (
+        json.loads((app.state.operations.root / "intent-dispositions.json").read_bytes())["entries"]
+        == []
+    )
 
 
 @pytest.mark.parametrize("route", [*PREVIEW_ROUTES, *APPLY_ROUTES[:-1]])
@@ -135,7 +153,13 @@ def test_body_mode_or_altered_preview_cannot_grant_execution(configured, route, 
     assert status == 422
     assert payload["code"] == "HFAPI006"
     assert not archive.exists()
-    assert not list(app.state.operations.root.glob("*.json"))
+    assert sorted(path.name for path in app.state.operations.root.glob("*.json")) == [
+        "intent-dispositions.json"
+    ]
+    assert (
+        json.loads((app.state.operations.root / "intent-dispositions.json").read_bytes())["entries"]
+        == []
+    )
 
 
 @pytest.mark.parametrize("confirm", [None, False, 0, 1, "true", [], {}])
@@ -160,7 +184,13 @@ def test_initialization_requires_literal_true_confirmation(settings, confirm):
     assert status == 422
     assert payload["code"] == "HFAPI006"
     assert not archive.exists()
-    assert not list(app.state.operations.root.glob("*.json"))
+    assert sorted(path.name for path in app.state.operations.root.glob("*.json")) == [
+        "intent-dispositions.json"
+    ]
+    assert (
+        json.loads((app.state.operations.root / "intent-dispositions.json").read_bytes())["entries"]
+        == []
+    )
 
 
 @pytest.mark.parametrize(
@@ -198,7 +228,13 @@ def test_initialization_rejects_unsafe_or_untyped_authority_fields(settings, fie
     assert status == 422
     assert payload["code"] in {"HFAPI006", "HFARG001"}
     assert not archive.exists()
-    assert not list(app.state.operations.root.glob("*.json"))
+    assert sorted(path.name for path in app.state.operations.root.glob("*.json")) == [
+        "intent-dispositions.json"
+    ]
+    assert (
+        json.loads((app.state.operations.root / "intent-dispositions.json").read_bytes())["entries"]
+        == []
+    )
 
 
 @pytest.mark.parametrize("route", ["/api/v1/purge-plans", "/api/v1/purges"])
@@ -228,7 +264,13 @@ def test_purge_requires_one_explicit_unmanaged_repository_scope(configured, rout
     assert status == 422
     assert payload["code"] in {"HFAPI006", "HFARG001"}
     assert not archive.exists()
-    assert not list(app.state.operations.root.glob("*.json"))
+    assert sorted(path.name for path in app.state.operations.root.glob("*.json")) == [
+        "intent-dispositions.json"
+    ]
+    assert (
+        json.loads((app.state.operations.root / "intent-dispositions.json").read_bytes())["entries"]
+        == []
+    )
 
 
 @pytest.mark.parametrize("route", ["/api/v1/quarantine-plans", "/api/v1/quarantine-cleanups"])
@@ -250,7 +292,13 @@ def test_quarantine_requires_a_bounded_explicit_transaction_id_array(configured,
     assert status in {413, 422}
     assert payload["code"] in {"HFAPI006", "HFARG001"}
     assert not archive.exists()
-    assert not list(app.state.operations.root.glob("*.json"))
+    assert sorted(path.name for path in app.state.operations.root.glob("*.json")) == [
+        "intent-dispositions.json"
+    ]
+    assert (
+        json.loads((app.state.operations.root / "intent-dispositions.json").read_bytes())["entries"]
+        == []
+    )
 
 
 @pytest.mark.parametrize(
@@ -275,7 +323,13 @@ def test_even_semantic_preview_requires_submission_key_before_service_work(confi
     assert status == 422
     assert payload["code"] == "HFAPI006"
     assert not archive.exists()
-    assert not list(app.state.operations.root.glob("*.json"))
+    assert sorted(path.name for path in app.state.operations.root.glob("*.json")) == [
+        "intent-dispositions.json"
+    ]
+    assert (
+        json.loads((app.state.operations.root / "intent-dispositions.json").read_bytes())["entries"]
+        == []
+    )
 
 
 @pytest.mark.parametrize(
@@ -307,7 +361,13 @@ def test_repair_requires_exact_revision_and_never_accepts_credential_override(co
     assert status == 422
     assert payload["code"] in {"HFAPI006", "HFARG001"}
     assert not archive.exists()
-    assert not list(app.state.operations.root.glob("*.json"))
+    assert sorted(path.name for path in app.state.operations.root.glob("*.json")) == [
+        "intent-dispositions.json"
+    ]
+    assert (
+        json.loads((app.state.operations.root / "intent-dispositions.json").read_bytes())["entries"]
+        == []
+    )
 
 
 def test_preview_key_does_not_authorize_apply_and_maintenance_gate_only_controls_init(

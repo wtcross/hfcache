@@ -2703,3 +2703,47 @@ def confirm_schedule(
     inspection.unit_states["hfcache-sync.service"] = _show("hfcache-sync.service", capture.budget)
     inspection.legacy = inspection.legacy_namespace()
     inspection.validate(observer_exited=action == "observer")
+
+
+def review_intent_locks(snapshot: AuthoritySnapshot, pid: int) -> dict[str, Any]:
+    """Metadata-only companion proof: actual authenticated API owns EX flock."""
+    capture = snapshot._inspection.capture  # noqa: SLF001 - shared protected snapshot
+    path = LOCK.with_name(LOCK.name + ".intent")
+    uid, gid = snapshot.api_principal
+    parent = capture.parent(path, owners={OWNER, uid})
+    try:
+        before = os.stat(path.name, dir_fd=parent, follow_symlinks=False)
+        _need(
+            stat.S_ISREG(before.st_mode)
+            and before.st_uid == uid
+            and before.st_gid == gid
+            and before.st_nlink == 1
+            and stat.S_IMODE(before.st_mode) == LOCK_MODE,
+            "facts-unavailable",
+        )
+        capture.label(path, ARCHIVE_LOCK_TYPE)
+        device = (os.major(before.st_dev), os.minor(before.st_dev), before.st_ino)
+        matches = 0
+        for line in capture.accounting(LOCKS).splitlines():
+            fields = line.split()
+            if (
+                len(fields) == 8  # noqa: PLR2004 - exact proc locks fields
+                and fields[1:4] == ["FLOCK", "ADVISORY", "WRITE"]
+                and fields[4] == str(pid)
+                and fields[6:] == ["0", "EOF"]
+            ):
+                parts = fields[5].split(":")
+                if (
+                    len(parts) == len(device)
+                    and (int(parts[0], 16), int(parts[1], 16), int(parts[2])) == device
+                ):
+                    matches += 1
+        after = os.stat(path.name, dir_fd=parent, follow_symlinks=False)
+        _need(matches == 1 and _identity(before) == _identity(after), "facts-unavailable")
+    finally:
+        os.close(parent)
+    original, _ = _archive_lock_context(capture, uid, gid)
+    return {
+        "intent_lock": {"device": before.st_dev, "inode": before.st_ino},
+        "archive_lock": {"device": original[0], "inode": original[1]},
+    }

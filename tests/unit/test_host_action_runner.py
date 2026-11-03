@@ -9,11 +9,11 @@ import pytest
 
 from hfcache import locking
 from hfcache.api.host_routes import OBSERVER_STOPS, SCHEDULE_CHANGES
-from hfcache.api.operations import OperationStore
 from hfcache.api.runner import OperationRunner
 from hfcache.errors import OperationError, RequestError, SafetyError
 from hfcache.locking import exclusive_lock
 from hfcache.services.context import ExecutionContext, ServiceResult
+from tests.intent_fixtures import OperationStore
 from tests.unit.test_runner import WRITER
 from tests.unit.test_runner import configured as configured  # noqa: PLC0414 - shared fixture
 

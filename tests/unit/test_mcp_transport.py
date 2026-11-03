@@ -11,10 +11,10 @@ from fastmcp import Client
 from fastmcp.client.transports import StreamableHttpTransport
 from fastmcp.utilities.asgi_transport import StreamingASGITransport, run_asgi_lifespan
 
-from hfcache.api.app import create_app
 from hfcache.mcp_tools import TOOL_NAMES
 from hfcache.server import build_server, listeners
 from hfcache.server_config import validate_server_config_mapping
+from tests.intent_fixtures import create_app
 from tests.unit.test_server_bootstrap import (
     TOKEN,
     exercise,

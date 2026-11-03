@@ -21,7 +21,6 @@ from hfcache.api.host_authorization import (
     require_admission,
     required_actions,
 )
-from hfcache.api.operations import OperationStore
 from hfcache.api.runner import OperationRunner
 from hfcache.errors import AuthorizationError, HostAdministrationUnavailableError, OperationError
 from hfcache.host_models import HOST_ACTIONS, HOST_UNITS, unavailable_host_status
@@ -29,6 +28,7 @@ from hfcache.host_protocol import HostProtocolError
 from hfcache.server_config import InstalledPolicy
 from hfcache.services.context import ExecutionContext, ServiceResult
 from tests.fixtures import examples
+from tests.intent_fixtures import OperationStore
 
 BASIC = Principal(
     CredentialClass.REST_WRITER,

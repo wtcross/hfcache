@@ -65,7 +65,7 @@ def install_maintenance_routes(app: FastAPI, server: ServerConfig) -> None:
             request.state.principal, Capability.WRITE if mutates else Capability.READ
         )
         route = request.scope["route"].path
-        authorization = await authorize_request(request, required_actions(route, body))
+        authorization = await authorize_request(request, required_actions(route, body), body=body)
         return await offload_command(
             request,
             lambda: admit_command(

@@ -458,7 +458,7 @@ class FixtureRoutes:
             await send({"type": "http.response.body", "body": body})
 
 
-async def exercise(  # noqa: PLR0915 - one actual fixture lifecycle retains drain evidence
+async def exercise(  # noqa: PLR0915, PLR0912 - one actual fixture lifecycle retains drain evidence
     workspace: Path, built: Path, env: dict[str, str], prefix: str
 ) -> dict[str, Any]:
     from hfcache.api.app import create_app
@@ -502,6 +502,18 @@ async def exercise(  # noqa: PLR0915 - one actual fixture lifecycle retains drai
             },
         }
     )
+    from hfcache import locking
+    from hfcache.api.operations import OperationStore
+
+    # Explicit offline activation of this new owned fixture before any API starts.
+    # Keep real product startup noncreating and all original browser/API assertions.
+    locking.LOCK_DIRECTORY = profile.parent / "intent-runtime"
+    locking.LOCK_DIRECTORY.mkdir(mode=0o700, exist_ok=True)
+    companion = locking.lock_path().with_name(locking.lock_path().name + ".intent")
+    if not companion.exists():
+        companion.touch(mode=0o600, exist_ok=False)
+    with OperationStore(settings.state_directory) as fixture_store:
+        fixture_store.prepare_intent_state(ARCHIVE_ID)
     app = create_app(settings, instance_lock_path=profile / "instance.lock")
     observations: list[dict[str, Any]] = []
     app.add_middleware(

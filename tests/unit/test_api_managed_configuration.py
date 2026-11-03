@@ -18,7 +18,6 @@ import httpx
 import pytest
 
 from hfcache import host_policy
-from hfcache.api.app import create_app
 from hfcache.host_models import HostStatus, unavailable_host_status
 from hfcache.host_protocol import HostProtocolError
 from hfcache.hub import DownloadEstimate, RepositoryFacts, TreeEntry
@@ -26,6 +25,7 @@ from hfcache.identity import CommitSha
 from hfcache.services.commands import CommandServices
 from hfcache.services.context import ServiceResult
 from tests.fixtures import examples
+from tests.intent_fixtures import create_app
 from tests.unit.test_host_action_routes import (
     ORIGIN,
 )

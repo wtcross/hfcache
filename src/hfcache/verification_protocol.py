@@ -78,7 +78,7 @@ def _version(value: object) -> object:
 
 class WorkerRequest(_Wire):
     schema_version: Annotated[Literal[1], BeforeValidator(_version)]
-    action: Literal["probe", "submit", "status"]
+    action: Literal["probe", "submit", "status", "intent-review"]
     operation_id: RunIdField | None = None
     config_fingerprint: Sha256 | None = None
     scope: VerificationScope | None = None
@@ -88,7 +88,7 @@ class WorkerRequest(_Wire):
     @model_validator(mode="after")
     def valid_action(self) -> Self:
         identified = self.operation_id is not None and self.config_fingerprint is not None
-        if self.action == "probe":
+        if self.action in {"probe", "intent-review"}:
             valid = (
                 all(
                     value is None
@@ -116,14 +116,28 @@ class WorkerRequest(_Wire):
         return self
 
 
+class WorkerReview(_Wire):
+    schema_version: Annotated[Literal[1], BeforeValidator(_version)]
+    instance_id: RunIdField
+    archive_id: str
+    config_fingerprint: Sha256
+    receipt_set_sha256: Sha256
+    intent_device: int = Field(strict=True, ge=0)
+    intent_inode: int = Field(strict=True, ge=0)
+
+
 class WorkerReply(_Wire):
     schema_version: Annotated[Literal[1], BeforeValidator(_version)]
-    outcome: Literal["available", "found", "missing", "unavailable", "conflict"]
+    outcome: Literal["available", "found", "missing", "unavailable", "conflict", "reviewed"]
     receipt: OperationReceipt | None = None
     envelope: Envelope | None = None
+    review: WorkerReview | None = None
 
     @model_validator(mode="after")
     def coherent(self) -> Self:
+        if (self.outcome == "reviewed") != (self.review is not None):
+            msg = "worker review lacks complete evidence"
+            raise ValueError(msg)
         if (self.outcome == "found") != (self.receipt is not None):
             message = "worker reply lacks exact identity"
             raise ValueError(message)
@@ -161,9 +175,14 @@ def _pairs(items: list[tuple[str, object]]) -> dict[str, object]:
     return result
 
 
-def _read_exact(connection: socket.socket, count: int) -> bytes:
+def _read_exact(connection: socket.socket, count: int, *, deadline: float | None = None) -> bytes:
     body = bytearray()
     while len(body) < count:
+        if deadline is not None:
+            left = deadline - time.monotonic()
+            if left <= 0:
+                raise unavailable()
+            connection.settimeout(left)
         chunk = connection.recv(min(65536, count - len(body)))
         if not chunk:
             raise unavailable()
@@ -171,12 +190,16 @@ def _read_exact(connection: socket.socket, count: int) -> bytes:
     return bytes(body)
 
 
-def receive_frame(connection: socket.socket, maximum: int = MAX_FRAME_BYTES) -> object:
-    size = _HEADER.unpack(_read_exact(connection, _HEADER.size))[0]
+def receive_frame(
+    connection: socket.socket, maximum: int = MAX_FRAME_BYTES, *, deadline: float | None = None
+) -> object:
+    size = _HEADER.unpack(_read_exact(connection, _HEADER.size, deadline=deadline))[0]
     if size < _MIN_FRAME_BYTES or size > maximum:
         raise unavailable()
     try:
-        return json.loads(_read_exact(connection, size), object_pairs_hook=_pairs)
+        return json.loads(
+            _read_exact(connection, size, deadline=deadline), object_pairs_hook=_pairs
+        )
     except ValueError, UnicodeError, RecursionError:
         raise unavailable() from None
 
@@ -297,21 +320,35 @@ class VerificationClient:
         self.progress = progress
         self.expected_archive_id = expected_archive_id
 
-    def exchange(self, request: WorkerRequest) -> WorkerReply:
+    def exchange(self, request: WorkerRequest, *, deadline: float | None = None) -> WorkerReply:
         try:
             with connect_private(
                 self.path,
                 expected_uid=self.expected_uid,
                 expected_socket_owner_uid=self.expected_socket_owner_uid,
-                timeout_seconds=self.timeout_seconds,
+                timeout_seconds=self.timeout_seconds
+                if deadline is None
+                else min(self.timeout_seconds, max(0.001, deadline - time.monotonic())),
             ) as connection:
+                if deadline is not None:
+                    left = deadline - time.monotonic()
+                    if left <= 0:
+                        raise unavailable()
+                    connection.settimeout(left)
                 send_frame(connection, request, self.max_frame_bytes)
-                reply = WorkerReply.model_validate(receive_frame(connection, self.max_frame_bytes))
+                reply = WorkerReply.model_validate(
+                    receive_frame(connection, self.max_frame_bytes, deadline=deadline)
+                )
         except OSError, ValueError, ValidationError, OperationError:
             raise unavailable() from None
         if reply.outcome in {"unavailable", "conflict"}:
             raise unavailable()
-        expected = {"probe": {"available"}, "status": {"found", "missing"}, "submit": {"found"}}
+        expected = {
+            "probe": {"available"},
+            "status": {"found", "missing"},
+            "submit": {"found"},
+            "intent-review": {"reviewed"},
+        }
         if reply.outcome not in expected[request.action]:
             raise unavailable()
         if reply.receipt is not None and (
@@ -331,6 +368,14 @@ class VerificationClient:
     def check_available(self) -> None:
         if self.exchange(WorkerRequest(schema_version=1, action="probe")).outcome != "available":
             raise unavailable()
+
+    def intent_review(self, *, deadline: float) -> WorkerReview:
+        reply = self.exchange(
+            WorkerRequest(schema_version=1, action="intent-review"), deadline=deadline
+        )
+        if reply.review is None or reply.review.archive_id != self.expected_archive_id:
+            raise unavailable()
+        return reply.review
 
     def status(self, operation_id: str, expected_fingerprint: str) -> WorkerReply:
         return self.exchange(

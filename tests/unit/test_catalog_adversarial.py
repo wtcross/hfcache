@@ -13,7 +13,6 @@ import httpx2
 import pytest
 from fastmcp.utilities.asgi_transport import StreamingASGITransport
 
-from hfcache.api.app import create_app
 from hfcache.catalog_display import catalog_rows
 from hfcache.catalog_models import ModelVariant, VariantMember, variant_identity
 from hfcache.catalog_query_models import CatalogQuery
@@ -25,6 +24,7 @@ from hfcache.redaction import redact_text, register_secret
 from hfcache.services.catalog_queries import CatalogQueries
 from tests.api_cli import api_cli
 from tests.fixtures import examples
+from tests.intent_fixtures import create_app
 from tests.unit import test_catalog_queries as domain
 from tests.unit.test_mcp_catalog import archive as archive  # noqa: PLC0414 - fixture
 from tests.unit.test_mcp_catalog import catalog as catalog  # noqa: PLC0414 - fixture

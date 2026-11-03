@@ -5,7 +5,6 @@ import threading
 
 import pytest
 
-from hfcache.api.app import create_app
 from hfcache.catalog_query_models import CatalogQuery
 from hfcache.catalog_storage import CatalogWriter
 from hfcache.config import load_config
@@ -14,6 +13,7 @@ from hfcache.paths import ArchiveLayout
 from hfcache.server_config import validate_server_config_mapping
 from hfcache.services.catalog_queries import CatalogQueries
 from tests.fixtures import examples
+from tests.intent_fixtures import create_app
 from tests.unit import test_api_reads as api
 from tests.unit import test_catalog_queries as catalog
 

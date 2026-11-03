@@ -1,9 +1,9 @@
 # Close original intent without inventing historical execution
 
 - Decision identity: 164.
-- Status: Accepted design; executable and installed conformance pending.
+- Status: Server implementation and owned source checks; browser and installed conformance pending.
 - Date: 2026-11-03.
-- Introducing change: this commit.
+- Introducing change: accepted design at `60d086931dc03d8582751c6a3c9b17eeb6f93715`; server implementation amendment below.
 
 ## Context and decision
 
@@ -11,8 +11,12 @@ Missing receipts cannot prove nonexecution, but a rejected or historical key-onl
 browser record otherwise prevents distinct new work indefinitely. Preserve all
 receipt schemas and introduce one bounded, separately versioned, permanent
 disposition file under the same store flock. Fresh validated pre-admission
-refusals close their keys durably. Exact admitted receipts always win over a
-later permission denial. An explicit Basic-own-key retirement can close unknown
+refusals close their keys durably. Generic registered Job adapters observe exact admitted receipts before a
+later effect permission check. Fixed protected configuration/host-effect POSTs
+retain independent fresh authorization; their original receipts and own-key
+GET/outcome observations remain available. Every lane enforces permanent fences
+and execution leases, and generic recovery cannot clear protected-effect
+precautions. An explicit Basic-own-key retirement can close unknown
 historical intent only after actual execution and protected-effect review.
 
 [The executable protocol](../job-recovery.md) fixes a shared admission/executor
@@ -31,7 +35,7 @@ confirmation becomes automatic. Schema 2 preserves schema-1 handles atomically.
 
 ## Rationale and alternatives
 
-One immutable-entry file and the existing store flock avoid a second multi-file
+One preserving-entry file and the existing store flock avoid a second multi-file
 transaction. No compaction/expiry makes non-revival directly testable. A retained
 fixed unknown filename deliberately makes the exact 0.3.1 predecessor refuse
 admission while preserving compatible exact-ID reads. Deleting browser evidence,
@@ -54,3 +58,40 @@ See [schemas](../schemas.md#133-original-intent-dispositions-schema-1),
 [invariants](../invariants.md#original-intent-closure).
 Design and predecessor source inspection are evidence of the chosen protocol;
 they are not executable race/crash or installed acceptance.
+
+## Historical refusal qualification (2026-11-03)
+
+A later refused same-key transmission cannot prove that an earlier missing or
+expired transmission never ran. Preserve the original refusal fields forever;
+allow only its null review to gain one complete exclusive historical-retirement
+proof. Project that reviewed key as retired unknown without deleting the refusal.
+This narrowly amends the original blanket entry-immutability wording. A second
+log, key revival or a special replay/dismiss command were rejected: the existing
+single-file atomic transaction and full review already provide the needed
+monotonic evidence. A saved browser disposition causally linked to its known new
+submission can be freshly matched after reload; an older unknown without that
+link must take the explicit review path even when a later refusal exists.
+
+## Server implementation evidence
+
+The [store](../../src/hfcache/api/operations.py),
+[independent disposition/interlock models](../../src/hfcache/api/intents.py),
+[authenticated routes](../../src/hfcache/api/intent_routes.py),
+[offline activation](../../src/hfcache/api/intent_activation.py),
+[runner](../../src/hfcache/api/runner.py) and private worker/helper implement
+the server protocol. Focused source tests cover
+[durability/previous reader](../../tests/unit/test_intent_dispositions.py),
+[authenticated HTTP](../../tests/unit/test_api_intents.py) and
+[exclusive review/handoff](../../tests/unit/test_intent_review.py).
+The activation module uses the real selected-runtime validator; a weaker
+handwritten predecessor reader is deliberately excluded. The protected runtime
+renderer/installer must supply the fixed invocation/mounts/label after actual
+previous-executor drain. Owned tests are neither installed helper confinement nor
+browser/deployed retirement proof.
+
+The server source gate25 passes9644 backend tests, three locked wheel profiles and
+all required strict web/source-browser/real-API read checks with1276 source files
+frozen unchanged. The executable exact0.3.1 c23abba reader drill refuses new-state
+scans/admission while retaining compatible exact-ID reads. These source proofs
+leave browser recovery, protected installer wiring/drain and installed workflow
+conformance with their selected later packages.

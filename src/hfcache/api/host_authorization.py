@@ -1,13 +1,16 @@
 """Fresh Basic action authority outside API/domain locks (INV-013/014, decision150)."""
 
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Protocol
 
 from pydantic import ValidationError
 
 from hfcache.api.auth import AuthenticationMethod
 from hfcache.api.command_models import DiagnosticsSubmission
-from hfcache.errors import AuthorizationError, HostAdministrationUnavailableError
+from hfcache.api.intents import IntentRefusalError
+from hfcache.api.operations import request_digest
+from hfcache.errors import AuthorizationError, HfcacheError, HostAdministrationUnavailableError
 from hfcache.host_models import HOST_ACTIONS, HostAction, HostBinding, HostProfile, HostStatus
 from hfcache.host_protocol import HostProtocolError
 
@@ -106,28 +109,85 @@ class ActionAuthorization:
 
 
 async def authorize_request(
-    request: Request, actions: frozenset[HostAction] | None
+    request: Request, actions: frozenset[HostAction] | None, *, body: CommandModel | None = None
 ) -> ActionAuthorization | None:
-    """Freshly authorize every Basic POST, including exact duplicate keys."""
-    if request.state.principal.authentication_method is not AuthenticationMethod.BASIC:
-        return None
-    if not actions or not actions <= frozenset(HOST_ACTIONS):
-        raise AuthorizationError
-    client = getattr(request.app.state, "host_helper", None)
-    if client is None:
-        raise HostAdministrationUnavailableError
+    """Observe an exact original admission before obtaining fresh action authority."""
+    from hfcache.api.commands import offload_command  # noqa: PLC0415 - shared bounded pool
+
+    key = None
+    route = request.scope["route"].path if body is not None else ""
+    if body is not None:
+        from hfcache.api.commands import (  # noqa: PLC0415 - shared strict header grammar
+            _key,
+            _no_query,
+        )
+
+        _no_query(request)
+        key = _key(request)
+        store = request.app.state.operations
+        record, disposition = await offload_command(
+            request,
+            lambda: store.intent(request.state.principal, key, request.app.state.policy.archive_id),
+        )
+        if record is not None:
+            store._same_request(record, route, request_digest(route, body.canonical_body()))  # noqa: SLF001 - shared canonical binding
+            request.state.original_admission = record
+            return None
+        if disposition is not None:
+            from hfcache.api.intents import unavailable  # noqa: PLC0415
+
+            msg = "Original key is closed; reconcile original intent"
+            raise unavailable(msg)
     try:
-        status = _status(await client.async_status(), actions)
-    except HostProtocolError, OSError, ValueError, TypeError:
-        raise HostAdministrationUnavailableError from None
-    binding, profile = status.binding, status.profile
-    if binding is None or profile is None:
-        raise HostAdministrationUnavailableError
-    # Exact duplicates bypass the store snapshot callback, so compare the
-    # lifespan's immutable archive authority before metadata offload as well.
-    policy = request.app.state.policy
-    _archive(binding, policy.archive_id, str(policy.root))
-    return ActionAuthorization(actions, binding, profile, client)
+        if request.state.principal.authentication_method is not AuthenticationMethod.BASIC:
+            return None
+        if not actions or not actions <= frozenset(HOST_ACTIONS):
+            raise AuthorizationError
+        client = getattr(request.app.state, "host_helper", None)
+        if client is None:
+            raise HostAdministrationUnavailableError
+        try:
+            status = _status(await client.async_status(), actions)
+            if (
+                "archive" in actions
+                and status.facts is not None
+                and status.facts.archive_mount in {"nfs-ro", "local-ro"}
+            ):
+                message = "Archive storage is read-only; no operation was admitted"
+                raise IntentRefusalError(reason="storage_read_only", message=message)
+        except HostProtocolError, OSError, ValueError, TypeError:
+            raise HostAdministrationUnavailableError from None
+        binding, profile = status.binding, status.profile
+        if binding is None or profile is None:
+            raise HostAdministrationUnavailableError
+        policy = request.app.state.policy
+        _archive(binding, policy.archive_id, str(policy.root))
+        return ActionAuthorization(actions, binding, profile, client)
+    except HfcacheError as error:
+        if key is not None and body is not None:
+            reason = (
+                "permission_denied"
+                if isinstance(error, AuthorizationError)
+                else error.reason
+                if isinstance(error, IntentRefusalError)
+                else "executor_unavailable"
+            )
+            record, _ = await offload_command(
+                request,
+                lambda: request.app.state.operations.refuse(
+                    request.state.principal,
+                    key,
+                    route,
+                    body.canonical_body(),
+                    request.app.state.policy.archive_id,
+                    reason,
+                ),
+            )
+            if record is not None:
+                request.state.original_admission = record
+                return None
+            error.headers = MappingProxyType({"Hfcache-Intent": "closed"})
+        raise
 
 
 def require_admission(
@@ -137,6 +197,8 @@ def require_admission(
     authorization: ActionAuthorization | None,
 ) -> None:
     """An omitted hook on a future Basic route cannot silently grant authority."""
+    if getattr(request.state, "original_admission", None) is not None:
+        return
     if request.state.principal.authentication_method is AuthenticationMethod.BASIC and (
         authorization is None or authorization.actions != required_actions(route, body)
     ):

@@ -10,7 +10,6 @@ import pytest
 
 from hfcache import locking
 from hfcache.api.auth import CredentialClass, Principal
-from hfcache.api.operations import OperationStore
 from hfcache.api.runner import OperationRunner
 from hfcache.errors import OperationError, SafetyError
 from hfcache.locking import CommandLockControl, exclusive_lock, scoped_command_lock
@@ -19,6 +18,7 @@ from hfcache.server_config import InstalledPolicy
 from hfcache.services import commands
 from hfcache.services.context import ServiceResult
 from tests.fixtures import examples
+from tests.intent_fixtures import OperationStore
 
 WRITER = Principal(CredentialClass.REST_WRITER)
 

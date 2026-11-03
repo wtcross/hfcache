@@ -23,11 +23,11 @@ from fastmcp.client.transports import StreamableHttpTransport
 from fastmcp.utilities.asgi_transport import StreamingASGITransport, run_asgi_lifespan
 
 import hfcache
-from hfcache.api.app import create_app
 from hfcache.config import load_config
 from hfcache.reporting import RunReport, VerificationReport
 from hfcache.server_config import validate_server_config_mapping
 from hfcache.services.queries import LocalQueries
+from tests.intent_fixtures import create_app
 from tests.unit.test_web_auth_fixture import provisioned as auth_provisioned  # noqa: F401
 from tests.unit.test_web_release import assets, release, verifier  # noqa: F401
 from tests.web_functional_fixture import seed_archive, snapshot

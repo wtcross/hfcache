@@ -9,12 +9,13 @@ import httpx2
 import pytest
 from fastmcp.utilities.asgi_transport import StreamingASGITransport, run_asgi_lifespan
 
-from hfcache.api.app import create_app
 from hfcache.client_models import ClientRead
 from hfcache.server_config import validate_server_config_mapping
+from tests.intent_fixtures import create_app
 from tests.unit.test_api_commands import configured as configured  # noqa: PLC0414 - fixture
 from tests.unit.test_api_commands import result, submit
 from tests.unit.test_api_operations import READER, READER_HEADERS, WRITER, WRITER_HEADERS
+from tests.unit.test_host_action_routes import StatusClient
 from tests.unit.test_mcp_tools import MCP, snapshot
 from tests.unit.test_mcp_tools import archive as archive  # noqa: PLC0414 - shared fixture
 from tests.unit.test_mcp_transport import INITIALIZE
@@ -98,12 +99,13 @@ def test_optional_mcp_keeps_exact_rest_openapi_and_authentication_scheme(configu
 
 
 @pytest.mark.parametrize("enabled", [False, True], ids=["rest-alone", "rest-and-mcp"])
-def test_every_rest_role_and_real_command_remains_identical_with_optional_mcp(
+def test_every_rest_role_and_real_command_remains_identical_with_optional_mcp(  # noqa: PLR0915 - complete role inventory plus unchanged real command workflow
     configured, tmp_path, enabled
 ):
     base, layout, hub, lock = configured
     server = settings(base, tmp_path, enabled=enabled)
     helper = ForbiddenHostHelper()
+    readiness = StatusClient()
     app = create_app(server, instance_lock_path=lock, host_helper=helper)
 
     async def exercise():
@@ -123,14 +125,24 @@ def test_every_rest_role_and_real_command_remains_identical_with_optional_mcp(
                 assert status == 401, (method, path, payload)
                 assert received == 0
                 for token in (READER, WRITER):
-                    outcome = await raw_request(
-                        app,
-                        method,
-                        concrete(path),
-                        (f"Bearer {token}".encode(),),
-                        body=b"{" if method == "POST" else b"",
-                    )
+                    advisory = path == "/api/v1/jobs/readiness"
+                    if advisory:
+                        app.state.host_helper = readiness
+                    try:
+                        outcome = await raw_request(
+                            app,
+                            method,
+                            concrete(path),
+                            (f"Bearer {token}".encode(),),
+                            body=b"{" if method == "POST" else b"",
+                        )
+                    finally:
+                        app.state.host_helper = helper
                     assert_rest_role_outcome(method, path, token, outcome)
+                    if advisory:
+                        observed = json.loads(outcome[1])
+                        assert observed["archive"] is observed["hub"] is observed["control"] is None
+            assert readiness.async_calls == 2
             assert app.state.operations.list() == ()
             assert snapshot(layout.root) == before_security_checks
             capabilities = await client.get("/api/v1/capabilities", headers=READER_HEADERS)

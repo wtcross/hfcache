@@ -1710,3 +1710,17 @@ def read_journal(policy: Any, snapshot: Any, body: object) -> dict[str, Any]:  #
         }
     finally:
         JOURNAL_CAPACITY.release()
+
+
+def review_intent_history(policy: Any, snapshot: Any) -> str:
+    """Read-only whole-history proof; pending/unclassifiable effects refuse."""
+    files = _Files(policy, snapshot)
+    with files.locked():
+        _need(_pending(files) is None)
+        _history(files)
+        records = [
+            files.authenticated(path / "record.json", b"host-action-record-v1")
+            for path in _entries(ROOT, MAX_RECORDS)
+        ]
+        policy.revalidate(snapshot)
+        return hashlib.sha256(_encoded(records)).hexdigest()

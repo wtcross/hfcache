@@ -9,12 +9,12 @@ import copy
 import httpx
 import pytest
 
-from hfcache.api.app import create_app
 from hfcache.api.host_routes import OBSERVER_STOPS, SCHEDULE_CHANGES
 from hfcache.errors import OperationError
 from hfcache.host_actions_models import HostObserverStatus, ScheduleChangeOutcome
 from tests.fixtures.examples import ARCHIVE_ID
 from tests.fixtures.host_examples import host_status
+from tests.intent_fixtures import create_app
 
 pytest_plugins = ("tests.unit.test_host_action_routes",)
 EXPECTED = {

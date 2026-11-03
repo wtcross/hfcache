@@ -15,7 +15,6 @@ from pydantic import ValidationError
 
 from hfcache import locking, storage
 from hfcache.api.auth import CredentialClass, Principal
-from hfcache.api.operations import OperationStore
 from hfcache.api.runner import OperationRunner
 from hfcache.archive import initialize_archive
 from hfcache.errors import ConfigurationError, OperationError, RequestError
@@ -37,6 +36,7 @@ from hfcache.verification_protocol import (
     receive_frame,
     send_frame,
 )
+from tests.intent_fixtures import OperationStore
 from tests.unit.test_verification import ARCHIVE_ID, MODEL, SHA_A, nfs_line, publish
 from tests.unit.test_verify_command import config_for, write_run_report
 
@@ -501,10 +501,15 @@ def test_activated_worker_entrypoint(tmp_path, extra_descriptor):
     credential = tmp_path / "synthetic-credential"
     credential.write_bytes(b"synthetic test file")
     address = tmp_path / "v.sock"
+    companion = tmp_path / "hfcache.lock.intent"
+    companion.touch(mode=0o600)
     trampoline = (
         "import os,sys; fd=int(sys.argv[1]); os.dup2(fd,3); os.set_inheritable(3,True); "
         "(os.close(fd) if fd!=3 else None); os.environ['LISTEN_PID']=str(os.getpid()); "
-        "os.execv(sys.executable,[sys.executable,'-m','hfcache.verification_worker',*sys.argv[2:]])"
+        "import hfcache.locking; "
+        "hfcache.locking.LOCK_DIRECTORY=__import__('pathlib').Path(sys.argv[3]).parent; "
+        "sys.argv=['hfcache.verification_worker',*sys.argv[2:]]; "
+        "__import__('runpy').run_module('hfcache.verification_worker',run_name='__main__')"
     )
     with (
         socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as listener,
@@ -589,3 +594,32 @@ def test_verifier_settings_are_strict(setting, value):
             }
         )
     assert "HFCFG" in str(failed.value)
+
+
+def test_review_frame_deadline_is_absolute_across_trickled_chunks():
+    body = b"{" + b" " * 100 + b"}"
+    reader, writer = socket.socketpair()
+
+    def trickle():
+        try:
+            writer.sendall(struct.pack("!I", len(body)))
+            for byte in body:
+                writer.sendall(bytes((byte,)))
+                threading.Event().wait(0.02)
+        except BrokenPipeError:
+            pass
+        finally:
+            writer.close()
+
+    thread = threading.Thread(target=trickle)
+    thread.start()
+    started = time.monotonic()
+    try:
+        reader.settimeout(1)
+        with pytest.raises((TimeoutError, OperationError)):
+            receive_frame(reader, deadline=started + 0.06)
+        assert time.monotonic() - started < 0.5
+    finally:
+        reader.close()
+        thread.join(5)
+    assert not thread.is_alive()

@@ -1044,9 +1044,15 @@ lives in the API operation store, under its original flock, service ownership,
 | `route`, `request_digest` | Canonical supported route and SHA256 for a validated fresh refusal; both null for key-wide unknown retirement |
 | `created_at` | Server UTC microsecond timestamp |
 | `reason` | Closed refusal reason from the [protocol](job-recovery.md#durable-key-closure), otherwise null |
-| `review` | Null for refusal; bounded exact review evidence below for unknown retirement |
+| `review` | Initially null for refusal; bounded exact review evidence for retirement, including a later reviewed historical retirement of a refused key |
 
-Entries sort by `(principal,key_digest)` and never change or expire. Reject
+Entries sort by `(principal,key_digest)` and never expire. Original fields are
+immutable. The sole monotonic update fills a refusal's null `review` once after
+the full exclusive historical review; it preserves the original refusal and
+permanently adds reviewed retirement evidence. No review may be replaced or
+cleared. A reviewed refusal projects as `retired_unknown` using its review
+ID/observed time/digest and null route/reason; its durable state and original
+refusal fields remain `not_admitted`. Reject
 duplicate namespace/key or IDs and contradictory receipt/fence bindings. Bound
 the complete file to 1 MiB and 1024 entries, each review to 4096 encoded bytes.
 Account this file within the existing operation-store byte budget as well.

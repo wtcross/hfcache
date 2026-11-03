@@ -7,7 +7,6 @@ import httpx
 import pytest
 
 from hfcache import locking, storage
-from hfcache.api.app import create_app
 from hfcache.archive import initialize_archive
 from hfcache.credentials import ResolvedToken, TokenSource
 from hfcache.errors import IntegrityError, Problem
@@ -20,6 +19,7 @@ from hfcache.publication import read_reference
 from hfcache.server_config import validate_server_config_mapping
 from hfcache.services.context import ExecutionContext, ServiceResult
 from hfcache.storage import parse_mount_table
+from tests.intent_fixtures import create_app
 from tests.unit.test_api_operations import READER, READER_HEADERS, WRITER, WRITER_HEADERS
 from tests.unit.test_synchronize import ARCHIVE_ID, CONFIG, CONTENT, DATASET, MODEL, SHA_A, FakeHub
 from tests.unit.test_verification import nfs_line

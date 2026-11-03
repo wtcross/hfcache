@@ -695,3 +695,15 @@ def test_every_emitted_durability_cut_preserves_inodes_and_observes_without_repl
         with pytest.raises(ValueError, match="protected configuration"):
             writer.apply(writer.request(operation_id="b" * 32))
         assert _owned_tree(writer) == preserved
+
+
+def test_intent_review_validates_confirmed_history_and_refuses_pending(writer):
+    baseline = configuration.review_intent_history(writer.policy, writer.snapshot())
+    assert len(baseline) == 64
+    body = writer.request([{"kind": "settings-replace", "settings": {"sync": {"max_workers": 3}}}])
+    assert writer.apply(body)["state"] == "confirmed"
+    assert configuration.review_intent_history(writer.policy, writer.snapshot()) != baseline
+    configuration.PENDING.write_bytes(b"preserved pending configuration")
+    with pytest.raises(ValueError, match="protected"):
+        configuration.review_intent_history(writer.policy, writer.snapshot())
+    assert configuration.PENDING.read_bytes() == b"preserved pending configuration"

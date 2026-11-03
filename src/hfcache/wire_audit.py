@@ -539,7 +539,7 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ("hfcache.ui_models", "3b3b4b2181294ce5c2426d9fdb9227c5a0da8bdfac67d99a0dabe61783701956"),
         (
             "hfcache.api.app",
-            "013dafe1bac42ac6a94794a1ed5e78bae222ecb0e693ec10e44022dd0cbfef23",
+            "53638a107bd579a738c2ce1f6d60a8c780cdf4eea84a095e4e7d9b04964c6466",
         ),
         (
             "hfcache.api.catalog",
@@ -547,7 +547,7 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ),
         (
             "hfcache.api.catalog_refresh",
-            "8a84aef9c0cd5d4eb77304ef3669f35c5509b75b862f801d3d40960a56abc5e8",
+            "2b2e70e70888eda6bb80a12140b9076503d33ad5084227c2e19fdfa73c030d42",
         ),
         (
             "hfcache.api.command_models",
@@ -555,11 +555,11 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ),
         (
             "hfcache.api.commands",
-            "73aa66e078d3baaaf471fe5fa0d935cd9d48d320c6d18e69d9bcc701e9dcecec",
+            "2923693fedbde7ef8db8b4fa0e5aa808bfca31ea23f510ee324f4d15a40f7d6a",
         ),
         (
             "hfcache.api.maintenance",
-            "76004c28da0dcd9344a2bd15e09661d8eddacf6a8a4304ba83e1dc31928c748c",
+            "8230aff071d5e0641d4241bb77a3e78c182f440b0a02fb3470165efd985545f3",
         ),
         (
             "hfcache.api.maintenance_models",
@@ -599,7 +599,7 @@ AUDITED_SOURCES: dict[str, str] = dict(  # noqa: C406 - multiline source pins re
         ),
         (
             "hfcache.errors",
-            "ea381bf6874dfd1de7f946d6790b1e9d2ea2d70fca9d7143b752c42f7c6ba9fe",
+            "aaef1e125b5a6afccf0f7013402f407c65da05bfe5a56546a82a69924cd5f676",
         ),
         (
             "hfcache.identity",

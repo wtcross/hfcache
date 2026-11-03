@@ -78,6 +78,7 @@ _REASONS = frozenset(
 _OPERATIONS = frozenset(
     {
         "status",
+        "intent-review",
         "config-read",
         "config-prepare",
         "config-apply",

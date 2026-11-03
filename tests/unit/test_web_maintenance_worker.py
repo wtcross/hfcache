@@ -11,13 +11,12 @@ from datetime import UTC, datetime, timedelta
 import httpx
 import pytest
 
-from hfcache.api.app import create_app
-from hfcache.api.operations import OperationStore
 from hfcache.identity import TransactionId
 from hfcache.paths import RepositoryLayout
 from hfcache.publication import read_reference, retained_references
 from hfcache.server_config import InstalledPolicy
 from hfcache.verification_executor import VerificationWorker
+from tests.intent_fixtures import OperationStore, create_app
 from tests.unit.test_api_commands import configured as configured  # noqa: PLC0414 - shared fixture
 from tests.unit.test_api_commands import submit
 from tests.unit.test_api_operations import READER_HEADERS, WRITER_HEADERS

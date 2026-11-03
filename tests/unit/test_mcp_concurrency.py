@@ -8,7 +8,6 @@ import pytest
 from fastmcp.utilities.asgi_transport import StreamingASGITransport
 
 from hfcache import locking
-from hfcache.api.app import create_app
 from hfcache.api.lifecycle import instance_lock
 from hfcache.errors import SafetyError
 from hfcache.hub import HubClient
@@ -18,6 +17,7 @@ from hfcache.services import commands
 from hfcache.services.context import ServiceResult
 from hfcache.services.queries import LocalQueries
 from tests.api_cli import private_verifier
+from tests.intent_fixtures import create_app
 from tests.unit.test_api_commands import configured as archive_base  # noqa: F401 - fixture
 from tests.unit.test_api_commands import result, submit
 from tests.unit.test_mcp_mount import MCP, WRITER

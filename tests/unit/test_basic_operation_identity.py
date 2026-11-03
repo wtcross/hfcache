@@ -13,11 +13,11 @@ from hfcache.api.auth import (
     Principal,
     require_admin_capability,
 )
-from hfcache.api.operations import OperationStore
 from hfcache.config import ApplicationConfig
 from hfcache.errors import AuthorizationError, OperationError, RequestError
 from hfcache.server_config import PolicySnapshot
 from tests.fixtures import examples
+from tests.intent_fixtures import OperationStore
 
 KEY = "known-original-key"
 LEGACY_DIGEST = "b5eb6d922ffe54c895f439b22b7b268cffc120dc816171d37b064fd307097ec3"

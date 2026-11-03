@@ -11,7 +11,7 @@ import os
 import re
 import secrets
 import stat
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -28,6 +28,19 @@ from hfcache.api.auth import (
     require_capability,
 )
 from hfcache.api.host_routes import HOST_EFFECT_ROUTES
+from hfcache.api.intents import (
+    INTENT_NAME,
+    MAX_INTENT_BYTES,
+    MAX_INTENTS,
+    AdmissionUncertainError,
+    IntentDisposition,
+    IntentReview,
+    IntentState,
+    RefusalReason,
+)
+from hfcache.api.intents import (
+    unavailable as intent_unavailable,
+)
 from hfcache.api.lifecycle import open_directory
 from hfcache.config import ArchiveId  # noqa: TC001 - runtime Pydantic field validation
 from hfcache.errors import OperationError, RequestError
@@ -300,8 +313,10 @@ class OperationStore:
         limits: OperationLimits = _DEFAULT_LIMITS,
         clock: Callable[[], datetime] | None = None,
         checkpoint: Callable[[str], None] | None = None,
+        private: bool = False,
     ) -> None:
         self.root = root
+        self.private = private
         self.limits = limits
         self.clock = clock or (lambda: datetime.now(UTC))
         self.checkpoint = checkpoint
@@ -309,11 +324,14 @@ class OperationStore:
         self._fd = -1
         self._lock_fd = -1
         self._closed = False
+        self._uncertain_admissions: set[str] = set()
         parent = -1
+        created_root = False
         try:
             parent = open_directory(root.parent)
             try:
                 os.mkdir(root.name, mode=0o700, dir_fd=parent)
+                created_root = True
                 os.fsync(parent)
             except FileExistsError:
                 pass
@@ -325,7 +343,11 @@ class OperationStore:
             self._validate(os.fstat(self._fd), directory=True)
             self._lock_fd = os.open(
                 ".lock",
-                os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC,
+                os.O_RDWR
+                | (os.O_CREAT if created_root or private else 0)
+                | os.O_NOFOLLOW
+                | os.O_NONBLOCK
+                | os.O_CLOEXEC,
                 0o600,
                 dir_fd=self._fd,
             )
@@ -448,17 +470,21 @@ class OperationStore:
             raise OperationError
         return receipt
 
-    def _scan(self) -> tuple[tuple[OperationReceipt, ...], int]:
+    def _scan(self) -> tuple[tuple[OperationReceipt, ...], int]:  # noqa: PLR0912 - closed store families
+        intent = None if self.private else self._intents()
         receipts = []
         names = []
         total = 0
         with os.scandir(self._fd) as entries:
             for entry in entries:
-                if len(names) > self.limits.max_records * 2 + 1:
+                if len(names) > self.limits.max_records * 2 + 2:
                     raise OperationError
                 names.append(entry.name)
         for name in sorted(names):
             if name == ".lock":
+                continue
+            if name == INTENT_NAME and intent is not None:
+                total += os.stat(INTENT_NAME, dir_fd=self._fd, follow_symlinks=False).st_size
                 continue
             info = os.stat(name, dir_fd=self._fd, follow_symlinks=False)
             self._validate(info)
@@ -478,6 +504,11 @@ class OperationStore:
             if record.state in _TERMINAL:
                 self._result(record)
         bindings = [(record.principal, record.key_digest) for record in receipts]
+        if intent is not None and (
+            any(record.archive_id != intent.archive_id for record in receipts)
+            or any((entry.principal, entry.key_digest) in bindings for entry in intent.entries)
+        ):
+            raise OperationError
         if len(set(bindings)) != len(bindings):
             raise OperationError
         return tuple(
@@ -509,6 +540,232 @@ class OperationStore:
             None,
         )
 
+    def prepare_intent_state(self, archive_id: str) -> None:
+        """Explicit OFFLINE first activation after independent executor drain.
+
+        Does not create a companion or touch the archive. Installer owns the
+        coordinated backup, exact ownership and original-lock handoff.
+        """
+        with self._locked():
+            if INTENT_NAME in os.listdir(self._fd):  # noqa: PTH208 - pinned dirfd, never reopen path
+                msg = "Intent authority already exists; preserve activation state"
+                raise intent_unavailable(msg)
+            # The predecessor validator must accept every artifact first.
+            private = self.private
+            try:
+                self.private = True
+                records, _ = self._scan()
+            finally:
+                self.private = private
+            if any(record.archive_id != archive_id for record in records):
+                raise intent_unavailable()
+            self._write(
+                INTENT_NAME,
+                dump(IntentState(schema_version=1, archive_id=archive_id)),
+                MAX_INTENT_BYTES,
+            )
+
+    def _intents(self) -> IntentState:
+        try:
+            return _decode(IntentState, self._read(INTENT_NAME, MAX_INTENT_BYTES))
+        except OperationError, ValueError, ValidationError:
+            raise intent_unavailable() from None
+
+    def intent(
+        self, principal: Principal, key: str, archive_id: str
+    ) -> tuple[OperationReceipt | None, IntentDisposition | None]:
+        require_capability(principal, Capability.READ)
+        digest = _key_digest(key, principal)
+        with self._locked():
+            state = self._intents()
+            if state.archive_id != archive_id:
+                raise intent_unavailable()
+            record = self._lookup(principal, digest)
+            entry = next(
+                (
+                    item
+                    for item in state.entries
+                    if item.principal == principal.credential_class and item.key_digest == digest
+                ),
+                None,
+            )
+            os.fsync(self._fd)
+            if (
+                record is not None
+                and record.operation_id in self._uncertain_admissions
+                and record.state in {"queued", "waiting_lock", "running"}
+            ):
+                raise AdmissionUncertainError(record.operation_id)
+            return record, entry
+
+    def _append_intent(self, state: IntentState, entry: IntentDisposition) -> IntentDisposition:
+        binding = (entry.principal, entry.key_digest)
+        previous = next(
+            (item for item in state.entries if (item.principal, item.key_digest) == binding), None
+        )
+        if previous is None and len(state.entries) >= MAX_INTENTS:
+            message = "Intent authority is full; preserve permanent closures"
+            raise intent_unavailable(message)
+        if previous is not None and (
+            previous.review is not None
+            or entry.review is None
+            or previous.model_dump(exclude={"review"}) != entry.model_dump(exclude={"review"})
+        ):
+            raise intent_unavailable()
+        try:
+            members = (
+                *(item for item in state.entries if (item.principal, item.key_digest) != binding),
+                entry,
+            )
+            updated = IntentState(
+                schema_version=1,
+                archive_id=state.archive_id,
+                entries=tuple(
+                    sorted(members, key=lambda item: (item.principal.value, item.key_digest))
+                ),
+            )
+        except ValidationError:
+            msg = "Intent authority capacity exhausted"
+            raise intent_unavailable(msg) from None
+        _, total = self._scan()
+        body = dump(updated)
+        if (
+            total - os.stat(INTENT_NAME, dir_fd=self._fd, follow_symlinks=False).st_size + len(body)
+            > self.limits.max_store_bytes
+        ):
+            msg = "Operation store capacity exhausted"
+            raise intent_unavailable(msg)
+        self._write(INTENT_NAME, body, MAX_INTENT_BYTES)
+        return entry
+
+    def refuse(  # noqa: PLR0913, PLR0917 - exact validated binding and trusted refusal
+        self,
+        principal: Principal,
+        key: str,
+        route: str,
+        request: Mapping[str, Any],
+        archive_id: str,
+        reason: RefusalReason,
+    ) -> tuple[OperationReceipt | None, IntentDisposition | None]:
+        """Recheck acceptance after fresh denial; never redefine an admitted key."""
+        digest, binding = request_digest(route, request), _key_digest(key, principal)
+        require_capability(principal, Capability.READ)
+        with self._locked():
+            state = self._intents()
+            if state.archive_id != archive_id:
+                raise intent_unavailable()
+            record = self._lookup(principal, binding)
+            if record is not None:
+                self._same_request(record, route, digest)
+                os.fsync(self._fd)
+                if record.operation_id in self._uncertain_admissions and record.state in {
+                    "queued",
+                    "waiting_lock",
+                    "running",
+                }:
+                    raise AdmissionUncertainError(record.operation_id)
+                return record, None
+            previous = next(
+                (
+                    item
+                    for item in state.entries
+                    if item.principal == principal.credential_class and item.key_digest == binding
+                ),
+                None,
+            )
+            if previous is not None:
+                os.fsync(self._fd)
+                return None, previous
+            entry = IntentDisposition(
+                disposition_id=secrets.token_hex(16),
+                principal=principal.credential_class,
+                key_digest=binding,
+                state="not_admitted",
+                route=route,
+                request_digest=digest,
+                created_at=self.clock(),
+                reason=reason,
+                review=None,
+            )
+            return None, self._append_intent(state, entry)
+
+    def retire(
+        self,
+        principal: Principal,
+        key: str,
+        archive_id: str,
+        review: IntentReview,
+        *,
+        receipt_set_sha256: str,
+    ) -> tuple[OperationReceipt | None, IntentDisposition | None]:
+        """Trusted exclusive-review publication; no public caller supplies proof."""
+        if principal.authentication_method is not AuthenticationMethod.BASIC:
+            raise RequestError(status_code=403)
+        binding = _key_digest(key, principal)
+        with self._locked():
+            state = self._intents()
+            records, _ = self._scan()
+            if (
+                state.archive_id != archive_id
+                or self.receipt_set_digest(records) != receipt_set_sha256
+                or review.receipt_set_sha256 != receipt_set_sha256
+            ):
+                msg = "Review changed; inspect operation history"
+                raise intent_unavailable(msg)
+            existing = self._lookup(principal, binding)
+            if existing is not None:
+                return existing, None
+            previous = next(
+                (
+                    item
+                    for item in state.entries
+                    if item.principal == principal.credential_class and item.key_digest == binding
+                ),
+                None,
+            )
+            if previous is not None:
+                if previous.review is not None:
+                    os.fsync(self._fd)
+                    return None, previous
+                enriched = IntentDisposition.model_validate(
+                    previous.model_dump() | {"review": review}
+                )
+                return None, self._append_intent(state, enriched)
+            entry = IntentDisposition(
+                disposition_id=secrets.token_hex(16),
+                principal=principal.credential_class,
+                key_digest=binding,
+                state="retired_unknown",
+                route=None,
+                request_digest=None,
+                created_at=self.clock(),
+                reason=None,
+                review=review,
+            )
+            return None, self._append_intent(state, entry)
+
+    @staticmethod
+    def receipt_set_digest(records: tuple[OperationReceipt, ...]) -> str:
+        return hashlib.sha256(
+            serialize(
+                [
+                    record.model_dump(mode="json")
+                    for record in sorted(
+                        records, key=lambda item: (item.created_at, item.operation_id)
+                    )
+                ]
+            ).encode()
+        ).hexdigest()
+
+    @staticmethod
+    def _same_request(record: OperationReceipt, route: str, digest: str) -> None:
+        if record.route != route or record.request_digest != digest:
+            raise RequestError(
+                code="HFAPI012",
+                status_code=409,
+                message="Idempotency key conflicts with its admitted request",
+            )
+
     def lookup(self, principal: Principal, key: str) -> OperationReceipt:
         require_capability(principal, Capability.READ)
         digest = _key_digest(key, principal)
@@ -527,7 +784,7 @@ class OperationStore:
             records, _ = self._scan()
             return tuple(reversed(records))
 
-    def admit(  # noqa: PLR0913 - trusted admission guards and exact worker identity
+    def admit(  # noqa: PLR0913, PLR0912, PLR0915 - trusted admission guards and exact worker identity
         self,
         principal: Principal,
         key: str,
@@ -541,6 +798,36 @@ class OperationStore:
         require_capability(principal, Capability.READ)
         key_hash = _key_digest(key, principal)
         digest = request_digest(route, request)
+        with self._locked():
+            previous = self._lookup(principal, key_hash)
+            if previous is not None:
+                self._same_request(previous, route, digest)
+                if operation_id is not None and previous.operation_id != operation_id:
+                    raise RequestError(code="HFAPI012", status_code=409)
+                os.fsync(self._fd)
+                if previous.operation_id in self._uncertain_admissions and previous.state in {
+                    "queued",
+                    "waiting_lock",
+                    "running",
+                }:
+                    raise AdmissionUncertainError(previous.operation_id)
+                return Admission(previous, created=False)
+            if not self.private:
+                state = self._intents()
+                if any(
+                    item.principal == principal.credential_class and item.key_digest == key_hash
+                    for item in state.entries
+                ):
+                    msg = "Original key is permanently closed; reconcile original intent"
+                    raise intent_unavailable(msg)
+                if len(state.entries) >= MAX_INTENTS or len(dump(state)) >= MAX_INTENT_BYTES:
+                    msg = "Intent authority is full"
+                    raise intent_unavailable(msg)
+        # Policy and executor checks may exchange IPC. Never run them under the
+        # store flock. Both authorities are rechecked immediately before save.
+        if before_admit is not None:
+            before_admit()
+        policy = snapshot()
         with self._locked():
             records, total = self._scan()
             previous = next(
@@ -564,11 +851,15 @@ class OperationStore:
                         message="Idempotency key conflicts with its admitted request",
                     )
                 os.fsync(self._fd)
+                if previous.operation_id in self._uncertain_admissions and previous.state in {
+                    "queued",
+                    "waiting_lock",
+                    "running",
+                }:
+                    raise AdmissionUncertainError(previous.operation_id)
                 return Admission(previous, created=False)
             if operation_id is not None and not _ID.fullmatch(operation_id):
                 raise OperationError
-            if before_admit is not None:
-                before_admit()
             reservation = self.limits.max_receipt_bytes + self.limits.max_result_bytes
             reserved = sum(reservation for record in records if record.state not in _TERMINAL)
             terminal_bytes = total - sum(
@@ -583,7 +874,18 @@ class OperationStore:
                 or terminal_bytes + reserved + reservation > self.limits.max_store_bytes
             ):
                 raise OperationError
-            policy = snapshot()
+            if not self.private:
+                state = self._intents()
+                if (
+                    state.archive_id != policy.config.storage.archive_id
+                    or len(state.entries) >= MAX_INTENTS
+                    or any(
+                        item.principal == principal.credential_class and item.key_digest == key_hash
+                        for item in state.entries
+                    )
+                ):
+                    msg = "Original-intent authority prevents admission"
+                    raise intent_unavailable(msg)
             now = self.clock()
             operation_id = operation_id or secrets.token_hex(16)
             if operation_id in {record.operation_id for record in records}:
@@ -600,7 +902,23 @@ class OperationStore:
                 created_at=now,
                 updated_at=now,
             )
-            self._save(receipt)
+            try:
+                self._save(receipt)
+            except OperationError:
+                # The candidate ID was minted/checked under this original flock
+                # and has never escaped to a queue. Classify only our exact
+                # visible candidate, while the caller's admission lease remains.
+                with suppress(OperationError, ValidationError):
+                    visible = self._receipt(receipt.operation_id)
+                    if visible == receipt:
+                        self._uncertain_admissions.add(receipt.operation_id)
+                        now = max(self.clock(), receipt.created_at)
+                        interrupted = OperationReceipt.model_validate(
+                            receipt.model_dump()
+                            | {"state": "interrupted", "updated_at": now, "completed_at": now}
+                        )
+                        self._save(interrupted)
+                raise AdmissionUncertainError(receipt.operation_id) from None
             return Admission(receipt, created=True)
 
     def transition(

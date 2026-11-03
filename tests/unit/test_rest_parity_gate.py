@@ -11,6 +11,7 @@ from tests.rest_parity import HOST_HTTP_EVIDENCE, PARITY, Evidence, ParityMode
 from tests.rest_reference import (
     CATALOG_API_REFERENCE,
     HOST_HTTP_REFERENCE,
+    INTENT_HTTP_REFERENCE,
     PARITY_REFERENCE,
     REFERENCE,
 )
@@ -75,11 +76,11 @@ def parameter_values(
 def test_manifest_has_exactly_all_36_unique_semantic_rows_in_contract_order():
     rows = matrix_rows()
     assert len(PARITY) == len(PARITY_REFERENCE) == 36
-    assert len(REFERENCE) == len(rows) == 58
+    assert len(REFERENCE) == len(rows) == 61
     assert len({mode.cli_mode for mode in PARITY}) == len(PARITY)
     assert list(PARITY_REFERENCE) == [mode.cli_mode for mode in PARITY]
     assert rows == REFERENCE
-    assert len({row[:2] for row in rows}) == 58
+    assert len({row[:2] for row in rows}) == 61
     assert all(len(row) == 9 for row in rows)
 
 
@@ -287,3 +288,22 @@ def test_catalog_routes_have_independent_http_evidence_before_cli_acceptance(rou
     }
     assert row[1:] == (*expected[:1], labels[route], *expected[2:])
     evidence_function(Evidence(*CATALOG_API_REFERENCE[route]))
+
+
+@pytest.mark.parametrize("expected", INTENT_HTTP_REFERENCE, ids=lambda row: row[0])
+def test_original_intent_routes_have_separate_http_authority_and_evidence(expected):
+    actual = next(row for row in matrix_rows() if row[:2] == expected[:2])
+    assert actual == expected
+    assert all(actual[:2] not in routes for routes in PARITY_REFERENCE.values())
+    for module, function in (
+        ("test_api_intents", "test_fresh_refusal_is_durable_and_own_namespace_get_survives_reload"),
+        (
+            "test_api_intents",
+            "test_readiness_needs_read_capability_and_reports_nullable_fresh_facts",
+        ),
+        (
+            "test_intent_review",
+            "test_unknown_retirement_needs_no_action_or_host_read_grants_and_never_replays",
+        ),
+    ):
+        evidence_function(Evidence(module, function))

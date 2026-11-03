@@ -18,7 +18,6 @@ with warnings.catch_warnings():
     )
     from fastapi.testclient import TestClient
 
-from hfcache.api.app import create_app
 from hfcache.archive import inspect_archive
 from hfcache.logging import reset
 from hfcache.metadata import MetadataReader, QueryBounds, QueryLimitError
@@ -26,6 +25,7 @@ from hfcache.paths import ArchiveLayout
 from hfcache.server_config import validate_server_config_mapping
 from hfcache.storage import parse_mount_table
 from tests.fixtures.examples import sentinel
+from tests.intent_fixtures import create_app
 
 WRITER = "writer_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
 READER = "reader_9876543210zyxwvutsrqponmlkjihgfedcbaZYXWVU"

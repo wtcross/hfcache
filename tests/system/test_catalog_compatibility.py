@@ -13,13 +13,13 @@ from pathlib import Path
 import pytest
 
 from hfcache.api.auth import CredentialClass, Principal
-from hfcache.api.operations import OperationStore
 from hfcache.client_models import ClientOperation
 from hfcache.paths import ArchiveLayout
 from hfcache.server_config import InstalledPolicy
 from hfcache.services.commands import CommandServices
 from hfcache.services.context import ExecutionContext
 from hfcache.services.requests import CatalogRefreshRequest
+from tests.intent_fixtures import OperationStore
 from tests.unit import test_catalog_lifecycle as lifecycle
 from tests.unit import test_synchronize as sync_fixtures
 from tests.unit.test_mcp_tools import snapshot

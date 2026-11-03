@@ -10,10 +10,8 @@ import httpx
 import pytest
 
 from hfcache import catalog_capture
-from hfcache.api.app import create_app
 from hfcache.api.auth import CredentialClass, Principal
 from hfcache.api.command_models import CatalogRefreshSubmission
-from hfcache.api.operations import OperationStore
 from hfcache.catalog_models import RepositoryCard
 from hfcache.catalog_refresh import CatalogRefreshResult
 from hfcache.catalog_storage import CatalogWriter, read_repository_card, read_tag_snapshot
@@ -27,6 +25,7 @@ from hfcache.services.commands import CommandServices
 from hfcache.services.context import ExecutionContext
 from hfcache.services.requests import SelectionRequest
 from tests.fixtures.gguf import gguf
+from tests.intent_fixtures import OperationStore, create_app
 from tests.unit import test_api_commands as api
 from tests.unit.test_synchronize import ARCHIVE_ID, MODEL, SHA_A
 

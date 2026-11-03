@@ -58,6 +58,33 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   receiptfc6fe3b5. No product source, dependency, production service, archive,
   permission, mount or original application lock changes. API-019 is next.
 
+
+- [x] API-019 Implement bounded original-intent dispositions and executor review
+  (2026-11-03, this commit — [task](plans/tasks/api-019-original-intent-dispositions.md),
+  [plan](plans/2026-11-03-plan-job-recovery-and-archive-writes.md)).
+  Permanent schema1 fences preserve admitted receipts/namespaces; bounded own-key
+  GET/readiness and explicit Basic retirement use independent cross-process
+  admission/queue/worker leases and actual helper/worker/pending-effect proof.
+  Offline activation uses the selected runtime's real predecessor validator.
+  Refusal review enriches once without erasing evidence or inventing historical
+  nonexecution; fixed protected effects retain their independent precautions.
+  Reviewed INV013/014/023, FS02/19/21–23, AD16/17 and applicable ADR114/115/118/
+  145/146/150/154/164; no dependency or receipt-wire change. Exact c23abba reader
+  execution proves new-marker refusal and preserved compatible exact-ID reads.
+  Strict gate25 passes9644 backend checks/build/three locked wheel profiles,
+  3757 web unit/4115 combined component checks,11 built Chromium checks, actual
+  zoom and real API React read fixture in1594.475s;1276 files frozen unchanged,
+  inner logab10e6eb/shadow8f917bc5. Focused race/crash/namespace/capacity/degraded/
+  authorization/worker-helper checks pass. Raw failures/full payloads survive
+  reviewed exact current-temp retirement and lossless manifest compression;
+  no historical cleanup or mandatory threshold reduction. Browser/installed
+  behavior, protected installer wiring/drain and writer mode remain later work.
+  Post-gate completion records pass69 documentation checks/alignment; only those
+  five Markdown files differ from the frozen source manifest. WEB-032 is next.
+  Successful gate25 TMP retires only after164266-entry manifest459b1289 and
+  fresh no-owner proof, receipt3eeb110c; all logs/browser/source reports remain.
+  No production/archive/service/permission/mount mutation.
+
 ## Repository hygiene (2026-11-02)
 
 - [x] DOC-020 Ignore root Node dependencies
@@ -2883,6 +2910,23 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-03: API-019 source completes and selects WEB-032 after strict gate25.
+Production remains the original0.3.1/sourcec23abba/NFS-ro baseline; no deployment,
+writer transition, application lock/state or protected permission changed here.
+The next browser task owns closed intent/readiness DTO/decoder/route entries, causal saved refusal
+restoration and GET-only visible recovery; older unknown records require explicit
+review. OPS-027 must wire fixed selected-image offline activation/mounts/label,
+prove actual prior-executor drain and original-lock handoff, and provision native/
+rootless companion binds. WEB-033 qualifies installed helper/executor confinement
+and recovery before installed retirement. Current-source checks
+are not that proof. Preserve full failed payloads/receipts under the current API019
+validation evidence and all browser/source reports. Exact reviewed temp retirement
+changed capacity only; no cache/historical cleanup, threshold waiver or production
+effect occurred. Root free1060589568B/home48721920B after successful25 TMP
+retirement require next-gate space planning; no further cleanup is authorized
+by this completed package. Remaining production jobs/authentication stay with later tasks.
+
 
 2026-11-03: WEB-031 completes accepted design and selects API-019. All eight
 packages are authorized in the active job-recovery/manual-writes plan, including
@@ -13842,3 +13886,14 @@ server metadata cache permission or a new architectural decision.
    proof and separately authorized pilots remain with later tasks. Existing
    worker storage/preflight contracts are retained to avoid a separate verifier
    redesign. ADR126/127/141/150/159/162 and INV003 are explicitly amended.
+
+2026-11-03 API-019 refinement and implementation of decision164: a later denied
+transmission cannot prove an older missing-history request never ran. Preserve
+all refusal fields and permit only one full exclusive-review enrichment; deriving
+retired unknown from that review avoids a second log, key revival or replay.
+Generic Job adapters observe admitted originals before fresh effect authority;
+fixed protected configuration/host-effect POSTs retain their independent checks
+and own-key GET/outcome rules. All lanes enforce permanent fences and execution
+leases, and generic recovery never clears protected effects. ADR164/schema13.3/
+INV023 and the executable recovery contract record this bounded amendment; browser
+and installed conformance remain separate from the passing source gate.

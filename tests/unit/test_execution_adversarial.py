@@ -11,7 +11,6 @@ import pytest
 from pydantic import ValidationError
 
 from hfcache.api.auth import CredentialClass, Principal
-from hfcache.api.operations import OperationStore
 from hfcache.api.runner import OperationRunner
 from hfcache.config import load_config
 from hfcache.errors import HfcacheError
@@ -20,6 +19,7 @@ from hfcache.server_config import InstalledPolicy
 from hfcache.services.context import ExecutionContext, ServiceResult
 from hfcache.verification_executor import VerificationWorker
 from hfcache.verification_protocol import VerificationScope, WorkerReply, WorkerRequest
+from tests.intent_fixtures import OperationStore
 
 ARCHIVE_ID = "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90"
 WRITER = Principal(CredentialClass.REST_WRITER)

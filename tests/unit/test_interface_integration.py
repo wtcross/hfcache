@@ -7,11 +7,11 @@ import sys
 
 import pytest
 
-from hfcache.api.app import create_app
 from hfcache.server import build_server, listeners
 from hfcache.server_config import validate_server_config_mapping
 from tests.api_cli import private_verifier
 from tests.fixtures.examples import ARCHIVE_ID
+from tests.intent_fixtures import create_app
 from tests.unit.test_api_commands import configured as configured_base  # noqa: F401 - fixture
 from tests.unit.test_api_operations import READER, WRITER
 from tests.unit.test_mcp_tools import snapshot

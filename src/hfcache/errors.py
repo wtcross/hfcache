@@ -122,6 +122,7 @@ class HfcacheError(Exception):
     """Base class for every failure that maps to an application exit code."""
 
     exit_code: ExitCode = ExitCode.CONFIGURATION
+    headers = MappingProxyType({})
 
     def __init__(self, problems: list[Problem] | tuple[Problem, ...]) -> None:
         self.problems: tuple[Problem, ...] = tuple(problems)

@@ -6,7 +6,6 @@ from dataclasses import asdict
 import pytest
 
 from hfcache.api.auth import CredentialClass, Principal
-from hfcache.api.operations import OperationStore
 from hfcache.api.runner import OperationRunner
 from hfcache.catalog_storage import CatalogWriter, read_tag_snapshot
 from hfcache.hub import HubClient
@@ -14,6 +13,7 @@ from hfcache.server_config import InstalledPolicy
 from hfcache.services import commands
 from hfcache.services.commands import CommandServices
 from hfcache.services.requests import CatalogRefreshRequest
+from tests.intent_fixtures import OperationStore
 from tests.unit import test_synchronize as sync_fixtures
 from tests.unit.test_synchronize import ARCHIVE_ID, MODEL
 

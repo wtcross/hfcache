@@ -12,10 +12,10 @@ import pytest
 from typer.testing import CliRunner
 
 from hfcache import cli, cli_client
-from hfcache.api.app import create_app
 from hfcache.client import ApiClient
 from hfcache.server import build_server, listeners
 from hfcache.server_config import validate_server_config_mapping
+from tests.intent_fixtures import create_app
 from tests.unit.test_api_client_adversarial import _accepted, _read
 from tests.unit.test_server_bootstrap import (
     ARCHIVE_ID,

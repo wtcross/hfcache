@@ -8,12 +8,12 @@ from starlette.requests import Request
 
 from hfcache.api.auth import CredentialClass, Principal
 from hfcache.api.commands import _accepted
-from hfcache.api.operations import OperationStore
 from hfcache.config import ApplicationConfig
 from hfcache.server_config import PolicySnapshot, ServerConfig
 from hfcache.services.context import ExecutionContext
 from hfcache.url_paths import uri_path
 from tests.fixtures import examples
+from tests.intent_fixtures import OperationStore
 
 
 @pytest.mark.parametrize(

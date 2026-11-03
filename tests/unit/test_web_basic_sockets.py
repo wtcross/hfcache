@@ -22,10 +22,10 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import NameOID
 
-from hfcache.api.app import create_app
 from hfcache.api.basic import create_administrator_record
 from hfcache.server import build_server
 from hfcache.server_config import validate_server_config_mapping
+from tests.intent_fixtures import create_app
 from tests.unit.test_server_bootstrap import isolate_logging  # noqa: F401 - autouse fixture
 
 if TYPE_CHECKING:

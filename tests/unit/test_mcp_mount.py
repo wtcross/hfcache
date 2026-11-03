@@ -9,7 +9,6 @@ from contextlib import asynccontextmanager
 
 import pytest
 
-from hfcache.api.app import create_app
 from hfcache.api.auth import Capability, load_credentials
 from hfcache.api.lifecycle import instance_lock
 from hfcache.errors import ConfigurationError, RequestError, SafetyError
@@ -23,6 +22,7 @@ from hfcache.mcp import (
 from hfcache.redaction import register_secret
 from hfcache.server_config import validate_server_config_mapping
 from tests.fixtures.examples import ARCHIVE_ID
+from tests.intent_fixtures import create_app
 
 WRITER = "mount-writer-" + "W" * 40
 READER = "mount-reader-" + "R" * 40

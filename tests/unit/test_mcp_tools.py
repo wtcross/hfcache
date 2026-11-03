@@ -17,7 +17,6 @@ from fastmcp.client.transports import StreamableHttpTransport
 from fastmcp.utilities.asgi_transport import StreamingASGITransport, run_asgi_lifespan
 
 from hfcache import credentials, hashing, hub, publication, storage, verification
-from hfcache.api.app import create_app
 from hfcache.config import load_config
 from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity, RunId
 from hfcache.manifests import RevisionManifest
@@ -33,6 +32,7 @@ from hfcache.services import commands
 from hfcache.services.queries import LocalQueries, PublicationQuery, RepositoryQuery
 from tests.docs_contract import CHECKER
 from tests.fixtures import examples
+from tests.intent_fixtures import create_app
 from tests.unit.test_server_bootstrap import (
     isolate_logging,  # noqa: F401 - autouse fixture
 )

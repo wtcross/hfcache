@@ -10,10 +10,10 @@ from fastmcp.server.middleware import MiddlewareContext
 from fastmcp.utilities.asgi_transport import StreamingASGITransport
 from mcp.types import CallToolRequestParams
 
-from hfcache.api.app import create_app
 from hfcache.mcp import SafeToolErrors
 from hfcache.services.context import ServiceResult
 from hfcache.services.queries import LocalQueries
+from tests.intent_fixtures import create_app
 from tests.unit.test_mcp_mount import MCP, WRITER
 from tests.unit.test_mcp_mount import configured as configured  # noqa: PLC0414 - pytest fixture
 

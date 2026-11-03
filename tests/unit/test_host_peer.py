@@ -692,3 +692,27 @@ def test_native_console_script_swapped_or_unverified_alias_refuses(monkeypatch, 
     state, deployment, _ = native_uv_fixture(monkeypatch, interpreter)
     with pytest.raises(module.PeerError):
         module._native_process(state, deployment, budget())
+
+
+def test_intent_review_rejects_unclassified_init_scope_processes():
+    keeper = {"pid": 20, "start_ticks": 30}
+    manager = {"pid": 21, "start_ticks": 31, "argv": ["/usr/lib/systemd/systemd", "--user"]}
+    assert module._intent_inert(manager, "/usr/lib/systemd/systemd", keeper)
+    assert module._intent_inert(
+        {"pid": 20, "start_ticks": 30, "argv": ["catatonit", "-P"]},
+        "/usr/libexec/catatonit/catatonit",
+        keeper,
+    )
+    assert not module._intent_inert(
+        manager | {"argv": ["python", "unknown.py"]}, "/usr/bin/python", keeper
+    )
+    assert not module._intent_inert(
+        {"pid": 99, "start_ticks": 30, "argv": ["catatonit", "-P"]},
+        "/usr/libexec/catatonit/catatonit",
+        keeper,
+    )
+    assert not module._intent_inert(
+        manager | {"argv": ["/usr/lib/systemd/systemd", "--user", "--unclassified"]},
+        "/usr/lib/systemd/systemd",
+        keeper,
+    )

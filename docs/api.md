@@ -131,6 +131,9 @@ apply authority. All POSTs reject query parameters. Optional docs require
 | `GET /operations/{operation_id}` | default | operations show | R | synchronous | none | no | none | none |
 | `GET /operations/{operation_id}/result` | default | operations wait | R | synchronous | none | no | none | none |
 | `GET /operations/{operation_id}/events` | default | operations wait | R | synchronous | none | no | none | none |
+| `GET /jobs/readiness` | default | browser / HTTP | R | bounded helper/worker observation | none | no | none | none |
+| `GET /operations/intent` | default | browser / HTTP | R + original key | bounded original namespace read | none | no | none | none |
+| `POST /operations/intent/retire` | default | browser / HTTP | Basic + original key | exclusive executor/effect review | archive | no | none | permanent original-intent disposition |
 | `GET /health` | default | SDK / HTTP | R | synchronous | none | no | none | none |
 | `GET /openapi.json` | default | SDK / HTTP | R | synchronous | none | no | none | none |
 | `GET /docs` | optional | SDK / HTTP | R | synchronous | none | no | none | none |
@@ -139,8 +142,11 @@ Basic keyed jobs additionally require fresh protected host permissions at
 admission and immediately before dispatch. Archive jobs require `archive`, Hub
 sizing/diagnostics require `hub`, and maintenance previews require `control`;
 non-read-only diagnostics require both `hub` and `archive`. Archive initialization
-is denied for Basic. Unknown actions deny. Duplicate POSTs repeat these checks;
-original operation lookup/result reads remain available without them. Service
+is denied for Basic. Unknown actions deny. Generic Job adapters observe exact admitted duplicates
+before fresh effect authorization; new admissions still repeat these checks.
+Managed configuration and fixed host-effect POSTs retain independent fresh
+authorization and original-key GET/outcome confirmation rules.
+Original operation lookup/result reads remain available without them. Service
 bearers retain their existing behavior. See the exact
 [action matrix](host-administration.md#fresh-basic-admission-and-uncertainty).
 
@@ -491,8 +497,8 @@ and the [recovery runbook](recovery.md#preserve-four-kinds-of-authority).
 
 The accepted [job recovery contract](job-recovery.md) adds bounded advisory
 `GET /api/v1/jobs/readiness`, original-key `GET /api/v1/operations/intent` and
-explicit Basic-own-key `POST /api/v1/operations/intent/retire`. These are design
-requirements pending implementation and installed acceptance. Existing receipt,
+explicit Basic-own-key `POST /api/v1/operations/intent/retire`. These are implemented in source; browser and installed acceptance remain
+pending. Existing receipt,
 acceptance, problem and lookup wire schemas remain unchanged. Durable
 pre-admission refusals hint closure with `Hfcache-Intent: closed`; only a fresh
 validated intent GET proves it. Ordinary problems and missing history remain

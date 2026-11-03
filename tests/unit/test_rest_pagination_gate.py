@@ -5,7 +5,6 @@ from datetime import timedelta
 
 import pytest
 
-from hfcache.api.app import create_app
 from hfcache.client import ApiClient
 from hfcache.client_config import ClientConfig
 from hfcache.client_errors import RemoteApiError
@@ -14,6 +13,7 @@ from hfcache.identity import CommitSha, PublicationId, RepositoryIdentity, RunId
 from hfcache.server import build_server, listeners
 from hfcache.services.queries import LocalQueries, RepositoryQuery
 from tests.fixtures import examples
+from tests.intent_fixtures import create_app
 from tests.unit.test_api_reads import write_model
 from tests.unit.test_server_bootstrap import (
     TOKEN,

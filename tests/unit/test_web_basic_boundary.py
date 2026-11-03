@@ -13,7 +13,6 @@ import httpx
 import pytest
 
 from hfcache.api import app as application_module
-from hfcache.api.app import create_app
 from hfcache.api.auth import AuthenticationMethod, CredentialClass
 from hfcache.api.basic import BasicProvider, create_administrator_record, load_basic_provider
 from hfcache.errors import AuthenticationCapacityError, AuthenticationError, ConfigurationError
@@ -21,6 +20,7 @@ from hfcache.logging import reset
 from hfcache.server_config import validate_server_config_mapping
 from hfcache.taxonomy import classify
 from tests.fixtures import examples
+from tests.intent_fixtures import create_app
 
 WRITER = "writer_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
 READER = "reader_9876543210zyxwvutsrqponmlkjihgfedcbaZYXWVU"

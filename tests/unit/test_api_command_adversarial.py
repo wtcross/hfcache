@@ -8,7 +8,6 @@ import httpx
 import pytest
 
 from hfcache import locking
-from hfcache.api.app import create_app
 from hfcache.errors import OperationError, SafetyError
 from hfcache.logging import reset
 from hfcache.paths import RepositoryLayout
@@ -17,6 +16,7 @@ from hfcache.server_config import validate_server_config_mapping
 from hfcache.services.commands import CommandServices
 from hfcache.services.context import ExecutionContext, ServiceResult
 from tests.fixtures import examples
+from tests.intent_fixtures import create_app
 from tests.unit.test_api_commands import (
     configured as command_archive,  # noqa: F401 - shared fixture
 )
@@ -309,7 +309,13 @@ def test_explicit_null_candidate_is_refused_without_echo_or_admission(configured
     assert payload["code"] == "HFAPI006"
     assert OPAQUE not in json.dumps(payload)
     assert not archive.exists()
-    assert not list(app.state.operations.root.glob("*.json"))
+    assert sorted(path.name for path in app.state.operations.root.glob("*.json")) == [
+        "intent-dispositions.json"
+    ]
+    assert (
+        json.loads((app.state.operations.root / "intent-dispositions.json").read_bytes())["entries"]
+        == []
+    )
 
 
 @pytest.mark.parametrize("read_only", [None, False, 0, 1, "true", [], {}])
@@ -344,7 +350,13 @@ def test_no_command_accepts_request_selected_server_path_or_credential(configure
     assert payload["code"] == "HFAPI006"
     assert OPAQUE not in json.dumps(payload)
     assert not archive.exists()
-    assert not list(app.state.operations.root.glob("*.json"))
+    assert sorted(path.name for path in app.state.operations.root.glob("*.json")) == [
+        "intent-dispositions.json"
+    ]
+    assert (
+        json.loads((app.state.operations.root / "intent-dispositions.json").read_bytes())["entries"]
+        == []
+    )
 
 
 @pytest.mark.parametrize(
@@ -381,7 +393,13 @@ def test_verification_invalid_modes_and_selectors_never_admit(configured, body, 
     assert payload["code"] == code
     assert OPAQUE not in json.dumps(payload)
     assert not archive.exists()
-    assert not list(app.state.operations.root.glob("*.json"))
+    assert sorted(path.name for path in app.state.operations.root.glob("*.json")) == [
+        "intent-dispositions.json"
+    ]
+    assert (
+        json.loads((app.state.operations.root / "intent-dispositions.json").read_bytes())["entries"]
+        == []
+    )
 
 
 @pytest.mark.parametrize("route", ["/api/v1/syncs", "/api/v1/plans"])
@@ -410,7 +428,13 @@ def test_selection_requires_array_of_domain_selectors(configured, route, selecto
     assert status == 422
     assert payload["code"] == code
     assert not archive.exists()
-    assert not list(app.state.operations.root.glob("*.json"))
+    assert sorted(path.name for path in app.state.operations.root.glob("*.json")) == [
+        "intent-dispositions.json"
+    ]
+    assert (
+        json.loads((app.state.operations.root / "intent-dispositions.json").read_bytes())["entries"]
+        == []
+    )
 
 
 @pytest.mark.parametrize(
@@ -435,7 +459,13 @@ def test_invalid_submission_key_refuses_before_verification_probe(configured, ve
     assert verifier.probes == 0
     assert verifier.calls == []
     assert not archive.exists()
-    assert not list(app.state.operations.root.glob("*.json"))
+    assert sorted(path.name for path in app.state.operations.root.glob("*.json")) == [
+        "intent-dispositions.json"
+    ]
+    assert (
+        json.loads((app.state.operations.root / "intent-dispositions.json").read_bytes())["entries"]
+        == []
+    )
 
 
 def test_verification_retry_precedes_unavailable_probe_changed_policy_and_conflict(
@@ -458,6 +488,11 @@ def test_verification_retry_precedes_unavailable_probe_changed_policy_and_confli
             assert unavailable.status_code == 503
             assert unavailable.json()["code"] == "HFAPI016"
             assert app.state.operations.list() == ()
+            assert unavailable.headers["Hfcache-Intent"] == "closed"
+            original = await client.get("/api/v1/operations/intent", headers=headers)
+            assert original.json()["state"] == "not_admitted"
+            # A closed original key cannot revive when readiness changes.
+            headers = headers | {"Idempotency-Key": "known-admitted-request"}
             verifier.available = True
             verifier.release.clear()
             try:
@@ -525,7 +560,9 @@ def test_simultaneous_semantically_identical_posts_have_one_durable_admission(co
             identifier = identifiers.pop()
             assert sum(payload["created"] for payload in payloads) == 1
             assert len(app.state.operations.list()) == 1
-            assert verifier.probes == 1
+            # Fresh probes may overlap outside store/runner locks; admission
+            # and actual execution below must still each happen exactly once.
+            assert 1 <= verifier.probes <= 4
             result = await asyncio.to_thread(app.state.runner.wait, identifier, timeout=5)
             assert result.exit_code == 0
             assert [entry[0] for entry in verifier.calls] == [identifier]

@@ -12,13 +12,12 @@ import httpx
 import pytest
 
 from hfcache import verification_executor
-from hfcache.api.app import create_app
-from hfcache.api.operations import OperationStore
 from hfcache.paths import RepositoryLayout
 from hfcache.preflight import hub_checks
 from hfcache.publication import read_reference
 from hfcache.server_config import InstalledPolicy
 from hfcache.verification_executor import VerificationWorker
+from tests.intent_fixtures import OperationStore, create_app
 from tests.unit.test_api_commands import configured as configured  # noqa: PLC0414 - shared fixture
 from tests.unit.test_api_commands import result as command_result
 from tests.unit.test_api_commands import submit

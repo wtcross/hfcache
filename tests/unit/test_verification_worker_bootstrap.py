@@ -16,9 +16,22 @@ from hfcache.verification_protocol import VerificationClient
 from tests.socket_activation import activated_process
 from tests.unit.test_verification_executor import ARCHIVE_ID
 
+_NATIVE_DRIVER = """
+import sys
+import hfcache.verification_worker as bootstrap
+_original_run=bootstrap._run
+def run(*arguments):
+ import hfcache.locking as locking
+ locking.LOCK_DIRECTORY=arguments[0].config.parent
+ return _original_run(*arguments)
+bootstrap._run=run
+raise SystemExit(bootstrap.main())
+"""
+
 
 @pytest.fixture
 def worker(tmp_path):
+    (tmp_path / "hfcache.lock.intent").touch(mode=0o600)
     config = tmp_path / "config.toml"
     config.write_text(
         f'schema_version=1\n[storage]\narchive_root="{tmp_path / "archive"}"\n'
@@ -30,8 +43,8 @@ def worker(tmp_path):
         address.chmod(0o600)
         listener.listen(8)
         arguments = [
-            "-m",
-            "hfcache.verification_worker",
+            "-c",
+            _NATIVE_DRIVER,
             "--config",
             str(config),
             "--state-directory",
@@ -175,6 +188,12 @@ def namespace_precondition(options):
  try: return original_check(options)
  finally: os.getpid=original_pid
 bootstrap._valid_bootstrap=namespace_precondition
+_actual_run=bootstrap._run
+def owned_run(*arguments):
+ import hfcache.locking as locking
+ locking.LOCK_DIRECTORY=arguments[0].config.parent
+ return _actual_run(*arguments)
+bootstrap._run=owned_run
 if case in {'nss','stop-during-nss'}:
  original_nss=bootstrap.pwd.getpwnam
  def nss(name):
@@ -205,6 +224,7 @@ raise SystemExit(bootstrap.main())
 
 @pytest.fixture
 def owned_worker(tmp_path):
+    (tmp_path / "hfcache.lock.intent").touch(mode=0o600)
     config = tmp_path / "owned.toml"
     config.write_text(
         f'schema_version=1\n[storage]\narchive_root="{tmp_path / "archive"}"\n'

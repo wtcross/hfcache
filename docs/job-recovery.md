@@ -1,7 +1,7 @@
 # Job readiness and original-intent recovery
 
 This contract specifies the next recovery and rootless writer behavior. It is
-accepted design; the installed release's capabilities and deployment checkpoint
+implemented server protocol with source validation; the installed release's capabilities and deployment checkpoint
 remain authoritative until implementation and installed acceptance complete.
 Existing operation receipts, domain journals and protected outcomes retain their
 independent meanings. [Decision 164](adr/decision-164.md) explains recovery;
@@ -71,11 +71,17 @@ state preserves evidence and closes admission/review; healthy exact-ID receipt
 and result reads remain possible. Store opening does not replay any operation.
 An activation marker is not recreated over uncertain existing state.
 
-For an authenticated, keyed, fully validated supported request, first look for
-its existing receipt and fence under the store flock. An exact receipt is the
+For an authenticated, keyed, fully validated request to a generic registered Job
+adapter (including installed/candidate `/plans`), first look for its existing receipt and fence under the store flock. An exact receipt is the
 original admitted operation; changed route/body conflicts. Fresh denial cannot
 redefine prior admission. Observe existing acceptance without new enqueue or
 effect authorization; authenticated namespace/read capability still applies.
+Managed configuration previews/applications and fixed protected host-effect POSTs
+retain their independent fresh authorization and outcome-confirmation rules.
+Their existing receipts remain unchanged and observable through original-key
+GET/outcome reads; a refused duplicate POST does not redefine their admission.
+All admission lanes still enforce permanent key fences and hold execution leases.
+Generic intent recovery never clears unresolved protected-effect precautions.
 If no binding exists, release the store flock and perform fresh action/policy/
 capacity/readiness checks. Protected exchanges never run under a store lock.
 Reacquire the store flock and recheck both authorities before either receipt
@@ -90,6 +96,14 @@ body/key, arbitrary middleware failure and unpersisted errors cannot assert
 closure. A failed fence write/fsync makes the response uncertain and runs no
 work. If rename succeeded before a crash, a later validated read can recover
 the durable fence; an error response alone cannot do so.
+
+A `not_admitted` fence proves only its validated refused transmission, never
+that an earlier transmission with missing/expired history did not execute. The
+browser persists the verified disposition for its known newly-created submission
+after that submission's closed response and authenticated intent GET; reload
+requires a fresh matching-ID GET. Restored older unknown records without this
+causal saved disposition require explicit historical review even if a later
+refusal has closed their key.
 
 No fence expires or is deleted. At 1024 entries or 1 MiB encoded state, refuse
 fresh admission and closure rather than discard a fence. Existing observations
@@ -194,7 +208,15 @@ archive, namespace binding and digest of bounded nonsecret review evidence.
 The evidence binds companion/original lock device/inode, actual API/worker/helper
 instance identities, selected deployment/policy, receipt-set and protected
 outcome observations; retain the evidence in the bounded entry, not a separate
-transaction file. The state means **Historical outcome unknown; request retired**.
+transaction file. For an existing refusal without a review, preserve every original refusal
+field and atomically fill its null `review` exactly once. This monotonic evidence
+enrichment has the same complete proof requirements as unknown retirement. Its
+public projection uses `retired_unknown`, the review ID/time/digest and null
+route/reason, while the original refusal remains intact in durable state. A
+review already present is immutable. A prior refusal alone cannot short-circuit
+historical review.
+
+The projected state means **Historical outcome unknown; request retired**.
 It says neither success nor nonexecution and changes no journal, receipt,
 configuration or protected outcome. Release locks only after durable publication.
 Future old-key requests can observe this disposition but cannot execute.
@@ -241,3 +263,19 @@ remain selected; an older UI can be used only with its actual fail-closed limits
 If an older backend is retained for diagnostics, stop its admission externally
 and retain a matching compatible reader. A rollback cannot erase fences or
 restore write authority to a binary unable to enforce them.
+
+## Offline source entrypoint and deployment boundary
+
+The internal [activation module](../src/hfcache/api/intent_activation.py) runs
+only in the selected immutable application runtime after the protected installer
+has independently drained actual executors and retained the original archive
+flock. Its fixed invocation has no network, credential or archive mount, and
+exposes only archive UUID and a new local backup destination. It validates and
+backs up both predecessor stores under their original flocks, then durably
+provisions the service-owned companion and initial public disposition authority.
+Partial or prior activation refuses without overwriting evidence.
+
+The protected installer/runtime renderer must supply that exact fixed invocation,
+original/companion mounts and coordination label before installed activation.
+This source module is not startup auto-provisioning or an installed acceptance
+claim. Recreated runtime objects still require independently reviewed quiescence.

@@ -8,13 +8,13 @@ from datetime import timedelta
 
 import pytest
 
-from hfcache.api.app import create_app
 from hfcache.config import load_config
 from hfcache.identity import RunId
 from hfcache.server import build_server, listeners
 from hfcache.server_config import validate_server_config_mapping
 from hfcache.services.queries import LocalQueries
 from tests.fixtures import examples
+from tests.intent_fixtures import create_app
 from tests.unit.test_api_reads import write_model
 from tests.unit.test_cli_runs import PREFIX
 from tests.unit.test_server_bootstrap import (

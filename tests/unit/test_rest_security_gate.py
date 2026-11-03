@@ -6,11 +6,11 @@ import json
 import pytest
 from starlette.routing import Route
 
-from hfcache.api.app import create_app
 from hfcache.logging import reset
 from hfcache.server_config import validate_server_config_mapping
 from tests.docs_contract import CHECKER
 from tests.fixtures.examples import ARCHIVE_ID
+from tests.intent_fixtures import create_app
 from tests.unit.test_rest_parity_gate import matrix_rows
 
 WRITER = "acceptance-writer-" + "W" * 40
@@ -42,6 +42,8 @@ READ_PATHS = (
         "/repositories/{repository_type}/{namespace}/{name}/publications/"
         "{commit_sha}/{publication_id}/card"
     ),
+    "/jobs/readiness",
+    "/operations/intent",
     "/operations",
     "/operations/lookup",
     "/operations/{operation_id}",
@@ -89,7 +91,7 @@ ADMIN_READ_PATHS = (
     "/config/applications/{operation_id}",
     *NEW_HOST_READ_PATHS,
 )
-ADMIN_POST_PATHS = ("/config/applications", *NEW_HOST_POST_PATHS)
+ADMIN_POST_PATHS = ("/config/applications", "/operations/intent/retire", *NEW_HOST_POST_PATHS)
 ROUTES = (
     tuple(("GET", PREFIX + path) for path in READ_PATHS)
     + tuple(("GET", PREFIX + path) for path in ADMIN_READ_PATHS)
@@ -197,7 +199,7 @@ def test_every_registered_rest_method_has_an_independent_security_case(configure
     if not docs_enabled:
         expected.remove(("GET", PREFIX + "/docs"))
     assert actual == expected
-    assert len(actual) == (51 if docs_enabled else 50)
+    assert len(actual) == (54 if docs_enabled else 53)
     documented = {
         (row[0].split(" ", 1)[0], PREFIX + row[0].split(" ", 1)[1])
         for row in matrix_rows()
@@ -215,6 +217,7 @@ def test_documented_post_routes_use_the_strict_named_request_models(configured):
     models = {
         "/config/validate": "ValidationSubmission",
         "/config/applications": "ConfigApplicationSubmission",
+        "/operations/intent/retire": "RetirementRequest",
         "/host/sync-schedule/validations": "ScheduleValidationRequest",
         "/host/sync-schedule/changes": "ScheduleChangeRequest",
         "/host/sync-observer/stops": "ObserverStopRequest",

@@ -14,7 +14,9 @@ import httpx
 import pytest
 
 from hfcache import server as bootstrap
+from hfcache.server_config import InstalledPolicy
 from hfcache.unix_http import UnixHTTPTransport
+from tests.intent_fixtures import OperationStore
 from tests.socket_activation import activated_process
 from tests.unit.test_server_bootstrap import TOKEN
 from tests.unit.test_server_bootstrap import policy as original_policy  # noqa: F401 - fixture
@@ -25,6 +27,7 @@ from pathlib import Path
 import hfcache
 from hfcache.server import build_server,listeners
 from hfcache.api.app import create_app
+from hfcache.api.operations import OperationStore
 from hfcache.server_config import validate_server_config_mapping
 
 root=Path(sys.argv[1]);mode=sys.argv[2]
@@ -53,7 +56,9 @@ def delayed_unlink(path,*args,**kwargs):
         return result
     return original_unlink(path,*args,**kwargs)
 if mode=='repeat':os.unlink=delayed_unlink
-application=create_app(policy,instance_lock_path=root/'daemon.lock')
+store=OperationStore(policy.state_directory)
+store.intent_lock_path=root/'intent.lock'
+application=create_app(policy,instance_lock_path=root/'daemon.lock',operation_store=store)
 server=build_server(application,policy)
 with listeners(policy.listener) as channels:
     info=policy.listener.unix_socket.lstat()
@@ -84,6 +89,8 @@ def policy(request):
 
 
 def prepare(policy, tmp_path):
+    with OperationStore(policy.state_directory, archive_id=InstalledPolicy.open(policy).archive_id):
+        pass  # Explicit owned offline activation precedes the isolated real server.
     (tmp_path / "policy.json").write_text(policy.model_dump_json())
 
 
@@ -161,6 +168,7 @@ def finish_owned(process, tmp_path):
                 pytest.fail("owned source-test child required forced cleanup; no drain proof")
             pytest.fail("owned source-test child exited without closing its output pipes")
     assert process.poll() is not None
+    process.communicate(timeout=5)  # Close exact stopped child pipes after startup failure too.
 
 
 def assert_no_archive(policy):

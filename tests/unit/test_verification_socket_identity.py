@@ -10,12 +10,11 @@ import socket
 
 import pytest
 
-from hfcache.api.app import create_app
-from hfcache.api.operations import OperationStore
 from hfcache.errors import ConfigurationError, OperationError
 from hfcache.server_config import validate_server_config_mapping
 from hfcache.verification_executor import VerificationWorker
 from hfcache.verification_protocol import VerificationClient, connect_private
+from tests.intent_fixtures import OperationStore, create_app
 from tests.unit.test_api_reads import configured as configured  # noqa: PLC0414 - pytest fixture
 from tests.unit.test_verification_executor import listening
 from tests.unit.test_verification_executor import policy as policy  # noqa: PLC0414 - pytest fixture

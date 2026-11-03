@@ -13,7 +13,6 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-from hfcache.api.app import create_app
 from hfcache.api.basic import create_administrator_record
 from hfcache.card_models import RepositoryCardRead
 from hfcache.catalog_capture import CatalogCapture
@@ -29,6 +28,7 @@ from hfcache.server_config import validate_server_config_mapping
 from hfcache.services import card_queries
 from hfcache.services.queries import LocalQueries, PublicationQuery
 from tests.fixtures import examples
+from tests.intent_fixtures import create_app
 from tests.unit import test_api_reads as reads
 
 configured = reads.configured

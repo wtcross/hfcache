@@ -15,6 +15,7 @@ from hashlib import sha256
 
 from hfcache.api.auth import CredentialClass
 from hfcache.api.basic import ProtectedAdministratorRecord
+from hfcache.api.intents import IntentDisposition, IntentState
 from hfcache.api.operations import OperationEvent, OperationReceipt, ResultReference
 from hfcache.card_models import RepositoryCardRead
 from hfcache.catalog_models import (
@@ -737,7 +738,28 @@ def configuration_application_outcome() -> ConfigApplicationOutcome:
     )
 
 
+def intent_dispositions() -> IntentState:
+    return IntentState(
+        schema_version=1,
+        archive_id=ARCHIVE_ID,
+        entries=(
+            IntentDisposition(
+                disposition_id="c" * 32,
+                principal=CredentialClass.REST_WRITER,
+                key_digest="a" * 64,
+                state="not_admitted",
+                route="/api/v1/syncs",
+                request_digest="b" * 64,
+                created_at=datetime(2026, 11, 3, 12, tzinfo=UTC),
+                reason="permission_denied",
+                review=None,
+            ),
+        ),
+    )
+
+
 EXAMPLES = {
+    "intent-dispositions": intent_dispositions,
     "host-status": host_status,
     "ui-asset-manifest": ui_asset_manifest,
     "ui-bootstrap": ui_bootstrap,

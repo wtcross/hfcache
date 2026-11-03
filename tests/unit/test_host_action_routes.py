@@ -10,13 +10,13 @@ import secrets
 import httpx
 import pytest
 
-from hfcache.api.app import create_app
 from hfcache.api.basic import create_administrator_record
 from hfcache.logging import reset as reset_logging
 from hfcache.server_config import validate_server_config_mapping
 from hfcache.services.commands import CommandServices
 from hfcache.services.context import ServiceResult
 from tests.fixtures import examples
+from tests.intent_fixtures import create_app
 from tests.unit.test_host_authorization import StatusClient, status
 
 ORIGIN = "https://testserver"
@@ -70,7 +70,7 @@ def configured(tmp_path, administrator, monkeypatch):
     reset_logging()
 
 
-def test_basic_http_duplicate_rechecks_but_lookup_result_stay_available(configured):
+def test_basic_http_duplicate_preserves_original_admission_and_lookup_result(configured):
     server, lock, headers, _, executed = configured
     helper = StatusClient()
 
@@ -91,12 +91,14 @@ def test_basic_http_duplicate_rechecks_but_lookup_result_stay_available(configur
                 assert duplicate.json()["created"] is False
                 helper.value = status(denied={"hub"})
                 denied = await client.post("/api/v1/plans", json={}, headers=keyed)
-                assert denied.status_code == 403
-                assert helper.async_calls == 3
+                assert denied.status_code == 202
+                assert denied.json()["operation"]["operation_id"] == identity
+                assert helper.async_calls == 1
                 assert executed == [True]
                 helper.value = OSError("unit-only unavailable detail")
                 unavailable = await client.post("/api/v1/plans", json={}, headers=keyed)
-                assert unavailable.status_code == 503
+                assert unavailable.status_code == 202
+                assert unavailable.json()["operation"]["operation_id"] == identity
                 assert "unit-only" not in unavailable.text
                 for path in (
                     "/api/v1/operations/lookup",
@@ -105,12 +107,12 @@ def test_basic_http_duplicate_rechecks_but_lookup_result_stay_available(configur
                 ):
                     observed = await client.get(path, headers=keyed)
                     assert observed.status_code == 200
-                assert helper.async_calls == 4
+                assert helper.async_calls == 1
 
     asyncio.run(exercise())
 
 
-def test_helper_wait_precedes_metadata_pool_and_atomic_receipt(configured):
+def test_helper_wait_charges_intent_metadata_before_atomic_receipt(configured):
     server, lock, headers, _, executed = configured
 
     async def exercise():
@@ -137,7 +139,7 @@ def test_helper_wait_precedes_metadata_pool_and_atomic_receipt(configured):
                 )
                 try:
                     await asyncio.wait_for(entered.wait(), timeout=3)
-                    assert app.state.pool.inflight == 0
+                    assert app.state.pool.inflight == 1
                     assert app.state.operations.list() == ()
                     assert executed == []
                     read = await client.get("/api/v1/capabilities", headers=headers)
@@ -176,7 +178,9 @@ def test_bearer_post_keeps_existing_workflow_with_helper_unavailable(configured)
     asyncio.run(exercise())
 
 
-def test_every_basic_keyed_route_denies_before_metadata_or_domain_work(configured, monkeypatch):
+def test_every_basic_keyed_route_denies_before_domain_work_and_persists_fence(
+    configured, monkeypatch
+):
     server, lock, headers, _, _ = configured
     server = server.model_copy(update={"maintenance_enabled": True})
     helper = StatusClient(status(denied={"archive", "hub", "control"}))
@@ -202,7 +206,6 @@ def test_every_basic_keyed_route_denies_before_metadata_or_domain_work(configure
         app = create_app(server, instance_lock_path=lock)
         async with app.router.lifespan_context(app):
             app.state.host_helper = helper
-            monkeypatch.setattr(app.state.pool, "submit", forbidden)
             monkeypatch.setattr(app.state.verifier, "check_available", forbidden)
             monkeypatch.setattr(app.state.verifier, "execute", forbidden)
             async with httpx.AsyncClient(
@@ -241,6 +244,7 @@ def test_every_basic_keyed_route_denies_before_metadata_or_domain_work(configure
                     )
                     assert response.status_code == 403, (route, response.text)
                 assert app.state.operations.list() == ()
+                assert len(app.state.operations._intents().entries) == len(rows)
                 assert helper.async_calls == len(rows) - 1
                 assert helper.sync_calls == 0
 

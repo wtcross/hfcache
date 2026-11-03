@@ -789,3 +789,13 @@ def apply_configuration(policy: Any, snapshot: Any, body: object) -> dict[str, A
         checkpoint("pending:after_unlink")
         store.sync(PENDING, "pending-clear")
         return _projection(snapshot, request, value, "confirmed", pending=False)
+
+
+def review_intent_history(policy: Any, snapshot: Any) -> str:  # noqa: ANN401 - fixed protected capture
+    """Read-only confirmed-history proof under the original configuration guard."""
+    store = _Store(policy, snapshot)
+    with store.locked():
+        _need(not os.path.lexists(PENDING))
+        history, _ = _history(store)
+        policy.revalidate(snapshot)
+        return hashlib.sha256(_encoded(history)).hexdigest()

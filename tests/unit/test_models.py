@@ -15,6 +15,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from hfcache.api.basic import ProtectedAdministratorRecord
+from hfcache.api.intents import IntentState
 from hfcache.api.operations import OperationEvent, OperationReceipt, ResultReference
 from hfcache.catalog_models import (
     CatalogRecord,
@@ -57,6 +58,7 @@ from tests.fixtures.examples import EXAMPLES, at
 FIXTURES = Path(__file__).parent.parent / "fixtures" / "schemas"
 
 MODEL_FOR = {
+    "intent-dispositions": IntentState,
     "host-status": HostStatus,
     "ui-asset-manifest": UiAssetManifest,
     "ui-bootstrap": UiBootstrap,
@@ -110,7 +112,8 @@ def test_every_fixture_round_trips(name):
 
     expected = EXAMPLES[name]()
     if isinstance(
-        expected, (ProtectedAdministratorRecord, UiAssetManifest, UiBootstrap, HostStatus)
+        expected,
+        (ProtectedAdministratorRecord, UiAssetManifest, UiBootstrap, HostStatus, IntentState),
     ):
         # Credential and UI formats each carry their own required schema 1,
         # outside the archive-wide version preflight in models.load().

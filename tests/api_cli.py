@@ -26,8 +26,6 @@ with warnings.catch_warnings():
     )
     from fastapi.testclient import TestClient
 
-from hfcache.api.app import create_app
-from hfcache.api.operations import OperationStore
 from hfcache.cli import app
 from hfcache.client import ApiClient
 from hfcache.identity import new_run_id
@@ -35,6 +33,7 @@ from hfcache.logging import bind_run, reset
 from hfcache.server_config import InstalledPolicy, validate_server_config_mapping
 from hfcache.verification_executor import VerificationWorker, serve_worker, validate_listener
 from hfcache.verification_protocol import VerificationClient
+from tests.intent_fixtures import OperationStore, create_app
 
 
 class ApiCli:

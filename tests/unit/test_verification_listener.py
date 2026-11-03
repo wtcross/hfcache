@@ -20,7 +20,6 @@ import pytest
 
 from hfcache import verification_listener
 from hfcache.api.lifecycle import instance_lock
-from hfcache.api.operations import OperationStore
 from hfcache.config import load_config
 from hfcache.errors import OperationError
 from hfcache.identity import new_run_id
@@ -32,6 +31,7 @@ from hfcache.services.requests import VerificationRequest
 from hfcache.verification_executor import VerificationWorker, serve_worker, validate_listener
 from hfcache.verification_listener import notify_ready, owned_listener
 from hfcache.verification_protocol import VerificationClient, VerificationScope, WorkerRequest
+from tests.intent_fixtures import OperationStore
 from tests.unit.test_verification import MODEL, SHA_A, publish
 from tests.unit.test_verification_executor import policy as archive_policy  # noqa: F401
 from tests.unit.test_verify_command import write_run_report

@@ -34,7 +34,6 @@ import pytest
 import hfcache.purge as purge_module
 from hfcache import sync as sync_module
 from hfcache.api.auth import CredentialClass, Principal
-from hfcache.api.operations import OperationStore
 from hfcache.api.runner import OperationRunner
 from hfcache.archive import initialize_archive
 from hfcache.config import ApplicationConfig, load_config, validate_config_mapping
@@ -62,6 +61,7 @@ from hfcache.storage import CapacityFacts, parse_mount_table
 from hfcache.sync import synchronize
 from hfcache.transactions import open_transaction, read_journal
 from tests.api_cli import api_cli
+from tests.intent_fixtures import OperationStore
 
 
 def invoke_api(config_path, arguments, *, json_output=True, hub_token_file=None):

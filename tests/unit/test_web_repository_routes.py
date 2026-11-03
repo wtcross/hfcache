@@ -7,11 +7,11 @@ import httpx
 import pytest
 
 from hfcache import wire_schema
-from hfcache.api.app import create_app
 from hfcache.api.ui_serving import UI_CSP, is_repository_navigation
 from hfcache.logging import reset
 from hfcache.url_paths import uri_path
 from tests.fixtures.web_ui import WIRE_DIGEST, WRITER, make_profile
+from tests.intent_fixtures import create_app
 
 
 @pytest.fixture(autouse=True)

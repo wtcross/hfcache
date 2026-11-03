@@ -41,6 +41,7 @@ from hfcache.api.configuration import install_configuration_route
 from hfcache.api.host_actions import VALIDATIONS, install_host_action_routes
 from hfcache.api.host_routes import OBSERVER_STOPS, SCHEDULE_CHANGES
 from hfcache.api.host_status import HostHelper, install_host_status_route, open_host_helper
+from hfcache.api.intent_routes import install_intent_routes
 from hfcache.api.lifecycle import MetadataPool, instance_lock
 from hfcache.api.maintenance import install_maintenance_routes
 from hfcache.api.models import ApiProblem, OperationView, PageQuery, ReadResponse
@@ -451,6 +452,12 @@ class Boundary:
             VALIDATIONS: AdminCapability.SCHEDULE_WRITE,
             OBSERVER_STOPS: AdminCapability.OBSERVER_STOP,
         }
+        if (
+            command
+            and path == PREFIX + "/operations/intent/retire"
+            and principal.authentication_method is not AuthenticationMethod.BASIC
+        ):
+            raise AuthorizationError
         if command and path in administration:
             require_admin_capability(principal, administration[path])
         if command and path in getattr(
@@ -1465,6 +1472,8 @@ def create_app(  # noqa: PLR0913, PLR0915 - one injectable application factory
         lease = app.state.pool.submit(work)
         request.state.metadata_leases.append(lease)
         return await lease.future
+
+    install_intent_routes(app)
 
     @app.get(PREFIX + "/operations", response_model=ReadResponse)
     async def operations(request: Request) -> Response:

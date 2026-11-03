@@ -9,11 +9,12 @@ import math
 import threading
 import time
 from collections import deque
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Self
 
 from hfcache.api.host_routes import HOST_EFFECT_ROUTES
+from hfcache.api.intents import IntentInterlock, IntentLease
 from hfcache.api.lifecycle import unavailable
 from hfcache.api.operations import Admission, OperationReceipt, OperationStore
 from hfcache.errors import HfcacheError, OperationError, RequestError
@@ -46,6 +47,7 @@ class _Work:
     requires_lock: bool = True
     monitor: Monitor | None = None
     authorize: Authorize | None = None
+    intent_lease: IntentLease | None = None
 
 
 class OperationRunner:
@@ -72,6 +74,7 @@ class OperationRunner:
             message = "the fixed host-action lane has exactly one pending slot"
             raise ValueError(message)
         self.store = store
+        self.interlock: IntentInterlock | None = None
         self.policy = policy
         self.max_pending = max_pending
         self.monotonic = monotonic
@@ -85,6 +88,7 @@ class OperationRunner:
         self._accepting = False
         self._closing = False
         self._broken = False
+        self._reviewing = False
         self._reconcile: Reconcile | None = None
 
     def __enter__(self) -> Self:
@@ -106,53 +110,93 @@ class OperationRunner:
 
     def start(self, *, reconcile: Reconcile | None = None) -> None:
         """Reconcile exact verifier identity first, interrupt everything else; no replay."""
-        with self._condition:
-            if self._thread is not None or self._closing:
-                raise unavailable()
-            self._reconcile = reconcile
-            for receipt in reversed(self.store.list()):
-                if not self._owns(receipt.route):
-                    continue
-                if receipt.state not in _ACTIVE_STATES:
-                    continue
-                recovered = None
-                if receipt.route == "/api/v1/verifications" and reconcile is not None:
-                    recovered = reconcile(receipt)
-                elif receipt.route == "/api/v1/verifications":
-                    raise OperationError(
-                        code="HFAPI016",
-                        message="Verification status must be reconciled before admission",
+        from hfcache.locking import lock_path  # noqa: PLC0415 - respects configured runtime
+
+        self.interlock = IntentInterlock(
+            getattr(
+                self.store, "intent_lock_path", lock_path().with_name(lock_path().name + ".intent")
+            )
+        )
+        if self._thread is not None or self._closing:
+            raise unavailable()
+        self._reconcile = reconcile
+        for receipt in reversed(self.store.list()):
+            if not self._owns(receipt.route):
+                continue
+            if receipt.state not in _ACTIVE_STATES:
+                continue
+            recovered = None
+            if receipt.route == "/api/v1/verifications" and reconcile is not None:
+                recovered = reconcile(receipt)
+            elif receipt.route == "/api/v1/verifications":
+                raise OperationError(
+                    code="HFAPI016",
+                    message="Verification status must be reconciled before admission",
+                )
+            if isinstance(recovered, Envelope):
+                self._complete(receipt.operation_id, recovered)
+            elif callable(recovered):
+                context = ExecutionContext.create(operation_id=receipt.operation_id)
+                self._queue.append(
+                    _Work(
+                        receipt,
+                        None,
+                        context,
+                        "verify",
+                        None,
+                        None,
+                        delegated=True,
+                        monitor=recovered,
+                        intent_lease=self.interlock.acquire(),
                     )
-                if isinstance(recovered, Envelope):
-                    self._complete(receipt.operation_id, recovered)
-                elif callable(recovered):
-                    context = ExecutionContext.create(operation_id=receipt.operation_id)
-                    self._queue.append(
-                        _Work(
-                            receipt,
-                            None,
-                            context,
-                            "verify",
-                            None,
-                            None,
-                            delegated=True,
-                            monitor=recovered,
-                        )
-                    )
-                else:
-                    self.store.transition(receipt.operation_id, "interrupted")
-            if self._queue:
-                self._active_id = self._queue[0].receipt.operation_id
-            name = "hfcache-host-action" if self.host_actions else "hfcache-command"
-            self._thread = threading.Thread(target=self._loop, name=name, daemon=False)
-            self._accepting = True
-            self._thread.start()
+                )
+            else:
+                self.store.transition(receipt.operation_id, "interrupted")
+        if self._queue:
+            self._active_id = self._queue[0].receipt.operation_id
+        name = "hfcache-host-action" if self.host_actions else "hfcache-command"
+        self._thread = threading.Thread(target=self._loop, name=name, daemon=False)
+        self._accepting = True
+        self._thread.start()
 
     def _owns(self, route: str) -> bool:
         """Fixed disjoint ownership, including restart; never claim another lane."""
         return (route in HOST_EFFECT_ROUTES) == self.host_actions
 
-    def submit(  # noqa: PLR0913 - trusted lane policy is separate from canonical request data
+    def submit(self, *args: Any, **kwargs: Any) -> Admission:  # noqa: ANN401 - forwards typed admission interface
+        if not self._owns(args[2]) or (
+            self.host_actions
+            and (kwargs.get("requires_lock", True) or kwargs.get("delegated", False))
+        ):
+            raise RequestError
+        with self._condition:
+            if self._reviewing:
+                raise unavailable()
+        if self.interlock is None:
+            raise unavailable()
+        lease = self.interlock.acquire()
+        try:
+            if kwargs.get("delegated"):
+                try:
+                    self.store.lookup(args[0], args[1])
+                except OperationError as error:
+                    if error.problems[0].code != "HFAPI013":
+                        raise
+                    if self.check_verification_available is None:
+                        raise OperationError(
+                            code="HFAPI016", message="Verification executor is unavailable"
+                        ) from None
+                    self.check_verification_available()
+            admission = self._submit(*args, **kwargs, intent_lease=lease)
+            if not admission.created:
+                lease.close()
+        except BaseException:
+            lease.close()
+            raise
+        else:
+            return admission
+
+    def _submit(  # noqa: PLR0913 - trusted lane policy is separate from canonical request data
         self,
         principal: Principal,
         key: str,
@@ -166,6 +210,7 @@ class OperationRunner:
         requires_lock: bool = True,
         context: ExecutionContext | None = None,
         authorize: Authorize | None = None,
+        intent_lease: IntentLease,
     ) -> Admission:
         if not self._owns(route) or (self.host_actions and (requires_lock or delegated)):
             raise RequestError
@@ -190,17 +235,12 @@ class OperationRunner:
             outstanding = len(self._queue) + self._executing
             if (
                 not self._accepting
+                or self._reviewing
                 or self._broken
                 or outstanding >= self.max_pending + 1
                 or (wait_seconds == 0 and outstanding)
             ):
                 raise unavailable()
-            if delegated:
-                if self.check_verification_available is None:
-                    raise OperationError(
-                        code="HFAPI016", message="Verification executor is unavailable"
-                    )
-                self.check_verification_available()
 
         def snapshot() -> PolicySnapshot:
             frozen = self.policy.snapshot()
@@ -219,27 +259,55 @@ class OperationRunner:
             )
             if not admission.created:
                 return admission
-            execution = ExecutionContext.create(
-                request_id=context.request_id if context is not None else None,
-                operation_id=admission.receipt.operation_id,
-            )
-            work = _Work(
-                admission.receipt,
-                snapshots[0],
-                execution,
-                command,
-                execute,
-                admitted_at + budgets[0],
-                nonblocking=budgets[0] == 0,
-                delegated=delegated,
-                requires_lock=requires_lock,
-                authorize=authorize,
-            )
-            self._queue.append(work)
-            if self._active_id is None:
-                self._active_id = work.receipt.operation_id
-            self._condition.notify_all()
-            return admission
+            work = None
+            try:
+                execution = ExecutionContext.create(
+                    request_id=context.request_id if context is not None else None,
+                    operation_id=admission.receipt.operation_id,
+                )
+                work = _Work(
+                    admission.receipt,
+                    snapshots[0],
+                    execution,
+                    command,
+                    execute,
+                    admitted_at + budgets[0],
+                    nonblocking=budgets[0] == 0,
+                    delegated=delegated,
+                    requires_lock=requires_lock,
+                    authorize=authorize,
+                    intent_lease=intent_lease,
+                )
+                self._queue.append(work)
+                if self._active_id is None:
+                    self._active_id = work.receipt.operation_id
+                self._condition.notify_all()
+            except BaseException:
+                if work is not None and work in self._queue:
+                    self._queue.remove(work)
+                if self._active_id == admission.receipt.operation_id:
+                    self._active_id = self._queue[0].receipt.operation_id if self._queue else None
+                self._broken = True
+                self._accepting = False
+                with contextlib.suppress(HfcacheError):
+                    self.store.transition(admission.receipt.operation_id, "interrupted")
+                raise
+            else:
+                return admission
+
+    @contextlib.contextmanager
+    def review_barrier(self) -> Iterator[None]:
+        """Stop local submissions while an external exclusive lease is obtained."""
+        with self._condition:
+            if self._reviewing:
+                raise unavailable()
+            self._reviewing = True
+        try:
+            yield
+        finally:
+            with self._condition:
+                self._reviewing = False
+                self._condition.notify_all()
 
     def stop_admission(self) -> None:
         with self._condition:
@@ -443,10 +511,16 @@ class OperationRunner:
                     abandoned = tuple(self._queue)
                     self._queue.clear()
                 for pending in abandoned:
-                    if pending.monitor is None:
-                        with contextlib.suppress(HfcacheError):
-                            self._interrupted(pending)
+                    try:
+                        if pending.monitor is None:
+                            with contextlib.suppress(HfcacheError):
+                                self._interrupted(pending)
+                    finally:
+                        if pending.intent_lease is not None:
+                            pending.intent_lease.close()
             finally:
+                if work.intent_lease is not None:
+                    work.intent_lease.close()
                 with self._condition:
                     self._executing = False
                     self._active_id = self._queue[0].receipt.operation_id if self._queue else None

@@ -1,0 +1,17 @@
+{
+  "archive_id": "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90",
+  "entries": [
+    {
+      "created_at": "2026-11-03T12:00:00.000000Z",
+      "disposition_id": "cccccccccccccccccccccccccccccccc",
+      "key_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "principal": "rest-writer",
+      "reason": "permission_denied",
+      "request_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "review": null,
+      "route": "/api/v1/syncs",
+      "state": "not_admitted"
+    }
+  ],
+  "schema_version": 1
+}

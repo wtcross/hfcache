@@ -28,7 +28,7 @@ def install_catalog_refresh_route(app: FastAPI, server: ServerConfig) -> None:
     @app.post(ROUTE, response_model=AcceptanceResponse, status_code=202)
     async def refresh(request: Request, body: CatalogRefreshSubmission) -> Response:
         require_capability(request.state.principal, Capability.WRITE)
-        authorization = await authorize_request(request, required_actions(ROUTE, body))
+        authorization = await authorize_request(request, required_actions(ROUTE, body), body=body)
         intent = body.service_request()
         return await offload_command(
             request,

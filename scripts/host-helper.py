@@ -453,12 +453,28 @@ class HostDaemon:
         self.executor = ThreadPoolExecutor(
             max_workers=MAX_EXCHANGES, thread_name_prefix="hfcache-host-read"
         )
+        self.effect_mutex = threading.Lock()
+        self.effects = 0
+        self.reviewing = False
         self.parent = -1
         self.deployment_sha256: str | None = None
         self.socket_identity: tuple[int, int] | None = None
         self.binding_identity: tuple[int, int] | None = None
 
     def dispatch_operation(self, request, authority):
+        effect = request.operation in {"config-apply", "schedule-change", "observer-stop"}
+        if effect:
+            with self.effect_mutex:
+                refuse(not self.reviewing)
+                self.effects += 1
+        try:
+            return self._dispatch_operation(request, authority)
+        finally:
+            if effect:
+                with self.effect_mutex:
+                    self.effects -= 1
+
+    def _dispatch_operation(self, request, authority):
         plain = {
             "status": authority.status,
             "config-read": lambda: self.policy.read_config_base(authority, request.body),
@@ -493,7 +509,7 @@ class HostDaemon:
         finally:
             self.journal_capacity.release()
 
-    def exchange(self, connection):
+    def exchange(self, connection):  # noqa: PLR0915 - authenticated bounded exchange/review ownership
         snapshot: Any = None
         first_peer: Any = None
         try:
@@ -532,6 +548,51 @@ class HostDaemon:
                     authority.budget.deadline_ns, time.monotonic_ns() + int(seconds * 1_000_000_000)
                 )
                 self.policy.revalidate(authority)
+                if request.operation == "intent-review":
+                    with self.effect_mutex:
+                        refuse(not self.reviewing and self.effects == 0)
+                        self.reviewing = True
+                    try:
+                        locks = self.policy.review_intent_locks(authority, first_peer.pid)
+                        status = authority.status()
+                        refuse(status["state"] in {"supported", "guarded"})
+                        for name, unit in status["facts"]["units"].items():
+                            refuse(unit["active"] in {"inactive", "failed"})
+                            refuse(
+                                unit["unit_file"] in {"masked", "masked-runtime"}
+                                or name.endswith(".timer")
+                            )
+                        workers = self.peers.intent_review(authority, remaining_seconds=seconds)
+                        configuration = self.configuration.review_intent_history(
+                            self.policy, authority
+                        )
+                        actions = self.actions.review_intent_history(self.policy, authority)
+                        self.policy.revalidate(authority)
+                        refuse(self.policy.review_intent_locks(authority, first_peer.pid) == locks)
+                        return {
+                            "schema_version": 1,
+                            "archive_id": authority.archive_id,
+                            "deployment_sha256": authority.deployment_sha256,
+                            "policy_sha256": authority.policy_sha256,
+                            "effects_sha256": hashlib.sha256(
+                                json.dumps(
+                                    {
+                                        "configuration": configuration,
+                                        "actions": actions,
+                                        "executors": workers,
+                                    },
+                                    sort_keys=True,
+                                ).encode()
+                            ).hexdigest(),
+                            "helper_instance": {
+                                "pid": os.getpid(),
+                                "start_ticks": own_start_ticks(),
+                            },
+                            **locks,
+                        }
+                    finally:
+                        with self.effect_mutex:
+                            self.reviewing = False
                 return self.dispatch_operation(request, authority)
 
             with connection:

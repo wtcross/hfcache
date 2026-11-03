@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from hfcache.api.app import create_app
 from hfcache.errors import Problem
 from hfcache.identity import RunId
 from hfcache.server import build_server, listeners
@@ -20,6 +19,7 @@ from hfcache.server_config import validate_server_config_mapping
 from hfcache.services.context import ExecutionContext, ServiceResult
 from tests.fixtures import examples
 from tests.installed_cli import installed_cli as installed_cli  # noqa: PLC0414 - shared fixture
+from tests.intent_fixtures import create_app
 from tests.unit.test_api_commands import configured as synthetic_archive  # noqa: F401 - fixture
 from tests.unit.test_api_reads import write_model
 from tests.unit.test_cli_runs import PREFIX

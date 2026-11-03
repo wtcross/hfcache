@@ -7,13 +7,14 @@ import pytest
 from pydantic import ValidationError
 
 from hfcache.api.auth import CredentialClass, Principal
-from hfcache.api.operations import OperationLimits, OperationReceipt, OperationStore, request_digest
+from hfcache.api.operations import OperationLimits, OperationReceipt, request_digest
 from hfcache.config import load_config
 from hfcache.errors import OperationError
 from hfcache.models import dump
 from hfcache.reporting import Envelope, EnvelopeProblem
 from hfcache.server_config import PolicySnapshot
 from tests.fixtures import examples
+from tests.intent_fixtures import OperationStore
 
 WRITER = Principal(CredentialClass.REST_WRITER)
 READER = Principal(CredentialClass.REST_READER)
@@ -290,10 +291,11 @@ def test_fsync_disk_full_refuses_acknowledgement_and_preserves_binding(
             failure.setattr("hfcache.storage.os.fsync", full)
             with pytest.raises(OperationError) as caught:
                 attempt()
-        assert caught.value.problems[0].code == "HFAPI014"
+        assert caught.value.problems[0].code == ("HFAPI015" if phase == "admission" else "HFAPI014")
         assert caught.value.exit_code == 20
         if known is None:
             assert store.list() == ()
+            assert store._uncertain_admissions == set()
         else:
             assert store.get(known.operation_id) == known
             assert store.lookup(WRITER, "key") == known

@@ -1465,7 +1465,10 @@ No enforcement or acceptance is claimed from these new register entries alone.
   helper exchanges never run under store/runner/domain/config locks. Prior
   uninterlocked executors require actual reviewed deployment drain. Retirement
   preserves historical uncertainty and handles; no job replay, cleanup or
-  protected-effect confirmation follows. Fences never expire; quotas refuse
+  protected-effect confirmation follows. Original refusal fields never change;
+  its null review may gain one complete historical-retirement proof. A later
+  refusal cannot prove an earlier missing transmission never executed.
+  Fences never expire; quotas refuse
   rather than discard them. Normal effect readiness requires explicitly
   provisioned state and never recreates missing fences. Safely pinned degraded
   stores may serve compatible exact-ID observations with admission/review closed;
@@ -1473,6 +1476,12 @@ No enforcement or acceptance is claimed from these new register entries alone.
   enforcing reader/admission binary; the exact predecessor must refuse new
   admission on the retained new state. Browser schema-1 migration preserves
   all original evidence and remains unverified until fresh bounded GETs.
+  Server enforcement: [dispositions/store](../src/hfcache/api/operations.py),
+  [independent leases](../src/hfcache/api/intents.py),
+  [review routes](../src/hfcache/api/intent_routes.py),
+  [focused durability/reader tests](../tests/unit/test_intent_dispositions.py)
+  and [review/handoff tests](../tests/unit/test_intent_review.py). Browser and
+  actual installed conformance remain separate.
   See [decision 164](adr/decision-164.md), [protocol](job-recovery.md) and
   [schemas](schemas.md#133-original-intent-dispositions-schema-1).
 

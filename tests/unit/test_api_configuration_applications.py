@@ -11,11 +11,11 @@ import threading
 import httpx
 import pytest
 
-from hfcache.api.app import create_app
 from hfcache.config import load_config
 from hfcache.errors import OperationError
 from hfcache.services.commands import CommandServices
 from hfcache.services.context import ServiceResult
+from tests.intent_fixtures import create_app
 from tests.unit.test_api_managed_configuration import ConfigurationAdapter, _settings
 from tests.unit.test_host_action_routes import ORIGIN
 from tests.unit.test_host_action_routes import (
