@@ -33,6 +33,21 @@ The startup paragraph above is the build-out record, superseded by
 changes and plan implementations also review the affected invariants and ADRs
 using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
+## Repository hygiene (2026-11-02)
+
+- [x] DOC-020 Ignore root Node dependencies
+  (2026-11-02, this commit — [task](plans/tasks/doc-020-root-node-ignore.md),
+  [plan](plans/2026-11-02-plan-root-node-ignore.md)).
+  Root-only `/node_modules/` ignores local dependencies; existing web matching
+  and unrelated nested fixture visibility remain. The physical directory and
+  its contents are preserved. Default `rtk scripts/check.sh` passes9594 tests,
+  build and three locked profiles in1286.43s;1255 inputs remain frozen. Raw log
+  `3f721433582fc73570348f5cea7143b566f86c9420de7f4e0abd4d2276597c9f`.
+  FS-19/AD-16, INV-010, FW-03/04 and ADR008/143 reviewed; existing development
+  contracts cover this hygiene fix, with no new invariant, ADR, dependency or
+  runtime effect. One main commit is published to both remotes without tags or
+  force; the plan closes and selector clears. No host deployment follows.
+
 ## Publication and local Library rollout (2026-11-02)
 
 - [x] REL-017 Publish and prepare 0.3.1 source
