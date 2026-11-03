@@ -1167,14 +1167,15 @@ is separately scoped by [deployment status](deployment-status.md).
 
 ## 16. Rootless release manifest and artifact index
 
-These independent schema-1 deployment records are separate from runtime.json,
+These independent deployment records (manifest 1/2, index 1) are separate from runtime.json,
 archive JSON and service receipts. [Installer](../scripts/install-container-release.py)
 uses duplicate-free/nonfinite-refusing bounded JSON and descriptor-pinned local
 no-follow reads with stable metadata excluding access time. Root-protected input
 must be a single-link regular file, at most 8 MiB; copied artifacts are bounded
 to 16 MiB each. Invalid/future/unknown data refuses without cleanup or activation.
 
-container-release.json has exactly these fields:
+Legacy container-release.json schema 1 has exactly these fields; schema 2 adds
+`archive_mode` and `release_id` as specified below:
 
 | Field | Requirement |
 | --- | --- |
@@ -2095,5 +2096,12 @@ index schema 1 remains unchanged and covers exact new rendered bytes. The
 independent helper index binds `profile_evidence.archive_mode` to the same closed
 value; omission is guarded-readonly only. Prior strict runtime/manifest/helper
 readers must refuse writer state. No upgrade of archive, receipt or SELinux
-installation-receipt formats follows. These are design requirements pending
-implementation, golden fixtures and exact 0.3.1 reader/rollback drills.
+installation-receipt formats follows. The helper `release` object retains
+`version` and `selector_target`, adding `release_id` for schema-2 siblings; that
+ID must be exactly version plus the independently bound evidence mode. A legacy
+release without the ID accepts only guarded-readonly evidence. Strict predecessor
+readers refuse the extended objects. The implementation supplies executable source and
+[manifest2](../tests/fixtures/schemas/deployment/container-release2.json) /
+[runtime2](../tests/fixtures/schemas/deployment/rootless-runtime2.json) goldens;
+exact 0.3.1 parser refusals are owned source evidence with modeled protected
+metadata; actual installed rollback evidence remains separately scoped.

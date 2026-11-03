@@ -54,6 +54,7 @@ def test_policy_has_no_optional_global_or_permissive_escape():
         "container_t",
         "container_runtime_t",
         "hfcache_sync_observer_t",
+        "hfcache_archive_writer_t",
     }
     forbidden_targets = {"domain", "file_type", "exec_type", "unconfined_domain_type", "*", "all"}
     assert all(target not in forbidden_targets for _, target, _, _ in access_rules("allow"))
@@ -572,6 +573,11 @@ def test_original_archive_lock_type_only_allows_helper_metadata_and_container_lo
     ] == [
         (SUBJECT, "file", frozenset({"getattr"})),
         ("container_t", "file", frozenset({"getattr", "open", "read", "write", "lock"})),
+        (
+            "hfcache_archive_writer_t",
+            "file",
+            frozenset({"getattr", "open", "read", "write", "lock"}),
+        ),
     ]
     forbidden = frozenset(
         {
@@ -1096,3 +1102,53 @@ def test_native_state_is_private_and_timer_unit_is_immutable_to_helper():
         and rights & {"write", "append", "create", "setattr", "unlink", "rename", "link"}
         for source, target, cls, rights in rules
     )
+
+
+def test_explicit_writer_domain_preserves_mcs_and_archive_only_write_extension():
+    tree = forms()
+    writer = "hfcache_archive_writer_t"
+    for attribute in (
+        "domain",
+        "can_dump_kernel",
+        "can_receive_kernel_messages",
+        "kernel_system_state_reader",
+        "process_user_target",
+        "syslog_client_type",
+        "container_domain",
+        "container_net_domain",
+        "sandbox_net_domain",
+        "svirt_sandbox_domain",
+        "corenet_unconfined_type",
+        "corenet_unlabeled_type",
+        "mcs_constrained_type",
+    ):
+        assert ["typeattributeset", attribute, [writer]] in tree
+    assert not any(
+        form[0] == "typeattributeset"
+        and form[1].startswith("pcmcia_typeattr_")
+        and writer in form[2]
+        for form in tree
+    )
+    for target in ("nfs_t", "hfcache_archive_t"):
+        rules = [
+            (src, cls, rights) for src, dst, cls, rights in access_rules("allow") if dst == target
+        ]
+        assert not any(
+            src == "container_t" and rights & {"write", "create", "unlink", "add_name"}
+            for src, _, rights in rules
+        )
+        assert (writer, "lnk_file", frozenset({"getattr", "read", "create", "unlink"})) in rules
+        assert any(
+            src == writer
+            and cls == "file"
+            and {"create", "write", "link", "rename", "unlink"} <= rights
+            for src, cls, rights in rules
+        )
+    for subject in (SUBJECT, "hfcache_sync_observer_t"):
+        assert not any(
+            src == subject
+            and dst in {"nfs_t", "hfcache_archive_t", "hfcache_host_helper_secret_t"}
+            and cls == "file"
+            and rights & {"read", "open", "map", "write", "create"}
+            for src, dst, cls, rights in access_rules("allow")
+        )

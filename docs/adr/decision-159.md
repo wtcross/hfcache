@@ -88,3 +88,12 @@ Accepted design in [decision 164](decision-164.md), [decision 165](decision-165.
 pending. The fixed companion interlock uses the existing dedicated coordination type with helper getattr only, preserving the original archive lock inode and metadata-only boundary. Independent writer mode changes fixed API/worker archive binds, never helper payload rights or automatic lock provisioning.
 See the [executable recovery contract](../job-recovery.md). Original rationale
 and unrelated requirements above remain in force.
+
+
+### Protected writer source implementation (2026-11-03)
+
+[Decision165's implementation record](decision-165.md#source-implementation-and-qualification-2026-11-03)
+now supplies the closed immutable sibling/mode, original-inode offline activation,
+role/domain and preserving procedure source. The original rationale and unrelated
+requirements remain. Source/binary/current-boolean checks establish no installed
+Enforcing, actual NFS or unattended-boot acceptance; those scopes remain explicit.

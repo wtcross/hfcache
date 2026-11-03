@@ -7,11 +7,13 @@ the atomic current link; normal runtime startup remains a separate operation.
 """
 
 import argparse
+import contextlib
 import fcntl
 import hashlib
 import importlib.util
 import json
 import os
+import pwd
 import re
 import stat
 import subprocess
@@ -21,6 +23,7 @@ from pathlib import Path, PurePosixPath
 REPOSITORY = Path(__file__).resolve().parents[1]
 PREFIX = Path("/opt/hfcache")
 LOCK_PATH = Path("/run/hfcache/hfcache.lock")
+ACTIVATION_BACKUPS = Path("/var/lib/hfcache/intent-activation-backups")
 BINDINGS = {
     Path("/usr/local/libexec/hfcache-container-service"): "scripts/container-service.py",
     Path("/usr/local/libexec/hfcache-client"): "scripts/hfcache-client",
@@ -43,6 +46,9 @@ MOUNTINFO = Path("/proc/self/mountinfo")
 IMAGE = re.compile(r"sha256:[0-9a-f]{64}\Z")
 HEX = re.compile(r"[0-9a-f]{64}\Z")
 VERSION = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+\Z")
+RELEASE_ID = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+(?:-(?:guarded-readonly|manual-writer))?\Z")
+MODE_SCHEMA = 2
+ARCHIVE_MODES = {"guarded-readonly", "manual-writer"}
 HOSTNAME = re.compile(r"[a-zA-Z0-9](?:[a-zA-Z0-9.-]{0,251}[a-zA-Z0-9])?\Z")
 REQUIRED = {
     "scripts/install-container-release.py",
@@ -259,10 +265,20 @@ def manifest(value):
         "wheel_sha256",
         "files",
     }
+    if isinstance(value, dict) and value.get("schema_version") == MODE_SCHEMA:
+        fields |= {"archive_mode", "release_id"}
     if not isinstance(value, dict) or set(value) != fields:
         refuse("unknown release manifest")
-    if type(value["schema_version"]) is not int or value["schema_version"] != 1:
+    if type(value["schema_version"]) is not int or value["schema_version"] not in {1, 2}:
         refuse("unknown release manifest schema")
+    if value["schema_version"] == MODE_SCHEMA and (
+        type(value["archive_mode"]) is not str
+        or type(value["version"]) is not str
+        or type(value["release_id"]) is not str
+        or value["archive_mode"] not in ARCHIVE_MODES
+        or value["release_id"] != value["version"] + "-" + value["archive_mode"]
+    ):
+        refuse("invalid protected archive mode identity")
     if any(
         type(value[key]) is not int or value[key] <= 0 for key in ("service_uid", "service_gid")
     ):
@@ -474,12 +490,13 @@ def _rendered(source, release, base):
             '\n[web]\nenabled = true\nasset_root = "/opt/hfcache/ui"\n'
             f"manifest_sha256 = {json.dumps(web_manifest)}\n"
         ).encode("ascii")
-    output["runtime.json"] = encoded(
-        {
-            key: release[key]
-            for key in ("schema_version", "service_uid", "service_gid", "app_image", "caddy_image")
-        }
-    )
+    runtime = {
+        key: release[key]
+        for key in ("schema_version", "service_uid", "service_gid", "app_image", "caddy_image")
+    }
+    if release["schema_version"] == MODE_SCHEMA:
+        runtime["archive_mode"] = release["archive_mode"]
+    output["runtime.json"] = encoded(runtime)
     output["default-seccomp.json"] = base
     output["worker-seccomp.json"] = encoded(worker_seccomp(decode(base)))
     output["seccomp-provenance.json"] = encoded(
@@ -590,8 +607,17 @@ def stage(source, release, default_seccomp):
     manifest(release)
     _host_helper_enabled(source, release)
     _web_assets(source, release)
-    destination = local(PREFIX / "releases" / release["version"])
-    staging = local(PREFIX / "releases" / (".container-stage-" + release["version"]))
+    with _original_archive_lock(release):
+        quiescent(release)
+        return _stage(source, release, default_seccomp)
+
+
+def _stage(source, release, default_seccomp):
+    """Copy authenticated local inputs only inside the retained readonly window."""
+    destination = local(PREFIX / "releases" / release.get("release_id", release["version"]))
+    staging = local(
+        PREFIX / "releases" / (".container-stage-" + release.get("release_id", release["version"]))
+    )
     parent = _parent(staging, protected=True)
     try:
         for name in (destination.name, staging.name):
@@ -717,6 +743,7 @@ def quiescent(release):
         "hfcache-verification.service",
         "hfcache-verification.socket",
         "hfcache-containers.service",
+        "hfcache-host-helper.service",
     ):
         _quiescent_unit(unit, system_show(unit))
     manager = subprocess.run(  # noqa: S603 - fixed local manager and validated numeric identity
@@ -777,7 +804,7 @@ def _previous_selector(parent):
         refuse("unexpected current selector preserved")
     value = os.readlink("current", dir_fd=parent)
     prefix = "releases/"
-    if not value.startswith(prefix) or not VERSION.fullmatch(value[len(prefix) :]):
+    if not value.startswith(prefix) or not RELEASE_ID.fullmatch(value[len(prefix) :]):
         refuse("unreviewed previous selector preserved")
     target = local(PREFIX / value)
     descriptor = _parent(target / ".selector-check", protected=True)
@@ -801,7 +828,7 @@ def _verify_bindings():
 
 
 def switch(version):
-    if not VERSION.fullmatch(version):
+    if not RELEASE_ID.fullmatch(version):
         refuse("invalid release version")
     destination = local(PREFIX / "releases" / version)
     release = protected_json(destination / _RELEASE)
@@ -815,6 +842,7 @@ def switch(version):
         if (
             not stat.S_ISREG(info.st_mode)
             or info.st_uid != release["service_uid"]
+            or info.st_gid != release["service_gid"]
             or stat.S_IMODE(info.st_mode) != _LOCK_MODE
             or info.st_nlink != 1
         ):
@@ -825,7 +853,7 @@ def switch(version):
             refuse("existing archive lock changed")
         quiescent(release)
         actual = _verify_stage(destination)
-        if actual != release or release["version"] != version:
+        if actual != release or release.get("release_id", release["version"]) != version:
             refuse("release identity changed")
         _verify_bindings()
         prefix = _parent(PREFIX / "current", protected=True)
@@ -843,15 +871,177 @@ def switch(version):
     return destination
 
 
+@contextlib.contextmanager
+def _original_archive_lock(release):
+    """Retain the original noncreating domain flock across a protected step."""
+    lock_parent = _parent(LOCK_PATH, protected=True, owners={0, OWNER_UID, release["service_uid"]})
+    descriptor = -1
+    try:
+        descriptor = os.open(
+            LOCK_PATH.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=lock_parent
+        )
+        before = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(before.st_mode)
+            or before.st_uid != release["service_uid"]
+            or before.st_gid != release["service_gid"]
+            or before.st_nlink != 1
+            or stat.S_IMODE(before.st_mode) != _LOCK_MODE
+        ):
+            refuse("unsafe original archive lock")
+        fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        linked = os.stat(LOCK_PATH.name, dir_fd=lock_parent, follow_symlinks=False)
+        if (linked.st_dev, linked.st_ino) != (before.st_dev, before.st_ino):
+            refuse("original archive lock changed")
+        yield
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+        os.close(lock_parent)
+
+
+def _activation_companion(release, companion):
+    """Verify the fixed coordination inode after independent persistent labeling."""
+    info = companion.lstat()
+    if (
+        not stat.S_ISREG(info.st_mode)
+        or info.st_nlink != 1
+        or stat.S_IMODE(info.st_mode) != _LOCK_MODE
+        or (info.st_uid, info.st_gid) != (release["service_uid"], release["service_gid"])
+    ):
+        refuse("unsafe activated companion; preserve evidence")
+    context = os.getxattr(companion, "security.selinux", follow_symlinks=False)
+    if not re.fullmatch(
+        rb"[A-Za-z0-9_]+:object_r:hfcache_host_helper_archive_lock_t:s0\0?", context
+    ):
+        refuse("companion label is not independently provisioned")
+    after = companion.lstat()
+    if any(getattr(info, name) != getattr(after, name) for name in _METADATA):
+        refuse("activated companion changed")
+
+
+def _activation_command(release, account, activation_runtime, archive_id, destination):
+    """Closed offline role; no archive/network/credential mount or argument."""
+    return [
+        "/usr/sbin/runuser",
+        "-u",
+        "hfcache",
+        "--",
+        "/usr/bin/env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "HOME=" + account.pw_dir,
+        "XDG_RUNTIME_DIR=/run/user/" + str(release["service_uid"]),
+        "/usr/bin/podman",
+        "--remote=false",
+        "run",
+        "--pull=never",
+        "--rm",
+        "--http-proxy=false",
+        "--network=none",
+        "--userns=keep-id:uid=981,gid=981",
+        "--user=981:981",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--security-opt=seccomp=" + str(destination / "rendered/worker-seccomp.json"),
+        "--read-only",
+        "--read-only-tmpfs=false",
+        "--pids-limit=512",
+        "--tmpfs=/tmp:rw,nosuid,nodev,noexec,mode=1777",
+        "--volume=/etc/hfcache/config.toml:/etc/hfcache/config.toml:ro",
+        "--volume=/var/lib/hfcache/api:/var/lib/hfcache/api:rw,z",
+        "--volume=/var/lib/hfcache/verification:/var/lib/hfcache/verification:rw,z",
+        "--volume=/var/lib/hfcache/intent-activation-backups:/var/lib/hfcache/intent-activation-backups:rw,z",
+        "--volume=" + str(activation_runtime) + ":/run/hfcache:rw,z",
+        release["app_image"],
+        "/opt/hfcache/.venv/bin/python",
+        "-I",
+        "-B",
+        "-m",
+        "hfcache.api.intent_activation",
+        "--archive-id",
+        archive_id,
+        "--backup-directory",
+        "/var/lib/hfcache/intent-activation-backups/initial",
+    ]
+
+
+def prepare_intents(archive_id):
+    """Fixed selected-image offline activation; no archive, network or credentials."""
+    if not isinstance(archive_id, str) or not re.fullmatch(
+        r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}", archive_id
+    ):
+        refuse("explicit canonical archive UUID required")
+    parent = _parent(PREFIX / "current", protected=True)
+    try:
+        _previous_selector(parent)
+        selected = os.readlink("current", dir_fd=parent)
+    finally:
+        os.close(parent)
+    destination = local(PREFIX / selected)
+    release = _verify_stage(destination)
+    if selected != "releases/" + release.get("release_id", release["version"]):
+        refuse("selected physical release identity mismatch")
+    _verify_bindings()
+    with _original_archive_lock(release):
+        quiescent(release)
+        if (
+            _verify_stage(destination) != release
+            or (PREFIX / "current").readlink().as_posix() != selected
+        ):
+            refuse("selected runtime changed")
+        account = pwd.getpwnam("hfcache")
+        if (account.pw_uid, account.pw_gid) != (
+            release["service_uid"],
+            release["service_gid"],
+        ) or account.pw_dir not in {"/var/lib/hfcache", "/var/lib/hfcache/container-home"}:
+            refuse("service account mismatch")
+        # A fresh local runtime parent permits only the companion creation. It
+        # exposes no original archive lock, sockets or credentials to activation.
+        companion = LOCK_PATH.with_name(LOCK_PATH.name + ".intent")
+        if os.path.lexists(companion):
+            refuse("existing companion preserved; activation is not repair")
+        backup_parent = local(ACTIVATION_BACKUPS)
+        backup_parent.mkdir(mode=0o700)
+        os.chown(
+            backup_parent, release["service_uid"], release["service_gid"], follow_symlinks=False
+        )
+        activation_runtime = LOCK_PATH.parent / "intent-activation"
+        activation_runtime.mkdir(mode=0o700)
+        os.chown(
+            activation_runtime,
+            release["service_uid"],
+            release["service_gid"],
+            follow_symlinks=False,
+        )
+        subprocess.run(  # noqa: S603 - fixed selected runtime and role paths
+            _activation_command(release, account, activation_runtime, archive_id, destination),
+            check=True,
+        )
+        if (PREFIX / "current").readlink().as_posix() != selected:
+            refuse("selected runtime changed during activation; preserve partial state")
+        companion = LOCK_PATH.with_name(LOCK_PATH.name + ".intent")
+        # Refuse an existing destination; link then unlink preserves the new
+        # inode without ever replacing an unexplained companion.
+        os.link(activation_runtime / "hfcache.lock.intent", companion, follow_symlinks=False)
+        (activation_runtime / "hfcache.lock.intent").unlink()
+        sync_directory(activation_runtime)
+        sync_directory(LOCK_PATH.parent)
+        subprocess.run(["/usr/sbin/restorecon", "-F", str(companion)], check=True)  # noqa: S603 - exact local coordination inode only
+        _activation_companion(release, companion)
+    return destination
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "mode",
-        choices=("render", "stage", "switch"),
+        choices=("render", "stage", "switch", "prepare-intent-state"),
         help="render: new local artifact tree; stage: protected immutable release; "
         "switch: inspect system/user managers and local Podman, retain original lock, "
         "then atomically select; no activation or credential delivery",
     )
+    parser.add_argument("--archive-id", help="exact configured UUID for offline first activation")
     parser.add_argument("--manifest", type=Path, help="explicit immutable image/source manifest")
     parser.add_argument(
         "--source", type=Path, default=REPOSITORY, help="reviewed local source artifacts"
@@ -865,7 +1055,9 @@ def main():
     if options.mode != "render" and os.geteuid() != 0:
         parser.error("stage/switch require root")
     try:
-        if options.mode == "switch":
+        if options.mode == "prepare-intent-state":
+            destination = prepare_intents(options.archive_id)
+        elif options.mode == "switch":
             if not options.version:
                 refuse("switch requires version")
             destination = switch(options.version)

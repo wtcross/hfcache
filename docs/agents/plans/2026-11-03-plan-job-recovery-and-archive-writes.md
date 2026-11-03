@@ -469,3 +469,15 @@ historical evidence collection is a deliverable.
   remain preserved; exact count corrections retain strict source authorities.
   OPS-027 is next. Source completion is not installed/runtime/writer acceptance;
   no deployment, live archive/service/permission/mount change, tag or push occurs.
+
+
+- 2026-11-03: OPS-027 completes protected guarded/manual-writer runtime2 and
+  immutable manifest2 siblings, independent helper/domain joins, original-lock
+  drained NFS-ro staging, fixed offline real-parser intent activation/companion
+  provisioning and preserving current-boot transition/rollback procedure. Default
+  gate19 passes9711 tests, package build and three locked profiles with1281 frozen
+  names/hashes unchanged. Failed gate10/full payload and all policy diagnostic
+  failures remain preserved. Owned current-boolean binary/AV compatibility is
+  bounded source evidence; strict Enforcing workloads/native transient/mounts and
+  actual NFS writer proof remain WEB-033/OPS-029. No production state changes,
+  deployment, tag or push. WEB-033 is selected next.

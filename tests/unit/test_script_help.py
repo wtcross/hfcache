@@ -317,7 +317,14 @@ def test_fixed_client_launcher_forwards_original_handle_after_delimiter(monkeypa
     def forbidden(*args, **kwargs):
         pytest.fail("client forwarding attempted a workload or installed profile read")
 
-    monkeypatch.setitem(main.__globals__, "load_profile", lambda: {"app_image": image})
+    profile = {
+        "schema_version": 1,
+        "service_uid": os.geteuid() or 981,
+        "service_gid": os.getegid() or 981,
+        "app_image": image,
+        "caddy_image": image,
+    }
+    monkeypatch.setitem(main.__globals__, "load_profile", lambda: profile)
     monkeypatch.setitem(main.__globals__, "archive_readonly", forbidden)
     monkeypatch.setitem(main.__globals__, "prepare_start", forbidden)
     monkeypatch.setattr(subprocess, "run", forbidden)

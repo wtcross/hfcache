@@ -622,6 +622,7 @@ def test_selected_live_images_require_canonical_build_inputs_and_finite_binds(
     rendered = selected / "rendered"
     rendered.mkdir()
     runtime = {
+        "schema_version": 1,
         "service_uid": 983,
         "service_gid": 983,
         "app_image": "sha256:" + "c" * 64,

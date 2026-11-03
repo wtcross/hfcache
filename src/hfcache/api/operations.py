@@ -306,7 +306,7 @@ class OperationStore:
     Unknown artifacts remain untouched and prevent fresh admission (AD-16).
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 - independent storage lifecycle and existing offline-only mode
         self,
         root: Path,
         *,
@@ -314,6 +314,7 @@ class OperationStore:
         clock: Callable[[], datetime] | None = None,
         checkpoint: Callable[[str], None] | None = None,
         private: bool = False,
+        existing: bool = False,
     ) -> None:
         self.root = root
         self.private = private
@@ -329,12 +330,13 @@ class OperationStore:
         created_root = False
         try:
             parent = open_directory(root.parent)
-            try:
-                os.mkdir(root.name, mode=0o700, dir_fd=parent)
-                created_root = True
-                os.fsync(parent)
-            except FileExistsError:
-                pass
+            if not existing:
+                try:
+                    os.mkdir(root.name, mode=0o700, dir_fd=parent)
+                    created_root = True
+                    os.fsync(parent)
+                except FileExistsError:
+                    pass
             self._fd = os.open(
                 root.name,
                 os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC,
@@ -344,7 +346,7 @@ class OperationStore:
             self._lock_fd = os.open(
                 ".lock",
                 os.O_RDWR
-                | (os.O_CREAT if created_root or private else 0)
+                | (os.O_CREAT if not existing and (created_root or private) else 0)
                 | os.O_NOFOLLOW
                 | os.O_NONBLOCK
                 | os.O_CLOEXEC,

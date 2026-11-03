@@ -830,13 +830,50 @@ profile. Default guarded deployments and installation windows remain read-only.
 Writer mode requires matching immutable runtime/index/helper evidence, fresh
 archive permission, actual NFS identity/capacity/ownership, original lock and
 Enforcing policy. Only API/worker fixed archive binds and a dedicated confined
-writer process type gain required archive writes; generic `container_t` and
+writer process type `hfcache_archive_writer_t` gain required archive writes;
+generic `container_t` and
 helper/observer archive/Hub/secret payload neverallows stay unchanged. Source
 and local synthetic archives cannot qualify production NFS. No boolean, relabel,
 privileged container, schedule activation or weaker systemd confinement substitutes
 for actual installed proof. Manual startup is current-boot only until separately
 qualified. [Original-intent closure](job-recovery.md) independently requires
 actual executor and protected-effect proof and never grants archive authority.
+
+The explicit writer type derives the reviewed distribution container/image and
+network attributes, including `container_domain`, `svirt_sandbox_domain`, the
+container/sandbox network domains and corenet types. It retains
+`mcs_constrained_type`; Podman retains its generated MCS categories. Generated
+policy-internal attributes are not cloned. Stable stock container process/system/
+log markers are retained; the kernel exception markers are required to make the
+container domain's existing proc mount mediation consistent with base-policy
+neverallows. They add no capability or helper/observer permission.
+Only its fixed API/worker invocation selects the type. Required NFS/owned-archive
+directory/file transaction rights include create, rename, unlink and hardlinks.
+Archive symlink create/unlink/read/getattr is required solely by the canonical
+Hub cache at `.store/hub` (`AD-09`, `snapshot_download`); publication resolves
+cache links into ordinary files. The new explicit archive rule adds no symlink setattr/rename. Inherited stock
+container/NFS policy may be broader at independently administered boolean values;
+the explicit rule is not a bound on those inherited rights.
+SELinux permissions are type-wide, not a MAC selector for that cache path.
+The common writer type retains API credential/network rights; the worker's
+separate secret-free mounts/masks, network-none and AF_UNIX-only seccomp enforce
+its narrower role. Type selection alone cannot establish worker isolation.
+Actual peer/recovery review binds selected writer command, payload PID/start,
+cgroup and SELinux domain; unknown facts refuse closure/effects. Helper and
+observer archive/secret payload neverallows remain unchanged.
+
+The owned target-policy drill distinguishes syntax/binary compatibility from
+strict neverallow validation and real confinement. Strict expansion also fails
+for the retained distribution/helper baseline; unchanged assertions are retained,
+not bypassed or weakened to obtain a green result. Compilation with the exact
+copied host compiler configuration plus bounded allow-vector comparison at
+freshly observed **active** boolean values establishes only that snapshot's
+compatibility and type permissions. The observed existing `virt_use_nfs=true`
+already permits stock container NFS rights; this change adds no generic
+`container_t` grant and cannot claim the writer is the sole systemwide writer
+type. MCS/DAC/mount/namespace/seccomp and actual enforcing positive/negative
+workloads remain independent installed requirements. Do not change a boolean or
+weaken confinement to make those checks pass.
 
 ## Confined private listener ownership
 

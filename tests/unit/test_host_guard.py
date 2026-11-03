@@ -397,3 +397,22 @@ def test_guard_child_closed_budget_and_original_clock_fail_before_metadata(
     with pytest.raises((policy.InspectionError, TimeoutError)):
         policy.observe_guard(bootstrap_work={"files": 4, "bytes": 100}, started_at=started)
     assert native.calls == []
+
+
+@pytest.mark.parametrize(
+    "change", [{"ActiveState": "failed"}, {"LoadState": "not-found"}, {"SubState": "unknown"}]
+)
+def test_writer_guard_requires_known_deliberately_inactive_unit(monkeypatch, change):
+    row = {"LoadState": "loaded", "ActiveState": "inactive", "SubState": "dead", "MainPID": "0"}
+    inspection = policy._Inspection(policy.InspectionBudget())
+    inspection.deployment = {
+        "profile": "rootless",
+        "profile_evidence": {"archive_mode": "manual-writer"},
+    }
+    inspection.legacy = {"_inspection_guard": lambda *_: "inactive"}
+    monkeypatch.setattr(policy, "_guard_unit", lambda _: row)
+    assert inspection.guard_state() == "inactive"
+    row.update(change)
+    with pytest.raises(policy.InspectionError) as refused:
+        inspection.guard_state()
+    assert refused.value.reason == "facts-unavailable"

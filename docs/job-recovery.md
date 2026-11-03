@@ -53,7 +53,7 @@ credential class and existing namespaced key digest. Closure covers every route
 under that key; a supplied route cannot weaken the fence.
 
 First activation is an explicit offline `prepare-intent-state` step in the
-existing release installer, with actual executors drained, original store and
+existing native/rootless release installer, with actual executors drained, original store and
 archive flocks retained, coordinated backup and a validated predecessor store.
 It provisions only the local companion inode and initially empty disposition
 file with exact service ownership; it never initializes the archive. Refuse
@@ -70,7 +70,14 @@ rejection and reviewed retirement reads it under that same flock. Unknown,
 unsafe, missing-after-activation, duplicate, future, contradictory or corrupt
 state preserves evidence and closes admission/review; healthy exact-ID receipt
 and result reads remain possible. Store opening does not replay any operation.
-An activation marker is not recreated over uncertain existing state.
+An activation marker is not recreated over uncertain existing state. The fixed
+selected-runtime offline invocation has no archive/network/credential mount;
+its application validator checks protected config UUID and both predecessor
+stores through existing-only original-lock opens. The rootless installer moves
+the new companion inode from an isolated local runtime bind to its fixed path
+without replacing existing evidence and verifies independently provisioned
+coordination labeling. The native installer uses its selected venv under an
+offline system-manager sandbox. See the [activation procedure](containers.md#offline-original-intent-activation).
 
 For an authenticated, keyed, fully validated request to a generic registered Job
 adapter (including installed/candidate `/plans`), first look for its existing receipt and fence under the store flock. An exact receipt is the

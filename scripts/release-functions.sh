@@ -27,7 +27,7 @@ require_quiescent() {
   canonical_absolute_path "${runtime}" || { release_die 'unsafe runtime directory'; return 1; }
   local units=(hfcache-sync.timer hfcache-verify.timer hfcache-sync.service
     hfcache-verify.service hfcache-api.socket hfcache-api.service
-    hfcache-verification.socket hfcache-verification.service)
+    hfcache-verification.socket hfcache-verification.service hfcache-host-helper.service)
   for unit in "${units[@]}"; do
     properties=$("${manager}" show "${unit}" --no-pager \
       --property=LoadState,ActiveState,MainPID,ControlPID,TasksCurrent,ControlGroup 2>/dev/null) || {

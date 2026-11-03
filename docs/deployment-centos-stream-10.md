@@ -524,7 +524,8 @@ prove real cgroup/libpod/process quiescence. Retain the original noncreating
 archive flock throughout protected selection and mount/guard handoff.
 
 Provision original-intent state offline only through the installer's explicit
-prepare-intent-state step; normal startup must refuse missing state. Preserve
+prepare-intent-state step; normal startup never creates missing authority and
+keeps admission/review closed while safe exact-ID observation remains. Preserve
 predecessor data. Bind new immutable runtime mode, independent helper index,
 bootstrap, policy and exact Enforcing policy receipt before helper READY. The
 writer mode is a separate protected selection, never a browser or ambient flag.
@@ -558,3 +559,90 @@ schema 2 and browser recovery schema 2 must be tested against exact predecessor
 source c23abba45f8967d058983043b96843bef62e899a. Unknown effects forbid automatic
 rollback/replay. Application rollback cannot undo archive writes or normal Sync
 retention. See the [original-intent protocol](job-recovery.md).
+
+
+### Current-boot protected writer procedure
+
+This is a reviewed procedure, not evidence that a deployment has run it. The
+operator must supply fresh host-specific commands and identity receipts.
+Stop on missing or contradictory facts; retain every failed/partial artifact.
+
+1. Record the deliberate guard enablement/active state, effective bridge and
+   guard fragments/drop-ins, persistent local mount override, actual NFS row
+   (excluding autofs), export/host/label, service passwd/home/mapping and original
+   archive/configuration/API/worker lock device/inodes. Take the coordinated
+   protected backup/inventory described above; retain both stores and browser
+   handles without printing secret values. Keep calendars disabled and native
+   writers masked. A historical observation or free flock is insufficient.
+2. Close admission and stop API activation, drain the real API while worker and
+   helper can still report outcomes, then drain worker/Caddy/helper/inspector.
+   Inspect actual system/user unit fragments, PID/start/cgroup/libpod cohorts,
+   all pending protected effects and detached children. Unknown activity stops
+   the procedure. Transfer ownership of the same noncreating archive flock only
+   through a freshly proven zero-executor handoff; an installer invocation must
+   acquire that flock itself, rather than compete with a separately held open
+   description. NFS remains read-only throughout staging/selection.
+3. Prepare root-protected manifest2 siblings whose only mode-dependent manifest
+   fields are archive_mode/release_id. Compare package version, source commit,
+   image IDs, wheel/UI/source bytes exactly. Use the existing installer `stage`
+   for each and `switch --version <version>-guarded-readonly` for initial
+   selection. Each protected step freshly retains the original flock and proves
+   drain/NFS-ro. Verify physical-root/current/index/rendered identity after the
+   operation; never edit immutable artifacts or remove a prior release.
+4. Before first effect admission, independently install the reviewed CIL and a
+   fresh exact helper receipt/index/bootstrap/policy. Provision persistent exact
+   fcontexts for both `/run/hfcache/hfcache.lock` and
+   `/run/hfcache/hfcache.lock.intent` as
+   `hfcache_host_helper_archive_lock_t:s0`, preserving the existing original inode.
+   With all executors/helper still drained and NFS-ro, run the matching installer
+   `prepare-intent-state --archive-id <configured UUID>` once. Native uses
+   `install-release.sh --prepare-intent-state --archive-id <UUID>`; rootless uses
+   `install-container-release.py prepare-intent-state --archive-id <UUID>`.
+   Native preparation accepts only fixed packaged/cached API startup and covered
+   credential sources under the reviewed effective verifier masks; custom source
+   masks are retained and absent standard stores are optional. Nonstandard native
+   archive roots/control-store paths and unsupported API overrides refuse before
+   effects. Preserve the exact config/unit/mask/account revision across invocation
+   and companion publication. The transient's private runtime bind must hide the
+   original archive/API/worker runtime sources. Do not infer real mask/bind
+   enforcement from source checks; installed qualification must prove it.
+   Inspect coordinated backup hashes, both original store-lock inodes, empty
+   disposition authority, new companion ownership/mode/link/label, and original
+   archive-lock identity. Missing/partial/prior evidence refuses repair/retry.
+5. Under the guarded sibling, provision current-boot runtime parents, preserve
+   all fixed labels, reload both managers and inspect effective fragments/drop-ins.
+   Start the exact matching helper to READY before bridge/worker/API/Caddy, then
+   perform initial installed read-only/recovery acceptance. A no-longer-compatible
+   predecessor must remain observation-only; retain every disposition permanently.
+6. Before enabling writes, repeat the independent full drain/backup/lock handoff.
+   Select the already staged manual-writer sibling through `switch` while NFS-ro,
+   rebind the protected helper/index/policy/receipt to its exact release_id, and
+   reacquire/retain the same original flock for the separate mount transition.
+   Remove only the reviewed bridge dependency that would start the lock-holding
+   guard; preserve unrelated dependencies and its recorded original bytes. Keep
+   the independent guard deliberately inactive and available. Do not start a
+   writer through the user default target or infer readiness from an exited bridge.
+7. Root adjusts only the protected local persistent mount override and remounts
+   the existing NFS connection rw without unmount/disconnect/NAS changes. Prove
+   host/export/mount identity, mapped ownership, unchanged sentinel UUID, actual
+   nfs_t label, Enforcing state, available/reserved capacity and application
+   preflight through the application path. No manual archive probe or initialization
+   is permitted. Provision matching current-boot helper/runtime objects, establish
+   helper READY, transfer the retained original lock to actual executors, and
+   start fixed roles. Verify API/worker rw archive binds and exact writer/MCS
+   domains; worker remains network-none, AF_UNIX-only and secret-free. Caddy/client
+   have no archive. Fresh independent archive permission is still required per job.
+8. For rollback, first stop admission and drain actual executors and detached
+   helper cohorts; preserve unknown outcomes. Reacquire the same original flock,
+   restore the reviewed local NFS-ro override/remount and original bridge/guard
+   settings, and select a retained compatible guarded sibling with matching
+   bootstrap/index/policy/receipt. Preserve the deliberate original guard state,
+   dispositions, stores, handles, backups and artifact/inode identities. Recheck
+   effective units and helper READY before safe observation. Unknown archive
+   effects forbid automatic rollback/replay; application rollback cannot undo
+   archive publications or retention.
+
+Runtime/companion recreation after a reboot is a separate manual provisioning
+operation under the same fresh drain and protected authority review. An existing
+healthy disposition file is preserved; first-activation preparation is never
+rerun to recreate a missing companion. No unattended startup claim is made.

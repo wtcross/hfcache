@@ -444,8 +444,13 @@ History: `synchronization` (`54e4671`), decision 94.
   [Decision 165](adr/decision-165.md) accepts a separately protected manual-writer
   mode for fixed API/worker archive writes, dedicated confined writer domains,
   unchanged helper/observer neverallows and a still-read-only installation window.
-  Runtime/index/helper/mount/guard facts must agree; unknown facts refuse. This
-  design does not establish actual NFS or unattended-boot acceptance.
+  Runtime/index/helper/mount/guard facts must agree; unknown facts refuse. Schema2
+  siblings bind an exact version-mode release_id without changing package/UI
+  version or image bytes. Protected staging and selection retain the original
+  noncreating flock and fresh NFS-ro executor/helper/cgroup/libpod drain. The
+  companion preserves its independently provisioned label and service ownership;
+  normal startup never creates missing disposition authority. This source
+  implementation does not establish actual NFS or unattended-boot acceptance.
   Actual disposable container proof binds
   no NAS; packaging cannot clear installed or full storage acceptance holds.
   Finite stateless observer containers alone may auto-remove without canceling

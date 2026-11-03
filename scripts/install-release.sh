@@ -13,6 +13,7 @@
 #   sudo scripts/install-release.sh --no-switch --web-release /absolute/release \
 #     --web-release-sha256 <reviewed-index-sha256>  # stage explicitly indexed UI/helper
 #   sudo scripts/install-release.sh --switch 0.1.0  # point `current` at a release
+#   sudo scripts/install-release.sh --prepare-intent-state --archive-id <UUID>
 #   scripts/install-release.sh --list               # what is installed, and what is live
 #   scripts/install-release.sh --dry-run            # review only; no writes or service calls
 #
@@ -142,10 +143,17 @@ DRY_RUN=false
 WITH_MCP=false
 WEB_RELEASE=
 WEB_RELEASE_SHA256=
+INTENT_ARCHIVE_ID=
 while [[ $# -gt 0 ]]; do
   argument=$1
   case "${argument}" in
     --no-switch) MODE=stage ;;
+    --prepare-intent-state) MODE=prepare-intent-state ;;
+    --archive-id)
+      [[ $# -ge 2 && -z ${INTENT_ARCHIVE_ID} ]] || die '--archive-id requires one UUID'
+      INTENT_ARCHIVE_ID=$2
+      shift
+      ;;
     --list) MODE=list ;;
     --dry-run) DRY_RUN=true ;;
     --with-mcp) WITH_MCP=true ;;
@@ -218,6 +226,88 @@ if [[ ${MODE} == list ]]; then
   installed_releases | sed 's/^/  /'
   exit 0
 fi
+
+if [[ ${MODE} == prepare-intent-state ]]; then
+  [[ ${PREFIX} == /opt/hfcache ]] || die 'offline activation requires the fixed installation prefix'
+  [[ ${INTENT_ARCHIVE_ID} =~ ^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$ ]] || die 'exact configured UUID required'
+  native_profiles
+  [[ ${EUID} -eq 0 ]] || die 'offline activation requires root'
+  HFCACHE_SYSTEMCTL=/usr/bin/systemctl HFCACHE_RUNTIME_DIRECTORY=/run/hfcache require_quiescent
+  selected=$(readlink -f /opt/hfcache/current)
+  native_policy=$("${selected}/.venv/bin/python" -I -B -m hfcache.api.intent_activation \
+    --archive-id "${INTENT_ARCHIVE_ID}" --native-masks-only)
+  native_masks=${native_policy%$'\n'*}
+  native_revision=${native_policy##*$'\n'}
+  [[ ${native_revision} =~ ^[0-9a-f]{64}$ && ${native_masks} != "${native_policy}" ]] || die 'native activation policy unavailable'
+  [[ ! -e /var/lib/hfcache/intent-activation-backups && ! -L /var/lib/hfcache/intent-activation-backups ]] || die 'existing activation evidence preserved'
+  [[ ! -e /run/hfcache/hfcache.lock.intent && ! -L /run/hfcache/hfcache.lock.intent ]] || die 'existing companion preserved'
+  mkdir --mode=0700 -- /var/lib/hfcache/intent-activation-backups
+  chown --no-dereference hfcache:hfcache /var/lib/hfcache/intent-activation-backups
+  mkdir --mode=0700 -- /run/hfcache/intent-activation
+  chown --no-dereference hfcache:hfcache /run/hfcache/intent-activation
+  # The selected application parser validates/backs up both original stores.
+  # Bound configured-source masks are revalidated before any state effect.
+  # The private runtime bind hides original archive/API/worker lock/socket sources.
+  /usr/bin/systemd-run --system --wait --pipe --collect \
+    --unit=hfcache-intent-activation \
+    --property=User=hfcache --property=Group=hfcache --property=UMask=0077 \
+    --property=NoNewPrivileges=yes --property=CapabilityBoundingSet= \
+    --property=PrivateNetwork=yes --property=IPAddressDeny=any \
+    --property=RestrictAddressFamilies=AF_UNIX \
+    '--property=UnsetEnvironment=HF_TOKEN HUGGING_FACE_HUB_TOKEN HUGGINGFACE_HUB_TOKEN HUGGINGFACEHUB_API_TOKEN CREDENTIALS_DIRECTORY HF_TOKEN_PATH HFCACHE_API_TOKEN HFCACHE_MCP_TOKEN' \
+    '--property=Environment=HF_HOME=/run/hfcache/hf-home HF_XET_CACHE=/run/hfcache/xet HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1 HF_HUB_DISABLE_TELEMETRY=1 HF_HUB_DISABLE_IMPLICIT_TOKEN=1' \
+    --property=PrivateTmp=yes --property=PrivateDevices=yes \
+    --property=ProtectSystem=strict --property=ProtectHome=yes \
+    --property=ProtectProc=invisible --property=ProcSubset=pid \
+    --property=RestrictNamespaces=yes \
+    "--property=InaccessiblePaths=${native_masks}" \
+    '--property=BindPaths=/run/hfcache/intent-activation:/run/hfcache' \
+    '--property=ReadWritePaths=/var/lib/hfcache/api /var/lib/hfcache/verification /var/lib/hfcache/intent-activation-backups /run/hfcache' \
+    "${selected}/.venv/bin/python" -I -B -m hfcache.api.intent_activation \
+    --archive-id "${INTENT_ARCHIVE_ID}" \
+    "--native-masks=${native_masks}" --native-revision "${native_revision}" \
+    --backup-directory /var/lib/hfcache/intent-activation-backups/initial </dev/null
+  [[ $("${selected}/.venv/bin/python" -I -B -m hfcache.api.intent_activation \
+    --archive-id "${INTENT_ARCHIVE_ID}" --native-masks-only) == "${native_policy}" ]] || die 'native policy changed; preserve partial activation'
+  [[ $(readlink -f /opt/hfcache/current) == "${selected}" ]] || die 'selection changed; preserve activation evidence'
+  "${selected}/.venv/bin/python" -I -B - <<'PY'
+import os
+from pathlib import Path
+source = Path("/run/hfcache/intent-activation/hfcache.lock.intent")
+target = Path("/run/hfcache/hfcache.lock.intent")
+os.link(source, target, follow_symlinks=False)
+source.unlink()
+for parent in (source.parent, target.parent):
+    descriptor = os.open(parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+PY
+  /usr/sbin/restorecon -F /run/hfcache/hfcache.lock.intent
+  "${selected}/.venv/bin/python" -I -B - <<'PY'
+import os
+import pwd
+import re
+import stat
+from pathlib import Path
+path = Path("/run/hfcache/hfcache.lock.intent")
+account = pwd.getpwnam("hfcache")
+before = path.lstat()
+if not (stat.S_ISREG(before.st_mode) and before.st_nlink == 1
+        and stat.S_IMODE(before.st_mode) == 0o600
+        and (before.st_uid, before.st_gid) == (account.pw_uid, account.pw_gid)):
+    raise SystemExit("native activated companion metadata refused; preserve evidence")
+context = os.getxattr(path, "security.selinux", follow_symlinks=False)
+if not re.fullmatch(rb"[A-Za-z0-9_]+:object_r:hfcache_host_helper_archive_lock_t:s0\0?", context):
+    raise SystemExit("native activated companion label refused; preserve evidence")
+after = path.lstat()
+if (before.st_dev, before.st_ino, before.st_ctime_ns) != (after.st_dev, after.st_ino, after.st_ctime_ns):
+    raise SystemExit("native activated companion changed; preserve evidence")
+PY
+  exit 0
+fi
+[[ -z ${INTENT_ARCHIVE_ID} ]] || die '--archive-id applies only to offline activation'
 
 if [[ ${MODE} == switch ]]; then
   native_profiles --target "${SWITCH_TARGET}"

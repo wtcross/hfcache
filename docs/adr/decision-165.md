@@ -1,9 +1,9 @@
 # Select rootless archive writes through independent protected authority
 
 - Decision identity: 165.
-- Status: Accepted design; executable and installed conformance pending.
+- Status: Source implementation; installed and actual NFS conformance pending.
 - Date: 2026-11-03.
-- Introducing change: this commit.
+- Introducing change: `60d086931dc03d8582751c6a3c9b17eeb6f93715` (accepted design); source implementation amendment below.
 
 ## Context and decision
 
@@ -101,3 +101,73 @@ See [containers](../containers.md#protected-manual-writer-profile),
 [recovery](../job-recovery.md) and [invariants](../invariants.md).
 Source tests, owned enforcing installed fixtures, exact predecessor-format drills
 and later separately authorized actual NFS pilots must establish conformance.
+
+
+## Source implementation and qualification (2026-11-03)
+
+The [installer](../../scripts/install-container-release.py),
+[launcher](../../scripts/container-service.py),
+[protected preparer](../../scripts/prepare-host-helper.py),
+[host authority](../../src/hfcache/host_policy.py),
+[peer review](../../src/hfcache/host_peer.py) and
+[SELinux source](../../packaging/selinux/hfcache-host-helper.cil) implement the
+finite mode/sibling identity joins. Helper `release.release_id` binds the exact
+physical sibling while `profile_evidence.archive_mode` independently binds mode.
+Legacy runtime/manifest readers remain strict, and new metadata inspection does
+not require a new function in an old launcher. Protected staging now retains
+fresh original-lock/NFS-ro/executor/helper/cgroup/libpod proof before effects,
+matching the accepted selection window; local rendering remains manager-free.
+
+Fixed rootless and native installer entrypoints run the selected application's
+real config/store validator offline after independent drain and original flock.
+Existing-only store opens cannot create missing original lock inodes. Rootless
+preparation exposes neither archive, original archive lock, sockets, network nor
+credentials: a new isolated local runtime parent supplies only the new companion.
+Non-replacing publication preserves its inode, followed by exact independently
+provisioned label/owner/mode verification. Normal role binds preserve that label.
+Native preparation uses its fixed selected venv and offline system-manager
+sandbox. It reuses the verifier's effective custom masks and canonical grammar,
+with optional standard masks and real server-model source coverage; exact
+packaged/cached native API command/credential delivery and no API drop-ins exclude
+unmodelled sources. Unsupported native roots/store layouts refuse. A bound exact
+config/unit/mask/account revision is checked before effects and again before
+non-replacing companion publication; a private runtime bind hides original
+archive/API/worker runtime sources. No bytecode or inherited stdin is supplied; fixed offline HF_HOME/Xet paths use
+that private runtime and the legacy service token cache is masked.
+Partial/prior authority is preserved, never repaired automatically.
+
+The writer derives the actual target's stable stock container attributes,
+including network/image/MCS and required proc exception markers, excluding
+compiler-generated private attributes. Its new explicit archive symlink rule
+contains only getattr/read/create/unlink for the canonical `.store/hub` cache;
+ordinary publication trees remain symlink-free. The explicit rule does not bound
+broader inherited stock NFS policy at independently administered boolean values.
+No generic container grant, capability, helper/observer payload permission or
+boolean is added. API/worker fixed role mounts/masks/network/seccomp remain the
+worker's narrower secret-free/offline boundary; the common type alone is not.
+Schema2 startup proves exact immutable selector/index/rendering, host NFS mode
+and nosuid/nodev/noexec, Enforcing state and fresh known guard/original-lock facts.
+Writer review additionally binds real payload PID/start/cgroup/command/domain.
+
+Owned schema2 sibling/identity/mount/guard/lock/refusal fixtures and goldens cover
+source behavior. Exact 0.3.1 c23abba parser execution preserves legacy schema1
+and refuses both schema2 modes with explicitly modeled protected metadata. The
+owned target-policy binary compiles using the exact copied host configuration;
+28 bounded allow-vector checks use freshly observed active booleans, including
+helper/observer payload denials, unchanged generic archive rights, existing role
+prerequisites and writer kernel-core/message rights no greater than stock.
+Actual kernel policy, original policy store/root and Enforcing state remain
+unchanged. This is neither an installed policy change nor workload acceptance.
+
+Strict expansion remains explicitly unqualified: the retained baseline fails33
+clauses, and the initial candidate fails40 (five new writer history/guard
+constraints matching inherited map/search patterns plus two proc-marker conflicts
+subsequently addressed through stock markers). All failures and assertions stay
+preserved. Existing `virt_use_nfs=true` already gives stock containers broader NFS
+rights; `domain_can_mmap_files=false` is part of the measured snapshot, not a
+permanent proof. No strict-neverallow pass or sole-systemwide-writer claim is made.
+Actual owned Enforcing role/mount/MCS/secret/network and recovery/rollback drills
+remain with the installed acceptance task; actual production nfs_t transactional
+writes and current-boot transition/pilots remain later. No unattended boot claim
+is added. Source gate and retained proof identities accompany the implementation commit
+evidence.

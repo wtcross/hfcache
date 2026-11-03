@@ -1174,5 +1174,7 @@ schema 2. The host inspector may recognize nfs-rw only with this exact bound
 mode, inactive guard, protected archive grant and fixed writer-domain/mount
 proof. It does not gain NFS payload access or grant rootless schedule/observer
 controls. Previous strict helpers refuse the new field; retain matching rollback
-bootstrap/index/policy and a capable recovery reader. Source design alone does
-not qualify the actual nfs_t mount, writer process labels or Enforcing writes.
+bootstrap/index/policy and a capable recovery reader. The protected helper release object additionally binds the exact sibling
+release_id while retaining the package version; no version-directory alias is
+accepted. Source implementation and owned checks do not qualify the actual
+nfs_t mount, writer process labels or Enforcing writes.

@@ -117,6 +117,42 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   gate3 TMP alone retires after164269-entry manifest0c72573f/fresh334-process
   all-UID zero-owner proof, receipt02726086; root1.480GB/home119.3MB free.
 
+- [x] OPS-027 Support protected writer runtime and offline intent activation
+  (2026-11-03, this commit — [task](plans/tasks/ops-027-explicit-rootless-writer-profile.md),
+  [plan](plans/2026-11-03-plan-job-recovery-and-archive-writes.md)).
+  Closed runtime2/manual-writer and exact manifest2 sibling identities bind fixed
+  API/worker mounts, dedicated writer domain and independently protected helper
+  metadata; guarded defaults and schema1 readers remain supported. Protected stage
+  now holds the original noncreating flock through actual drained NFS-ro manager
+  observations. Fixed selected-runtime real-parser activation validates/backs up
+  both existing stores under original locks, provisions the companion without
+  replacement and refuses missing/partial authority on startup. Native transient
+  uses reviewed stable credential masks, fixed private runtime/offline cache and
+  repeated config/unit/mask/account revisions. Preserving current-boot procedure
+  keeps original identities and deliberate guard state through rollback.
+  FS02/19/21–23, AD09/16/17, INV003/004/010/013/014/023 and agentINV011 plus
+  ADR126/127/141/150/159/162/164/165 reviewed; contracts/INV003/ADR165 and prior
+  amendment links updated, no new architecture/dependency. Exact c23abba parsers
+  accept legacy1 and refuse both new mode2 formats without rewriting bytes.
+  Default gate19 passes9711 tests/52 deselected, build and three locked wheel
+  profiles in1313.549s;1281 frozen names/hashes unchanged, log SHA
+  `b6bf8d20a5ca987f1aa73144eca2641faaee621ab9bd65ca72a9c9617fe2f39f`.
+  Failed gate10 remains11fail/9700pass: exact11 fixture regressions pass before
+  retry, original assertions preserved. Full failed payload archive/metadata and
+  log bindings remain after fresh all-UID no-owner-proven exact TMP retirement.
+  Owned copied-policy/current-active-boolean28-AV checks prove bounded TE binary
+  compatibility only; retained expand-check1 baseline33/candidate40 failures are
+  not a strict neverallow pass. Generic container_t vectors/host booleans/kernel
+  and production files remain unchanged. WEB-033 owns installed Enforcing/MCS/
+  native transient/role mount/negative workload/rollback acceptance; OPS-028/029
+  retain actual guarded deployment/NFS transition/pilots/backfill. No production
+  service, permission, mount, lock/store, credential, deployment, tag or push.
+  Completion-only Markdown passes69 focused documentation checks and alignment
+  216 human documents/29 helpers; only four completion records differ from the
+  green frozen technical inputs. Successful gate19 TMP alone retires after
+  matching164940-entry inventories and fresh471-process all-UID zero-reference
+  proof, receipt76c9858a; root1.178GB/home90.3MB free.
+
 ## Repository hygiene (2026-11-02)
 
 - [x] DOC-020 Ignore root Node dependencies
@@ -2942,6 +2978,24 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-03: OPS-027 source/profile/procedure completes after default gate19 and
+selects WEB-033. Guarded/manual immutable siblings, independent writer identity,
+fixed offline existing-store activation and companion provisioning are supported
+source paths. Actual native transient/private masks and rootless role mounts,
+Enforcing/MCS writer/helper/observer positive/negative workloads and installed
+old/current readers remain WEB-033. Copied target-policy build/current-active-
+boolean AV checks do not establish strict neverallows or workload enforcement;
+all baseline/candidate expanded failures remain retained. Existing virt_use_nfs
+already grants stock container NFS rights; no generic grant/boolean changed and
+no sole-systemwide-writer claim follows. Production remains0.3.1/c23abba/NFS-ro/
+nfs_t/Enforcing, deliberate guard inactive, original lock/store/grant/credential
+identities preserved. OPS-028/029 separately own guarded deployment, original
+unknown-key review, protected current-boot writer transition and original-handle
+pilots/backfill after fresh prerequisites. Preserve all failed logs/full payload
+archives, successful gate evidence and the tooling-incident read-only receipt.
+Optional instrumented runner remains unchanged/uninvoked; no installed acceptance
+or production action is inferred from this source commit.
 
 2026-11-03: WEB-032 source completes after strict gate3 and selects OPS-027.
 Browser readiness/GET-only original recovery, explicit reviewed retirement and
@@ -13955,3 +14009,17 @@ explicit retained-ID Review; per-disposition callbacks and visibility/auth fence
 prevent old observations donating proof. Atomic schema1 migration and exact prior
 reader refusal preserve history. ADR164/INV023/API/schema/recovery contracts record
 these bounded refinements; no protocol redesign or new architectural decision.
+
+
+2026-11-03 OPS-027 implementation of decision165: exact immutable sibling
+release_id joins and independent helper mode protect fixed API/private-worker
+writer mounts/domain; renderer stays local while protected stage gains the
+required original-flock/drained-NFS-ro barrier. Fixed selected-runtime offline
+activation reuses real config/store validators and original locks, provisions
+companion authority without replacement and fails closed for unmodelled native
+credential/unit/layout sources. Stock stable-domain prerequisites and Hub-cache
+symlink create/unlink reflect existing paths; generic grants/booleans remain
+unchanged. Owned target-policy/current-active-boolean AV compatibility is bounded
+source evidence with all strict expanded-policy failures preserved; installed
+Enforcing workloads and actual NFS conformance remain separate. ADR165/INV003
+and affected contracts record these implementation details without a new decision.

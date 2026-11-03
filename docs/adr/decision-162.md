@@ -75,3 +75,12 @@ Accepted design in [decision 165](decision-165.md); implementation and installed
 pending. Closed rootless account-home selection and existing mapped identities remain unchanged. The independent writer archive-mode binding is additional protected authority, not a new home, engine selector or permission to migrate an account/store.
 See the [executable recovery contract](../job-recovery.md). Original rationale
 and unrelated requirements above remain in force.
+
+
+### Protected writer source implementation (2026-11-03)
+
+[Decision165's implementation record](decision-165.md#source-implementation-and-qualification-2026-11-03)
+now supplies the closed immutable sibling/mode, original-inode offline activation,
+role/domain and preserving procedure source. The original rationale and unrelated
+requirements remain. Source/binary/current-boolean checks establish no installed
+Enforcing, actual NFS or unattended-boot acceptance; those scopes remain explicit.

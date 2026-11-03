@@ -10,6 +10,11 @@ from types import SimpleNamespace
 
 import pytest
 
+from tests.unit.test_container_release_installer import (
+    deployment as deployment,  # noqa: PLC0414 - original immutable staged fixture
+)
+from tests.unit.test_container_release_installer import installer
+
 SCRIPT = Path(__file__).parents[2] / "scripts/container-service.py"
 SPEC = importlib.util.spec_from_file_location("container_service", SCRIPT)
 assert SPEC is not None
@@ -374,3 +379,122 @@ def test_fixed_profile_supplies_missing_service_runtime_but_refuses_wrong_one(
     monkeypatch.setenv("XDG_RUNTIME_DIR", "/run/user/1000")
     with pytest.raises(ValueError, match="identity"):
         runtime.load_profile(path)
+
+
+@pytest.mark.parametrize("mode", ["guarded-readonly", "manual-writer"])
+def test_schema2_mode_only_changes_executor_archive_bind_and_explicit_domain(mode):
+    profile = PROFILE | {"schema_version": 2, "archive_mode": mode}
+    for role in ("api", "worker", "caddy", "client"):
+        argv = runtime.command(profile, role)
+        archive = [part for part in argv if part.startswith("/srv/hfcache:")]
+        if role in {"api", "worker"}:
+            assert archive == [
+                "/srv/hfcache:/srv/hfcache:" + ("rw" if mode == "manual-writer" else "ro")
+            ]
+            assert ("--security-opt=label=type:hfcache_archive_writer_t" in argv) == (
+                mode == "manual-writer"
+            )
+            assert "/run/hfcache/hfcache.lock.intent:/run/hfcache/hfcache.lock.intent:rw" in argv
+        else:
+            assert not archive
+            assert not any(
+                "hfcache_archive_writer_t" in part or "lock.intent" in part for part in argv
+            )
+        if role == "worker":
+            assert "--network=none" in argv
+            assert not any(part == "--secret" for part in argv)
+            assert any(part.startswith("--security-opt=seccomp=") for part in argv)
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"archive_mode": "manual-writer"},
+        {"schema_version": 2},
+        {"schema_version": 2, "archive_mode": "rw"},
+        {"schema_version": True},
+    ],
+)
+def test_unknown_or_ambient_mode_never_grants_writer(change, monkeypatch):
+    monkeypatch.setenv("HFCACHE_ARCHIVE_MODE", "manual-writer")
+    assert "/srv/hfcache:/srv/hfcache:ro" in runtime.command(PROFILE, "api")
+    with pytest.raises(ValueError, match="unknown protected"):
+        runtime.command(PROFILE | change, "api")
+
+
+def test_host_mount_inspection_requires_explicit_protected_writer_mode():
+    rows = [(Path("/srv/hfcache"), "nfs4", {"rw"}, {"rw"})]
+    with pytest.raises(ValueError, match="read-only host inspection refused"):
+        runtime._inspection_archive_mount(rows)
+    assert runtime._inspection_archive_mount(rows, archive_mode="manual-writer") == "nfs-rw"
+    with pytest.raises(ValueError, match="read-only host inspection refused"):
+        runtime._inspection_archive_mount(rows, archive_mode="unknown")
+
+
+@pytest.mark.parametrize("mode", ["guarded-readonly", "manual-writer"])
+@pytest.mark.parametrize(
+    "unsafe",
+    [None, "wrong-mount", "not-enforcing", "missing-noexec", "selector", "runtime", "guard"],
+)
+def test_schema2_protected_start_requires_exact_release_mount_guard_and_enforcing(
+    deployment, monkeypatch, mode, unsafe
+):
+    release = deployment.release | {
+        "schema_version": 2,
+        "archive_mode": mode,
+        "release_id": "0.2.0-" + mode,
+    }
+    root = installer.stage(deployment.source, release, deployment.default)
+    installer.switch(root.name)
+    table = deployment.mountinfo.read_text().replace("hfcache ro", "hfcache ro,nosuid,nodev,noexec")
+    if mode == "manual-writer":
+        table = table.replace("hfcache ro,", "hfcache rw,")
+    if unsafe == "wrong-mount":
+        table = (
+            table.replace("hfcache rw,", "hfcache ro,")
+            if mode == "manual-writer"
+            else table.replace("hfcache ro,", "hfcache rw,")
+        )
+    if unsafe == "missing-noexec":
+        table = table.replace(",noexec", "")
+    enforcing = "0" if unsafe == "not-enforcing" else "1"
+    monkeypatch.setattr(
+        runtime,
+        "_inspection_accounting",
+        lambda path: enforcing if str(path) == "/sys/fs/selinux/enforce" else table,
+    )
+    for name, value in {
+        "INSPECTION_PREFIX": deployment.prefix,
+        "RELEASE_ROOT": root,
+        "INSPECTION_OWNER": os.getuid(),
+        "INSPECTION_BINDINGS": deployment.bindings,
+        "INSPECTION_LOCK": deployment.lock,
+    }.items():
+        monkeypatch.setattr(runtime, name, value)
+    monkeypatch.setattr(
+        runtime,
+        "_inspection_system_show",
+        lambda _: {
+            "LoadState": "loaded",
+            "ActiveState": "active" if unsafe == "guard" else "inactive",
+            "SubState": "running" if unsafe == "guard" else "dead",
+            "MainPID": "123" if unsafe == "guard" else "0",
+        },
+    )
+    profile = json.loads((root / "rendered/runtime.json").read_bytes())
+    if unsafe == "selector":
+        (deployment.prefix / "current").unlink()
+        (deployment.prefix / "current").symlink_to("releases/0.1.9")
+    if unsafe == "runtime":
+        (root / "rendered/runtime.json").write_text("{}")
+    if unsafe is None:
+        assert runtime.protected_runtime(profile) == release
+    else:
+        with pytest.raises(
+            ValueError,
+            match=(
+                r"protected host helper projection|read-only host inspection|"
+                r"staged release|rendered policy"
+            ),
+        ):
+            runtime.protected_runtime(profile)

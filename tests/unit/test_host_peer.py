@@ -287,6 +287,7 @@ def rootless_fixture():
         "cgroup": state["ControlGroup"],
     }
     deployment = {
+        "release": {"version": "0.2.0", "selector_target": "releases/0.2.0"},
         "api_principal": {"host_uid": uid, "host_gid": gid},
         "profile_evidence": {"app_image_sha256": image},
     }
@@ -716,3 +717,80 @@ def test_intent_review_rejects_unclassified_init_scope_processes():
         "/usr/lib/systemd/systemd",
         keeper,
     )
+
+
+@pytest.mark.parametrize("role", ["api", "worker"])
+def test_writer_review_binds_actual_domain_command_and_payload_identity(monkeypatch, role):
+    uid, gid = os.getuid(), os.getgid()
+    cid = "c" * 64
+    image = "sha256:" + "a" * 64
+    launched = ["/opt/hfcache/.venv/bin/python", "-m", "hfcache.verification_worker"]
+    if role == "api":
+        launched = ["/opt/hfcache/.venv/bin/hfcache", "serve"]
+    item = {"Id": cid, "Pid": 222, "ImageID": image}
+    process = {
+        "pid": 222,
+        "start_ticks": 456,
+        "cgroup": "/user.slice/libpod-" + cid + ".scope/container",
+        "argv": launched,
+    }
+    monkeypatch.setattr(module, "_process", lambda *_args, **_kwargs: process)
+    checked = []
+    monkeypatch.setattr(module, "_api_security", lambda proc, u, g: checked.append((proc, u, g)))
+    context = b"system_u:system_r:hfcache_archive_writer_t:s0:c10,c20"
+    monkeypatch.setattr(module, "_read", lambda *_args, **_kwargs: context)
+    result = module._intent_writer_payload(
+        item, ["podman", image, *launched], role, (uid, gid), budget()
+    )
+    assert result == {
+        "pid": 222,
+        "start_ticks": 456,
+        "cgroup": process["cgroup"],
+        "domain": context.decode(),
+    }
+    assert checked == [(process, uid, gid)]
+    monkeypatch.setattr(
+        module, "_read", lambda *_args, **_kwargs: b"system_u:system_r:container_t:s0:c10,c20"
+    )
+    with pytest.raises(module.PeerError):
+        module._intent_writer_payload(
+            item, ["podman", image, *launched], role, (uid, gid), budget()
+        )
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        ["label=type:hfcache_archive_writer_t"] * 2,
+        ["no-new-privileges"],
+        ["no-new-privileges", "label=disable"],
+        ["no-new-privileges", "label=type:hfcache_archive_writer_t", "label=level:s0"],
+    ],
+)
+def test_writer_peer_refuses_missing_nnp_or_nonselected_label_options(options):
+    deployment = {"profile_evidence": {"archive_mode": "manual-writer"}}
+    with pytest.raises(module.PeerError):
+        module._container_domain_options(
+            deployment,
+            options,
+            {"ProcessLabel": "system_u:system_r:hfcache_archive_writer_t:s0:c1,c2"},
+        )
+
+
+def test_runtime_mode_reader_preserves_strict_schema1_without_new_launcher_api():
+    profile = {
+        "schema_version": 1,
+        "service_uid": 981,
+        "service_gid": 981,
+        "app_image": "sha256:" + "a" * 64,
+        "caddy_image": "sha256:" + "b" * 64,
+    }
+    assert module._rootless_runtime_mode(profile) == "guarded-readonly"
+    assert (
+        module._rootless_runtime_mode(
+            profile | {"schema_version": 2, "archive_mode": "manual-writer"}
+        )
+        == "manual-writer"
+    )
+    with pytest.raises(module.PeerError):
+        module._rootless_runtime_mode(profile | {"archive_mode": "manual-writer"})

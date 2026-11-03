@@ -644,11 +644,15 @@ def archive_lock(host, monkeypatch):
         os.chown(path, host.profile["service_uid"], host.profile["service_gid"])
         os.chown(path.parent, host.profile["service_uid"], host.profile["service_gid"])
     path.parent.chmod(0o700)
+    companion = path.with_name(path.name + ".intent")
+    write(companion, b"", 0o600)
+    if os.geteuid() == 0:
+        os.chown(companion, host.profile["service_uid"], host.profile["service_gid"])
     context = b"system_u:object_r:hfcache_host_helper_archive_lock_t:s0"
     reads = []
 
     def getxattr(target, name, *, follow_symlinks):
-        assert target == path
+        assert target in {path, companion}
         assert name == "security.selinux"
         assert follow_symlinks is False
         reads.append(target)
@@ -672,7 +676,10 @@ def test_enabled_launch_lock_check_reads_metadata_only_and_preserves_inode(
     monkeypatch.setattr(os, "open", open_parent)
     runtime.host_helper_archive_lock(host.profile)
     after = archive_lock.path.stat()
-    assert archive_lock.reads == [archive_lock.path]
+    assert archive_lock.reads == [
+        archive_lock.path,
+        archive_lock.path.with_name(archive_lock.path.name + ".intent"),
+    ]
     assert (before.st_dev, before.st_ino, before.st_mode) == (
         after.st_dev,
         after.st_ino,
@@ -806,3 +813,34 @@ def test_projection_rejects_unreviewed_or_alias_home_before_podman(host, home):
     write(host.binding_file, encoded(host.binding), 0o440)
     with pytest.raises(ValueError, match="protected host helper projection refused"):
         runtime.host_helper_projection(host.profile)
+
+
+@pytest.mark.parametrize("mode", ["guarded-readonly", "manual-writer"])
+def test_schema2_projection_requires_exact_sibling_and_independent_mode(host, monkeypatch, mode):
+    profile = host.profile | {"schema_version": 2, "archive_mode": mode}
+    selected = host.selected.with_name("0.2.0-" + mode)
+    host.selected.rename(selected)
+    (host.prefix / "current").unlink()
+    (host.prefix / "current").symlink_to("releases/" + selected.name)
+    monkeypatch.setattr(runtime, "RELEASE_ROOT", selected)
+    monkeypatch.setattr(runtime, "PROFILE_DIRECTORY", selected / "rendered")
+    write(selected / "rendered/runtime.json", encoded(profile))
+    host.index["release"]["release_id"] = selected.name
+    host.index["release"]["selector_target"] = "releases/" + selected.name
+    host.index["profile_evidence"]["archive_mode"] = mode
+    host.index["profile_evidence"]["runtime_profile_sha256"] = digest(encoded(profile))
+    write(host.deployment, encoded(host.index))
+    host.binding["deployment_sha256"] = digest(host.deployment.read_bytes())
+    write(host.binding_file, encoded(host.binding), 0o440)
+    assert (
+        runtime.host_helper_projection(profile)["deployment_sha256"]
+        == host.binding["deployment_sha256"]
+    )
+    host.index["profile_evidence"]["archive_mode"] = (
+        "manual-writer" if mode == "guarded-readonly" else "guarded-readonly"
+    )
+    write(host.deployment, encoded(host.index))
+    host.binding["deployment_sha256"] = digest(host.deployment.read_bytes())
+    write(host.binding_file, encoded(host.binding), 0o440)
+    with pytest.raises(ValueError, match="protected host helper projection refused"):
+        runtime.host_helper_projection(profile)

@@ -715,3 +715,12 @@ Accepted design in [decision 164](decision-164.md), [decision 165](decision-165.
 pending. The closed intent-review read checks actual helper cohorts and protected pending/history without archive payload access. Independent profile_evidence.archive_mode binds manual-writer to matching runtime schema 2, actual fixed role mounts, dedicated writer process labels and guard state. Default read-only behavior, metadata-only helper/observer authority and neverallows survive.
 See the [executable recovery contract](../job-recovery.md). Original rationale
 and unrelated requirements above remain in force.
+
+
+### Protected writer source implementation (2026-11-03)
+
+[Decision165's implementation record](decision-165.md#source-implementation-and-qualification-2026-11-03)
+now supplies the closed immutable sibling/mode, original-inode offline activation,
+role/domain and preserving procedure source. The original rationale and unrelated
+requirements remain. Source/binary/current-boolean checks establish no installed
+Enforcing, actual NFS or unattended-boot acceptance; those scopes remain explicit.

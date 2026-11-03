@@ -36,6 +36,8 @@ METADATA = (
     "st_ctime_ns",
 )
 
+MODE_SCHEMA = 2
+
 
 def require(value):
     if not value:
@@ -169,7 +171,11 @@ def prepare(policy, profile, commit, snapshot, dirty):  # noqa: PLR0915 - two cl
         selected = os.readlink(selector.name, dir_fd=parent)
     finally:
         os.close(parent)
-    grammar = policy.NATIVE_VERSION if profile == "native" else policy.ROOTLESS_VERSION
+    grammar = (
+        policy.NATIVE_VERSION
+        if profile == "native"
+        else re.compile(r"[0-9]+\.[0-9]+\.[0-9]+(?:-(?:guarded-readonly|manual-writer))?")
+    )
     require(
         selected.startswith("releases/") and grammar.fullmatch(selected.removeprefix("releases/"))
     )
@@ -247,6 +253,13 @@ def prepare(policy, profile, commit, snapshot, dirty):  # noqa: PLR0915 - two cl
         }
         if account.pw_dir != "/var/lib/hfcache":
             evidence["account_home"] = account.pw_dir
+    release_identity = {"version": root.name, "selector_target": selected}
+    if profile == "rootless":
+        release_identity["version"] = release["version"]
+        if release["schema_version"] == MODE_SCHEMA:
+            require(root.name == release["release_id"])
+            release_identity["release_id"] = release["release_id"]
+            evidence["archive_mode"] = release["archive_mode"]
     files = {}
     for name in sorted(names):
         body = read(root / name)
@@ -270,7 +283,7 @@ def prepare(policy, profile, commit, snapshot, dirty):  # noqa: PLR0915 - two cl
     proposed = {
         "schema_version": 1,
         "profile": profile,
-        "release": {"version": root.name, "selector_target": selected},
+        "release": release_identity,
         "source": {"parent_commit": commit, "snapshot_sha256": snapshot, "dirty": dirty},
         "api_principal": {"host_uid": account.pw_uid, "host_gid": account.pw_gid},
         "bindings": {name: files[relative]["sha256"] for name, (_host, relative) in paths.items()},

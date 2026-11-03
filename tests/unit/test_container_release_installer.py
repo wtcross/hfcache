@@ -18,6 +18,7 @@ import pytest
 from hfcache.client_config import ClientConfig
 from hfcache.models import dump
 from hfcache.server_config import validate_server_config_mapping
+from tests.fixtures.examples import rootless_release_manifest, rootless_runtime
 from tests.fixtures.ui_examples import UI_BODIES, ui_asset_manifest
 
 REPOSITORY = Path(__file__).parents[2]
@@ -127,7 +128,9 @@ def deployment(tmp_path, monkeypatch):
     monkeypatch.setattr(
         installer,
         "subprocess",
-        SimpleNamespace(run=run, SubprocessError=subprocess.SubprocessError),
+        SimpleNamespace(
+            run=run, SubprocessError=subprocess.SubprocessError, DEVNULL=subprocess.DEVNULL
+        ),
     )
     return SimpleNamespace(
         source=source,
@@ -210,7 +213,24 @@ def test_explicit_web_release_indexes_assets_and_renders_only_api_authentication
         body = (target / "rendered" / name).read_bytes()
         assert b"ui-administrator" not in body
         assert b"/opt/hfcache/ui" not in body
-    assert not deployment.calls
+    # Protected staging now proves the same readonly drain as selection. These
+    # exact observations neither activate services nor deliver credentials.
+    uid = deployment.release["service_uid"]
+    assert deployment.calls == [
+        ["/usr/bin/systemctl", "is-active", f"user@{uid}.service"],
+        [
+            "/usr/sbin/runuser",
+            "-u",
+            "hfcache",
+            "--",
+            "/usr/bin/env",
+            f"XDG_RUNTIME_DIR=/run/user/{uid}",
+            "/usr/bin/podman",
+            "--remote=false",
+            "ps",
+            "--format=json",
+        ],
+    ]
     assert_preserved(deployment)
 
 
@@ -833,7 +853,7 @@ def test_host_installer_runs_with_its_system_python_without_the_application_envi
         check=False,
     )
     assert result.returncode == 0, result.stderr
-    assert "{render,stage,switch}" in result.stdout
+    assert "{render,stage,switch,prepare-intent-state}" in result.stdout
 
 
 @pytest.mark.parametrize("installed", tuple(installer.BINDINGS))
@@ -915,3 +935,146 @@ def test_two_release_switch_and_rollback_pin_helper_profile_and_units_together(d
             assert path.resolve() == physical_root / relative
     assert installer._verify_stage(previous) == old
     assert installer._verify_stage(deployment.prefix / "releases/0.2.0") == new
+
+
+@pytest.mark.parametrize("mode", ["guarded-readonly", "manual-writer"])
+def test_schema2_sibling_identity_render_stage_switch(deployment, mode):
+    release = deployment.release | {
+        "schema_version": 2,
+        "archive_mode": mode,
+        "release_id": "0.2.0-" + mode,
+    }
+    other_mode = "guarded-readonly" if mode == "manual-writer" else "manual-writer"
+    other = release | {"archive_mode": other_mode, "release_id": "0.2.0-" + other_mode}
+    first = installer.stage(deployment.source, release, deployment.default)
+    second = installer.stage(deployment.source, other, deployment.default)
+    assert first != second
+    assert first.name == release["release_id"]
+    assert installer._verify_stage(first) == release
+    assert json.loads((first / "rendered/runtime.json").read_bytes())["archive_mode"] == mode
+    assert installer.switch(first.name) == first
+    assert (deployment.prefix / "current").readlink().as_posix() == "releases/" + first.name
+    # A sibling selection remains possible only through the same readonly drain.
+    deployment.mountinfo.write_text(
+        deployment.mountinfo.read_text().replace("hfcache ro", "hfcache rw")
+    )
+    with pytest.raises(ValueError, match="read-only NAS"):
+        installer.switch(second.name)
+    assert (deployment.prefix / "current").readlink().as_posix() == "releases/" + first.name
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"archive_mode": "manual-writer"},
+        {"schema_version": 2},
+        {"schema_version": 2, "archive_mode": [], "release_id": "0.2.0-manual-writer"},
+        {"schema_version": 2, "archive_mode": {}, "release_id": "0.2.0-manual-writer"},
+        {
+            "schema_version": 2,
+            "version": None,
+            "archive_mode": "manual-writer",
+            "release_id": "0.2.0-manual-writer",
+        },
+        {"schema_version": 2, "archive_mode": "unknown", "release_id": "0.2.0-unknown"},
+        {
+            "schema_version": 2,
+            "archive_mode": "manual-writer",
+            "release_id": "0.2.0-guarded-readonly",
+        },
+    ],
+)
+def test_modes_cannot_alias_version_or_escape_closed_schema(deployment, change):
+    with pytest.raises(ValueError, match=r"release manifest|archive mode"):
+        installer.manifest(deployment.release | change)
+
+
+def test_fixed_offline_activation_retains_original_flock_and_has_no_archive_secrets_or_network(
+    deployment, monkeypatch
+):
+    root = installer.stage(deployment.source, deployment.release, deployment.default)
+    installer.switch(root.name)
+    original_inode = deployment.lock.stat().st_ino
+    backups = deployment.prefix / "activation-backups"
+    monkeypatch.setattr(installer, "ACTIVATION_BACKUPS", backups)
+    monkeypatch.setattr(
+        installer.pwd,
+        "getpwnam",
+        lambda _: SimpleNamespace(
+            pw_uid=deployment.release["service_uid"],
+            pw_gid=deployment.release["service_gid"],
+            pw_dir="/var/lib/hfcache",
+        ),
+    )
+    previous = installer.subprocess.run
+    monkeypatch.setattr(
+        installer.os,
+        "getxattr",
+        lambda *_args, **_kwargs: b"system_u:object_r:hfcache_host_helper_archive_lock_t:s0",
+    )
+    invocations = []
+
+    def activation(argv, **kwargs):
+        if "hfcache.api.intent_activation" not in argv:
+            return previous(argv, **kwargs)
+        invocations.append(argv)
+        assert "--network=none" in argv
+        assert "--user=981:981" in argv
+        assert "--security-opt=no-new-privileges" in argv
+        assert not any("secret" in part or "/srv/hfcache" in part for part in argv)
+        assert not any("hfcache.lock:" in part for part in argv)
+        assert argv[-6:] == [
+            "-m",
+            "hfcache.api.intent_activation",
+            "--archive-id",
+            "00000000-0000-0000-0000-000000000001",
+            "--backup-directory",
+            "/var/lib/hfcache/intent-activation-backups/initial",
+        ]
+        with deployment.lock.open("rb") as challenger, pytest.raises(BlockingIOError):
+            fcntl.flock(challenger, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        companion = deployment.lock.parent / "intent-activation/hfcache.lock.intent"
+        companion.write_bytes(b"")
+        companion.chmod(0o600)
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(installer.subprocess, "run", activation)
+    assert installer.prepare_intents("00000000-0000-0000-0000-000000000001") == root
+    assert deployment.lock.stat().st_ino == original_inode
+    assert deployment.lock.with_name("hfcache.lock.intent").is_file()
+    assert len(invocations) == 1
+    with pytest.raises(ValueError, match="existing companion"):
+        installer.prepare_intents("00000000-0000-0000-0000-000000000001")
+    assert len(invocations) == 1
+
+
+def test_runtime2_and_manifest2_stable_golden_fixtures():
+    fixtures = REPOSITORY / "tests/fixtures/schemas/deployment"
+    assert (
+        installer.encoded(rootless_runtime()) == (fixtures / "rootless-runtime2.json").read_bytes()
+    )
+    raw = (fixtures / "container-release2.json").read_bytes()
+    assert installer.encoded(rootless_release_manifest()) == raw
+    assert installer.manifest(installer.decode(raw)) == rootless_release_manifest()
+
+
+@pytest.mark.parametrize("unsafe", ["rw", "active", "held-lock"])
+def test_protected_stage_requires_fresh_readonly_drain_and_original_lock(
+    deployment, monkeypatch, unsafe
+):
+    if unsafe == "rw":
+        deployment.mountinfo.write_text(
+            deployment.mountinfo.read_text().replace("hfcache ro", "hfcache rw")
+        )
+    elif unsafe == "active":
+        monkeypatch.setattr(
+            installer, "system_show", lambda *_args, **_kwargs: quiet() | {"ActiveState": "active"}
+        )
+    with deployment.lock.open("rb") as held:
+        if unsafe == "held-lock":
+            fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with pytest.raises((ValueError, BlockingIOError)):
+            installer.stage(deployment.source, deployment.release, deployment.default)
+    assert not (deployment.prefix / "releases/0.2.0").exists()
+    assert not (deployment.prefix / "releases/.container-stage-0.2.0").exists()
+    assert (deployment.prefix / "current").readlink().as_posix() == "releases/0.1.9"

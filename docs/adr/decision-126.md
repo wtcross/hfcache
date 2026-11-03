@@ -57,3 +57,12 @@ Accepted design in [decision 165](decision-165.md); implementation and installed
 pending. A separately protected manual-writer profile may authorize fixed-role archive writes after fresh actual NFS and Enforcing qualification. Default guarded deployment and drained installer selection stay NFS-read-only, with original-lock handoff, independent guard and preserving rollback.
 See the [executable recovery contract](../job-recovery.md). Original rationale
 and unrelated requirements above remain in force.
+
+
+### Protected writer source implementation (2026-11-03)
+
+[Decision165's implementation record](decision-165.md#source-implementation-and-qualification-2026-11-03)
+now supplies the closed immutable sibling/mode, original-inode offline activation,
+role/domain and preserving procedure source. The original rationale and unrelated
+requirements remain. Source/binary/current-boolean checks establish no installed
+Enforcing, actual NFS or unattended-boot acceptance; those scopes remain explicit.

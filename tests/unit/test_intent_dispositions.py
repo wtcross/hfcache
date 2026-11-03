@@ -6,16 +6,21 @@ import os
 import subprocess
 import sys
 import threading
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
 
 import pytest
 from pydantic import ValidationError
 
+from hfcache.api import intent_activation as activation
 from hfcache.api.auth import AuthenticationMethod, CredentialClass, Principal
 from hfcache.api.intent_activation import prepare_intent_state
 from hfcache.api.intents import INTENT_NAME, IntentInterlock, IntentState
 from hfcache.api.operations import OperationStore as UnactivatedStore
 from hfcache.api.operations import request_digest
 from hfcache.errors import OperationError, RequestError
+from hfcache.server_config import validate_server_config_mapping
 from tests.fixtures import examples
 from tests.intent_fixtures import OperationStore
 from tests.unit.test_operations import ROUTE, WRITER, envelope
@@ -479,3 +484,224 @@ def test_store_budget_counts_actual_disposition_bytes_with_valid_whitespace(tmp_
         with pytest.raises(OperationError):
             narrow.list()
         assert narrow.get(receipt.operation_id) == receipt
+
+
+@pytest.mark.parametrize("missing", ["directory", "lock"])
+def test_offline_existing_store_refuses_missing_original_without_creation(tmp_path, missing):
+    root = tmp_path / "api"
+    if missing == "lock":
+        root.mkdir(mode=0o700)
+    with pytest.raises(OperationError):
+        OperationStore(root, private=True, existing=True)
+    assert not (root / ".lock").exists()
+    assert root.exists() == (missing == "lock")
+
+
+def test_activation_preserves_original_store_lock_inodes(tmp_path):
+    api, worker = tmp_path / "api", tmp_path / "worker"
+    for root in (api, worker):
+        with UnactivatedStore(root, private=True):
+            pass
+    before = [(root / ".lock").stat().st_ino for root in (api, worker)]
+    prepare_intent_state(
+        examples.ARCHIVE_ID,
+        tmp_path / "backup",
+        public=api,
+        private=worker,
+        companion=tmp_path / "companion",
+    )
+    assert before == [(root / ".lock").stat().st_ino for root in (api, worker)]
+
+
+@pytest.mark.parametrize("kind", ["writer", "reader", "mcp_reader", "basic", "tls"])
+def test_native_custom_credential_sources_require_actual_model_and_covered_masks(kind):
+    data: dict[str, Any] = {
+        "schema_version": 1,
+        "credentials": {"writer": {"systemd_name": "rest-writer"}},
+    }
+    if kind in {"writer", "reader", "mcp_reader"}:
+        data["credentials"][kind] = {"file": "/private-activation-source/token"}
+    elif kind == "basic":
+        data["basic"] = {
+            "origin": "https://localhost",
+            "administrator": {"file": "/private-activation-source/administrator.json"},
+        }
+        data["listener"] = {"allowed_origins": ["https://localhost"]}
+    else:
+        data["listener"] = {
+            "tls": {
+                "certificate": "/public/certificate.pem",
+                "private_key": "/private-activation-source/key.pem",
+            }
+        }
+    server = validate_server_config_mapping(data)
+    with pytest.raises(OperationError):
+        activation.validate_native_sources(server, (Path("/etc/credstore"),))
+    activation.validate_native_sources(server, (Path("/private-activation-source"),))
+
+
+@pytest.fixture
+def native_activation_policy(tmp_path, monkeypatch):
+    selected = tmp_path / "selected"
+    packaged = selected / "packaging/systemd/hfcache-api.service"
+    packaged.parent.mkdir(parents=True)
+    packaged.write_bytes(
+        (Path(__file__).parents[2] / "packaging/systemd/hfcache-api.service").read_bytes()
+    )
+    script = selected / "scripts/hardening-probe.py"
+    script.parent.mkdir()
+    script.write_bytes((Path(__file__).parents[2] / "scripts/hardening-probe.py").read_bytes())
+    server = tmp_path / "server.toml"
+    server.write_text(
+        'schema_version=1\n[credentials.writer]\nfile="/private-activation-source/token"\n'
+    )
+    archive = tmp_path / "config.toml"
+    archive.write_text(
+        'schema_version=1\n[storage]\narchive_root="/srv/hfcache"\narchive_id="'
+        + examples.ARCHIVE_ID
+        + '"\n'
+    )
+    monkeypatch.setattr(activation, "NATIVE_SERVER", server)
+    monkeypatch.setattr(activation, "NATIVE_ARCHIVE_CONFIG", archive)
+    monkeypatch.setattr(
+        activation.pwd,
+        "getpwnam",
+        lambda _: SimpleNamespace(pw_uid=981, pw_gid=981, pw_dir="/var/lib/hfcache"),
+    )
+    entry = "/opt/hfcache/current/.venv/bin/hfcache"
+    api = {
+        "FragmentPath": str(packaged),
+        "DropInPaths": "",
+        "LoadCredential": "",
+        "LoadCredentialEncrypted": "hfcache.api:/etc/credstore.encrypted/hfcache.api",
+        "ImportCredential": "hf-token",
+        "ExecStart": "{ path="
+        + entry
+        + " ; argv[]="
+        + entry
+        + " serve --server-config /etc/hfcache/server.toml ; ignore_errors=no ; pid=0 ; }",
+    }
+    worker = {"LoadState": "loaded", "InaccessiblePaths": "-/private-activation-source"}
+    monkeypatch.setattr(
+        activation,
+        "_native_show",
+        lambda unit, _properties: api.copy() if unit == "hfcache-api.service" else worker.copy(),
+    )
+    return SimpleNamespace(
+        selected=selected, api=api, worker=worker, server=server, archive=archive
+    )
+
+
+def test_native_masks_preserve_reviewed_sources_and_optional_absent_standard_stores(
+    native_activation_policy,
+):
+    host = native_activation_policy
+    masks, revision = activation.native_mask_policy(host.selected)
+    assert "-/private-activation-source" in masks.split()
+    for path in activation._NATIVE_MASKS:
+        assert "-" + path in masks.split()
+    assert len(revision) == 64
+    before = masks, revision
+    host.server.write_text(host.server.read_text() + "# changed exact bytes\n")
+    assert activation.native_mask_policy(host.selected) != before
+    host.worker["InaccessiblePaths"] = ""
+    with pytest.raises(OperationError):
+        activation.native_mask_policy(host.selected)
+
+
+@pytest.mark.parametrize(
+    "change",
+    ["dropin", "hub-file", "missing-worker", "escaped-mask", "custom-archive", "cached-credential"],
+)
+def test_native_policy_refuses_unsupported_or_unmodelled_sources(native_activation_policy, change):
+    host = native_activation_policy
+    if change == "dropin":
+        host.api["DropInPaths"] = "/etc/systemd/system/hfcache-api.service.d/custom.conf"
+    elif change == "hub-file":
+        host.api["ExecStart"] = host.api["ExecStart"].replace(
+            " ; ignore_errors", " --hub-token-file /custom/source ; ignore_errors"
+        )
+    elif change == "missing-worker":
+        host.worker["LoadState"] = "not-found"
+    elif change == "cached-credential":
+        host.api["LoadCredential"] = "hf-token:/private-unmodelled-source/token"
+    elif change == "custom-archive":
+        host.archive.write_text(
+            host.archive.read_text().replace("/srv/hfcache", "/mnt/custom-native-archive")
+        )
+    else:
+        host.worker["InaccessiblePaths"] = "-/private-activation-source /custom%masked"
+    with pytest.raises((OperationError, ValueError)):
+        activation.native_mask_policy(host.selected)
+
+
+@pytest.mark.parametrize("stale", [False, True])
+def test_native_revision_rechecks_before_state_effects(tmp_path, monkeypatch, snapshot, stale):
+    current = snapshot()
+    masks = "-/etc/credstore"
+    revision = "a" * 64
+    monkeypatch.setattr(activation, "load_config", lambda _: current.config)
+    monkeypatch.setattr(
+        activation, "native_mask_policy", lambda _: (masks, "b" * 64 if stale else revision)
+    )
+    calls = []
+    monkeypatch.setattr(activation, "prepare_intent_state", lambda *args: calls.append(args))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "intent_activation",
+            "--archive-id",
+            str(current.config.storage.archive_id),
+            "--backup-directory",
+            str(tmp_path / "initial"),
+            "--native-masks=" + masks,
+            "--native-revision",
+            revision,
+        ],
+    )
+    if stale:
+        with pytest.raises(OperationError):
+            activation.main()
+        assert calls == []
+    else:
+        activation.main()
+        assert calls == [(str(current.config.storage.archive_id), tmp_path / "initial")]
+
+
+def test_offline_partial_activation_preserves_companion_backup_and_original_inodes(
+    tmp_path, monkeypatch
+):
+    api, worker = tmp_path / "api", tmp_path / "worker"
+    for root in (api, worker):
+        with UnactivatedStore(root, private=True):
+            pass
+    inodes = [(root / ".lock").stat().st_ino for root in (api, worker)]
+    runtime = tmp_path / "isolated-runtime"
+    runtime.mkdir(mode=0o700)
+    companion = runtime / "hfcache.lock.intent"
+    backup = tmp_path / "initial-backup"
+
+    def interrupted(*_args, **_kwargs):
+        raise OperationError
+
+    monkeypatch.setattr(UnactivatedStore, "_write", interrupted)
+    with pytest.raises(OperationError):
+        prepare_intent_state(
+            examples.ARCHIVE_ID, backup, public=api, private=worker, companion=companion
+        )
+    assert companion.is_file()
+    companion_inode = companion.stat().st_ino
+    assert (backup / "manifest.json").is_file()
+    assert not (api / INTENT_NAME).exists()
+    assert inodes == [(root / ".lock").stat().st_ino for root in (api, worker)]
+    with pytest.raises(OperationError):
+        prepare_intent_state(
+            examples.ARCHIVE_ID,
+            tmp_path / "unexplained-retry",
+            public=api,
+            private=worker,
+            companion=companion,
+        )
+    assert not (tmp_path / "unexplained-retry").exists()
+    assert companion.stat().st_ino == companion_inode

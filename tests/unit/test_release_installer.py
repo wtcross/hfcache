@@ -1025,3 +1025,44 @@ def test_installed_smoke_parses_required_hub_policy_without_borrowing_credential
     assert (result.returncode == 0) is valid_policy, result.stderr
     assert not archive.exists()
     assert "HFARG008" not in result.stderr
+
+
+def test_native_offline_activation_keeps_fixed_runtime_and_offline_confinement():
+    source = (ROOT / "scripts/install-release.sh").read_text()
+    branch = source.split("if [[ ${MODE} == prepare-intent-state ]]; then", 1)[1].split(
+        "[[ -z ${INTENT_ARCHIVE_ID} ]]", 1
+    )[0]
+    assert (
+        "HFCACHE_SYSTEMCTL=/usr/bin/systemctl "
+        "HFCACHE_RUNTIME_DIRECTORY=/run/hfcache require_quiescent" in branch
+    )
+    assert '"${selected}/.venv/bin/python" -I -B -m hfcache.api.intent_activation' in branch
+    for control in [
+        "--property=User=hfcache",
+        "--property=Group=hfcache",
+        "--property=NoNewPrivileges=yes",
+        "--property=PrivateNetwork=yes",
+        "--property=IPAddressDeny=any",
+        "--property=RestrictAddressFamilies=AF_UNIX",
+        "--property=ProtectSystem=strict",
+        "--property=ProtectHome=yes",
+        "--property=UnsetEnvironment=HF_TOKEN",
+        "--property=Environment=HF_HOME=/run/hfcache/hf-home",
+        "HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1 HF_HUB_DISABLE_TELEMETRY=1",
+        "--property=InaccessiblePaths=${native_masks}",
+        "--property=BindPaths=/run/hfcache/intent-activation:/run/hfcache",
+        "--native-masks-only",
+        '"--native-masks=${native_masks}" --native-revision "${native_revision}"',
+        "--property=ProtectProc=invisible",
+    ]:
+        assert control in branch
+    writable = next(line for line in branch.splitlines() if "ReadWritePaths=" in line)
+    assert "/srv/hfcache" not in writable
+    assert "LoadCredential" not in branch
+    assert "ImportCredential" not in branch
+    assert "--backup-directory /var/lib/hfcache/intent-activation-backups/initial" in branch
+    assert 'source = Path("/run/hfcache/intent-activation/hfcache.lock.intent")' in branch
+    assert 'target = Path("/run/hfcache/hfcache.lock.intent")' in branch
+    assert "os.link(source, target, follow_symlinks=False)" in branch
+    assert "os.fsync(descriptor)" in branch
+    assert "native policy changed; preserve partial activation" in branch

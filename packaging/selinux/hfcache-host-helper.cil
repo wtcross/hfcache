@@ -402,3 +402,56 @@
 (neverallow hfcache_host_helper_t hfcache_host_helper_engine_lock_t (file (append create setattr unlink rename link map execute)))
 ; Archive-lock observation must never acquire content, lock or relabel authority.
 (neverallow hfcache_host_helper_t hfcache_host_helper_archive_lock_t (file (ioctl open read write append create setattr lock relabelfrom relabelto unlink link rename map execute execute_no_trans entrypoint mounton)))
+
+; ADR165: only explicitly selected API/worker payloads enter this container domain.
+; Inherit the reviewed distro container-domain confinement and MCS constraints;
+; do not add archive writes to container_t or bypass category separation.
+(type hfcache_archive_writer_t)
+(typeattributeset domain (hfcache_archive_writer_t))
+; Stock container-domain proc mount mediation requires these exact base-policy
+; neverallow exception markers. They add no capability or helper permission.
+(typeattributeset can_dump_kernel (hfcache_archive_writer_t))
+(typeattributeset can_receive_kernel_messages (hfcache_archive_writer_t))
+(typeattributeset kernel_system_state_reader (hfcache_archive_writer_t))
+(typeattributeset process_user_target (hfcache_archive_writer_t))
+(typeattributeset syslog_client_type (hfcache_archive_writer_t))
+(typeattributeset container_domain (hfcache_archive_writer_t))
+(typeattributeset container_net_domain (hfcache_archive_writer_t))
+(typeattributeset sandbox_net_domain (hfcache_archive_writer_t))
+(typeattributeset svirt_sandbox_domain (hfcache_archive_writer_t))
+(typeattributeset corenet_unconfined_type (hfcache_archive_writer_t))
+(typeattributeset corenet_unlabeled_type (hfcache_archive_writer_t))
+(typeattributeset mcs_constrained_type (hfcache_archive_writer_t))
+(roletype system_r hfcache_archive_writer_t)
+; Ordinary transactional archive operations, for actual NFS and owned fixtures.
+(allow hfcache_archive_writer_t nfs_t (dir (getattr search open read write add_name remove_name create setattr rmdir rename)))
+(allow hfcache_archive_writer_t nfs_t (file (getattr open read write append create setattr unlink rename link lock map)))
+; Canonical .store/hub snapshot_download creates/removes cache symlinks (AD09).
+; Publication resolves them into ordinary files; no symlink setattr/rename grant.
+(allow hfcache_archive_writer_t nfs_t (lnk_file (getattr read create unlink)))
+(allow hfcache_archive_writer_t hfcache_archive_t (dir (getattr search open read write add_name remove_name create setattr rmdir rename)))
+(allow hfcache_archive_writer_t hfcache_archive_t (file (getattr open read write append create setattr unlink rename link lock map)))
+; Canonical .store/hub snapshot_download creates/removes cache symlinks (AD09).
+; Publication resolves them into ordinary files; no symlink setattr/rename grant.
+(allow hfcache_archive_writer_t hfcache_archive_t (lnk_file (getattr read create unlink)))
+(neverallow hfcache_archive_writer_t hfcache_host_helper_host_action_state_t (dir (search read write add_name remove_name)))
+(neverallow hfcache_archive_writer_t hfcache_host_helper_host_action_state_t (file (open read write map execute)))
+(neverallow hfcache_archive_writer_t hfcache_host_helper_application_state_t (dir (search read write add_name remove_name)))
+(neverallow hfcache_archive_writer_t hfcache_host_helper_application_state_t (file (open read write map execute)))
+(neverallow hfcache_archive_writer_t hfcache_host_helper_configuration_guard_t (file (open read write map execute)))
+(allow hfcache_archive_writer_t hfcache_host_helper_archive_lock_t (file (getattr open read write lock)))
+(allow hfcache_host_helper_t hfcache_archive_writer_t (process (getattr)))
+(allow hfcache_host_helper_t hfcache_archive_writer_t (file (getattr open read)))
+(allow hfcache_host_helper_t hfcache_archive_writer_t (dir (getattr search open read)))
+(allow hfcache_host_helper_t hfcache_archive_writer_t (lnk_file (getattr read)))
+(allow hfcache_archive_writer_t hfcache_host_helper_configuration_dir_t (dir (getattr search open read)))
+(allow hfcache_archive_writer_t hfcache_host_helper_application_conf_t (file (getattr open read)))
+(allow hfcache_archive_writer_t hfcache_host_helper_hub_state_t (dir (getattr search open read write add_name remove_name create setattr rmdir)))
+(allow hfcache_archive_writer_t hfcache_host_helper_hub_state_t (file (getattr open read write append create setattr unlink rename link lock map)))
+(allow hfcache_archive_writer_t hfcache_host_helper_hub_state_t (lnk_file (getattr read create setattr unlink rename)))
+(allow hfcache_archive_writer_t hfcache_host_helper_secret_t (dir (getattr search)))
+(allow hfcache_archive_writer_t hfcache_host_helper_secret_t (file (getattr open read map)))
+(allow hfcache_archive_writer_t hfcache_host_helper_runtime_t (dir (getattr search)))
+(allow hfcache_archive_writer_t hfcache_host_helper_runtime_t (file (getattr open read)))
+(allow hfcache_archive_writer_t hfcache_host_helper_runtime_t (sock_file (getattr open read write)))
+(allow hfcache_archive_writer_t hfcache_host_helper_t (unix_stream_socket (connectto)))

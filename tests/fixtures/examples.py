@@ -786,3 +786,44 @@ EXAMPLES = {
     "verification-report": verification_report,
 }
 """Every durable format, by fixture name (`docs/schemas.md` §11)."""
+
+
+def rootless_runtime() -> dict[str, object]:
+    """Independent deployment runtime2 golden; no installed or archive claim."""
+    return {
+        "schema_version": 2,
+        "service_uid": 981,
+        "service_gid": 981,
+        "app_image": "sha256:" + "a" * 64,
+        "caddy_image": "sha256:" + "b" * 64,
+        "archive_mode": "manual-writer",
+    }
+
+
+def rootless_release_manifest() -> dict[str, object]:
+    """Independent manifest2 golden with the fixed minimal source closure."""
+    return rootless_runtime() | {
+        "version": "0.3.2",
+        "release_id": "0.3.2-manual-writer",
+        "hostname": "writer.example.test",
+        "source_commit": "c" * 40,
+        "wheel_sha256": "d" * 64,
+        "files": dict.fromkeys(
+            (
+                "scripts/install-container-release.py",
+                "scripts/container-service.py",
+                "scripts/hfcache-client",
+                "packaging/systemd/hfcache.target",
+                "packaging/containers/hfcache.target",
+                "packaging/containers/hfcache-api.service",
+                "packaging/containers/hfcache-caddy.service",
+                "packaging/containers/hfcache-verification.service",
+                "packaging/containers/hfcache-verification.socket",
+                "packaging/containers/hfcache-containers.service.in",
+                "packaging/containers/Caddyfile.in",
+                "packaging/containers/server.toml.in",
+                "packaging/containers/client.toml",
+            ),
+            "e" * 64,
+        ),
+    }

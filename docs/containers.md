@@ -134,8 +134,9 @@ recorded separately from that companion.
 ### Protected manual writer profile
 
 [Decision 165](adr/decision-165.md) accepts a closed `manual-writer` mode beside
-the default `guarded-readonly`. This is design pending executable and installed
-acceptance; the selected deployment facts above remain read-only. Existing
+the default `guarded-readonly`. The source implements profile selection;
+installed and actual NFS qualification remain separate. The selected deployment
+facts above remain read-only. Existing
 runtime schema 1 means guarded-readonly. Writer runtime schema 2 requires
 `archive_mode:"manual-writer"`, with the same fixed image/UID/GID fields and
 no generic paths/options. The immutable release/index/rendered profile and
@@ -168,6 +169,51 @@ outside transitions. Current-boot manual provisioning and helper-READY-before-
 bridge/API is the supported startup scope; unattended boot remains unproved.
 The [transition](deployment-centos-stream-10.md#manual-writer-transition) and
 [recovery](job-recovery.md) contracts govern preserving rollback.
+
+### Offline original-intent activation
+
+The protected installer exposes `prepare-intent-state --archive-id <UUID>` for
+one first activation of existing stores. It authenticates the selected physical
+release/index/rendering and bindings, independently proves API/worker/helper and
+libpod/cgroup quiescence, and retains the original noncreating archive flock.
+The fixed immutable app image runs `python -I -m hfcache.api.intent_activation`
+with no network, archive, original archive-lock, socket or credential mount.
+Only protected config, the two existing stores, a new service-owned backup
+parent and a new local temporary runtime parent are mounted. The real selected
+application config/store models validate UUID, every predecessor receipt and
+both original noncreating store locks before coordinated backup/publication.
+
+The new companion inode is created in the private local runtime parent. After
+success the root installer links it, without replacement, to the fixed original
+archive-lock path plus `.intent`, removes the temporary link and fsyncs both
+parents. Independent persistent fcontext provisioning assigns
+`hfcache_host_helper_archive_lock_t:s0`; exact service ownership,0600,single-link
+regular metadata and that label must pass. Normal API/worker binds preserve
+this label without `:z`. The helper retains metadata-only rights. Native uses
+the selected immutable venv through its installer’s fixed offline systemd-run
+invocation. Its metadata-only preparation reuses the existing canonical mask
+grammar and real server/config models. Effective verifier masks and optional
+standard credential masks must cover every configured REST/MCP/Basic/TLS key
+source. Exact packaged API bytes, cached command and credential delivery plus
+no API drop-ins exclude unmodelled Hub-file/unit overrides. Nonstandard native
+archive roots or control-store paths refuse before effects; this fixed profile
+masks `/srv/hfcache`. The masks/config/manager/account revision is repeated inside
+the transient and rechecked before companion publication. Unsupported or changed
+authority preserves partial evidence and refuses. A private runtime bind hides
+original archive/API/worker lock/socket sources while retaining only the two
+original store flocks. Fixed Python invocations use isolated/no-bytecode mode and
+closed stdin. Native HF_HOME/Xet paths are fixed below that new private runtime,
+with Hub/Datasets offline and telemetry/implicit-token flags fixed; the legacy
+service cached-token directory is additionally masked. Actual transient/mask
+enforcement remains installed acceptance.
+
+Backups remain at `/var/lib/hfcache/intent-activation-backups/initial`; unknown
+existing parent/companion, previous activation, partial publication or validation
+failure is retained and refuses automatic retry/repair. Normal startup never
+creates authority: missing/corrupt dispositions permit safe exact-ID observation
+only, with admission and retirement closed. Existing runtime objects persist
+through service restarts; `/run` recreation requires reviewed manual provisioning
+under independent drain. No tmpfiles/startup rule recreates a companion silently.
 
 ### Guarded runtime schema 1
 
@@ -390,7 +436,8 @@ A bounded root-protected container-release.json authenticates fixed input files
 and immutable identities; [schema 16](schemas.md#16-rootless-release-manifest-and-artifact-index)
 defines it and the independent artifact-index.json.
 
-Staging under /opt/hfcache/releases/<version> copies authenticated sources and
+Staging under /opt/hfcache/releases/<release_id> (schema 2) or `<version>`
+(schema 1) copies authenticated sources and
 rendered units/config/runtime/default+derived seccomp/provenance, fsyncs files and
 directories, verifies exact indexed bytes, then atomically renames and fsyncs the
 parent. The index covers everything except itself; unknown artifacts/links/dirs
@@ -400,6 +447,11 @@ updates /opt/hfcache/current and fsyncs its parent. No running/unknown executor,
 libpod cgroup or activation state may be ignored. Previous native/container
 releases and all retained state remain; no force cleanup or implicit migration.
 Staging and selection require explicit operator authorization and quiescence.
+Protected `stage` requires the same barrier as selection: after early local/source/input
+validation, it holds the original noncreating archive flock and freshly proves
+the same NFS-read-only manager/helper/cgroup/libpod drain as `switch`, before
+creating any protected stage. `render` remains local and needs no manager or
+archive lock. Neither mode can install/select while NFS is writable.
 
 ### Optional web release input
 

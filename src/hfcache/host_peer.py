@@ -243,6 +243,7 @@ def _read(path: Path, budget: _Budget, *, maximum: int, protected: bool = False)
         os.close(parent)
 
 
+_RUNTIME_MODE_SCHEMA = 2
 _DEFAULT_ACCOUNT_HOME = "/var/lib/hfcache"
 _ROOTLESS_ACCOUNT_HOMES = frozenset({_DEFAULT_ACCOUNT_HOME, "/var/lib/hfcache/container-home"})
 
@@ -1546,8 +1547,14 @@ def _selected(deployment: dict[str, Any]) -> Path:
     release = deployment["release"]
     version = release["version"]
     _need(type(version) is str and _VERSION.fullmatch(version) is not None)
-    _need(release["selector_target"] == "releases/" + version)
-    return PREFIX / "releases" / version
+    identity = version
+    if "release_id" in release:
+        mode = deployment["profile_evidence"].get("archive_mode", "guarded-readonly")
+        _need(type(mode) is str and mode in {"guarded-readonly", "manual-writer"})
+        identity += "-" + mode
+        _need(release["release_id"] == identity)
+    _need(release["selector_target"] == "releases/" + identity)
+    return PREFIX / "releases" / identity
 
 
 def _indexed(selected: Path, relative: str, deployment: dict[str, Any], budget: _Budget) -> bytes:
@@ -1644,6 +1651,22 @@ def _cap_drop(value: object) -> bool:
     )
 
 
+def _rootless_runtime_mode(profile: dict[str, Any]) -> str:
+    """Read the closed runtime ABI without requiring a new legacy launcher API."""
+    fields = {"schema_version", "service_uid", "service_gid", "app_image", "caddy_image"}
+    _need(type(profile.get("schema_version")) is int)
+    if profile["schema_version"] == 1:
+        _need(set(profile) == fields)
+        return "guarded-readonly"
+    _need(
+        profile["schema_version"] == _RUNTIME_MODE_SCHEMA
+        and set(profile) == fields | {"archive_mode"}
+    )
+    mode = profile["archive_mode"]
+    _need(type(mode) is str and mode in {"guarded-readonly", "manual-writer"})
+    return cast("str", mode)
+
+
 def _expected_container(
     manager: dict[str, str], deployment: dict[str, Any], budget: _Budget, *, role: str = "api"
 ) -> list[str]:
@@ -1655,6 +1678,10 @@ def _expected_container(
     module.__file__ = str(selected / "scripts/container-service.py")
     exec(compile(source, module.__file__, "exec"), module.__dict__)  # noqa: S102 - digest-verified selected code, unprivileged observer
     profile = _json(_indexed(selected, "rendered/runtime.json", deployment, budget))
+    _need(
+        _rootless_runtime_mode(profile)
+        == deployment["profile_evidence"].get("archive_mode", "guarded-readonly")
+    )
     principal = deployment["api_principal"]
     _need(
         profile["service_uid"] == principal["host_uid"]
@@ -1806,6 +1833,42 @@ def _helper_mount(pid: int, budget: _Budget) -> dict[str, Any]:
     }
 
 
+def _container_domain_options(
+    deployment: dict[str, Any], options: object, info: dict[str, Any]
+) -> None:
+    """Exact mode-bound security options, preserving Podman's MCS categories."""
+    writer = deployment["profile_evidence"].get("archive_mode") == "manual-writer"
+    _need(type(options) is list)
+    options = cast("list[str]", options)
+    _need(all(type(option) is str for option in options))
+    _need(sum(option in {"no-new-privileges", "no-new-privileges=true"} for option in options) == 1)
+    normalized = set(options) - {"no-new-privileges", "no-new-privileges=true"}
+    _need(len(options) == (2 if writer else 1))
+    _need(normalized == ({"label=type:hfcache_archive_writer_t"} if writer else set()))
+    if writer:
+        _need(
+            re.fullmatch(
+                r"[^:]+:[^:]+:hfcache_archive_writer_t:s0:c[0-9]+(?:,c[0-9]+)*",
+                info.get("ProcessLabel", ""),
+            )
+            is not None
+        )
+
+
+def _writer_process_label(
+    deployment: dict[str, Any], info: dict[str, Any], process: dict[str, Any], budget: _Budget
+) -> None:
+    """Join the engine's writer domain with the actual original API process."""
+    if deployment["profile_evidence"].get("archive_mode") == "manual-writer":
+        context = (
+            _read(Path(f"/proc/{process['pid']}/attr/current"), budget, maximum=4096)
+            .decode()
+            .strip()
+            .rstrip("\0")
+        )
+        _need(context == info["ProcessLabel"])
+
+
 def _container(
     manager: dict[str, str], deployment: dict[str, Any], budget: _Budget
 ) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -1835,11 +1898,7 @@ def _container(
     _need(host["NetworkMode"] == "pasta" and host["PortBindings"] in ({}, None))
     _need(type(host["UsernsMode"]) is str and len(host["UsernsMode"]) <= _MAX_TEXT)
     options = host["SecurityOpt"]
-    _need(
-        type(options) is list
-        and len(options) == 1
-        and options[0] in {"no-new-privileges", "no-new-privileges=true"}
-    )
+    _container_domain_options(deployment, options, info)
     expected = _expected_container(manager, deployment, budget)
     _need(config["CreateCommand"] == expected)
     environment = config["Env"]
@@ -1860,6 +1919,7 @@ def _container(
     )
     process = _process(state["Pid"], budget)
     _api_security(process, uid, gid)
+    _writer_process_label(deployment, info, process, budget)
     image_position = expected.index("sha256:" + image)
     launched = expected[image_position + 1 :]
     _need(launched[:2] == ["/opt/hfcache/.venv/bin/hfcache", "serve"])
@@ -2037,6 +2097,43 @@ def _intent_inert(process: dict[str, Any], executable: str, keeper: dict[str, An
     )
 
 
+def _intent_writer_payload(
+    item: dict[str, Any], command: list[str], role: str, principal: tuple[int, int], budget: _Budget
+) -> dict[str, Any]:
+    """Bind actual writer payload to its immutable command, domain and cgroup."""
+    pid = item.get("Pid")
+    _need(type(pid) is int and pid > 1)
+    pid = cast("int", pid)
+    process = _process(pid, budget, namespaces=False)
+    _api_security(process, *principal)
+    identifier = item["Id"]
+    _need(
+        process["cgroup"].endswith(
+            ("/libpod-" + identifier + ".scope", "/libpod-" + identifier + ".scope/container")
+        )
+    )
+    image = item["ImageID"]
+    image = image if image.startswith("sha256:") else "sha256:" + image
+    launched = command[command.index(image) + 1 :]
+    alternatives = [launched]
+    if role == "api":
+        alternatives.append(["/opt/hfcache/.venv/bin/python", *launched])
+    _need(process["argv"] in alternatives)
+    context = (
+        _read(Path(f"/proc/{pid}/attr/current"), budget, maximum=4096).decode().strip().rstrip("\0")
+    )
+    _need(
+        re.fullmatch(r"[^:]+:[^:]+:hfcache_archive_writer_t:s0:c[0-9]+(?:,c[0-9]+)*", context)
+        is not None
+    )
+    return {
+        "pid": pid,
+        "start_ticks": process["start_ticks"],
+        "cgroup": process["cgroup"],
+        "domain": context,
+    }
+
+
 def _intent_auxiliary(deployment: dict[str, Any], budget: _Budget) -> dict[str, Any]:
     """Bind the fixed vendor manager/broker units; no arbitrary unit selectors."""
     uid = deployment["api_principal"]["host_uid"]
@@ -2172,7 +2269,7 @@ def _intent_auxiliary_kind(  # noqa: PLR0913, PLR0917 - complete observed proces
     return None
 
 
-def _intent_executors(deployment: dict[str, Any], budget: _Budget) -> dict[str, Any]:  # noqa: PLR0915 - fixed bounded role/cgroup proof
+def _intent_executors(deployment: dict[str, Any], budget: _Budget) -> dict[str, Any]:  # noqa: PLR0912, PLR0915 - fixed bounded role/cgroup proof
     """Closed read-only review of all selected role cgroups and running libpods.
 
     Uses the same bounded manager/engine observer and kernel accounting. Unknown
@@ -2278,6 +2375,15 @@ def _intent_executors(deployment: dict[str, Any], budget: _Budget) -> dict[str, 
             command = commands[role]
             position = command.index("sha256:" + expected_image)
             _need(item.get("Command") == command[position + 1 :])
+            if deployment["profile_evidence"].get("archive_mode") == "manual-writer" and role in {
+                "api",
+                "worker",
+            }:
+                facts["verification" if role == "worker" else role]["payload"] = (
+                    _intent_writer_payload(
+                        item, command, role, (uid, deployment["api_principal"]["host_gid"]), budget
+                    )
+                )
             groups.add(
                 "/user.slice/user-"
                 + str(uid)

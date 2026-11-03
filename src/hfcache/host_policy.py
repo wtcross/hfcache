@@ -777,6 +777,24 @@ def _selinux_state(budget: InspectionBudget, *, require_domain: bool = True) -> 
             os.close(descriptor)
 
 
+def _release_identity(raw_release: object, profile: str, mode: object) -> None:
+    """Closed helper identity for legacy releases and immutable mode siblings."""
+    release_fields = {"version", "selector_target"}
+    if profile == "rootless" and type(raw_release) is dict and "release_id" in raw_release:
+        release_fields |= {"release_id"}
+    release = _object(raw_release, release_fields)
+    grammar = NATIVE_VERSION if profile == "native" else ROOTLESS_VERSION
+    _need(type(release["version"]) is str and grammar.fullmatch(release["version"]) is not None)
+    identity = release["version"]
+    _need(type(mode) is str and mode in {"guarded-readonly", "manual-writer"})
+    if "release_id" in release:
+        identity += "-" + str(mode)
+        _need(release["release_id"] == identity)
+    else:
+        _need(mode == "guarded-readonly")
+    _need(release["selector_target"] == "releases/" + identity)
+
+
 def _deployment(body: bytes) -> dict[str, Any]:
     value = _object(
         _json(body),
@@ -796,10 +814,10 @@ def _deployment(body: bytes) -> dict[str, Any]:
     _digest(value["selinux_installation_sha256"])
     profile = value["profile"]
     _need(type(profile) is str and profile in {"native", "rootless"})
-    release = _object(value["release"], {"version", "selector_target"})
-    grammar = NATIVE_VERSION if profile == "native" else ROOTLESS_VERSION
-    _need(type(release["version"]) is str and grammar.fullmatch(release["version"]) is not None)
-    _need(release["selector_target"] == "releases/" + release["version"])
+    _need(type(value["profile_evidence"]) is dict)
+    _release_identity(
+        value["release"], profile, value["profile_evidence"].get("archive_mode", "guarded-readonly")
+    )
     source = _object(value["source"], {"parent_commit", "snapshot_sha256", "dirty"})
     _need(
         type(source["parent_commit"]) is str
@@ -862,6 +880,7 @@ def _deployment(body: bytes) -> dict[str, Any]:
         raw_evidence = value["profile_evidence"]
         _need(type(raw_evidence) is dict)
         home_field = {"account_home"} if "account_home" in raw_evidence else set()
+        mode_field = {"archive_mode"} if "archive_mode" in raw_evidence else set()
         evidence = _object(
             raw_evidence,
             {
@@ -870,12 +889,13 @@ def _deployment(body: bytes) -> dict[str, Any]:
                 "app_image_sha256",
                 "caddy_image_sha256",
             }
-            | home_field,
+            | home_field
+            | mode_field,
         )
         home = evidence.get("account_home", "/var/lib/hfcache")
         _need(type(home) is str and home in {"/var/lib/hfcache", "/var/lib/hfcache/container-home"})
         for name, item in evidence.items():
-            if name != "account_home":
+            if name not in {"account_home", "archive_mode"}:
                 _digest(item)
     return value
 
@@ -1525,6 +1545,9 @@ class _Inspection:
         verifier["_verify_bindings"]()
         _need(
             release["version"] == self.deployment["release"]["version"]
+            and release.get("release_id", release["version"]) == self.selected.name
+            and release.get("archive_mode", "guarded-readonly")
+            == self.deployment["profile_evidence"].get("archive_mode", "guarded-readonly")
             and release["source_commit"] == self.deployment["source"]["parent_commit"]
         )
         _need(
@@ -1586,7 +1609,14 @@ class _Inspection:
     def facts(self) -> dict[str, Any]:
         self.guard = self.guard_state()
         if self.deployment["profile"] == "rootless":
-            mount = self.legacy["_inspection_archive_mount"](self.capture.mounts)
+            mode = self.deployment["profile_evidence"].get("archive_mode", "guarded-readonly")
+            if mode == "manual-writer":
+                _need(self.guard == "inactive", "facts-unavailable")
+                mount = self.legacy["_inspection_archive_mount"](
+                    self.capture.mounts, archive_mode=mode
+                )
+            else:
+                mount = self.legacy["_inspection_archive_mount"](self.capture.mounts)
         else:
             rows = [
                 (kind, flags)
@@ -1623,6 +1653,16 @@ class _Inspection:
         before = _guard_unit(budget)
         pid = int(before["MainPID"])
         if before["ActiveState"] in {"inactive", "failed"} and pid == 0:
+            if (
+                self.deployment["profile"] == "rootless"
+                and self.deployment["profile_evidence"].get("archive_mode") == "manual-writer"
+            ):
+                _need(
+                    before["LoadState"] == "loaded"
+                    and before["ActiveState"] == "inactive"
+                    and before["SubState"] == "dead",
+                    "facts-unavailable",
+                )
             state = "absent" if before["LoadState"] == "not-found" else "inactive"
             _need(
                 self.legacy["_inspection_guard"](self.capture.mounts, {}) == state,

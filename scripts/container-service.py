@@ -30,6 +30,8 @@ NAMES = {"api": "hfcache-api", "worker": "hfcache-verification", "caddy": "hfcac
 IMAGE_ID = re.compile(r"sha256:[0-9a-f]{64}")
 MAX_PROFILE_BYTES = 16384
 MIN_MOUNT_FIELDS = 6
+MIN_MOUNT_TRAILING_FIELDS = 3
+MODE_SCHEMA = 2
 HOST_HELPER_PREFIX = Path("/opt/hfcache")
 HOST_HELPER_DEPLOYMENT = Path("/etc/hfcache/host-helper-deployment.json")
 HOST_HELPER_PARENT = Path("/run/hfcache-host-helper/api")
@@ -354,7 +356,9 @@ def _inspection_guard(rows, release):
     return "held"
 
 
-def _inspection_archive_mount(rows):
+def _inspection_archive_mount(rows, *, archive_mode="guarded-readonly"):
+    if type(archive_mode) is not str or archive_mode not in {"guarded-readonly", "manual-writer"}:
+        _inspection_refuse()
     mounts = [
         (kind, flags)
         for path, kind, flags, _ in rows
@@ -367,8 +371,11 @@ def _inspection_archive_mount(rows):
     kind, flags = mounts[0]
     if ("ro" in flags) == ("rw" in flags):
         _inspection_refuse()
-    if kind in {"nfs", "nfs4"} and "ro" in flags:
-        return "nfs-ro"
+    if kind in {"nfs", "nfs4"}:
+        if "ro" in flags:
+            return "nfs-ro"
+        if archive_mode == "manual-writer":
+            return "nfs-rw"
     if kind in _INSPECTION_LOCAL_FS:
         return "local-ro" if "ro" in flags else "local-rw"
     return _inspection_refuse()
@@ -382,6 +389,25 @@ def profile_pairs(items):
             raise ValueError(msg)
         result[key] = value
     return result
+
+
+def archive_mode(profile):
+    """Closed independent runtime schema; absent mode is legacy read-only."""
+    fields = {"schema_version", "service_uid", "service_gid", "app_image", "caddy_image"}
+    version = profile.get("schema_version")
+    if type(version) is not int or version not in {1, 2}:
+        msg = "unknown protected runtime schema"
+        raise ValueError(msg)
+    if version == MODE_SCHEMA:
+        fields.add("archive_mode")
+    if set(profile) != fields:
+        msg = "unknown protected runtime fields"
+        raise ValueError(msg)
+    mode = profile.get("archive_mode", "guarded-readonly")
+    if type(mode) is not str or mode not in {"guarded-readonly", "manual-writer"}:
+        msg = "unknown protected archive mode"
+        raise ValueError(msg)
+    return mode
 
 
 def load_profile(path=PROFILE):
@@ -418,11 +444,9 @@ def load_profile(path=PROFILE):
     finally:
         os.close(descriptor)
     profile = json.loads(raw, object_pairs_hook=profile_pairs)
+    archive_mode(profile)
     if (
-        set(profile) != {"schema_version", "service_uid", "service_gid", "app_image", "caddy_image"}
-        or type(profile["schema_version"]) is not int
-        or profile["schema_version"] != 1
-        or any(
+        any(
             type(profile[key]) is not int or profile[key] < 1
             for key in ("service_uid", "service_gid")
         )
@@ -524,7 +548,14 @@ class _HelperProjectionRead:
         _helper_need(path.is_absolute() and ".." not in path.parts)
         _helper_need(
             archive_owner is None
-            or (path == HOST_HELPER_ARCHIVE_LOCK and type(archive_owner) is int)
+            or (
+                path
+                in {
+                    HOST_HELPER_ARCHIVE_LOCK,
+                    HOST_HELPER_ARCHIVE_LOCK.with_name(HOST_HELPER_ARCHIVE_LOCK.name + ".intent"),
+                }
+                and type(archive_owner) is int
+            )
         )
         owners = {0, HOST_HELPER_OWNER}
         if archive_owner is not None:
@@ -647,18 +678,26 @@ def host_helper_enabled(profile):
 
 
 def host_helper_archive_lock(profile):
+    """Original domain lock remains noncreating; companion has the same label."""
+    _coordination_lock(profile, HOST_HELPER_ARCHIVE_LOCK)
+    _coordination_lock(
+        profile, HOST_HELPER_ARCHIVE_LOCK.with_name(HOST_HELPER_ARCHIVE_LOCK.name + ".intent")
+    )
+
+
+def _coordination_lock(profile, path):
     """Observe only the fixed existing coordination inode and its full context."""
     capture = _HelperProjectionRead()
-    parent = capture.parent(HOST_HELPER_ARCHIVE_LOCK, archive_owner=profile["service_uid"])
+    parent = capture.parent(path, archive_owner=profile["service_uid"])
     try:
-        before = os.stat(HOST_HELPER_ARCHIVE_LOCK.name, dir_fd=parent, follow_symlinks=False)
+        before = os.stat(path.name, dir_fd=parent, follow_symlinks=False)
         _helper_need(
             stat.S_ISREG(before.st_mode)
             and (before.st_uid, before.st_gid) == (profile["service_uid"], profile["service_gid"])
             and stat.S_IMODE(before.st_mode) == _INSPECTION_LOCK_MODE
             and before.st_nlink == 1
         )
-        context = os.getxattr(HOST_HELPER_ARCHIVE_LOCK, "security.selinux", follow_symlinks=False)
+        context = os.getxattr(path, "security.selinux", follow_symlinks=False)
         _helper_need(
             0 < len(context) <= HOST_HELPER_MAX_CONTEXT
             and re.fullmatch(
@@ -666,7 +705,7 @@ def host_helper_archive_lock(profile):
                 context,
             )
         )
-        after = os.stat(HOST_HELPER_ARCHIVE_LOCK.name, dir_fd=parent, follow_symlinks=False)
+        after = os.stat(path.name, dir_fd=parent, follow_symlinks=False)
         _helper_need(
             tuple(getattr(before, name) for name in _INSPECTION_METADATA)
             == tuple(getattr(after, name) for name in _INSPECTION_METADATA)
@@ -706,12 +745,19 @@ def host_helper_projection(profile):  # noqa: PLR0915 - one fixed protected star
         and deployment["profile"] == "rootless"
     )
     _helper_digest(deployment["selinux_installation_sha256"])
-    release = _helper_object(deployment["release"], {"version", "selector_target"})
+    release_fields = {"version", "selector_target"}
+    if profile["schema_version"] == MODE_SCHEMA:
+        release_fields |= {"release_id"}
+    release = _helper_object(deployment["release"], release_fields)
     _helper_need(
         type(release["version"]) is str
         and re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", release["version"])
     )
-    _helper_need(release["selector_target"] == "releases/" + release["version"])
+    identity = release["version"]
+    if profile["schema_version"] == MODE_SCHEMA:
+        identity += "-" + archive_mode(profile)
+        _helper_need(release["release_id"] == identity)
+    _helper_need(release["selector_target"] == "releases/" + identity)
     _helper_need(HOST_HELPER_PREFIX / release["selector_target"] == RELEASE_ROOT)
     selector = HOST_HELPER_PREFIX / "current"
     selector_parent = capture.parent(selector)
@@ -736,6 +782,7 @@ def host_helper_projection(profile):  # noqa: PLR0915 - one fixed protected star
     raw_evidence = deployment["profile_evidence"]
     _helper_need(type(raw_evidence) is dict)
     home_field = {"account_home"} if "account_home" in raw_evidence else set()
+    mode_field = {"archive_mode"} if "archive_mode" in raw_evidence else set()
     evidence = _helper_object(
         raw_evidence,
         {
@@ -744,8 +791,10 @@ def host_helper_projection(profile):  # noqa: PLR0915 - one fixed protected star
             "app_image_sha256",
             "caddy_image_sha256",
         }
-        | home_field,
+        | home_field
+        | mode_field,
     )
+    _helper_need(evidence.get("archive_mode", "guarded-readonly") == archive_mode(profile))
     home = evidence.get("account_home", "/var/lib/hfcache")
     _helper_need(
         type(home) is str and home in {"/var/lib/hfcache", "/var/lib/hfcache/container-home"}
@@ -758,7 +807,7 @@ def host_helper_projection(profile):  # noqa: PLR0915 - one fixed protected star
     )
     _helper_need(os.environ.get("HOME") == home)
     for name, value in evidence.items():
-        if name != "account_home":
+        if name not in {"account_home", "archive_mode"}:
             _helper_digest(value)
     runtime = capture.read(PROFILE_DIRECTORY / "runtime.json", MAX_PROFILE_BYTES)
     _helper_need(
@@ -852,6 +901,7 @@ def command(  # noqa: PLR0912, PLR0913, PLR0915 - one closed role/mount allowlis
     helper_projection=None,
     preserve_archive_lock=False,
 ):
+    mode = archive_mode(profile)
     if role not in {*NAMES, "client"} or (role != "client" and arguments):
         msg = "unknown fixed container role"
         raise ValueError(msg)
@@ -910,7 +960,11 @@ def command(  # noqa: PLR0912, PLR0913, PLR0915 - one closed role/mount allowlis
         ):
             argv += [f"--tmpfs={hidden}:ro,nosuid,nodev,noexec,mode=000"]
     if role in {"api", "worker"}:
-        argv += volume("/srv/hfcache")  # No relabel/chown/copyup option, ever.
+        # Fixed archive path, never relabel/chown/copyup; mode grants no permission.
+        argv += volume("/srv/hfcache", writable=mode == "manual-writer")
+        if mode == "manual-writer":
+            argv += ["--security-opt=label=type:hfcache_archive_writer_t"]
+        argv += volume("/run/hfcache/hfcache.lock.intent", writable=True)
         argv += volume("/run/hfcache/hfcache.lock", writable=True, shared=not preserve_archive_lock)
     if role in {"api", "client", "caddy"}:
         argv += volume("/run/hfcache/api", writable=role == "api", shared=True)
@@ -1053,6 +1107,68 @@ def prepare_start(profile, role):
         subprocess.run([*ENGINE, "rm", info["Id"]], check=True)  # noqa: S603
 
 
+def protected_runtime(profile):
+    """Schema2 joins the physical selection, immutable renderer and host guard.
+
+    The separately protected helper projection remains independently required;
+    a runtime file, path override or successful mount check alone grants nothing.
+    """
+    mode = archive_mode(profile)
+    _helper_need(_inspection_accounting(Path("/sys/fs/selinux/enforce")).strip() == "1")
+    rows = []
+    for line in _inspection_accounting(Path("/proc/1/mountinfo")).splitlines():
+        left, separator, right = line.partition(" - ")
+        before, after = left.split(), right.split()
+        _helper_need(
+            separator
+            and len(before) >= MIN_MOUNT_FIELDS
+            and len(after) >= MIN_MOUNT_TRAILING_FIELDS
+        )
+        rows.append(
+            (Path(before[4]), after[0], set(before[5].split(",")), set(after[2].split(",")))
+        )
+    archive_rows = [
+        flags
+        for path, kind, flags, _ in rows
+        if path == Path("/srv/hfcache") and kind in {"nfs", "nfs4"}
+    ]
+    _helper_need(len(archive_rows) == 1 and {"nosuid", "nodev", "noexec"} <= archive_rows[0])
+    index = _inspection_json(
+        _inspection_read(RELEASE_ROOT / "artifact-index.json", rows, maximum=HOST_HELPER_MAX_INDEX)
+    )
+    verifier = _inspection_verifier(RELEASE_ROOT, rows, index)
+    release = verifier["_verify_stage"](RELEASE_ROOT)
+    verifier["_verify_bindings"]()
+    identity = release.get("release_id", release["version"])
+    _helper_need(INSPECTION_PREFIX / "releases" / identity == RELEASE_ROOT)
+    _helper_need((INSPECTION_PREFIX / "current").readlink().as_posix() == "releases/" + identity)
+    _helper_need(release["schema_version"] == MODE_SCHEMA and release["archive_mode"] == mode)
+    _helper_need(
+        _inspection_archive_mount(rows, archive_mode=mode)
+        == ("nfs-rw" if mode == "manual-writer" else "nfs-ro")
+    )
+    guard = _inspection_system_show(INSPECTION_GUARD)
+    inactive = (
+        guard["ActiveState"] == "inactive"
+        and guard["SubState"] == "dead"
+        and guard["MainPID"] == "0"
+    )
+    active = (
+        guard["ActiveState"] == "active"
+        and guard["SubState"] == "running"
+        and re.fullmatch(r"[1-9][0-9]*", guard["MainPID"]) is not None
+    )
+    _helper_need(guard["LoadState"] == "loaded" and (inactive or active))
+    observed_guard = _inspection_guard(rows, release)
+    _helper_need(
+        observed_guard == "inactive"
+        if mode == "manual-writer"
+        else observed_guard in {"held", "inactive"}
+    )
+    _helper_need(_inspection_system_show(INSPECTION_GUARD) == guard)
+    return release
+
+
 def archive_readonly(table=None):
     """Inspect local kernel mount information, never a live archive pathname."""
     body = Path("/proc/self/mountinfo").read_text() if table is None else table
@@ -1116,7 +1232,17 @@ def main():
             drain(profile, sys.argv[2])
             return 0
         role = sys.argv[1] if len(sys.argv) > 1 else ""
-        projection = host_helper_projection(profile) if role == "api" else None
+        if profile["schema_version"] == MODE_SCHEMA and role in {"api", "worker"}:
+            protected_runtime(profile)
+            # Validate the same independently protected mode/index for both roles.
+            # Worker receives none of the projection or helper mount.
+            validated_projection = host_helper_projection(profile)
+            _helper_need(validated_projection is not None)
+        else:
+            validated_projection = None
+        projection = (
+            (validated_projection or host_helper_projection(profile)) if role == "api" else None
+        )
         preserve_lock = projection is not None or (
             role == "worker" and host_helper_enabled(profile)
         )
@@ -1130,7 +1256,7 @@ def main():
             helper_projection=projection,
             preserve_archive_lock=preserve_lock,
         )
-        if role in {"api", "worker"}:
+        if role in {"api", "worker"} and profile["schema_version"] == 1:
             archive_readonly()
         if role != "client":
             prepare_start(profile, role)
