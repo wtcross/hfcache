@@ -52,6 +52,24 @@ test.each(["confirmed", "installed_unconfirmed"] as const)(
             const url = new URL(
                 input instanceof Request ? input.url : String(input),
             );
+            if (url.pathname === "/api/v1/operations/intent")
+                return Promise.resolve(
+                    jsonResponse({
+                        schema_version: 1,
+                        archive_id: ARCHIVE_ID,
+                        state: "admitted",
+                        operation: interrupted,
+                        disposition: null,
+                    }),
+                );
+            if (url.pathname === "/api/v1/operations/" + id)
+                return Promise.resolve(
+                    jsonResponse(
+                        operationResponse("operations show", {
+                            operation: interrupted,
+                        }),
+                    ),
+                );
             if (url.pathname === "/api/v1/operations/lookup")
                 return Promise.resolve(
                     jsonResponse(
@@ -117,9 +135,6 @@ test.each(["confirmed", "installed_unconfirmed"] as const)(
         }
         render(<View />);
         expect(fetcher).not.toHaveBeenCalled();
-        await user.click(
-            screen.getByRole("button", { name: "Observe original operation" }),
-        );
         await waitFor(() => {
             expect(screen.getByText("interrupted")).toBeInTheDocument();
         });
@@ -166,7 +181,11 @@ test.each(["confirmed", "installed_unconfirmed"] as const)(
             const path = new URL(
                 input instanceof Request ? input.url : String(input),
             ).pathname;
-            return path.includes("/lookup") || path.includes("/applications/");
+            return (
+                path.includes("/intent") ||
+                path.includes("/lookup") ||
+                path.includes("/applications/")
+            );
         });
         expect(keys).toHaveLength(3);
         for (const [, options] of keys)

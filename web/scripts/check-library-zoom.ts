@@ -144,7 +144,7 @@ try {
         context.serviceWorkers()[0] ??
         (await context.waitForEvent("serviceworker", { timeout: 10000 }));
     const page = context.pages()[0] ?? (await context.newPage());
-    fixture = await sourceFixture(page, { library: true });
+    fixture = await sourceFixture(page, { library: true, jobs: "empty" });
     await page.goto(SOURCE_FIXTURE_ORIGIN + "/ui/library");
     await expect(
         page.getByRole("link", { name: "model-00", exact: true }),
@@ -243,6 +243,35 @@ try {
     await expect(
         page.getByRole("link", { name: "model-00", exact: true }),
     ).toBeVisible();
+    fixture.setJobReadiness({ archive: false });
+    await page
+        .getByRole("button", { name: "Open navigation", exact: true })
+        .focus();
+    await page.keyboard.press("Enter");
+    await page.getByRole("link", { name: "Operations", exact: true }).focus();
+    await page.keyboard.press("Enter");
+    await page.getByRole("button", { name: /^Job: /u }).click();
+    await page.getByRole("option", { name: "Sync", exact: true }).click();
+    const submitJob = page.getByRole("button", {
+        name: "Submit job",
+        exact: true,
+    });
+    await expect(submitJob).toBeDisabled();
+    await expect(submitJob).toHaveAccessibleDescription(
+        "Unavailable: archive writes are disabled.",
+    );
+    const recheckJob = page.getByRole("button", {
+        name: "Recheck job readiness",
+    });
+    await recheckJob.focus();
+    await page.keyboard.press("Enter");
+    await expect(recheckJob).toBeEnabled();
+    expect((await metrics()).scrollWidth).toBe(320);
+    results.jobsAt200Percent = await metrics();
+    await page.screenshot({
+        path: join(evidence, "jobs-actual200percent-320css.png"),
+        fullPage: true,
+    });
     const accessibility = await new AxeBuilder({ page }).analyze();
     results.violations = accessibility.violations;
     expect(accessibility.violations).toEqual([]);

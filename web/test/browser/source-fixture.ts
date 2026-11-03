@@ -37,7 +37,11 @@ function text(value: unknown): string {
 
 export async function sourceFixture(
     page: Page,
-    options: { library?: boolean; facetDelayMs?: number } = {},
+    options: {
+        library?: boolean;
+        facetDelayMs?: number;
+        jobs?: "unknown" | "unknown-id" | "failed" | "empty";
+    } = {},
 ) {
     if ((options.facetDelayMs ?? 0) < 0 || (options.facetDelayMs ?? 0) > 250)
         throw new Error("Owned facet delay must remain between0 and250ms.");
@@ -126,6 +130,83 @@ export async function sourceFixture(
     let apiActive = 0,
         apiPeak = 0;
     const apiTimings: { path: string; durationMs: number }[] = [];
+    let jobReadiness: Record<string, boolean | null> = {
+        archive: true,
+        hub: true,
+        control: true,
+        archive_writable: true,
+        verification_available: true,
+    };
+    const retiredKeys = new Set<string>(),
+        refusedKeys = new Set<string>();
+    const failedReceipt = {
+        schema_version: 1,
+        operation_id: "a".repeat(32),
+        principal: "rest-writer",
+        route: "/api/v1/plans",
+        archive_id: config.read.archive_id,
+        config_fingerprint: "2".repeat(64),
+        state: "failed",
+        created_at: "2026-10-20T12:00:00.000001Z",
+        updated_at: "2026-10-20T12:00:02.000000Z",
+        completed_at: "2026-10-20T12:00:02.000000Z",
+        domain_run_id: readWire("plan", {}).envelope.run_id,
+        transaction_ids: [],
+        next_event_sequence: 1,
+        result_recorded: true,
+    };
+    if (
+        options.jobs === "unknown" ||
+        options.jobs === "unknown-id" ||
+        options.jobs === "failed"
+    ) {
+        const scope = {
+            origin: SOURCE_FIXTURE_ORIGIN,
+            publicPrefix: "",
+            authorityEpoch: "1".repeat(32),
+            subject: "administrator",
+            credentialClass: "rest-writer",
+            instanceId: "1".repeat(32),
+            archiveId: config.read.archive_id,
+            configFingerprint: null,
+        };
+        await page.addInitScript(
+            ({ scope, retainedId }) => {
+                const key = "hfcache.web.operations.v1";
+                if (localStorage.getItem(key) === null)
+                    localStorage.setItem(
+                        key,
+                        JSON.stringify({
+                            schemaVersion: 1,
+                            records: [
+                                {
+                                    schemaVersion: 1,
+                                    recordId: "b".repeat(32),
+                                    handles: {
+                                        kind: "basic-key",
+                                        key: "owned-original-key",
+                                        operationId: retainedId
+                                            ? "a".repeat(32)
+                                            : null,
+                                    },
+                                    originalAuthority: { kind: "web", scope },
+                                    observationTarget: scope,
+                                    source: "web",
+                                    action: "installedPlan",
+                                    route: "/api/v1/plans",
+                                    receiptIdentity: null,
+                                    createdAt: 100,
+                                    updatedAt: 100,
+                                    state: "uncertain",
+                                    terminal: null,
+                                },
+                            ],
+                        }),
+                    );
+            },
+            { scope, retainedId: options.jobs === "unknown-id" },
+        );
+    }
     let configGets = 0;
     let nextRead: {
         outcome: "api" | "success";
@@ -168,6 +249,130 @@ export async function sourceFixture(
                     headers: { "Cache-Control": "no-store" },
                 });
             };
+            if (options.jobs !== undefined) {
+                const key = request.headers()["idempotency-key"] ?? "";
+                const intent = () => {
+                    if (options.jobs === "failed")
+                        return {
+                            schema_version: 1,
+                            archive_id: config.read.archive_id,
+                            state: "admitted",
+                            operation: failedReceipt,
+                            disposition: null,
+                        };
+                    const state = retiredKeys.has(key)
+                        ? "retired_unknown"
+                        : refusedKeys.has(key)
+                          ? "not_admitted"
+                          : "unknown";
+                    return {
+                        schema_version: 1,
+                        archive_id: config.read.archive_id,
+                        state,
+                        operation: null,
+                        disposition:
+                            state === "unknown"
+                                ? null
+                                : {
+                                      disposition_id: (state ===
+                                      "retired_unknown"
+                                          ? "d"
+                                          : "e"
+                                      ).repeat(32),
+                                      state,
+                                      archive_id: config.read.archive_id,
+                                      route:
+                                          state === "not_admitted"
+                                              ? "/api/v1/syncs"
+                                              : null,
+                                      created_at: "2026-11-03T12:00:00.000001Z",
+                                      reason:
+                                          state === "not_admitted"
+                                              ? "permission_denied"
+                                              : null,
+                                      review_sha256:
+                                          state === "retired_unknown"
+                                              ? "f".repeat(64)
+                                              : null,
+                                  },
+                    };
+                };
+                if (
+                    request.method() === "GET" &&
+                    path === "/api/v1/jobs/readiness"
+                ) {
+                    await json({
+                        schema_version: 1,
+                        archive_id: config.read.archive_id,
+                        config_fingerprint: null,
+                        ...jobReadiness,
+                    });
+                    return;
+                }
+                if (
+                    request.method() === "GET" &&
+                    path === "/api/v1/operations/intent"
+                ) {
+                    await json(intent());
+                    return;
+                }
+                if (
+                    request.method() === "POST" &&
+                    path === "/api/v1/operations/intent/retire"
+                ) {
+                    if (
+                        key !== "owned-original-key" ||
+                        request.postData() !==
+                            '{"schema_version":1,"confirm":"retire_unknown"}'
+                    )
+                        throw new Error("Unexpected original review");
+                    retiredKeys.add(key);
+                    await json(intent());
+                    return;
+                }
+                if (request.method() === "POST" && path === "/api/v1/syncs") {
+                    if (key === "owned-original-key")
+                        throw new Error("Original request replayed");
+                    refusedKeys.add(key);
+                    await route.fulfill({
+                        status: 403,
+                        contentType: "application/json",
+                        headers: {
+                            "Hfcache-Intent": "closed",
+                            "Cache-Control": "no-store",
+                        },
+                        body: JSON.stringify(problemWire("HFAPI010")),
+                    });
+                    return;
+                }
+                if (
+                    request.method() === "GET" &&
+                    path.startsWith("/api/v1/operations/" + "a".repeat(32))
+                ) {
+                    const data = path.endsWith("/result")
+                        ? {}
+                        : path.endsWith("/events")
+                          ? {
+                                operation_id: "a".repeat(32),
+                                events: [],
+                                next_cursor: 0,
+                                oldest_sequence: 1,
+                                truncated: false,
+                            }
+                          : { operation: failedReceipt };
+                    const command = path.endsWith("/result")
+                        ? "plan"
+                        : path.endsWith("/events")
+                          ? "operations events"
+                          : "operations show";
+                    await json({
+                        ...readWire(command, data, path.endsWith("/result")),
+                        archive_id: config.read.archive_id,
+                        config_fingerprint: "2".repeat(64),
+                    });
+                    return;
+                }
+            }
             if (request.method() === "GET") {
                 const library =
                     options.library === true
@@ -226,7 +431,12 @@ export async function sourceFixture(
                     return;
                 }
                 if (
-                    ["/ui/", "/ui/administration", "/ui/library"].includes(path)
+                    [
+                        "/ui/",
+                        "/ui/administration",
+                        "/ui/library",
+                        "/ui/operations",
+                    ].includes(path)
                 ) {
                     await route.fulfill({
                         contentType: "text/html",
@@ -278,6 +488,9 @@ export async function sourceFixture(
             build,
         },
         configGets: () => configGets,
+        setJobReadiness(value: Record<string, boolean | null>) {
+            jobReadiness = { ...jobReadiness, ...value };
+        },
         releasePendingReads() {
             for (const release of pendingReads) release();
         },

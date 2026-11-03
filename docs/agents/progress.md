@@ -85,6 +85,38 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
   fresh no-owner proof, receipt3eeb110c; all logs/browser/source reports remain.
   No production/archive/service/permission/mount mutation.
 
+
+- [x] WEB-032 Explain job readiness and recover original requests safely
+  (2026-11-03, this commit — [task](plans/tasks/web-032-job-readiness-and-automatic-recovery.md),
+  [plan](plans/2026-11-03-plan-job-recovery-and-archive-writes.md)).
+  Accessible permission/storage/readiness reasons, ordinary outcomes and contextual
+  review preserve original admitted failures and unknown history. Authenticated
+  visible bounded reconciliation uses GET only; hidden/late/cross-tab callbacks
+  cannot donate freshness or replay. Atomic browser2 migration preserves handles,
+  summaries and original bytes on failure; exact c23abba reader refuses2 without
+  writes. Causal refusal requires its current typed closed submission and fresh
+  own-key proof; explicit reviewed retirement retains original IDs/summary and
+  independent protected effects. INV013/014/018–023, FS02/19/21–23, AD16/17 and
+  applicable browser/API ADRs reviewed; ADR164/contracts record refinements, with
+  no new architecture/runtime dependency. Strict gate3 passes9644 backend/three
+  locked wheel profiles/179 generated definitions/3809 unit/4169 combined checks,
+  all16 built Chromium cases, actual200% zoom and real API React reads in1602.732s;
+  1279 files/names frozen unchanged,94.89% lines/89.83% branches. Full log
+  `9d46b39dfb8ad04116b60c23b7b3f573a2a7e77abd7aeb6bb4d3f0fcdbfda216`.
+  Both earlier gates remain failed: source-derived corpus/mode pins, then the
+  real-read fixture's stale positive count; only exact counts change, preserving
+  strict inventories/incorrect-wire refusals. Direct affected read fixture passes
+  both8-case prefixes. Named retained-ID and idle-owner regressions receive focused
+  preserving-history/stale-callback/private-slot checks before final gate. Full
+  failed payloads/logs survive root's archive/manifest/no-owner-proven exact TMP
+  retirement; safety floors and metadata charges stay unchanged. Completion-only
+  Markdown records receive separate focused checks after the frozen gate.
+  OPS-027 is next; installed/runtime/production writer acceptance remains later.
+  No production/archive/service/permission/mount mutation, deployment, tag or push.
+  Completion docs pass69 checks/alignment216 documents/29 helpers. Successful
+  gate3 TMP alone retires after164269-entry manifest0c72573f/fresh334-process
+  all-UID zero-owner proof, receipt02726086; root1.480GB/home119.3MB free.
+
 ## Repository hygiene (2026-11-02)
 
 - [x] DOC-020 Ignore root Node dependencies
@@ -2910,6 +2942,21 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-03: WEB-032 source completes after strict gate3 and selects OPS-027.
+Browser readiness/GET-only original recovery, explicit reviewed retirement and
+browser2 migration are validated in owned source fixtures, including actual zoom
+and exact predecessor reader refusal. Production remains0.3.1/sourcec23abba,
+NFS-ro/nfs_t/Enforcing with original locks/grants/stores/secrets unchanged, legacy
+writers/calendars masked and guard intentionally inactive. OPS-027 still owns
+protected renderer/profile wiring and drain/handoff; WEB-033 owns direct installed
+Caddy/native/rootless recovery and confinement acceptance before later writer
+transition/pilots/backfill. Generic recovery never clears independent config/host
+effect precautions. Preserve both failed gate logs/full payload archives and all
+browser/source reports; resource recovery changes capacity only. Optional
+instrumented functional runner remains untouched/uninvoked. No production action
+or installed acceptance is inferred from this source commit.
+
 
 2026-11-03: API-019 source completes and selects WEB-032 after strict gate25.
 Production remains the original0.3.1/sourcec23abba/NFS-ro baseline; no deployment,
@@ -13897,3 +13944,14 @@ and own-key GET/outcome rules. All lanes enforce permanent fences and execution
 leases, and generic recovery never clears protected effects. ADR164/schema13.3/
 INV023 and the executable recovery contract record this bounded amendment; browser
 and installed conformance remain separate from the passing source gate.
+
+
+2026-11-03 WEB-032 implementation refinement of decision164: browser2 stores only
+causal current-submission refusals and revalidates the same saved disposition on
+reload; a later refusal never resolves older unknown history. Same-authority
+reviewed retirement preserves original handles/terminal summary, while a refusal
+contradicting admission stays operator-only conflict. Fresh own-key unknown gates
+explicit retained-ID Review; per-disposition callbacks and visibility/auth fences
+prevent old observations donating proof. Atomic schema1 migration and exact prior
+reader refusal preserve history. ADR164/INV023/API/schema/recovery contracts record
+these bounded refinements; no protocol redesign or new architectural decision.

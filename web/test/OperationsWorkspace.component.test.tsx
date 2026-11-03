@@ -50,7 +50,22 @@ function mount(router: (url: URL, init?: RequestInit) => Response) {
     );
     const fetcher = vi.fn<typeof fetch>((input, init) =>
         Promise.resolve(
-            router(new URL(input instanceof Request ? input.url : input), init),
+            new URL(input instanceof Request ? input.url : input).pathname ===
+                "/api/v1/jobs/readiness"
+                ? jsonResponse({
+                      schema_version: 1,
+                      archive_id: ARCHIVE_ID,
+                      config_fingerprint: null,
+                      archive: null,
+                      hub: null,
+                      control: null,
+                      archive_writable: null,
+                      verification_available: null,
+                  })
+                : router(
+                      new URL(input instanceof Request ? input.url : input),
+                      init,
+                  ),
         ),
     );
     const controller = createSessionController({
@@ -122,7 +137,7 @@ test("workspace starts read-free, explicitly lists bounded histories and never i
             name: `Read run report ${report.run_id}`,
         }),
     ).toBeInTheDocument();
-    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher).toHaveBeenCalledTimes(3);
     expect(
         screen.getByText(/1 operation receipts in the known loaded extent/),
     ).toBeInTheDocument();
@@ -153,7 +168,7 @@ test("job permission evidence is an explicit shared GET and preserves effective 
     expect(screen.getByTestId("host-permission-hub")).toHaveTextContent(
         "The installed policy denies this action.",
     );
-    expect(fetcher).toHaveBeenCalledOnce();
+    expect(fetcher).toHaveBeenCalledTimes(2);
     expect(fetcher.mock.calls[0]?.[1]?.method).toBe("GET");
     expect(controller.snapshot().registry.records).toEqual([]);
 });
@@ -189,7 +204,7 @@ test("exact selected operation presents original result separately from events a
     ).toBeInTheDocument();
     expect(screen.getByText(/does not prove ownership/)).toBeInTheDocument();
     expect(controller.snapshot().registry.records).toEqual([]);
-    expect(fetcher).toHaveBeenCalledTimes(5);
+    expect(fetcher).toHaveBeenCalledTimes(6);
     expect(fetcher.mock.calls.every(([, init]) => init?.method === "GET")).toBe(
         true,
     );
@@ -215,8 +230,8 @@ test("a run selected from a repository can open directly without an implicit his
     expect(
         screen.getByText(/Historical report policy may differ/),
     ).toBeInTheDocument();
-    expect(fetcher).toHaveBeenCalledTimes(1);
-    const request = fetcher.mock.calls[0]?.[0];
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    const request = fetcher.mock.calls[1]?.[0];
     expect(request instanceof URL ? request.pathname : null).toBe(
         `/api/v1/runs/${report.run_id}`,
     );

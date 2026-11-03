@@ -15,6 +15,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from hfcache.api.command_models import CommandModel
+from hfcache.api.intent_routes import projection
 from hfcache.archive import InitializationResult
 from hfcache.card_models import RepositoryCardRead
 from hfcache.catalog_query_models import (
@@ -72,6 +73,12 @@ from hfcache.services.commands import _planned
 from hfcache.services.context import ExecutionContext, ServiceResult
 from hfcache.services.queries import LocalQueries, RepositoryQuery
 from hfcache.verification import VerificationEstimate
+from hfcache.wire_models import (
+    IntentRetirement,
+    JobReadiness,
+    OriginalIntent,
+    PublicIntentDisposition,
+)
 from hfcache.wire_registry import AUTHORITIES, ROUTES, request_authorities, validate_payload
 from hfcache.wire_schema import build_contracts
 from tests.fixtures import examples
@@ -84,6 +91,7 @@ def request_samples() -> dict[str, dict[str, Any]]:
     selector = f"model:{examples.REPOSITORY_ID}"
     candidate = "schema_version=1\n# exact literal candidate fixture\n"
     bodies = {
+        "IntentRetirement": {"schema_version": 1, "confirm": "retire_unknown"},
         "ScheduleValidationRequest": {"on_calendar": "daily", "randomized_delay_sec": None},
         "ScheduleChangeRequest": {
             "action": "replace",
@@ -131,10 +139,13 @@ def request_samples() -> dict[str, dict[str, Any]]:
     result = {}
     for name, model in request_authorities().items():
         parsed = model.model_validate(bodies[name])
-        if not isinstance(parsed, (CommandModel, ConfigApplicationSubmission, HostActionRequest)):
+        if isinstance(parsed, IntentRetirement):
+            body = parsed.model_dump(mode="json")
+        elif isinstance(parsed, (CommandModel, ConfigApplicationSubmission, HostActionRequest)):
+            body = parsed.canonical_body()
+        else:
             message = "request authority is not an original command model"
             raise TypeError(message)
-        body = parsed.canonical_body()
         if name in {"ManagedValidationRequest", "ManagedPlanRequest"}:
             body = parsed.model_dump(mode="json", exclude_none=True)
         if name == "ValidationSubmission":
@@ -645,13 +656,42 @@ def serialized_corpus() -> list[dict[str, Any]]:  # noqa: PLR0915 - explicit ind
         value = report.model_dump(mode="json") | {"report": "runs/original.json"}
         validate_payload(name, value)
         add(name, value)
+
+    readiness = JobReadiness(
+        schema_version=1,
+        archive_id=examples.ARCHIVE_ID,
+        config_fingerprint=None,
+        archive=None,
+        hub=False,
+        control=True,
+        archive_writable=False,
+        verification_available=None,
+    )
+    add("JobReadiness", readiness.model_dump(mode="json"))
+    closed = examples.intent_dispositions().entries[0]
+    add(
+        "PublicIntentDisposition",
+        PublicIntentDisposition.model_validate(closed.projection(examples.ARCHIVE_ID)).model_dump(
+            mode="json"
+        ),
+    )
+    for disposition in (None, closed):
+        add(
+            "OriginalIntent",
+            OriginalIntent.model_validate(
+                projection(examples.ARCHIVE_ID, None, disposition)
+            ).model_dump(mode="json"),
+        )
     first = {}
     for entry in entries:
         first.setdefault(entry["definition"], entry["value"])
     covered_route_modes()
     context = ExecutionContext(RunId(examples.RUN), datetime(2026, 10, 20, 12, tzinfo=UTC))
     for route in ROUTES:
-        if route.response_kind == "acceptance":
+        if route.response_kind == "raw":
+            assert route.success is not None
+            add(route.success, first[route.success])
+        elif route.response_kind == "acceptance":
             accepted = Acceptance(
                 schema_version=1,
                 request_id=examples.PLAN,
@@ -692,6 +732,9 @@ def covered_route_modes() -> set[tuple[str, str, str]]:
     """Source-known schema modes represented; this does not claim HTTP execution."""
     defaults = {
         "ui_bootstrap",
+        "job_readiness",
+        "original_intent",
+        "retire_intent",
         "version",
         "capabilities",
         "health",

@@ -10,19 +10,21 @@ release and [access guidance](README.md) before following these procedures.
 ## Choose a job and its effects
 
 In **Jobs**, choose **Job**, review **Selected job effects**, then choose
-**Submit job** only for the intended scope. The currently installed behavior
-offers an optional **Read job permission evidence** read in **Job permissions**
-when host-read is available. It shows the
-observed effective archive/Hub permissions, refusal reasons and guard state;
-opening the workspace does not yet read it automatically. The accepted
-[readiness changes below](#accepted-readiness-and-recovery-changes) replace that
-optional-only behavior when implemented and accepted. That cached observation
-is informational, never authorization or an extra prerequisite for a job. The displayed REST capability is an
-explanation, not a grant: Basic jobs also require a fresh protected host binding
-and the relevant permission at admission and again before execution. An
-unavailable helper, held guard or changed scope can refuse a request even when
-read-only metadata is available. Do not switch credentials or repeat a request
-to work around a refusal.
+**Submit job** only for the intended scope. Jobs reads one bounded authenticated
+readiness response on entry, action change and **Recheck job readiness**. Its
+30-second advisory evidence distinguishes denied archive/Hub grants, read-only
+required storage and unavailable verification. The reason beside a disabled
+button is also its accessible description. Maintenance likewise explains
+control-state preview and archive-effect availability. Unknown readiness says
+so and permits an explicit submission for fresh server checks when no known
+refusal or original-request precaution blocks it. Optional **Read job permission
+evidence** shows additional host facts when host-read is available; that grant
+is never a prerequisite for a job.
+
+Readiness grants no authority. Basic jobs still require fresh protected binding,
+permissions, storage and scope checks at admission and execution. A changed
+server permission may refuse a job despite earlier available readiness. Keep
+its original request and observed result rather than repeating it.
 
 | Job | Scope and actual effects |
 | --- | --- |
@@ -155,7 +157,8 @@ original handle's namespace and do not grant authority.
 2. In **Import original handle**, choose the handle type, enter its exact value
    and choose **Save original handle**. This saves local recovery metadata and
    sends no API request.
-3. Choose **Observe original operation**. Key lookup uses the current
+3. Choose **Recheck original request** (or **Review original request** for an
+   unresolved key-only request). Key lookup uses the current
    credential's original-key namespace; ID observation reads the exact original
    operation. Preserve any validated ID learned from the response.
 4. Interpret admission, execution and domain result separately. A 202 is durable
@@ -185,8 +188,8 @@ reader. See [API recovery](../api.md#reconnect-after-lost-acknowledgement).
 
 An API restart can change the API instance while leaving the original authority,
 archive and administrator subject unchanged. Explicit reconnect obtains fresh
-authenticated context, clears private cached reads and permits new observation
-of the same original handles. It does not rewrite their admitted scope or
+authenticated context, clears private cached reads and automatically reconciles
+compatible saved originals with bounded GETs on the visible page. It does not rewrite their admitted scope or
 resubmit their requests. A local authentication-generation change clears private
 caches even if the returned scope has identical values.
 
@@ -231,7 +234,7 @@ never repeat Stop or delete recovery records to enable a new job.
 
 For configuration application, **unknown** and **installed_unconfirmed** remain
 separate host effects. A generic failed/interrupted API receipt cannot clear
-them. After **Observe original operation** establishes the original application's
+them. After original request observation establishes the original application's
 route and receipt, **Observe original configuration outcome** explicitly reads
 its protected history. It also works for a restored/imported original Basic key
 after the editable draft is gone. The editor labels its corresponding action
@@ -265,12 +268,11 @@ its pending retry delays. It also stops in-flight original configuration and
 host-outcome reads. Original keys and accepted jobs remain unchanged; backend
 work continues. A late response cannot establish a new outcome after that pause.
 
-Returning to the page does not restart observation. Choose **Observe original
-operation**, **Observe original configuration outcome** or **Observe original
-host outcome** deliberately for the corresponding original handle. This also
-applies when admission completes while the page is hidden: the acknowledged
-handle is retained without automatic polling. Never submit a new job to resume
-observation.
+Returning to the visible authenticated page starts bounded GET-only
+reconciliation of saved compatible originals. A late admission acknowledgement
+preserves handles but supplies no fresh proof or polling restart. Protected
+configuration and host-outcome confirmation remain deliberate reads under their
+original keys. No return, reconnect or GET retires an intent or submits work.
 
 | Bound | Browser behavior |
 | --- | --- |
@@ -295,9 +297,9 @@ contents. See [troubleshooting](troubleshooting.md#original-operation-recovery).
 
 ## Accepted readiness and recovery changes
 
-The [original-intent contract](../job-recovery.md) specifies the next behavior;
-this section supersedes the optional-only permission read and deliberate-only
-restored-job observation above once that behavior is installed and accepted.
+The [original-intent contract](../job-recovery.md) is implemented in browser
+source. Installed release capabilities and deployment acceptance remain separate;
+check the selected release before relying on these controls.
 Jobs reads bounded advisory action readiness on entry/change and offers Recheck.
 Known archive denial or read-only storage explains an unavailable Sync/refresh
 beside its disabled button. Unknown readiness is labelled unknown, and optional
@@ -307,12 +309,19 @@ receives fresh server authorization.
 Visible authenticated pages reconcile original jobs with bounded GETs only.
 Hidden pages stop reads and reject late proof. Ordinary labels distinguish
 Submitted, Running, Completed, Failed, Not admitted and Needs review. A durable
-Not admitted result stays visible without becoming a phantom running job. For
+Not admitted result stays visible with a plain refusal reason and an explicit
+Recheck readiness next step. The old advisory readiness is retired after a
+verified refusal; refusal never becomes a phantom running job. For
 a missing original key, the explicit Review original request action explains
 historical uncertainty and asks the server for reviewed retirement. If proof
 is unavailable, keep the original handle and follow its concrete operator step.
 A confirmed retirement says Historical outcome unknown; request retired. A new
 job is a separate deliberate action; recovery never repeats the old request.
 Keys, JSON and raw receipt states stay in advanced diagnostics. Schema-1 handles
-are preserved by atomic versioned migration. Configuration/host unknown effects
+are preserved by atomic versioned migration to schema2 under the existing key.
+An inability to preserve the complete migration blocks submission and retains
+original bytes. A stored Not admitted result releases its own job precaution
+only after fresh same-disposition-ID GET verification. A later refusal for an
+older unknown request is insufficient; that original still requires historical
+review. Configuration/host unknown effects
 retain their independent original-key confirmation rules.

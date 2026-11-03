@@ -39,18 +39,52 @@ function mounted(
         lost?: boolean;
         denied?: boolean;
         persistenceRefused?: boolean;
+        closed?: boolean;
     } = {},
 ) {
     let route = "/api/v1/plans";
     const fetcher = vi.fn<typeof fetch>().mockImplementation((input, init) => {
         const requested = path(input);
+        if (requested === "/api/v1/operations/intent")
+            return Promise.resolve(
+                jsonResponse({
+                    schema_version: 1,
+                    archive_id: ARCHIVE_ID,
+                    state: "not_admitted",
+                    operation: null,
+                    disposition: {
+                        disposition_id: "b".repeat(32),
+                        state: "not_admitted",
+                        archive_id: ARCHIVE_ID,
+                        route: "/api/v1/plans",
+                        created_at: "2026-11-03T12:00:00Z",
+                        reason: "permission_denied",
+                        review_sha256: null,
+                    },
+                }),
+            );
+        if (requested === "/api/v1/jobs/readiness")
+            return Promise.resolve(
+                jsonResponse({
+                    schema_version: 1,
+                    archive_id: ARCHIVE_ID,
+                    config_fingerprint: "2".repeat(64),
+                    archive: true,
+                    hub: true,
+                    control: true,
+                    archive_writable: true,
+                    verification_available: true,
+                }),
+            );
         if (init?.method === "POST") {
             if (options.lost)
                 return Promise.reject(new TypeError("Owned lost reply"));
-            if (options.denied)
-                return Promise.resolve(
-                    jsonResponse(problemWire("HFAPI010"), 403),
-                );
+            if (options.denied) {
+                const response = jsonResponse(problemWire("HFAPI010"), 403);
+                if (options.closed)
+                    response.headers.set("Hfcache-Intent", "closed");
+                return Promise.resolve(response);
+            }
             route = requested;
             const status = "/api/v1/operations/" + operationId;
             return Promise.resolve(
@@ -183,7 +217,7 @@ async function submit(fixture: ReturnType<typeof mounted>) {
     return value;
 }
 
-test("mount and local action/scope choices are read-free, CSP-safe and expose exact effects", async () => {
+test("Jobs entry and action changes read readiness only, remain CSP-safe and expose exact effects", async () => {
     const fixture = mounted();
     expect(fixture.fetcher).not.toHaveBeenCalled();
     expect(screen.getByRole("region", { name: "Jobs" })).toBeInTheDocument();
@@ -211,7 +245,15 @@ test("mount and local action/scope choices are read-free, CSP-safe and expose ex
             name: "All configured and archived repositories",
         }),
     ).toBeChecked();
-    expect(fixture.fetcher).not.toHaveBeenCalled();
+    expect(fixture.fetcher).toHaveBeenCalledTimes(3);
+    expect(
+        fixture.fetcher.mock.calls.map(([url, init]) => [
+            path(url),
+            init?.method,
+        ]),
+    ).toEqual(
+        Array.from({ length: 3 }, () => ["/api/v1/jobs/readiness", "GET"]),
+    );
 });
 
 test.each(["Installed sizing", "Sync"])(
@@ -234,7 +276,7 @@ test.each(["Installed sizing", "Sync"])(
         expect(await submit(fixture)).toEqual({
             selectors: ["dataset:owned/data", "model:owned/model"],
         });
-        await screen.findByText(/202 admitted/u);
+        await screen.findByText(/Submitted\. This is not domain completion/u);
         expect(
             screen.getByText(new RegExp("^Action: " + label + "\\.", "u")),
         ).toBeInTheDocument();
@@ -350,7 +392,14 @@ test("candidate file selection is read-free, never exposes contents or persists 
         new File([body], "candidate<owned>.toml", { type: "application/toml" }),
     );
     await screen.findByText("candidate<owned>.toml", { selector: "code" });
-    expect(fixture.fetcher).not.toHaveBeenCalled();
+    expect(fixture.fetcher).toHaveBeenCalledTimes(2);
+    expect(
+        fixture.fetcher.mock.calls.every(
+            ([url, init]) =>
+                path(url) === "/api/v1/jobs/readiness" &&
+                init?.method === "GET",
+        ),
+    ).toBe(true);
     expect(document.body.textContent).not.toContain(secret);
     expect(window.localStorage.getItem("hfcache.web.operations.v1")).toBeNull();
     expect(await submit(fixture)).toEqual({ selectors: [], candidate: body });
@@ -385,7 +434,8 @@ test.each([
         expect(
             screen.getByRole("button", { name: "Submit job" }),
         ).toBeDisabled();
-        expect(fixture.fetcher).not.toHaveBeenCalled();
+        expect(fixture.fetcher).toHaveBeenCalledTimes(2);
+        expect(fixture.posts()).toHaveLength(0);
     },
 );
 
@@ -397,7 +447,10 @@ test("managed draft sizing opens only the explicit configuration callback withou
         }),
     );
     expect(fixture.onOpenConfiguration).toHaveBeenCalledOnce();
-    expect(fixture.fetcher).not.toHaveBeenCalled();
+    expect(fixture.fetcher).toHaveBeenCalledOnce();
+    expect(path(fixture.fetcher.mock.calls[0]?.[0] ?? "https://invalid")).toBe(
+        "/api/v1/jobs/readiness",
+    );
 });
 
 test("estimate is one real typed GET, keeps unknown throughput explicit and creates no job", async () => {
@@ -413,7 +466,11 @@ test("estimate is one real typed GET, keeps unknown throughput explicit and crea
     await within(estimate).findByText("Undetectable; no safety inference.");
     expect(within(estimate).getAllByText("Unknown")).toHaveLength(2);
     expect(fixture.posts()).toEqual([]);
-    expect(fixture.fetcher).toHaveBeenCalledOnce();
+    expect(fixture.fetcher).toHaveBeenCalledTimes(2);
+    expect(fixture.fetcher.mock.calls.map(([url]) => path(url))).toEqual([
+        "/api/v1/jobs/readiness",
+        "/api/v1/verification/estimate",
+    ]);
     expect(window.localStorage.getItem("hfcache.web.operations.v1")).toBeNull();
 });
 
@@ -430,7 +487,10 @@ test("unmount preserves one RAM form across routes, while auth clearing removes 
     expect(
         screen.getByText("owned.toml", { selector: "code" }),
     ).toBeInTheDocument();
-    expect(fixture.fetcher).not.toHaveBeenCalled();
+    await waitFor(() => {
+        expect(fixture.fetcher).toHaveBeenCalledTimes(3);
+    });
+    expect(fixture.posts()).toHaveLength(0);
     act(() => {
         fixture.controller.disconnect();
     });
@@ -464,3 +524,36 @@ test.each([{ lost: true }, { denied: true }, { persistenceRefused: true }])(
         ).not.toBeInTheDocument();
     },
 );
+
+test("fresh verified closed refusal displays Not admitted rather than contradictory uncertainty", async () => {
+    const fixture = mounted({ denied: true, closed: true });
+    await userEvent.click(screen.getByRole("button", { name: "Submit job" }));
+    await screen.findByText(
+        /Not admitted\. The required job permission was denied/u,
+    );
+    expect(
+        screen.queryByText(/Needs review\. Admission is uncertain/u),
+    ).not.toBeInTheDocument();
+    expect(fixture.posts()).toHaveLength(1);
+    expect(fixture.store.snapshot().availabilityReason).toContain(
+        "Readiness unavailable",
+    );
+    expect(
+        screen.getByRole("button", { name: "Recheck job readiness" }),
+    ).toBeEnabled();
+    expect(
+        screen.getByText(
+            /Recheck job readiness before considering a distinct new job\. The original request will not be retried/u,
+        ),
+    ).toBeVisible();
+    expect(
+        fixture.fetcher.mock.calls.filter(
+            ([url]) => path(url) === "/api/v1/jobs/readiness",
+        ),
+    ).toHaveLength(1);
+    expect(
+        fixture.fetcher.mock.calls.filter(
+            ([url]) => path(url) === "/api/v1/operations/intent",
+        ),
+    ).toHaveLength(1);
+});

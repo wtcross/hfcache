@@ -1,7 +1,7 @@
 # Job readiness and original-intent recovery
 
 This contract specifies the next recovery and rootless writer behavior. It is
-implemented server protocol with source validation; the installed release's capabilities and deployment checkpoint
+implemented server and browser protocol with source validation; the installed release's capabilities and deployment checkpoint
 remain authoritative until implementation and installed acceptance complete.
 Existing operation receipts, domain journals and protected outcomes retain their
 independent meanings. [Decision 164](adr/decision-164.md) explains recovery;
@@ -10,7 +10,8 @@ independent meanings. [Decision 164](adr/decision-164.md) explains recovery;
 ## Readiness and ordinary states
 
 Jobs obtains one bounded authenticated `GET /api/v1/jobs/readiness` on entry,
-action/context change and explicit Recheck. It returns only schema version 1,
+action/context change and explicit Recheck. Maintenance uses the same bounded
+read to explain control-state previews and archive effects. It returns only schema version 1,
 configured archive UUID/fingerprint, nullable effective `archive`, `hub` and
 `control` grants, nullable `archive_writable` and nullable
 `verification_available`. Null means unknown. The API obtains action evidence
@@ -263,6 +264,16 @@ remain selected; an older UI can be used only with its actual fail-closed limits
 If an older backend is retained for diagnostics, stop its admission externally
 and retain a matching compatible reader. A rollback cannot erase fences or
 restore write authority to a binary unable to enforce them.
+
+Reviewed retirement may preserve an original browser operation ID, receipt
+identity and saved terminal summary when the current own-key intent is unknown.
+These retained fields remain historical evidence; they are never overwritten by
+closure or promoted to fresh outcome proof. A retained-ID Review action requires
+fresh RAM-only own-key unknown evidence under the current authentication and
+visibility context. Conflict remains blocked for operator review; a not-admitted
+projection cannot contradict retained admission. Record-specific observation
+authorizations bind the current disposition, and closure fences older callbacks
+without clearing independent configuration or host-effect precautions.
 
 ## Offline source entrypoint and deployment boundary
 

@@ -349,6 +349,9 @@ export function MaintenanceWorkspace({
     onReadReport?: (runId: string) => void;
 }) {
     const state = useSyncExternalStore(store.subscribe, store.snapshot);
+    useEffect(() => {
+        void store.recheckReadiness();
+    }, [store, state.authGeneration]);
     const id = useId();
     const [permissionEvidence, setPermissionEvidence] = useState(false);
     useEffect(
@@ -673,9 +676,30 @@ export function MaintenanceWorkspace({
                         </>
                     )}
                     {form.kind !== "repair" && (
-                        <button type="submit" disabled={!state.canPreview}>
-                            Preview maintenance
-                        </button>
+                        <>
+                            <p
+                                id="maintenance-preview-availability"
+                                role="status"
+                            >
+                                {state.previewAvailability}
+                            </p>
+                            <button
+                                type="button"
+                                disabled={state.readinessPhase === "checking"}
+                                onClick={() => {
+                                    void store.recheckReadiness();
+                                }}
+                            >
+                                Recheck maintenance readiness
+                            </button>
+                            <button
+                                type="submit"
+                                aria-describedby="maintenance-preview-availability"
+                                disabled={!state.canPreview}
+                            >
+                                Preview maintenance
+                            </button>
+                        </>
                     )}
                     <button
                         type="button"
@@ -752,8 +776,12 @@ export function MaintenanceWorkspace({
                             ? "Current review confirmed for one attempt."
                             : "Current review is not confirmed."}
                     </p>
+                    <p id="maintenance-apply-availability" role="status">
+                        {state.applyAvailability}
+                    </p>
                     <button
                         type="button"
+                        aria-describedby="maintenance-apply-availability"
                         disabled={
                             form.kind === "repair"
                                 ? !state.canRepair

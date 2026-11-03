@@ -180,6 +180,16 @@ function setup(
     );
     const fetcher = vi.fn<typeof fetch>((input, init) => {
         const requested = url(input);
+        if (requested.pathname.endsWith("/operations/intent"))
+            return Promise.resolve(
+                jsonResponse({
+                    schema_version: 1,
+                    archive_id: ARCHIVE_ID,
+                    state: "unknown",
+                    operation: null,
+                    disposition: null,
+                }),
+            );
         const fallback = () =>
             jsonResponse(
                 requested.pathname.endsWith("/operations/lookup")
@@ -249,6 +259,7 @@ function onlyOriginalGets(
     prefix = "",
 ) {
     expect(fetcher.mock.calls.map(([input]) => url(input).pathname)).toEqual([
+        prefix + "/api/v1/operations/intent",
         prefix + "/api/v1/operations/lookup",
         prefix + route + "/" + OPERATION_ID,
     ]);
@@ -406,7 +417,7 @@ test.each(["lookup", "outcome"])(
             fixture.controller.snapshot().registry.records[0]?.handles,
         ).toEqual(fixture.record.handles);
         expect(fixture.fetcher).toHaveBeenCalledTimes(
-            missing === "lookup" ? 1 : 2,
+            missing === "lookup" ? 2 : 3,
         );
         expect(
             fixture.fetcher.mock.calls.every(
@@ -439,7 +450,7 @@ test("disconnect hides a late old-generation outcome and requires an explicit fr
         screen.getByRole("button", { name: "Observe original host outcome" }),
     );
     await waitFor(() => {
-        expect(fixture.fetcher).toHaveBeenCalledTimes(2);
+        expect(fixture.fetcher).toHaveBeenCalledTimes(3);
     });
     act(() => {
         fixture.controller.disconnect();
@@ -458,13 +469,13 @@ test("disconnect hides a late old-generation outcome and requires an explicit fr
     await act(async () => {
         await fixture.controller.reconnect();
     });
-    expect(fixture.fetcher).toHaveBeenCalledTimes(2);
+    expect(fixture.fetcher).toHaveBeenCalledTimes(4);
     expect(
         screen.queryByText("Protected host outcome", { selector: "dt" }),
     ).not.toBeInTheDocument();
     await observe();
     expect(fact("Protected host outcome")).toHaveTextContent("confirmed");
-    expect(fixture.fetcher).toHaveBeenCalledTimes(4);
+    expect(fixture.fetcher).toHaveBeenCalledTimes(6);
     expect(
         fixture.controller.snapshot().registry.records[0]?.originalAuthority,
     ).toEqual(fixture.record.originalAuthority);
@@ -487,7 +498,7 @@ test("route unmount releases the charged private outcome without removing origin
     expect(
         screen.queryByText("Protected host outcome", { selector: "dt" }),
     ).not.toBeInTheDocument();
-    expect(fixture.fetcher).toHaveBeenCalledTimes(2);
+    expect(fixture.fetcher).toHaveBeenCalledTimes(3);
     expect(fixture.controller.snapshot().registry.records[0]?.handles).toEqual(
         fixture.record.handles,
     );
@@ -557,7 +568,7 @@ test("a late outcome after unmount creates no retained private result or new req
         screen.getByRole("button", { name: "Observe original host outcome" }),
     );
     await waitFor(() => {
-        expect(fixture.fetcher).toHaveBeenCalledTimes(2);
+        expect(fixture.fetcher).toHaveBeenCalledTimes(3);
     });
     fixture.view.unmount();
     await act(async () => {

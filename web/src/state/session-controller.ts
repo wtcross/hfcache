@@ -23,7 +23,11 @@ import type {
 } from "../wire/generated";
 import type { ReadOptions } from "../api/types";
 import { parseWireJson, WireError } from "../wire/json";
-import { createAuthSession, sameAuthSession } from "./authority";
+import {
+    createAuthSession,
+    sameAuthSession,
+    sameStableAuthority,
+} from "./authority";
 import type { AuthorizedObservation, RecordId } from "./authority";
 import {
     createOperationRegistry,
@@ -123,6 +127,8 @@ export interface SessionSnapshot {
         "connected" | "disconnected" | "reconnecting" | "update_required";
     readonly registry: RegistrySnapshot;
     readonly pendingSubmission: boolean;
+    readonly pageHidden: boolean;
+    readonly visibilityEpoch: number;
     readonly canSubmit: boolean;
     readonly notice: string | null;
 }
@@ -211,6 +217,13 @@ export function createSessionController(options: SessionControllerOptions) {
     const privateOwners = new Set<string>();
     const controlledReads = new Set<AbortController>();
     const observationReads = new Set<AbortController>();
+    const unknownIntents = new Map<
+        RecordId,
+        {
+            readonly session: ReturnType<typeof createAuthSession>;
+            readonly epoch: number;
+        }
+    >();
     let snapshot: SessionSnapshot;
     function publish() {
         if (batching || disposed) return;
@@ -220,6 +233,8 @@ export function createSessionController(options: SessionControllerOptions) {
             connection,
             registry: registry.snapshot(),
             pendingSubmission,
+            pageHidden,
+            visibilityEpoch,
             canSubmit:
                 !otherTabChanged &&
                 connection === "connected" &&
@@ -251,12 +266,15 @@ export function createSessionController(options: SessionControllerOptions) {
         reads,
         onUnauthorized: unauthorized,
         onReceipt: (auth, receipt) => {
-            if (!current(auth)) return null;
+            if (!current(auth) || !registry.isObservationCurrent(auth))
+                return null;
+            unknownIntents.delete(auth.recordId);
             registry.observed(auth, receipt);
             return registry.authorizeObservation(auth.recordId, session);
         },
         onResult: (auth, receipt, result) => {
-            if (!current(auth)) return "unknown-effects";
+            if (!current(auth) || !registry.isObservationCurrent(auth))
+                return "unknown-effects";
             const certainty = resultCertainty(receipt, result);
             if (result.kind === "success" || result.kind === "domain_failure") {
                 const envelope = result.response.envelope;
@@ -311,6 +329,7 @@ export function createSessionController(options: SessionControllerOptions) {
     ) {
         return (
             current(auth) &&
+            registry.isObservationCurrent(auth) &&
             !pageHidden &&
             epoch === visibilityEpoch &&
             !signal.aborted
@@ -325,10 +344,192 @@ export function createSessionController(options: SessionControllerOptions) {
     }
     function startObservation(auth: AuthorizedObservation) {
         void observer.observe(auth, client).catch(() => {
-            if (current(auth)) registry.unknown(auth.recordId, "unavailable");
+            if (current(auth) && registry.isObservationCurrent(auth))
+                registry.unknown(auth.recordId, "unavailable");
         });
     }
+    function canReviewOriginal(id: RecordId): boolean {
+        const record = registry
+            .snapshot()
+            .records.find((row) => row.recordId === id);
+        if (
+            disposed ||
+            pageHidden ||
+            otherTabChanged ||
+            connection !== "connected" ||
+            registry.snapshot().storage !== "ready" ||
+            record?.handles.kind !== "basic-key" ||
+            record.state === "conflict" ||
+            record.disposition !== null ||
+            record.originalAuthority.kind !== "web" ||
+            !sameStableAuthority(record.originalAuthority.scope, session.scope)
+        )
+            return false;
+        if (record.handles.operationId === null) return true;
+        const proof = unknownIntents.get(id);
+        return (
+            record.state === "missing" &&
+            proof !== undefined &&
+            proof.epoch === visibilityEpoch &&
+            sameAuthSession(proof.session, session)
+        );
+    }
+    function tabChanged() {
+        return otherTabChanged;
+    }
+    async function reconcileOriginal(
+        id: RecordId,
+        causal = false,
+        retire = false,
+    ) {
+        if (
+            disposed ||
+            pageHidden ||
+            otherTabChanged ||
+            connection !== "connected"
+        )
+            return;
+        const record = registry
+            .snapshot()
+            .records.find((row) => row.recordId === id);
+        if (record?.state === "prepared") return;
+        if (record?.handles.kind !== "basic-key") {
+            if (
+                record?.handles.operationId !== null &&
+                record !== undefined &&
+                !retire
+            ) {
+                try {
+                    startObservation(
+                        registry.authorizeObservation(id, session, {
+                            reconnect: true,
+                        }),
+                    );
+                } catch {
+                    /* Foreign originals retain their handles. */
+                }
+            }
+            return;
+        }
+        let auth: AuthorizedObservation;
+        try {
+            auth = registry.authorizeObservation(id, session, {
+                reconnect: true,
+                requireKey: true,
+            });
+        } catch {
+            return;
+        }
+        unknownIntents.delete(id);
+        const originalClient = client;
+        const controller = new AbortController();
+        controlledReads.add(controller);
+        observationReads.add(controller);
+        const epoch = visibilityEpoch;
+        const observationGeneration = observer.snapshot(id).generation;
+        const owner = "intent-reconciliation:" + id;
+        try {
+            await reads.run(owner, controller.signal, async () => {
+                if (!retention.claim(owner, READ_RESERVATION_BYTES))
+                    throw new StateCapacityError();
+                try {
+                    const result = await (
+                        retire
+                            ? originalClient.retireOriginalIntent.bind(
+                                  originalClient,
+                              )
+                            : originalClient.readOriginalIntent.bind(
+                                  originalClient,
+                              )
+                    )(
+                        record.handles.kind === "basic-key"
+                            ? record.handles.key
+                            : "",
+                        { signal: controller.signal, responseByteLimit: 65536 },
+                    );
+                    if (
+                        !currentObservation(auth, epoch, controller.signal) ||
+                        otherTabChanged
+                    )
+                        return;
+                    if (
+                        result.kind === "api_problem" &&
+                        result.status === 401
+                    ) {
+                        unauthorized();
+                        return;
+                    }
+                    if (result.kind !== "success") {
+                        if (
+                            observer.snapshot(id).generation !==
+                            observationGeneration
+                        )
+                            return;
+                        registry.unknown(id, "unavailable");
+                        notice =
+                            retire && result.kind === "api_problem"
+                                ? result.problem.message
+                                : "Original request readiness is unavailable. Preserve its handles and recheck.";
+                        return;
+                    }
+                    if (
+                        result.payload.disposition === null &&
+                        observer.snapshot(id).generation !==
+                            observationGeneration
+                    )
+                        return;
+                    if (
+                        result.payload.state === "admitted" &&
+                        result.payload.operation !== null
+                    ) {
+                        registry.observed(auth, result.payload.operation);
+                        startObservation(
+                            registry.authorizeObservation(id, session),
+                        );
+                    } else if (result.payload.disposition !== null) {
+                        if (observer.snapshot(id).phase === "observing")
+                            observer.pause(id, "user");
+                        registry.disposition(
+                            auth,
+                            result.payload.disposition,
+                            causal,
+                        );
+                    } else {
+                        if (observer.snapshot(id).phase === "observing")
+                            observer.pause(id, "history_missing");
+                        unknownIntents.set(id, { session, epoch });
+                        registry.unknown(id, "missing");
+                    }
+                } finally {
+                    retention.release(owner);
+                }
+            });
+        } catch {
+            if (
+                currentObservation(auth, epoch, controller.signal) &&
+                !tabChanged() &&
+                observer.snapshot(id).generation === observationGeneration
+            )
+                registry.unknown(id, "unavailable");
+        } finally {
+            controlledReads.delete(controller);
+            observationReads.delete(controller);
+            publish();
+        }
+    }
+    function reconcileSaved() {
+        if (
+            disposed ||
+            pageHidden ||
+            otherTabChanged ||
+            connection !== "connected"
+        )
+            return;
+        for (const record of registry.snapshot().records)
+            void reconcileOriginal(record.recordId);
+    }
     function clearPrivate() {
+        unknownIntents.clear();
         batching = true;
         session = createAuthSession({
             scope: session.scope,
@@ -352,7 +553,11 @@ export function createSessionController(options: SessionControllerOptions) {
     }
     let advice = createCrossTabAdvice({ scope: session.scope });
     function receiveAdvice() {
+        unknownIntents.clear();
         otherTabChanged = true;
+        for (const controller of observationReads) controller.abort();
+        observer.clearPrivate();
+        registry.invalidateObservations();
         notice =
             "Another tab changed recovery history. Copy any memory-only handles, then reload to read the saved history before submitting.";
         publish();
@@ -375,6 +580,12 @@ export function createSessionController(options: SessionControllerOptions) {
         publish();
     });
     publish();
+    const restoredIds = registry
+        .snapshot()
+        .records.map((record) => record.recordId);
+    queueMicrotask(() => {
+        for (const id of restoredIds) void reconcileOriginal(id);
+    });
     return Object.freeze({
         snapshot: () => snapshot,
         subscribe(listener: () => void) {
@@ -386,6 +597,58 @@ export function createSessionController(options: SessionControllerOptions) {
         queries,
         get apiReads(): ReadApiClient {
             return client;
+        },
+        async readJobReadiness(options: ReadOptions = {}) {
+            const auth = session;
+            const epoch = visibilityEpoch;
+            const originalClient = client;
+            const controller = new AbortController();
+            const abort = () => {
+                controller.abort();
+            };
+            options.signal?.addEventListener("abort", abort, { once: true });
+            if (
+                options.signal?.aborted === true ||
+                pageHidden ||
+                disposed ||
+                connection !== "connected"
+            )
+                controller.abort();
+            controlledReads.add(controller);
+            observationReads.add(controller);
+            const owner = "job-readiness";
+            try {
+                return await reads.run(owner, controller.signal, async () => {
+                    if (!retention.claim(owner, READ_RESERVATION_BYTES))
+                        throw new StateCapacityError();
+                    try {
+                        const result = await originalClient.readJobReadiness({
+                            signal: controller.signal,
+                            responseByteLimit: 65536,
+                        });
+                        if (
+                            controller.signal.aborted ||
+                            pageHidden ||
+                            epoch !== visibilityEpoch ||
+                            !sameAuthSession(auth, session) ||
+                            otherTabChanged
+                        )
+                            return { kind: "aborted" } as const;
+                        if (
+                            result.kind === "api_problem" &&
+                            result.status === 401
+                        )
+                            unauthorized();
+                        return result;
+                    } finally {
+                        retention.release(owner);
+                    }
+                });
+            } finally {
+                options.signal?.removeEventListener("abort", abort);
+                controlledReads.delete(controller);
+                observationReads.delete(controller);
+            }
         },
         get hostStatus() {
             return hostStatus;
@@ -798,16 +1061,37 @@ export function createSessionController(options: SessionControllerOptions) {
             return registry.importHandle(input, session);
         },
         originalScope: () => session.scope,
+        exportRecoveryMetadata: () => registry.exportMetadata(),
+        reconcileOriginal(id: RecordId) {
+            return reconcileOriginal(id);
+        },
+        canReviewOriginal,
+        reviewOriginal(id: RecordId) {
+            if (!canReviewOriginal(id))
+                return Promise.reject(
+                    new OperationRegistryError("observation"),
+                );
+            return reconcileOriginal(id, false, true);
+        },
         setPageHidden(value: boolean) {
             if (disposed || pageHidden === value) return;
             pageHidden = value;
             if (value) visibilityEpoch++;
             observer.setHidden(value);
-            if (value)
+            if (value) {
+                unknownIntents.clear();
                 for (const controller of observationReads) controller.abort();
+                registry.invalidateObservations();
+            } else reconcileSaved();
+            publish();
         },
         observe(id: RecordId) {
-            if (disposed || connection !== "connected")
+            if (
+                disposed ||
+                pageHidden ||
+                otherTabChanged ||
+                connection !== "connected"
+            )
                 throw new OperationRegistryError("scope");
             const auth = registry.authorizeObservation(id, session, {
                 reconnect: true,
@@ -896,6 +1180,14 @@ export function createSessionController(options: SessionControllerOptions) {
                             ),
                         );
                 }
+                if (
+                    result.kind === "api_problem" &&
+                    result.intentClosed === true &&
+                    observationWasAllowed &&
+                    observationEpoch === visibilityEpoch &&
+                    sameAuthSession(originalSession, session)
+                )
+                    await reconcileOriginal(record.recordId, true);
                 return { recordId: record.recordId, result };
             } finally {
                 pendingSubmission = false;
@@ -937,7 +1229,8 @@ export function createSessionController(options: SessionControllerOptions) {
                     unsubscribeAdvice = advice.subscribe(receiveAdvice);
                     connection = "connected";
                     notice =
-                        "Reconnected. Observe original operations explicitly; no submission was replayed.";
+                        "Reconnected. Checking saved original requests; no submission was replayed.";
+                    reconcileSaved();
                 }
             } catch (error) {
                 if (!stillReconnecting(reconnectGeneration)) return;

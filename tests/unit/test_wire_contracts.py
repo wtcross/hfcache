@@ -169,6 +169,7 @@ def test_every_actual_json_route_and_original_job_result_is_registered():
         "host_status",
         "host_actions",
         "configuration",
+        "intent_routes",
     ):
         tree = ast.parse(Path(f"src/hfcache/api/{module}.py").read_text())
         prefix = "/api/v1/catalog" if module == "catalog" else "/api/v1"

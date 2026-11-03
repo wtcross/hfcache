@@ -10,6 +10,7 @@ from pydantic import BeforeValidator, Field
 
 from hfcache.client_models import (
     ClientOperation,  # noqa: TC001 - Pydantic resolves fields at runtime
+    Version,  # noqa: TC001 - strict shared schema version
 )
 from hfcache.manifests import RevisionManifest  # noqa: TC001 - Pydantic resolves fields at runtime
 from hfcache.models import (
@@ -343,3 +344,52 @@ class InitializationPayload(DurableModel):
     created_directories: Strings
     removed_temporaries: Strings
     sentinel: ArchivePath
+
+
+class JobReadiness(DurableModel):
+    """Existing raw readiness response; nullable facts are advisory."""
+
+    schema_version: Version
+    archive_id: ArchiveIdField
+    config_fingerprint: Sha256 | None
+    archive: bool | None
+    hub: bool | None
+    control: bool | None
+    archive_writable: bool | None
+    verification_available: bool | None
+
+
+class PublicIntentDisposition(DurableModel):
+    """Only the safe public projection, never private namespace evidence."""
+
+    disposition_id: RunIdField
+    state: Literal["not_admitted", "retired_unknown"]
+    archive_id: ArchiveIdField
+    route: Annotated[str, Field(pattern=r"^/api/v1/[a-z0-9_/-]{1,200}$")] | None
+    created_at: Annotated[str, Field(min_length=20, max_length=32)]
+    reason: (
+        Literal[
+            "permission_denied",
+            "storage_read_only",
+            "executor_unavailable",
+            "admission_unavailable",
+            "invalid_policy",
+        ]
+        | None
+    )
+    review_sha256: Sha256 | None
+
+
+class OriginalIntent(DurableModel):
+    schema_version: Version
+    archive_id: ArchiveIdField
+    state: Literal["admitted", "not_admitted", "retired_unknown", "unknown"]
+    operation: ClientOperation | None
+    disposition: PublicIntentDisposition | None
+
+
+class IntentRetirement(DurableModel):
+    """Fixed confirmation body for the existing explicit original-key review."""
+
+    schema_version: Version
+    confirm: Literal["retire_unknown"]

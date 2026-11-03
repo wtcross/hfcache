@@ -84,7 +84,7 @@ test.each(incorrect)(
 );
 test("every generated definition has an independently serialized source original", () => {
     // Exporter's separately audited coverage assertion owns the exact authority set.
-    expect(new Set(corpus.map((item) => item.definition)).size).toBe(175);
+    expect(new Set(corpus.map((item) => item.definition)).size).toBe(179);
 });
 test("route path/query schemas reconstruct explicit optional inputs and forbid extras", () => {
     for (const contract of Object.values(routeContracts)) {

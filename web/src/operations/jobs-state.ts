@@ -1,4 +1,6 @@
 /** Bounded RAM job intent; the session controller alone owns POST and original handles. */
+import { refusalExplanation } from "../state/operation-registry";
+import type { RecoveryState } from "../state/operation-registry";
 import type { SubmissionResult } from "../api/client";
 import type {
     SessionController,
@@ -18,7 +20,11 @@ import {
     decodeRequestRevisionVerification,
     decodeRequestSyncSubmission,
 } from "../wire/generated";
-import type { EmptyPayload, EstimatePayload } from "../wire/generated";
+import type {
+    JobReadiness,
+    EmptyPayload,
+    EstimatePayload,
+} from "../wire/generated";
 import { parseWireJson } from "../wire/json";
 
 export const MAX_JOB_INPUT_BYTES = 2 * 1024 * 1024;
@@ -416,8 +422,12 @@ export interface JobsSnapshot {
     readonly canEstimate: boolean;
     readonly description: JobDescription;
     readonly capabilityAvailable: boolean;
+    readonly availabilityReason: string;
+    readonly readinessPhase: "checking" | "ready" | "unavailable";
     readonly lastAction: JobSubmissionIntent["action"] | null;
     readonly lastRecordId: string | null;
+    readonly lastRecoveryState: RecoveryState | null;
+    readonly lastRefusalExplanation: string | null;
     readonly submission: SubmissionResult | null;
     readonly observation: ObservationSnapshot | null;
     readonly estimate: QuerySnapshot<EstimatePayload, EmptyPayload> | null;
@@ -464,8 +474,160 @@ export function createJobsStore(controller: SessionController) {
         unsubscribeObservation = () => {};
     const listeners = new Set<() => void>();
     let snapshot: JobsSnapshot;
+    let readinessActive = false;
+    let readiness: JobReadiness | null = null;
+    let readinessPhase: JobsSnapshot["readinessPhase"] = "unavailable";
+    let readinessAt = 0,
+        readinessSerial = 0;
+    let readinessAbort: AbortController | null = null;
+    let readinessTimer: ReturnType<typeof setTimeout> | null = null;
+    function clearReadiness() {
+        readinessSerial++;
+        readinessAbort?.abort();
+        readinessAbort = null;
+        if (readinessTimer !== null) clearTimeout(readinessTimer);
+        readinessTimer = null;
+        readiness = null;
+        readinessPhase = "unavailable";
+    }
+    function readinessCurrent(
+        serial: number,
+        auth: number,
+        signal: AbortSignal,
+    ) {
+        return (
+            !disposed &&
+            !signal.aborted &&
+            serial === readinessSerial &&
+            authGeneration === auth
+        );
+    }
+    async function recheckReadiness() {
+        readinessActive = true;
+        clearReadiness();
+        if (
+            disposed ||
+            session.pageHidden ||
+            session.connection !== "connected"
+        )
+            return;
+        const serial = readinessSerial;
+        const ownAuth = authGeneration;
+        const abort = new AbortController();
+        readinessAbort = abort;
+        readinessPhase = "checking";
+        publish();
+        try {
+            const result = await controller.readJobReadiness({
+                signal: abort.signal,
+            });
+            if (!readinessCurrent(serial, ownAuth, abort.signal)) return;
+            if (result.kind === "success") {
+                readiness = result.payload;
+                readinessAt = performance.now();
+                readinessPhase = "ready";
+                if (!retain()) {
+                    readiness = null;
+                    readinessPhase = "unavailable";
+                }
+                readinessTimer = setTimeout(() => {
+                    clearReadiness();
+                    publish();
+                }, 30000);
+            } else readinessPhase = "unavailable";
+        } catch {
+            if (serial === readinessSerial) readinessPhase = "unavailable";
+        } finally {
+            if (serial === readinessSerial) {
+                readinessAbort = null;
+                publish();
+            }
+        }
+    }
+    function availability(): { blocked: boolean; reason: string } {
+        if (!session.canSubmit) {
+            const active = session.registry.records.some((record) =>
+                ["accepted", "observing"].includes(record.state),
+            );
+            return {
+                blocked: true,
+                reason:
+                    session.connection !== "connected"
+                        ? "Unavailable: reconnect to check job readiness."
+                        : session.registry.storage !== "ready"
+                          ? "Unavailable: original request recovery storage needs review."
+                          : active
+                            ? "Unavailable: an original job is active. Follow its original result in Operations."
+                            : "Needs review: an original request is unresolved. Review it in Operations before starting a new job.",
+            };
+        }
+        const fresh =
+            readiness !== null && performance.now() - readinessAt < 30000;
+        if (!fresh)
+            return {
+                blocked: false,
+                reason:
+                    readinessPhase === "checking"
+                        ? "Checking job readiness. You may submit explicitly for fresh server checks."
+                        : "Readiness unavailable. Recheck or submit explicitly for fresh server checks.",
+            };
+        const facts = readiness;
+        if (facts === null)
+            return { blocked: false, reason: "Readiness unavailable." };
+        const archive =
+            ["sync", "verification", "catalogRefresh"].includes(form.kind) ||
+            (form.kind === "diagnostics" && !form.readOnly);
+        const hub = ["installedPlan", "candidatePlan", "diagnostics"].includes(
+            form.kind,
+        );
+        if (archive && facts.archive === false)
+            return {
+                blocked: true,
+                reason: "Unavailable: archive writes are disabled.",
+            };
+        if (hub && facts.hub === false)
+            return {
+                blocked: true,
+                reason: "Unavailable: Hub access is disabled.",
+            };
+        if (archive && facts.archive_writable === false)
+            return {
+                blocked: true,
+                reason: "Unavailable: required archive storage is read-only.",
+            };
+        if (
+            form.kind === "verification" &&
+            facts.verification_available === false
+        )
+            return {
+                blocked: true,
+                reason: "Unavailable: the verification worker is unavailable.",
+            };
+        if (
+            (archive &&
+                (facts.archive === null || facts.archive_writable === null)) ||
+            (hub && facts.hub === null) ||
+            (form.kind === "verification" &&
+                facts.verification_available === null)
+        )
+            return {
+                blocked: false,
+                reason: "Some readiness facts are unknown. Submit explicitly for fresh server checks or recheck.",
+            };
+        return {
+            blocked: false,
+            reason: "Observed readiness is available. The server checks authorization and storage freshly on submission.",
+        };
+    }
+
     function retain() {
-        return slot.set({ form, candidate, candidateFile, submission });
+        return slot.set({
+            form,
+            candidate,
+            candidateFile,
+            submission,
+            readiness,
+        });
     }
     let checkedForm: JobForm | null = null,
         checkedCandidate: string | null = null;
@@ -489,6 +651,10 @@ export function createJobsStore(controller: SessionController) {
                     error instanceof JobInputError ? error.reason : "invalid";
             }
         }
+        const available = availability();
+        const lastRecord = session.registry.records.find(
+            (record) => record.recordId === lastRecordId,
+        );
         snapshot = Object.freeze({
             authGeneration,
             generation,
@@ -498,6 +664,7 @@ export function createJobsStore(controller: SessionController) {
             issue: issue ?? inputIssue,
             notice,
             canSubmit:
+                !available.blocked &&
                 inputIssue === null &&
                 capabilityAvailable &&
                 session.canSubmit &&
@@ -508,8 +675,18 @@ export function createJobsStore(controller: SessionController) {
                 pending === null,
             description,
             capabilityAvailable,
+            readinessPhase,
+            availabilityReason: capabilityAvailable
+                ? available.reason
+                : "Unavailable: this session lacks the required REST capability.",
             lastAction,
             lastRecordId,
+            lastRecoveryState: lastRecord?.state ?? null,
+            lastRefusalExplanation:
+                lastRecord?.disposition === null ||
+                lastRecord?.disposition === undefined
+                    ? null
+                    : refusalExplanation(lastRecord.disposition.reason),
             submission,
             observation:
                 lastRecordId === null
@@ -530,6 +707,7 @@ export function createJobsStore(controller: SessionController) {
         reader = null;
     }
     function clear() {
+        clearReadiness();
         generation++;
         stopFile();
         unsubscribeEstimate();
@@ -561,7 +739,14 @@ export function createJobsStore(controller: SessionController) {
             notice =
                 "Authentication or connection changed. The private job input was cleared; original handles remain in Operations.";
         }
+        const visibilityChanged =
+            next.visibilityEpoch !== session.visibilityEpoch ||
+            next.pageHidden !== session.pageHidden;
         session = next;
+        if (visibilityChanged) {
+            clearReadiness();
+            if (!next.pageHidden && readinessActive) void recheckReadiness();
+        }
         publish();
     });
     publish();
@@ -573,6 +758,7 @@ export function createJobsStore(controller: SessionController) {
                 listeners.delete(listener);
             };
         },
+        recheckReadiness,
         setForm(input: unknown): boolean {
             if (
                 disposed ||
@@ -583,6 +769,14 @@ export function createJobsStore(controller: SessionController) {
             try {
                 const next = parseJobForm(input),
                     before = { form, candidate, candidateFile };
+                const contextChanged =
+                    next.kind !== form.kind ||
+                    (next.kind === "verification" &&
+                        form.kind === "verification" &&
+                        next.mode !== form.mode) ||
+                    (next.kind === "diagnostics" &&
+                        form.kind === "diagnostics" &&
+                        next.readOnly !== form.readOnly);
                 form = next;
                 if (next.kind !== "candidatePlan") {
                     candidate = null;
@@ -596,6 +790,7 @@ export function createJobsStore(controller: SessionController) {
                 issue = null;
                 notice = null;
                 publish();
+                if (contextChanged && readinessActive) void recheckReadiness();
                 return true;
             } catch (error) {
                 issue =
@@ -721,6 +916,11 @@ export function createJobsStore(controller: SessionController) {
                 submission = result.result;
                 lastAction = intent.action;
                 lastRecordId = result.recordId;
+                const notAdmitted =
+                    session.registry.records.find(
+                        (record) => record.recordId === result.recordId,
+                    )?.state === "not_admitted";
+                if (notAdmitted) clearReadiness();
                 if (!retain()) {
                     submission = null;
                     issue = "capacity";
@@ -730,8 +930,9 @@ export function createJobsStore(controller: SessionController) {
                     result.recordId,
                     publish,
                 );
-                notice =
-                    "Submission is not domain completion. Observe the original operation; no request was retried.";
+                notice = notAdmitted
+                    ? "Recheck job readiness before considering a distinct new job. The original request will not be retried."
+                    : "Submission is not domain completion. Observe the original operation; no request was retried.";
             } catch {
                 if (authGeneration === ownAuth) {
                     issue = "unavailable";
@@ -775,6 +976,8 @@ export function createJobsStore(controller: SessionController) {
             }
         },
         pause() {
+            readinessActive = false;
+            clearReadiness();
             if (pending === "file") {
                 generation++;
                 stopFile();

@@ -24,7 +24,11 @@ import type {
     RecoveryRecord,
     SafeTerminalSummary,
 } from "../src/state/operation-registry";
-import { decodeAcceptance, decodeClientOperation } from "../src/wire/generated";
+import {
+    decodePublicIntentDisposition,
+    decodeAcceptance,
+    decodeClientOperation,
+} from "../src/wire/generated";
 import type { ClientOperation } from "../src/wire/generated";
 import { parseWireJson } from "../src/wire/json";
 import { wireObject } from "../src/wire/runtime";
@@ -260,7 +264,7 @@ test("only actual current-session pre-fetch refusal removes its own prepared rec
     expect(value.submitted(record.recordId, result, session)).toBeNull();
     expect(value.snapshot().records).toEqual([]);
     expect(value.canSubmit(session)).toBe(true);
-    expect(storage.value).toBe('{"schemaVersion":1,"records":[]}');
+    expect(storage.value).toBe('{"schemaVersion":2,"records":[]}');
     expect(registry(storage).value.canSubmit(session)).toBe(true);
 });
 
@@ -691,8 +695,8 @@ test("external storage changes are preserved while learned handles remain availa
 
 test.each([
     "{",
-    '{"schemaVersion":1,"schemaVersion":1,"records":[]}',
-    '{"schemaVersion":2,"records":[]}',
+    '{"schemaVersion":1,"schemaVersion":2,"records":[]}',
+    '{"schemaVersion":3,"records":[]}',
     '{"schemaVersion":1,"records":[],"body":"secret"}',
     "x".repeat(MAX_OPERATION_STORAGE_BYTES + 1),
 ])("corrupt or oversized storage remains byte-for-byte preserved", (saved) => {
@@ -703,6 +707,7 @@ test.each([
     expect(value.snapshot().records).toEqual([]);
     expect(value.canSubmit(session)).toBe(false);
     expect(storage.value).toBe(saved);
+    expect(value.exportMetadata()).toBeNull();
     expect(storage.writes).toBe(0);
 });
 
@@ -718,7 +723,17 @@ test("golden recovery metadata round-trips without persisting payloads or forged
     const record = decodeRecoveryRecord(raw[0]);
     const { value, storage } = registry();
     expect(value.prepare("sync", session)).toEqual(record);
-    expect(JSON.parse(storage.value ?? "null")).toEqual(JSON.parse(golden));
+    expect(JSON.parse(storage.value ?? "null")).toEqual(
+        JSON.parse(
+            readFileSync(
+                new URL(
+                    "./fixtures/operation-registry-v2.json",
+                    import.meta.url,
+                ),
+                "utf8",
+            ),
+        ),
+    );
     for (const change of [
         { state: "not_submitted" },
         { candidate: "private TOML" },
@@ -1095,7 +1110,7 @@ test("restored byte-saturated valid metadata retains a learned ID when its post-
         Math.floor(
             (MAX_OPERATION_STORAGE_BYTES -
                 new TextEncoder().encode(
-                    JSON.stringify({ schemaVersion: 1, records: [record] }),
+                    JSON.stringify({ schemaVersion: 2, records: [record] }),
                 ).length) /
                 2,
         ) - 2;
@@ -1105,7 +1120,7 @@ test("restored byte-saturated valid metadata retains a learned ID when its post-
     });
     const storage = new MemoryStorage();
     storage.value = JSON.stringify({
-        schemaVersion: 1,
+        schemaVersion: 2,
         records: [
             {
                 ...record,
@@ -1125,3 +1140,349 @@ test("restored byte-saturated valid metadata retains a learned ID when its post-
     expect(restored.snapshot().records[0]?.handles.operationId).toBe(id);
     expect(storage.value).toBe(saved);
 });
+
+function refusal(state: "not_admitted" | "retired_unknown" = "not_admitted") {
+    return decodePublicIntentDisposition(
+        parseWireJson(
+            JSON.stringify({
+                disposition_id: "f".repeat(32),
+                state,
+                archive_id: archive,
+                route: state === "not_admitted" ? "/api/v1/syncs" : null,
+                created_at: at,
+                reason: state === "not_admitted" ? "permission_denied" : null,
+                review_sha256:
+                    state === "retired_unknown" ? "b".repeat(64) : null,
+            }),
+        ),
+    );
+}
+test("schema1 migration atomically preserves every field and handle with no restored proof", () => {
+    const saved = readFileSync(
+        new URL("./fixtures/operation-registry-v1.json", import.meta.url),
+        "utf8",
+    );
+    const storage = new MemoryStorage();
+    storage.value = saved;
+    const value = registry(storage).value;
+    const old: unknown = JSON.parse(saved);
+    const top = wireObject(old, ["schemaVersion", "records"]);
+    if (!Array.isArray(top.records)) throw new Error("Missing golden records");
+    const first: unknown = top.records[0];
+    const fields = wireObject(first, [
+        "schemaVersion",
+        "recordId",
+        "handles",
+        "originalAuthority",
+        "observationTarget",
+        "source",
+        "action",
+        "route",
+        "receiptIdentity",
+        "createdAt",
+        "updatedAt",
+        "state",
+        "terminal",
+    ]);
+    expect(JSON.parse(storage.value)).toEqual({
+        schemaVersion: 2,
+        records: [{ ...fields, schemaVersion: 2, disposition: null }],
+    });
+    expect(storage.writes).toBe(1);
+    expect(value.exportMetadata()).toBe(storage.value);
+    expect(value.snapshot().records[0]?.state).toBe("unverified");
+    expect(value.canSubmit(session)).toBe(false);
+});
+test.each(["quota", "drop"])(
+    "failed schema1 migration %s preserves original bytes and blocks",
+    (failure) => {
+        const storage = new MemoryStorage();
+        storage.value = readFileSync(
+            new URL("./fixtures/operation-registry-v1.json", import.meta.url),
+            "utf8",
+        );
+        const original = storage.value;
+        storage.failWrite = failure === "quota";
+        storage.dropWrite = failure === "drop";
+        const value = registry(storage).value;
+        expect(storage.value).toBe(original);
+        expect(value.exportMetadata()).toBe(original);
+        expect(value.snapshot().storage).toBe("unavailable");
+        expect(value.canSubmit(session)).toBe(false);
+    },
+);
+test("new closed refusal plus own-key GET creates causal disposition; restore requires identical fresh GET", () => {
+    const { value, storage } = registry();
+    const record = value.prepare("sync", session);
+    value.submitted(
+        record.recordId,
+        {
+            kind: "api_problem",
+            status: 403,
+            problem: {
+                request_id: id,
+                code: "HFAPI010",
+                message: "Denied",
+                exit_code: 50,
+            },
+            intentClosed: true,
+        },
+        session,
+    );
+    expect(value.canSubmit(session)).toBe(false);
+    value.disposition(
+        value.authorizeObservation(record.recordId, session),
+        refusal(),
+        true,
+    );
+    expect(value.canSubmit(session)).toBe(true);
+    expect(value.snapshot().records[0]?.handles).toEqual(record.handles);
+    const restored = registry(storage).value;
+    expect(restored.canSubmit(session)).toBe(false);
+    restored.disposition(
+        restored.authorizeObservation(record.recordId, session),
+        refusal(),
+    );
+    expect(restored.canSubmit(session)).toBe(true);
+    restored.invalidateObservations();
+    expect(restored.canSubmit(session)).toBe(false);
+});
+test("older unknown cannot borrow a later refusal fence, but reviewed retirement preserves its original handle", () => {
+    const { value, storage } = registry();
+    const record = value.prepare("sync", session);
+    value.submitted(
+        record.recordId,
+        {
+            kind: "uncertain",
+            route: record.route ?? "",
+            idempotencyKey: "key-1",
+            reason: "network",
+        },
+        session,
+    );
+    const restored = registry(storage).value;
+    const auth = restored.authorizeObservation(record.recordId, session);
+    restored.disposition(auth, refusal(), true);
+    expect(restored.canSubmit(session)).toBe(false);
+    expect(restored.snapshot().records[0]?.disposition).toBeNull();
+    restored.disposition(auth, refusal("retired_unknown"));
+    expect(restored.canSubmit(session)).toBe(true);
+    expect(restored.snapshot().records[0]?.handles).toEqual(record.handles);
+    expect(restored.snapshot().records[0]?.state).toBe("retired_unknown");
+});
+test.each([
+    "configurationApplication",
+    "scheduleChange",
+    "observerStop",
+] as const)(
+    "generic reviewed closure never clears independent %s effect precautions",
+    (action) => {
+        const { value } = registry();
+        const record = value.prepare(action, session);
+        value.submitted(
+            record.recordId,
+            {
+                kind: "uncertain",
+                route: record.route ?? "",
+                idempotencyKey: "key-1",
+                reason: "network",
+            },
+            session,
+        );
+        value.disposition(
+            value.authorizeObservation(record.recordId, session),
+            refusal("retired_unknown"),
+        );
+        expect(value.snapshot().records[0]?.state).toBe("retired_unknown");
+        expect(value.canSubmit(session)).toBe(false);
+    },
+);
+
+test("migration readback failure restores exact original metadata before blocking", () => {
+    const original = readFileSync(
+        new URL("./fixtures/operation-registry-v1.json", import.meta.url),
+        "utf8",
+    );
+    let saved = original,
+        reads = 0,
+        writes = 0;
+    const value = createOperationRegistry({
+        storage: {
+            getItem() {
+                if (++reads === 3) throw new Error("Readback denied");
+                return saved;
+            },
+            setItem(_key, value) {
+                writes++;
+                saved = value;
+            },
+        },
+    });
+    expect(saved).toBe(original);
+    expect(value.exportMetadata()).toBe(original);
+    expect(writes).toBe(2);
+    expect(value.snapshot().storage).toBe("unavailable");
+    expect(value.canSubmit(session)).toBe(false);
+});
+
+test("migration readback failure preserves concurrent newer history without blind rollback", () => {
+    const original = readFileSync(
+        new URL("./fixtures/operation-registry-v1.json", import.meta.url),
+        "utf8",
+    );
+    const concurrent = '{"schemaVersion":2,"records":[]}';
+    let saved = original,
+        reads = 0,
+        writes = 0;
+    const value = createOperationRegistry({
+        storage: {
+            getItem() {
+                if (++reads === 3) {
+                    saved = concurrent;
+                    throw new Error("Readback denied after concurrent edit");
+                }
+                return saved;
+            },
+            setItem(_key, value) {
+                writes++;
+                saved = value;
+            },
+        },
+    });
+    expect(saved).toBe(concurrent);
+    expect(value.exportMetadata()).toBe(original);
+    expect(writes).toBe(1);
+    expect(value.snapshot().storage).toBe("unavailable");
+    expect(value.canSubmit(session)).toBe(false);
+});
+
+test("schema1 migration preserves terminal summaries and legacy handles byte values without restoring proof", () => {
+    const { value } = registry();
+    const original = value.prepare("sync", session);
+    value.submitted(original.recordId, accepted(original), session);
+    const auth = value.authorizeObservation(original.recordId, session);
+    value.observed(auth, terminal());
+    value.resolved(
+        value.authorizeObservation(original.recordId, session),
+        summary,
+        "known",
+    );
+    value.importHandle(
+        {
+            kind: "legacy-key",
+            key: "preserved-legacy-key",
+            credentialClass: "rest-reader",
+        },
+        session,
+    );
+    const records = value.snapshot().records.map((record) => {
+        const { disposition, ...fields } = record;
+        expect(disposition).toBeNull();
+        return { ...fields, schemaVersion: 1 };
+    });
+    const storage = new MemoryStorage();
+    storage.value = JSON.stringify({ schemaVersion: 1, records });
+    const restored = registry(storage).value;
+    expect(JSON.parse(storage.value)).toEqual({
+        schemaVersion: 2,
+        records: records.map((record) => ({
+            ...record,
+            schemaVersion: 2,
+            disposition: null,
+        })),
+    });
+    expect(restored.snapshot().records[0]?.terminal).toEqual(summary);
+    expect(restored.snapshot().records[1]?.handles).toEqual(
+        value.snapshot().records[1]?.handles,
+    );
+    expect(restored.canSubmit(session)).toBe(false);
+});
+
+test("reviewed retirement preserves retained admission identity and summary, fences old tokens and revalidates on reload", () => {
+    const { value, storage } = registry();
+    const original = value.prepare("sync", session);
+    value.submitted(original.recordId, accepted(original), session);
+    const old = value.authorizeObservation(original.recordId, session);
+    value.observed(old, terminal());
+    value.resolved(
+        value.authorizeObservation(original.recordId, session),
+        summary,
+        "known",
+    );
+    value.unknown(original.recordId, "missing");
+    const before = value.snapshot().records[0];
+    const auth = value.authorizeObservation(original.recordId, session, {
+        requireKey: true,
+    });
+    expect(auth.locator.kind).toBe("key");
+    value.disposition(auth, refusal("retired_unknown"));
+    expect(value.canSubmit(session)).toBe(true);
+    expect(value.snapshot().records[0]).toMatchObject({
+        handles: before?.handles,
+        receiptIdentity: before?.receiptIdentity,
+        terminal: before?.terminal,
+        state: "retired_unknown",
+    });
+    expect(value.isObservationCurrent(old)).toBe(false);
+    expect(() => value.observed(old, terminal())).toThrow();
+    expect(() => value.resolved(old, summary, "known")).toThrow();
+    expect(value.canSubmit(session)).toBe(true);
+    const restored = registry(storage).value;
+    expect(restored.canSubmit(session)).toBe(false);
+    restored.disposition(
+        restored.authorizeObservation(original.recordId, session, {
+            requireKey: true,
+        }),
+        refusal("retired_unknown"),
+    );
+    expect(restored.canSubmit(session)).toBe(true);
+    expect(restored.snapshot().records[0]).toMatchObject({
+        handles: before?.handles,
+        receiptIdentity: before?.receiptIdentity,
+        terminal: before?.terminal,
+    });
+});
+test("not-admitted contradicting a retained admission stays operator-only conflict", () => {
+    const { value } = registry();
+    const original = value.prepare("sync", session);
+    value.submitted(original.recordId, accepted(original), session);
+    const before = value.snapshot().records[0];
+    const auth = value.authorizeObservation(original.recordId, session, {
+        requireKey: true,
+    });
+    expect(value.disposition(auth, refusal()).state).toBe("conflict");
+    expect(value.canSubmit(session)).toBe(false);
+    expect(value.snapshot().records[0]?.handles).toEqual(before?.handles);
+    expect(() =>
+        value.authorizeObservation(original.recordId, session, {
+            requireKey: true,
+        }),
+    ).toThrow();
+});
+test.each([
+    "configurationApplication",
+    "scheduleChange",
+    "observerStop",
+] as const)(
+    "retired retained-ID %s cannot clear independent protected effects",
+    (action) => {
+        const { value } = registry();
+        const original = value.prepare(action, session);
+        const auth = value.authorizeObservation(original.recordId, session);
+        value.observed(auth, operation({ route: ACTION_ROUTES[action] }));
+        value.unknown(original.recordId, "missing");
+        const before = value.snapshot().records[0];
+        value.disposition(
+            value.authorizeObservation(original.recordId, session, {
+                requireKey: true,
+            }),
+            refusal("retired_unknown"),
+        );
+        expect(value.snapshot().records[0]?.handles).toEqual(before?.handles);
+        expect(value.snapshot().records[0]?.receiptIdentity).toEqual(
+            before?.receiptIdentity,
+        );
+        expect(value.canSubmit(session)).toBe(false);
+        expect(value.isObservationCurrent(auth)).toBe(false);
+    },
+);

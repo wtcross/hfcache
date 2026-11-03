@@ -26,12 +26,13 @@ import type {
 } from "./types";
 import { buildRequestInput, serializeRequestJson } from "./request";
 import { uriPath } from "./url-paths";
+import { timestampParts } from "../wire/semantics";
 import { validateCardDigest } from "../wire/card-semantics";
 
 type Decoder<T> = (value: unknown) => T;
 interface Contract<S, F> {
     readonly responseKind:
-        "read" | "acceptance" | "operation_result" | "ui_bootstrap";
+        "read" | "raw" | "acceptance" | "operation_result" | "ui_bootstrap";
     readonly method: "GET" | "POST";
     readonly path: string;
     readonly commands: readonly string[];
@@ -69,6 +70,7 @@ export type SubmissionResult =
           readonly kind: "api_problem";
           readonly status: number;
           readonly problem: wire.ClientProblem;
+          readonly intentClosed?: boolean;
       }
     | {
           readonly kind: "uncertain";
@@ -283,6 +285,7 @@ export class ApiClient {
                 case "read":
                 case "operation_result":
                     break;
+                case "raw":
                 case "acceptance":
                 case "ui_bootstrap":
                     throw new WireError("schema");
@@ -902,6 +905,163 @@ export class ApiClient {
             body,
         );
     }
+    private async rawRead<T>(
+        contract: Contract<T, never>,
+        options: ReadOptions,
+        originalKey?: string,
+        retire?: wire.RequestIntentRetirement,
+    ) {
+        const controller = new AbortController();
+        const abort = () => {
+            controller.abort();
+        };
+        options.signal?.addEventListener("abort", abort, { once: true });
+        if (options.signal?.aborted === true) controller.abort();
+        const deadline = { expired: false };
+        const timer = setTimeout(() => {
+            deadline.expired = true;
+            controller.abort();
+        }, this.timeoutMs);
+        try {
+            const headers = new Headers({ Accept: "application/json" });
+            if (originalKey !== undefined)
+                headers.set("Idempotency-Key", key(originalKey));
+            if (retire) {
+                headers.set("Content-Type", "application/json");
+                headers.set("X-Hfcache-Request", "1");
+            }
+            if (wasAborted(controller.signal))
+                return { kind: "aborted" } as const;
+            const response = await this.fetcher(this.url(contract, {}, {}), {
+                method: contract.method,
+                headers,
+                credentials: "same-origin",
+                mode: "same-origin",
+                redirect: "error",
+                cache: "no-store",
+                referrerPolicy: "same-origin",
+                signal: controller.signal,
+                ...(retire
+                    ? {
+                          body: JSON.stringify(retire),
+                      }
+                    : {}),
+            });
+            const value = await readBoundedJson(response, {
+                signal: controller.signal,
+                limits: {
+                    ...NORMAL_JSON_LIMITS,
+                    maxBytes: Math.min(
+                        65536,
+                        options.responseByteLimit ?? 65536,
+                    ),
+                },
+            });
+            if (wasAborted(controller.signal))
+                return { kind: "aborted" } as const;
+            if (response.status >= 400 && response.status <= 599) {
+                const problem = wire.decodeClientProblem(value);
+                validateApiProblem(problem);
+                return {
+                    kind: "api_problem",
+                    status: response.status,
+                    problem,
+                } as const;
+            }
+            if (response.status !== 200) throw new WireError("schema");
+            const payload = contract.decodeSuccess(value);
+            return { kind: "success", payload } as const;
+        } catch (error) {
+            if (options.signal?.aborted === true)
+                return { kind: "aborted" } as const;
+            return {
+                kind: "unavailable",
+                reason: deadline.expired
+                    ? "timeout"
+                    : error instanceof WireError
+                      ? "protocol"
+                      : "network",
+            } as const;
+        } finally {
+            clearTimeout(timer);
+            options.signal?.removeEventListener("abort", abort);
+            controller.abort();
+        }
+    }
+    async readJobReadiness(options: ReadOptions = {}) {
+        const result = await this.rawRead(
+            wire.routeContracts.job_readiness_default,
+            options,
+        );
+        if (result.kind === "success")
+            this.authority(result.payload, false, false, true);
+        return result;
+    }
+    async readOriginalIntent(originalKey: string, options: ReadOptions = {}) {
+        const result = await this.rawRead(
+            wire.routeContracts.original_intent_default,
+            options,
+            originalKey,
+        );
+        if (result.kind === "success") this.checkIntent(result.payload);
+        return result;
+    }
+    async retireOriginalIntent(originalKey: string, options: ReadOptions = {}) {
+        const result = await this.rawRead(
+            wire.routeContracts.retire_intent_default,
+            options,
+            originalKey,
+            wire.routeContracts.retire_intent_default.decodeBody(
+                canonicalInput({
+                    schema_version: 1,
+                    confirm: "retire_unknown",
+                }),
+            ),
+        );
+        if (result.kind === "success") this.checkIntent(result.payload);
+        return result;
+    }
+    private checkIntent(value: wire.OriginalIntent) {
+        if (value.archive_id !== this.scope.archiveId)
+            throw new WireError("semantic");
+        const disposition = value.disposition;
+        if (disposition !== null) {
+            timestampParts(disposition.created_at);
+            if (disposition.route?.includes("//") === true)
+                throw new WireError("semantic");
+        }
+        if (value.state === "admitted") {
+            if (
+                value.operation === null ||
+                disposition !== null ||
+                value.operation.archive_id !== value.archive_id ||
+                value.operation.principal !== this.scope.credentialClass
+            )
+                throw new WireError("semantic");
+            this.remember(value.operation);
+        } else if (value.state === "unknown") {
+            if (value.operation !== null || disposition !== null)
+                throw new WireError("semantic");
+        } else {
+            if (
+                value.operation !== null ||
+                disposition === null ||
+                disposition.state !== value.state ||
+                disposition.archive_id !== value.archive_id
+            )
+                throw new WireError("semantic");
+            if (
+                value.state === "not_admitted"
+                    ? disposition.route === null ||
+                      disposition.reason === null ||
+                      disposition.review_sha256 !== null
+                    : disposition.route !== null ||
+                      disposition.reason !== null ||
+                      disposition.review_sha256 === null
+            )
+                throw new WireError("semantic");
+        }
+    }
     private async submit<B>(
         contract: Contract<wire.Acceptance, never> & {
             readonly decodeBody: Decoder<B>;
@@ -967,6 +1127,8 @@ export class ApiClient {
                     kind: "api_problem",
                     status: response.status,
                     problem,
+                    intentClosed:
+                        response.headers.get("Hfcache-Intent") === "closed",
                 };
             }
             if (response.status !== 202) throw new WireError("schema");

@@ -1845,7 +1845,7 @@ secret-dependent full-document hash. See [managed API](api.md#managed-configurat
 
 ### 18.6 Browser recovery metadata schema 1
 
-This independent session-storage format is not an archive record, API receipt or
+This independent browser-local storage format is not an archive record, API receipt or
 execution ledger. Its fixed storage key is `hfcache.web.operations.v1`; the exact
 top-level object is `{schemaVersion:1,records:[...]}`. Closed decoding rejects
 unknown/coercive fields, malformed identities and unsupported versions before
@@ -1902,10 +1902,28 @@ public projection from §13.3; it contains no raw digest/key or private review.
 Existing handles remain untouched. Restored records, including closed ones,
 require fresh GET verification; persisted state never supplies fresh proof.
 The 32-record/64KiB/growth-reserve limits remain. Precompute/validate the entire
-migration before one storage replacement; failure preserves original bytes and
-blocks submission. Schema-1 readers must reject schema 2 without rewriting it.
-Both formats remain exportable; cross-tab edits invalidate current proof. No
+migration before one atomic storage replacement; inability to replace preserves
+old stored bytes and blocks submission. After replacement, unverifiable readback
+retains the exact original in validated memory/export and blocks submission;
+concurrent or unknown current bytes must never be blindly overwritten. Schema-1 readers must reject schema 2 without rewriting it.
+The schema2 golden fixture is
+[the browser recovery fixture](../web/test/fixtures/operation-registry-v2.json).
+A not-admitted disposition is saved causally only for the new closed response
+and its authenticated own-key GET; restore requires fresh identical public
+projection/ID verification. Older unresolved schema1 records gain no such proof
+from migration or a later refusal. Both formats remain exportable; cross-tab
+edits invalidate current proof. No
 saved bodies, drafts, credentials, replay or automatic retirement is added.
+
+Reviewed retirement may preserve an original browser operation ID, receipt
+identity and saved terminal summary when the current own-key intent is unknown.
+These retained fields remain historical evidence; they are never overwritten by
+closure or promoted to fresh outcome proof. A retained-ID Review action requires
+fresh RAM-only own-key unknown evidence under the current authentication and
+visibility context. Conflict remains blocked for operator review; a not-admitted
+projection cannot contradict retained admission. Record-specific observation
+authorizations bind the current disposition, and closure fences older callbacks
+without clearing independent configuration or host-effect precautions.
 
 ### 18.7 Fixed host-action projections schema 1
 

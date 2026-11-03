@@ -1,6 +1,6 @@
-/** Generated from source digest 0472c83945af56a0d3033f347716f2cd1f08580553a320aecaead02db312a24b. Run generate:wire; do not edit. */
+/** Generated from source digest 53ac5ba8d3d043d8e08a0a49d2a766150f68122d85887304063f9c2d2fb890ed. Run generate:wire; do not edit. */
 export const WIRE_SOURCE_DIGEST =
-    "0472c83945af56a0d3033f347716f2cd1f08580553a320aecaead02db312a24b";
+    "53ac5ba8d3d043d8e08a0a49d2a766150f68122d85887304063f9c2d2fb890ed";
 import {
     wireObject,
     wireRequestObject,
@@ -551,6 +551,16 @@ export type InstalledValidationPayload = {
     readonly ["repositories"]: number;
     readonly ["token_source"]: string;
 };
+export type JobReadiness = {
+    readonly ["schema_version"]: number;
+    readonly ["archive_id"]: string;
+    readonly ["config_fingerprint"]: string | null;
+    readonly ["archive"]: boolean | null;
+    readonly ["hub"]: boolean | null;
+    readonly ["control"]: boolean | null;
+    readonly ["archive_writable"]: boolean | null;
+    readonly ["verification_available"]: boolean | null;
+};
 export type ManagedAssessment = {
     readonly ["schema_version"]: 1;
     readonly ["archive_id"]: string;
@@ -634,6 +644,14 @@ export type OperationPayload = { readonly ["operation"]: ClientOperation };
 export type OperationsPayload = {
     readonly ["operations"]: readonly ClientOperation[];
 };
+export type OriginalIntent = {
+    readonly ["schema_version"]: number;
+    readonly ["archive_id"]: string;
+    readonly ["state"]:
+        "admitted" | "not_admitted" | "retired_unknown" | "unknown";
+    readonly ["operation"]: ClientOperation | null;
+    readonly ["disposition"]: PublicIntentDisposition | null;
+};
 export type PlanPayload = {
     readonly ["repositories"]: readonly PlannedRepositoryPayload[];
 };
@@ -711,6 +729,23 @@ export type PrunedRevisionRecord = {
     readonly ["retained_after"]: readonly RevisionSummary[];
     readonly ["transaction_id"]: string;
     readonly ["tree"]: string;
+};
+export type PublicIntentDisposition = {
+    readonly ["disposition_id"]: string;
+    readonly ["state"]: "not_admitted" | "retired_unknown";
+    readonly ["archive_id"]: string;
+    readonly ["route"]: string | null;
+    readonly ["created_at"]: string;
+    readonly ["reason"]:
+        | (
+              | "permission_denied"
+              | "storage_read_only"
+              | "executor_unavailable"
+              | "admission_unavailable"
+              | "invalid_policy"
+          )
+        | null;
+    readonly ["review_sha256"]: string | null;
 };
 export type PublicationRefresh = {
     readonly ["commit_sha"]: string;
@@ -1031,6 +1066,10 @@ export type RequestInstalledValidation = RequestInstalledValidationSubmission;
 export type RequestInstalledValidationSubmission = Readonly<
     Record<string, never>
 >;
+export type RequestIntentRetirement = {
+    readonly ["schema_version"]: number;
+    readonly ["confirm"]: "retire_unknown";
+};
 export type RequestLiteralCandidatePlan = {
     readonly ["selectors"]?: readonly string[];
     readonly ["candidate"]: string;
@@ -3936,6 +3975,66 @@ export function decodeInstalledValidationPayload(
         });
     })(value);
 }
+export function decodeJobReadiness(value: unknown): JobReadiness {
+    return ((input: unknown) => {
+        const object = wireObject(input, [
+            "schema_version",
+            "archive_id",
+            "config_fingerprint",
+            "archive",
+            "hub",
+            "control",
+            "archive_writable",
+            "verification_available",
+        ]);
+        return Object.freeze({
+            ["schema_version"]: checked(
+                wireInteger(object["schema_version"], null, null),
+                ["hfcache.client_models.exact_version"],
+            ),
+            ["archive_id"]: checked(
+                wireString(object["archive_id"], null, null, null),
+                ["hfcache.models._parse_archive_id"],
+            ),
+            ["config_fingerprint"]: wireUnion<string | null>(
+                object["config_fingerprint"],
+                [
+                    (member: unknown) =>
+                        checked(wireString(member, null, null, null), [
+                            "hfcache.models._parse_sha256",
+                        ]),
+                    (member: unknown) => wireNull(member),
+                ],
+            ),
+            ["archive"]: wireUnion<boolean | null>(object["archive"], [
+                (member: unknown) => wireBoolean(member),
+                (member: unknown) => wireNull(member),
+            ]),
+            ["hub"]: wireUnion<boolean | null>(object["hub"], [
+                (member: unknown) => wireBoolean(member),
+                (member: unknown) => wireNull(member),
+            ]),
+            ["control"]: wireUnion<boolean | null>(object["control"], [
+                (member: unknown) => wireBoolean(member),
+                (member: unknown) => wireNull(member),
+            ]),
+            ["archive_writable"]: wireUnion<boolean | null>(
+                object["archive_writable"],
+                [
+                    (member: unknown) => wireBoolean(member),
+                    (member: unknown) => wireNull(member),
+                ],
+            ),
+            ["verification_available"]: wireUnion<boolean | null>(
+                object["verification_available"],
+                [
+                    (member: unknown) => wireBoolean(member),
+                    (member: unknown) => wireNull(member),
+                ],
+            ),
+        });
+    })(value);
+}
 export function decodeManagedAssessment(value: unknown): ManagedAssessment {
     return checked(
         ((input: unknown) => {
@@ -4379,6 +4478,49 @@ export function decodeOperationsPayload(value: unknown): OperationsPayload {
         });
     })(value);
 }
+export function decodeOriginalIntent(value: unknown): OriginalIntent {
+    return ((input: unknown) => {
+        const object = wireObject(input, [
+            "schema_version",
+            "archive_id",
+            "state",
+            "operation",
+            "disposition",
+        ]);
+        return Object.freeze({
+            ["schema_version"]: checked(
+                wireInteger(object["schema_version"], null, null),
+                ["hfcache.client_models.exact_version"],
+            ),
+            ["archive_id"]: checked(
+                wireString(object["archive_id"], null, null, null),
+                ["hfcache.models._parse_archive_id"],
+            ),
+            ["state"]: wireUnion<
+                "admitted" | "not_admitted" | "retired_unknown" | "unknown"
+            >(object["state"], [
+                (member: unknown) => wireLiteral(member, "admitted"),
+                (member: unknown) => wireLiteral(member, "not_admitted"),
+                (member: unknown) => wireLiteral(member, "retired_unknown"),
+                (member: unknown) => wireLiteral(member, "unknown"),
+            ]),
+            ["operation"]: wireUnion<ClientOperation | null>(
+                object["operation"],
+                [
+                    (member: unknown) => decodeClientOperation(member),
+                    (member: unknown) => wireNull(member),
+                ],
+            ),
+            ["disposition"]: wireUnion<PublicIntentDisposition | null>(
+                object["disposition"],
+                [
+                    (member: unknown) => decodePublicIntentDisposition(member),
+                    (member: unknown) => wireNull(member),
+                ],
+            ),
+        });
+    })(value);
+}
 export function decodePlanPayload(value: unknown): PlanPayload {
     return ((input: unknown) => {
         const object = wireObject(input, ["repositories"]);
@@ -4770,6 +4912,93 @@ export function decodePrunedRevisionRecord(
         })(value),
         ["hfcache.models.VersionedModel._check_schema_version"],
     );
+}
+export function decodePublicIntentDisposition(
+    value: unknown,
+): PublicIntentDisposition {
+    return ((input: unknown) => {
+        const object = wireObject(input, [
+            "disposition_id",
+            "state",
+            "archive_id",
+            "route",
+            "created_at",
+            "reason",
+            "review_sha256",
+        ]);
+        return Object.freeze({
+            ["disposition_id"]: checked(
+                wireString(object["disposition_id"], null, null, null),
+                ["hfcache.identity.parse_run_id"],
+            ),
+            ["state"]: wireUnion<"not_admitted" | "retired_unknown">(
+                object["state"],
+                [
+                    (member: unknown) => wireLiteral(member, "not_admitted"),
+                    (member: unknown) => wireLiteral(member, "retired_unknown"),
+                ],
+            ),
+            ["archive_id"]: checked(
+                wireString(object["archive_id"], null, null, null),
+                ["hfcache.models._parse_archive_id"],
+            ),
+            ["route"]: wireUnion<string | null>(object["route"], [
+                (member: unknown) =>
+                    wireString(
+                        member,
+                        null,
+                        null,
+                        "^/api/v1/[a-z0-9_/-]{1,200}$",
+                    ),
+                (member: unknown) => wireNull(member),
+            ]),
+            ["created_at"]: checked(
+                wireString(object["created_at"], 20, 32, null),
+                ["timestamp.wire"],
+            ),
+            ["reason"]: wireUnion<
+                | (
+                      | "permission_denied"
+                      | "storage_read_only"
+                      | "executor_unavailable"
+                      | "admission_unavailable"
+                      | "invalid_policy"
+                  )
+                | null
+            >(object["reason"], [
+                (member: unknown) =>
+                    wireUnion<
+                        | "permission_denied"
+                        | "storage_read_only"
+                        | "executor_unavailable"
+                        | "admission_unavailable"
+                        | "invalid_policy"
+                    >(member, [
+                        (member: unknown) =>
+                            wireLiteral(member, "permission_denied"),
+                        (member: unknown) =>
+                            wireLiteral(member, "storage_read_only"),
+                        (member: unknown) =>
+                            wireLiteral(member, "executor_unavailable"),
+                        (member: unknown) =>
+                            wireLiteral(member, "admission_unavailable"),
+                        (member: unknown) =>
+                            wireLiteral(member, "invalid_policy"),
+                    ]),
+                (member: unknown) => wireNull(member),
+            ]),
+            ["review_sha256"]: wireUnion<string | null>(
+                object["review_sha256"],
+                [
+                    (member: unknown) =>
+                        checked(wireString(member, null, null, null), [
+                            "hfcache.models._parse_sha256",
+                        ]),
+                    (member: unknown) => wireNull(member),
+                ],
+            ),
+        });
+    })(value);
 }
 export function decodePublicationRefresh(value: unknown): PublicationRefresh {
     return checked(
@@ -6372,6 +6601,20 @@ export function decodeRequestInstalledValidationSubmission(
     return ((input: unknown) => {
         wireObject(input, []);
         return Object.freeze({});
+    })(value);
+}
+export function decodeRequestIntentRetirement(
+    value: unknown,
+): RequestIntentRetirement {
+    return ((input: unknown) => {
+        const object = wireObject(input, ["schema_version", "confirm"]);
+        return Object.freeze({
+            ["schema_version"]: checked(
+                wireInteger(object["schema_version"], null, null),
+                ["hfcache.client_models.exact_version"],
+            ),
+            ["confirm"]: wireLiteral(object["confirm"], "retire_unknown"),
+        });
     })(value);
 }
 export function decodeRequestLiteralCandidatePlan(
@@ -9167,6 +9410,8 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeInspectionPayload(value);
         case "InstalledValidationPayload":
             return decodeInstalledValidationPayload(value);
+        case "JobReadiness":
+            return decodeJobReadiness(value);
         case "ManagedAssessment":
             return decodeManagedAssessment(value);
         case "ManagedValidation":
@@ -9187,6 +9432,8 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeOperationPayload(value);
         case "OperationsPayload":
             return decodeOperationsPayload(value);
+        case "OriginalIntent":
+            return decodeOriginalIntent(value);
         case "PlanPayload":
             return decodePlanPayload(value);
         case "PlanResultPayload":
@@ -9205,6 +9452,8 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodePrunedRevision(value);
         case "PrunedRevisionRecord":
             return decodePrunedRevisionRecord(value);
+        case "PublicIntentDisposition":
+            return decodePublicIntentDisposition(value);
         case "PublicationRefresh":
             return decodePublicationRefresh(value);
         case "PurgePayload":
@@ -9281,6 +9530,8 @@ export function decodeNamed(name: string, value: unknown): unknown {
             return decodeRequestInstalledValidation(value);
         case "RequestInstalledValidationSubmission":
             return decodeRequestInstalledValidationSubmission(value);
+        case "RequestIntentRetirement":
+            return decodeRequestIntentRetirement(value);
         case "RequestLiteralCandidatePlan":
             return decodeRequestLiteralCandidatePlan(value);
         case "RequestLiteralCandidateValidation":
@@ -9436,6 +9687,81 @@ export const routeContracts = {
             throw new WireError("schema");
         },
         decodeBody: wireNull,
+    },
+    job_readiness_default: {
+        method: "GET",
+        path: "/api/v1/jobs/readiness",
+        commands: [],
+        bindingIds: [],
+        responseKind: "raw",
+        cursor: "none",
+        decodePath: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        decodeQuery: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        repeated: [],
+        decodeSuccess: decodeJobReadiness,
+        decodeFailure: (_value: unknown): never => {
+            void _value;
+            throw new WireError("schema");
+        },
+        decodeBody: wireNull,
+    },
+    original_intent_default: {
+        method: "GET",
+        path: "/api/v1/operations/intent",
+        commands: [],
+        bindingIds: [],
+        responseKind: "raw",
+        cursor: "none",
+        decodePath: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        decodeQuery: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        repeated: [],
+        decodeSuccess: decodeOriginalIntent,
+        decodeFailure: (_value: unknown): never => {
+            void _value;
+            throw new WireError("schema");
+        },
+        decodeBody: wireNull,
+    },
+    retire_intent_default: {
+        method: "POST",
+        path: "/api/v1/operations/intent/retire",
+        commands: [],
+        bindingIds: [],
+        responseKind: "raw",
+        cursor: "none",
+        decodePath: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        decodeQuery: (value: unknown): Readonly<Record<string, never>> =>
+            ((input: unknown) => {
+                wireObject(input, []);
+                return Object.freeze({});
+            })(value),
+        repeated: [],
+        decodeSuccess: decodeOriginalIntent,
+        decodeFailure: (_value: unknown): never => {
+            void _value;
+            throw new WireError("schema");
+        },
+        decodeBody: decodeRequestIntentRetirement,
     },
     version_default: {
         method: "GET",
@@ -12036,6 +12362,51 @@ export const routeDefinitions = [
         request_body: null,
         response_kind: "ui_bootstrap",
         success: "UiBootstrap",
+    },
+    {
+        binding_ids: [],
+        commands: [],
+        cursor: "none",
+        failure: [],
+        id: "job_readiness",
+        method: "GET",
+        mode: "default",
+        path: "/api/v1/jobs/readiness",
+        path_parameters: [],
+        query_parameters: [],
+        request_body: null,
+        response_kind: "raw",
+        success: "JobReadiness",
+    },
+    {
+        binding_ids: [],
+        commands: [],
+        cursor: "none",
+        failure: [],
+        id: "original_intent",
+        method: "GET",
+        mode: "default",
+        path: "/api/v1/operations/intent",
+        path_parameters: [],
+        query_parameters: [],
+        request_body: null,
+        response_kind: "raw",
+        success: "OriginalIntent",
+    },
+    {
+        binding_ids: [],
+        commands: [],
+        cursor: "none",
+        failure: [],
+        id: "retire_intent",
+        method: "POST",
+        mode: "default",
+        path: "/api/v1/operations/intent/retire",
+        path_parameters: [],
+        query_parameters: [],
+        request_body: "RequestIntentRetirement",
+        response_kind: "raw",
+        success: "OriginalIntent",
     },
     {
         binding_ids: [],

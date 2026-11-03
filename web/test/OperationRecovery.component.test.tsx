@@ -81,7 +81,7 @@ test("manual ID is saved without a request, survives route remount, and observes
     await userEvent.click(screen.getByRole("link", { name: "Operations" }));
     expect(fetcher).not.toHaveBeenCalled();
     await userEvent.click(
-        screen.getByRole("button", { name: "Observe original operation" }),
+        screen.getByRole("button", { name: "Recheck original request" }),
     );
     await waitFor(() => {
         expect(screen.getByText(/history missing/)).toBeInTheDocument();
@@ -115,11 +115,12 @@ test("stopping observation aborts GET and preserves the imported handle without 
     const { controller } = mount(fetcher);
     await importId();
     await userEvent.click(
-        screen.getByRole("button", { name: "Observe original operation" }),
+        screen.getByRole("button", { name: "Recheck original request" }),
     );
     await waitFor(() => {
         expect(fetcher).toHaveBeenCalledOnce();
     });
+    await userEvent.click(screen.getByText("Observation and export controls"));
     await userEvent.click(
         screen.getByRole("button", { name: "Stop observing in this browser" }),
     );
@@ -147,7 +148,7 @@ test("legacy bearer-key reference is preserved separately and cannot be converte
     const entry = screen.getByRole("article");
     await userEvent.click(
         within(entry).getByRole("button", {
-            name: "Observe original operation",
+            name: "Recheck original request",
         }),
     );
     expect(
@@ -241,7 +242,7 @@ test("unavailable storage is visible and no manual handle or request is fabricat
     expect(controller.snapshot().registry.records).toHaveLength(0);
     expect(fetcher).not.toHaveBeenCalled();
 });
-test("authentication loss clears observations and reconnect does not issue an operation request", async () => {
+test("authentication loss clears observations and reconnect reads the original imported ID without replay", async () => {
     const { controller, fetcher } = mount();
     await importId();
     const original = controller.snapshot().registry.records[0];
@@ -258,10 +259,11 @@ test("authentication loss clears observations and reconnect does not issue an op
     await userEvent.click(screen.getByRole("button", { name: "Reconnect" }));
     await waitFor(() => {
         expect(
-            screen.getByText(/Reconnected\. Observe original/),
+            screen.getByText(/Reconnected\. Checking saved original/),
         ).toBeInTheDocument();
     });
-    expect(fetcher).not.toHaveBeenCalled();
+    expect(fetcher).toHaveBeenCalledOnce();
+    expect(fetcher.mock.calls[0]?.[1]?.method).toBe("GET");
     expect(
         screen.getByText(/Original operation handles are preserved separately/),
     ).toBeInTheDocument();
@@ -346,4 +348,77 @@ test("a changed interface build offers explicit reload while preserving the orig
     );
     expect(fetcher).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Reconnect" })).toBeDisabled();
+});
+
+test("retained original ID exposes explicit review only after a fresh own-key unknown and preserves it after retirement", async () => {
+    const archive = uiBootstrapFixture().configured_archive_id;
+    const fetcher = vi.fn<typeof fetch>((_input, init) => {
+        const retired = init?.method === "POST";
+        return Promise.resolve(
+            jsonResponse({
+                schema_version: 1,
+                archive_id: archive,
+                state: retired ? "retired_unknown" : "unknown",
+                operation: null,
+                disposition: retired
+                    ? {
+                          disposition_id: "d".repeat(32),
+                          state: "retired_unknown",
+                          archive_id: archive,
+                          route: null,
+                          created_at: "2026-11-03T12:00:00Z",
+                          reason: null,
+                          review_sha256: "e".repeat(64),
+                      }
+                    : null,
+            }),
+        );
+    });
+    const { controller } = mount(fetcher);
+    const originals: ReturnType<typeof controller.importHandle>[] = [];
+    act(() => {
+        originals.push(
+            controller.importHandle({
+                kind: "basic-key",
+                key: "owned-retained-original",
+                operationId: "a".repeat(32),
+                originalScope: controller.originalScope(),
+            }),
+        );
+    });
+    expect(
+        screen.queryByRole("button", {
+            name: "Review original request",
+        }),
+    ).not.toBeInTheDocument();
+    await userEvent.click(
+        screen.getByRole("button", {
+            name: "Recheck original request",
+        }),
+    );
+    const review = await screen.findByRole("button", {
+        name: "Review original request",
+    });
+    expect(fetcher).toHaveBeenCalledOnce();
+    expect(fetcher.mock.calls[0]?.[1]?.method).toBe("GET");
+    await userEvent.click(review);
+    expect(fetcher).toHaveBeenCalledOnce();
+    await userEvent.click(
+        screen.getByRole("button", {
+            name: "Confirm review and retire original request",
+        }),
+    );
+    await screen.findByText(
+        /Historical outcome unknown; request retired\. You may start a new job/u,
+    );
+    expect(fetcher.mock.calls.map(([, init]) => init?.method)).toEqual([
+        "GET",
+        "POST",
+    ]);
+    expect(controller.snapshot().registry.records[0]?.handles.operationId).toBe(
+        "a".repeat(32),
+    );
+    expect(controller.snapshot().registry.records[0]?.handles).toEqual(
+        originals[0]?.handles,
+    );
 });

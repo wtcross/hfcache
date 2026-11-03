@@ -9,6 +9,7 @@ import type { ApiScope } from "../api/identity";
 import { canonicalArchiveId, canonicalHex } from "../api/identity";
 import {
     decodeClientOperation,
+    decodePublicIntentDisposition,
     decodeConfigApplicationOutcome,
     decodeScheduleChangeOutcome,
     decodeObserverStopOutcome,
@@ -16,6 +17,7 @@ import {
 } from "../wire/generated";
 import type {
     ClientOperation,
+    PublicIntentDisposition,
     ConfigApplicationOutcome,
     ScheduleChangeOutcome,
     ObserverStopOutcome,
@@ -65,6 +67,25 @@ export const ACTION_ROUTES = Object.freeze({
     catalogRefresh: "/api/v1/catalog/refreshes",
 } as const);
 
+export function refusalExplanation(
+    reason: PublicIntentDisposition["reason"],
+): string {
+    switch (reason) {
+        case "permission_denied":
+            return "The required job permission was denied.";
+        case "storage_read_only":
+            return "The required archive storage is read-only.";
+        case "executor_unavailable":
+            return "The job executor is unavailable.";
+        case "admission_unavailable":
+            return "Job admission is unavailable.";
+        case "invalid_policy":
+            return "The installed policy is invalid.";
+        case null:
+            return "The request was refused before admission.";
+    }
+}
+
 export type Action = keyof typeof ACTION_ROUTES;
 export type OperationRoute = (typeof ACTION_ROUTES)[Action];
 export const OPERATION_STORAGE_KEY = "hfcache.web.operations.v1";
@@ -111,7 +132,9 @@ export type RecoveryState =
     | "conflict"
     | "unverified"
     | "terminal"
-    | "reference";
+    | "reference"
+    | "not_admitted"
+    | "retired_unknown";
 
 export interface SafeTerminalSummary {
     readonly command: string;
@@ -122,7 +145,7 @@ export interface SafeTerminalSummary {
 }
 
 export interface RecoveryRecord {
-    readonly schemaVersion: 1;
+    readonly schemaVersion: 2;
     readonly recordId: RecordId;
     readonly handles: RecoveryHandles;
     readonly originalAuthority: OriginalAuthority;
@@ -135,6 +158,7 @@ export interface RecoveryRecord {
     readonly updatedAt: number;
     readonly state: RecoveryState;
     readonly terminal: SafeTerminalSummary | null;
+    readonly disposition: PublicIntentDisposition | null;
 }
 
 export type ManualImport =
@@ -200,6 +224,7 @@ export interface RegistryOptions {
 
 export interface OperationRegistry {
     snapshot(): RegistrySnapshot;
+    exportMetadata(): string | null;
     subscribe(listener: () => void): () => void;
     prepare(action: Action, session: AuthSession): RecoveryRecord;
     importHandle(input: ManualImport, session: AuthSession): RecoveryRecord;
@@ -211,8 +236,12 @@ export interface OperationRegistry {
     authorizeObservation(
         id: RecordId,
         session: AuthSession,
-        options?: { readonly reconnect?: boolean },
+        options?: {
+            readonly reconnect?: boolean;
+            readonly requireKey?: boolean;
+        },
     ): AuthorizedObservation;
+    isObservationCurrent(auth: AuthorizedObservation): boolean;
     observed(
         auth: AuthorizedObservation,
         receipt: ClientOperation,
@@ -231,6 +260,11 @@ export interface OperationRegistry {
         outcome: ScheduleChangeOutcome | ObserverStopOutcome,
     ): void;
     unknown(id: RecordId, reason: UnknownReason): RecoveryRecord;
+    disposition(
+        auth: AuthorizedObservation,
+        input: PublicIntentDisposition,
+        causal?: boolean,
+    ): RecoveryRecord;
     invalidateObservations(): void;
     canSubmit(session: AuthSession): boolean;
 }
@@ -548,15 +582,42 @@ const STATES: readonly RecoveryState[] = [
     "unverified",
     "terminal",
     "reference",
+    "not_admitted",
+    "retired_unknown",
 ];
 
 function isState(value: unknown): value is RecoveryState {
     return STATES.some((state) => state === value);
 }
 
+function terminalInvalidDisposition(
+    value: PublicIntentDisposition,
+    archive: string | null,
+    route: string | null,
+): boolean {
+    try {
+        timestampParts(value.created_at);
+    } catch {
+        return true;
+    }
+    return (
+        value.archive_id !== archive ||
+        (value.state === "not_admitted"
+            ? value.reason === null ||
+              value.route === null ||
+              (route !== null && value.route !== route) ||
+              value.review_sha256 !== null
+            : value.reason !== null ||
+              value.route !== null ||
+              value.review_sha256 === null)
+    );
+}
+
 /** Reconstruct only safe metadata; unknown flags/fields are never migration hints. */
 export function decodeRecoveryRecord(value: unknown): RecoveryRecord {
+    const legacy = isRecord(value) && integer(value.schemaVersion) === 1;
     const row = wireObject(value, [
+        ...(legacy ? [] : ["disposition"]),
         "schemaVersion",
         "recordId",
         "handles",
@@ -572,7 +633,7 @@ export function decodeRecoveryRecord(value: unknown): RecoveryRecord {
         "terminal",
     ]);
     if (
-        integer(row.schemaVersion) !== 1 ||
+        ![1, 2].includes(integer(row.schemaVersion)) ||
         !isState(row.state) ||
         (row.source !== "web" &&
             row.source !== "cockpit" &&
@@ -611,6 +672,23 @@ export function decodeRecoveryRecord(value: unknown): RecoveryRecord {
             identity.archive_id !== target.archiveId)
     )
         invalid();
+    const disposition =
+        legacy || row.disposition === null
+            ? null
+            : decodePublicIntentDisposition(row.disposition);
+    if (
+        disposition !== null &&
+        (handles.kind !== "basic-key" ||
+            (disposition.state === "not_admitted" &&
+                (identity !== null || handles.operationId !== null)) ||
+            terminalInvalidDisposition(disposition, target.archiveId, route))
+    )
+        invalid();
+    if (
+        (row.state === "not_admitted" || row.state === "retired_unknown") &&
+        disposition?.state !== row.state
+    )
+        invalid();
     const terminal =
         row.terminal === null ? null : decodeSummary(row.terminal, route);
     if (row.state === "terminal" && (terminal === null || identity === null))
@@ -632,7 +710,7 @@ export function decodeRecoveryRecord(value: unknown): RecoveryRecord {
     )
         invalid();
     return Object.freeze({
-        schemaVersion: 1,
+        schemaVersion: 2,
         recordId: operationId(row.recordId),
         handles,
         originalAuthority,
@@ -645,11 +723,12 @@ export function decodeRecoveryRecord(value: unknown): RecoveryRecord {
         updatedAt: updated,
         state: row.state,
         terminal,
+        disposition,
     });
 }
 
 function encoded(records: readonly RecoveryRecord[]): string {
-    return JSON.stringify({ schemaVersion: 1, records });
+    return JSON.stringify({ schemaVersion: 2, records });
 }
 
 function bytes(value: string): number {
@@ -673,7 +752,13 @@ export function createOperationRegistry(
     const listeners = new Set<() => void>();
     const proofs = new Map<RecordId, ObservationProof>();
     const prepared = new Map<RecordId, AuthSession>();
+    const causalRefusals = new Map<RecordId, AuthSession>();
+    const dispositionProofs = new Map<RecordId, AuthSession>();
     let issued = new WeakSet<AuthorizedObservation>();
+    let issuedDispositions = new WeakMap<
+        AuthorizedObservation,
+        string | null
+    >();
     let activeSession: AuthSession | null = null;
     let snapshot: RegistrySnapshot = Object.freeze({
         records: Object.freeze([]),
@@ -682,6 +767,7 @@ export function createOperationRegistry(
     });
     let writable = false,
         lastPersisted: string | null = null;
+    let safeExport: string | null = null;
     const clock = options.clock ?? Date.now;
     const keyFactory = options.keyFactory ?? (() => crypto.randomUUID());
     const idFactory =
@@ -723,13 +809,20 @@ export function createOperationRegistry(
                 ["schemaVersion", "records"],
             );
             if (
-                integer(top.schemaVersion) !== 1 ||
+                ![1, 2].includes(integer(top.schemaVersion)) ||
                 !Array.isArray(top.records) ||
                 top.records.length > MAX_OPERATION_RECORDS
             )
                 invalid();
             const rawRecords: readonly unknown[] = top.records;
-            const records = rawRecords.map(decodeRecoveryRecord);
+            const records = rawRecords.map((value) => {
+                if (
+                    !isRecord(value) ||
+                    integer(value.schemaVersion) !== integer(top.schemaVersion)
+                )
+                    invalid();
+                return decodeRecoveryRecord(value);
+            });
             if (
                 new Set(records.map((record) => record.recordId)).size !==
                 records.length
@@ -750,9 +843,48 @@ export function createOperationRegistry(
                     ]),
                 );
             if (new Set(originalKeys).size !== originalKeys.length) invalid();
+            safeExport = saved;
+            if (integer(top.schemaVersion) === 1) {
+                const migrated = encoded(records);
+                if (
+                    bytes(migrated) +
+                        records.filter((record) => record.state !== "terminal")
+                            .length *
+                            OPERATION_GROWTH_RESERVE_BYTES >
+                    MAX_OPERATION_STORAGE_BYTES
+                )
+                    throw new OperationRegistryError("storage");
+                if (options.storage.getItem(OPERATION_STORAGE_KEY) !== saved)
+                    throw new OperationRegistryError("storage");
+                options.storage.setItem(OPERATION_STORAGE_KEY, migrated);
+                let confirmed: string | null;
+                try {
+                    confirmed = options.storage.getItem(OPERATION_STORAGE_KEY);
+                } catch {
+                    // Never replace a concurrent tab's history or an unknown
+                    // current document. Exact old bytes remain in safeExport.
+                    let current: string | null = null;
+                    try {
+                        current = options.storage.getItem(
+                            OPERATION_STORAGE_KEY,
+                        );
+                    } catch {
+                        /* Current storage is unproved. */
+                    }
+                    if (current === migrated)
+                        options.storage.setItem(OPERATION_STORAGE_KEY, saved);
+                    throw new OperationRegistryError("storage");
+                }
+                if (confirmed !== migrated)
+                    throw new OperationRegistryError("storage");
+                lastPersisted = migrated;
+                safeExport = migrated;
+            }
             publish(
                 records.map((record) =>
-                    record.state === "prepared" || record.state === "terminal"
+                    record.state === "prepared" ||
+                    record.state === "terminal" ||
+                    record.disposition !== null
                         ? Object.freeze({ ...record, state: "unverified" })
                         : record,
                 ),
@@ -801,6 +933,7 @@ export function createOperationRegistry(
             if (options.storage.getItem(OPERATION_STORAGE_KEY) !== payload)
                 throw new OperationRegistryError("storage");
             lastPersisted = payload;
+            safeExport = payload;
             publish(records, "ready", null);
             return true;
         } catch {
@@ -843,6 +976,17 @@ export function createOperationRegistry(
                 )
             )
                 return false;
+            const dispositionProof = dispositionProofs.get(record.recordId);
+            if (
+                dispositionProof !== undefined &&
+                sameAuthSession(dispositionProof, session) &&
+                ![
+                    "/api/v1/config/applications",
+                    "/api/v1/host/sync-schedule/changes",
+                    "/api/v1/host/sync-observer/stops",
+                ].includes(record.route ?? "")
+            )
+                return false;
             return (
                 proofFor(record.recordId, session)?.configurationKnown !==
                     true &&
@@ -872,7 +1016,10 @@ export function createOperationRegistry(
             !sameAuthSession(activeSession, session)
         ) {
             proofs.clear();
+            dispositionProofs.clear();
+            causalRefusals.clear();
             issued = new WeakSet();
+            issuedDispositions = new WeakMap();
             activeSession = session;
         }
     };
@@ -920,12 +1067,17 @@ export function createOperationRegistry(
     };
     const conflict = (record: RecoveryRecord): RecoveryRecord => {
         proofs.delete(record.recordId);
+        dispositionProofs.delete(record.recordId);
+        causalRefusals.delete(record.recordId);
         return update(record, { state: "conflict" });
     };
     const authorizeObservation = (
         id: RecordId,
         raw: AuthSession,
-        settings: { readonly reconnect?: boolean } = {},
+        settings: {
+            readonly reconnect?: boolean;
+            readonly requireKey?: boolean;
+        } = {},
     ): AuthorizedObservation => {
         const session = createAuthSession(raw),
             record = find(id);
@@ -952,6 +1104,7 @@ export function createOperationRegistry(
         let locator: AuthorizedObservation["locator"];
         if (record.handles.kind === "basic-key") {
             locator =
+                settings.requireKey !== true &&
                 proof?.keyVerified === true &&
                 record.handles.operationId !== null
                     ? { kind: "id", operationId: record.handles.operationId }
@@ -969,6 +1122,10 @@ export function createOperationRegistry(
             expectedSafeReceiptIdentity: record.receiptIdentity,
         });
         issued.add(auth);
+        issuedDispositions.set(
+            auth,
+            record.disposition?.disposition_id ?? null,
+        );
         return auth;
     };
     const authorized = (
@@ -989,6 +1146,11 @@ export function createOperationRegistry(
                 authGeneration: auth.authGeneration,
             });
         if (
+            issuedDispositions.get(auth) !==
+            (record.disposition?.disposition_id ?? null)
+        )
+            throw new OperationRegistryError("observation");
+        if (
             record.state === "conflict" ||
             !sameStableAuthority(record.observationTarget, session.scope)
         )
@@ -1000,6 +1162,7 @@ export function createOperationRegistry(
         input: ClientOperation,
     ): RecoveryRecord => {
         const { record, session } = authorized(auth);
+        if (record.disposition !== null) return conflict(record);
         const receipt = decodeClientOperation(
                 parseWireJson(JSON.stringify(input)),
             ),
@@ -1054,6 +1217,7 @@ export function createOperationRegistry(
     };
     return {
         snapshot: () => snapshot,
+        exportMetadata: () => safeExport,
         subscribe: (listener) => {
             listeners.add(listener);
             return () => {
@@ -1080,7 +1244,7 @@ export function createOperationRegistry(
                 invalid();
             const at = now();
             const record = decodeRecoveryRecord({
-                schemaVersion: 1,
+                schemaVersion: 2,
                 recordId: newId(),
                 handles: { kind: "basic-key", key, operationId: null },
                 originalAuthority: { kind: "web", scope: session.scope },
@@ -1093,6 +1257,7 @@ export function createOperationRegistry(
                 updatedAt: at,
                 state: "prepared",
                 terminal: null,
+                disposition: null,
             });
             add(record);
             prepared.set(record.recordId, session);
@@ -1165,7 +1330,7 @@ export function createOperationRegistry(
             const at = now();
             return add(
                 decodeRecoveryRecord({
-                    schemaVersion: 1,
+                    schemaVersion: 2,
                     recordId: newId(),
                     handles,
                     originalAuthority: authority,
@@ -1182,6 +1347,7 @@ export function createOperationRegistry(
                             ? "reference"
                             : "unverified",
                     terminal: null,
+                    disposition: null,
                 }),
             );
         },
@@ -1222,8 +1388,16 @@ export function createOperationRegistry(
                 );
                 return record;
             }
-            if (result.kind !== "accepted")
+            if (result.kind !== "accepted") {
+                if (
+                    result.kind === "api_problem" &&
+                    result.intentClosed === true &&
+                    activeSession !== null &&
+                    sameAuthSession(activeSession, session)
+                )
+                    causalRefusals.set(id, session);
                 return update(record, { state: "uncertain" });
+            }
             if (
                 result.idempotencyKey !== record.handles.key ||
                 result.route !== record.route
@@ -1264,6 +1438,76 @@ export function createOperationRegistry(
             });
         },
         authorizeObservation,
+        isObservationCurrent: (auth) => {
+            try {
+                authorized(auth);
+                return true;
+            } catch {
+                return false;
+            }
+        },
+        disposition: (auth, input, causal = false) => {
+            const { record, session } = authorized(auth);
+            const disposition = decodePublicIntentDisposition(
+                parseWireJson(JSON.stringify(input)),
+            );
+            if (
+                record.handles.kind !== "basic-key" ||
+                auth.locator.kind !== "key" ||
+                auth.locator.key !== record.handles.key ||
+                (disposition.state === "not_admitted" &&
+                    (record.receiptIdentity !== null ||
+                        record.handles.operationId !== null ||
+                        record.terminal !== null)) ||
+                terminalInvalidDisposition(
+                    disposition,
+                    session.scope.archiveId,
+                    record.route,
+                )
+            )
+                return conflict(record);
+            if (
+                disposition.state === "not_admitted" &&
+                !(
+                    causal &&
+                    record.source === "web" &&
+                    causalRefusals.get(record.recordId) !== undefined &&
+                    sameAuthSession(
+                        causalRefusals.get(record.recordId) ?? session,
+                        session,
+                    )
+                ) &&
+                record.disposition?.disposition_id !==
+                    disposition.disposition_id
+            )
+                return update(record, { state: "uncertain" });
+            if (
+                record.disposition !== null &&
+                JSON.stringify(record.disposition) !==
+                    JSON.stringify(disposition)
+            ) {
+                // A refusal may acquire a reviewed historical retirement once.
+                if (
+                    record.disposition.state !== "not_admitted" ||
+                    disposition.state !== "retired_unknown"
+                )
+                    return conflict(record);
+            }
+            const saved = update(record, {
+                disposition,
+                state: disposition.state,
+            });
+            proofs.delete(record.recordId);
+            causalRefusals.delete(record.recordId);
+            if (
+                snapshot.storage === "ready" &&
+                activeSession !== null &&
+                sameAuthSession(activeSession, session)
+            )
+                dispositionProofs.set(record.recordId, session);
+            publish(snapshot.records, snapshot.storage, snapshot.error);
+            return saved;
+        },
         observed,
         resolved: (auth, input, certainty) => {
             const { record, session } = authorized(auth),
@@ -1352,6 +1596,7 @@ export function createOperationRegistry(
         },
         unknown: (id, reason) => {
             const record = find(id);
+            dispositionProofs.delete(id);
             if (record.state === "conflict") return record;
             if (reason === "conflict") return conflict(record);
             const state =
@@ -1367,10 +1612,13 @@ export function createOperationRegistry(
         },
         invalidateObservations: () => {
             proofs.clear();
+            dispositionProofs.clear();
+            causalRefusals.clear();
             issued = new WeakSet();
+            issuedDispositions = new WeakMap();
             activeSession = null;
             const records = snapshot.records.map((record) =>
-                record.state === "terminal"
+                record.state === "terminal" || record.disposition !== null
                     ? Object.freeze({ ...record, state: "unverified" as const })
                     : record,
             );

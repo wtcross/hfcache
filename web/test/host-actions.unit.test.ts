@@ -609,7 +609,12 @@ test("hidden original host outcome reads require an explicit observation after r
     expect((await value.observeHostActionOutcome(record.recordId)).kind).toBe(
         "lookup",
     );
-    expect(fetcher).toHaveBeenCalledOnce();
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(
+        fetcher.mock.calls.filter(
+            ([input]) => url(input).pathname === "/api/v1/operations/intent",
+        ),
+    ).toHaveLength(1);
 });
 
 test.each(["lookup", "outcome"])(
@@ -618,6 +623,16 @@ test.each(["lookup", "outcome"])(
         const late = deferred<Response>();
         let signal: AbortSignal | null | undefined;
         const fetcher = vi.fn<typeof fetch>((input, options) => {
+            if (url(input).pathname === "/api/v1/operations/intent")
+                return Promise.resolve(
+                    jsonResponse({
+                        schema_version: 1,
+                        archive_id: ARCHIVE_ID,
+                        state: "unknown",
+                        operation: null,
+                        disposition: null,
+                    }),
+                );
             const lookup = url(input).pathname === "/api/v1/operations/lookup";
             if ((stage === "lookup") === lookup) {
                 signal = options?.signal;
@@ -656,7 +671,13 @@ test.each(["lookup", "outcome"])(
             ),
         );
         await rejection;
-        expect(fetcher).toHaveBeenCalledTimes(stage === "lookup" ? 1 : 2);
+        expect(fetcher).toHaveBeenCalledTimes(stage === "lookup" ? 2 : 3);
+        expect(
+            fetcher.mock.calls.filter(
+                ([input]) =>
+                    url(input).pathname === "/api/v1/operations/intent",
+            ),
+        ).toHaveLength(1);
         expect(value.snapshot().canSubmit).toBe(false);
         expect(value.snapshot().registry.records[0]?.handles).toMatchObject({
             key,

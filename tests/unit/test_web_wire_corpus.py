@@ -50,10 +50,10 @@ def original_models():
 
 
 def test_original_serializer_corpus_covers_every_public_named_definition(corpus):
-    assert len(corpus) == 366
+    assert len(corpus) == 374
     assert len({entry["case_id"] for entry in corpus}) == len(corpus)
     names = {entry["definition"] for entry in corpus}
-    assert len(names) == 175
+    assert len(names) == 179
     assert names == build_contracts()["definitions"].keys()
     assert names.isdisjoint({"OperationReceipt", "ResultReference", "TransactionJournal"})
     for entry in corpus:
@@ -108,7 +108,7 @@ def test_every_serialized_example_still_validates_with_its_original_python_autho
 
 def test_mode_fixture_inventory_and_original_canonical_request_bodies_are_complete():
     modes = web_wire_corpus.covered_route_modes()
-    assert len(modes) == 57
+    assert len(modes) == 60
     assert modes == {(route.method, route.path, route.mode) for route in ROUTES}
     bodies = web_wire_corpus.request_samples()
     for name, model in request_authorities().items():
@@ -143,7 +143,7 @@ def test_factory_needs_no_network_or_archive_initialization_and_cleans_its_tree(
     monkeypatch.setattr(socket.socket, "connect", forbidden)
     monkeypatch.setattr(socket.socket, "connect_ex", forbidden)
     monkeypatch.setattr(socket, "create_connection", forbidden)
-    assert len(web_wire_corpus.serialized_corpus()) == 366
+    assert len(web_wire_corpus.serialized_corpus()) == 374
     assert len(created) == 1
     assert not any(tmp_path.iterdir())
 

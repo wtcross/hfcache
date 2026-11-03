@@ -1,3 +1,4 @@
+import type { JobReadiness } from "../wire/generated";
 /** Bounded explicit maintenance intent; original operations remain controller-owned. */
 import type { ExactPublication } from "../api/identity";
 import { publicationIdentity, repositorySegments } from "../api/identity";
@@ -383,6 +384,9 @@ export interface MaintenanceSnapshot {
         "ready" | "nothing_eligible" | "blocked" | "unconfirmed";
     readonly confirmed: boolean;
     readonly canPreview: boolean;
+    readonly readinessPhase: "checking" | "ready" | "unavailable";
+    readonly previewAvailability: string;
+    readonly applyAvailability: string;
     readonly canConfirm: boolean;
     readonly canApply: boolean;
     readonly effectRecordId: RecordId | null;
@@ -442,9 +446,117 @@ export function createMaintenanceStore(controller: SessionController) {
     let seenResult: string | null = null;
     const listeners = new Set<() => void>();
     let snapshot: MaintenanceSnapshot;
+    let readinessActive = false;
+    let readiness: JobReadiness | null = null;
+    let readinessPhase: MaintenanceSnapshot["readinessPhase"] = "unavailable";
+    let readinessAt = 0,
+        readinessSerial = 0;
+    let readinessAbort: AbortController | null = null;
+    let readinessTimer: ReturnType<typeof setTimeout> | null = null;
+    function clearReadiness() {
+        readinessSerial++;
+        readinessAbort?.abort();
+        readinessAbort = null;
+        if (readinessTimer !== null) clearTimeout(readinessTimer);
+        readinessTimer = null;
+        readiness = null;
+        readinessPhase = "unavailable";
+    }
+    function readinessCurrent(
+        serial: number,
+        auth: number,
+        signal: AbortSignal,
+    ) {
+        return (
+            !disposed &&
+            !signal.aborted &&
+            serial === readinessSerial &&
+            authGeneration === auth
+        );
+    }
+    async function recheckReadiness() {
+        readinessActive = true;
+        clearReadiness();
+        if (
+            disposed ||
+            session.pageHidden ||
+            session.connection !== "connected"
+        )
+            return;
+        const serial = readinessSerial;
+        const ownAuth = authGeneration;
+        const abort = new AbortController();
+        readinessAbort = abort;
+        readinessPhase = "checking";
+        publish();
+        try {
+            const result = await controller.readJobReadiness({
+                signal: abort.signal,
+            });
+            if (!readinessCurrent(serial, ownAuth, abort.signal)) return;
+            if (result.kind === "success") {
+                readiness = result.payload;
+                readinessAt = performance.now();
+                readinessPhase = "ready";
+                if (!retain()) {
+                    readiness = null;
+                    readinessPhase = "unavailable";
+                }
+                readinessTimer = setTimeout(() => {
+                    clearReadiness();
+                    publish();
+                }, 30000);
+            } else readinessPhase = "unavailable";
+        } catch {
+            if (serial === readinessSerial) readinessPhase = "unavailable";
+        } finally {
+            if (serial === readinessSerial) {
+                readinessAbort = null;
+                publish();
+            }
+        }
+    }
+    function availability(effect: boolean) {
+        if (!session.canSubmit)
+            return {
+                blocked: true,
+                reason: "Needs review: an original request or active job blocks new work. Follow the original request in Operations.",
+            };
+        if (readiness === null || performance.now() - readinessAt >= 30000)
+            return {
+                blocked: false,
+                reason:
+                    readinessPhase === "checking"
+                        ? "Checking job readiness. Explicit submission still receives fresh server checks."
+                        : "Readiness unavailable. Recheck or submit explicitly for fresh server checks.",
+            };
+        const action = effect ? readiness.archive : readiness.control;
+        if (action === false)
+            return {
+                blocked: true,
+                reason: effect
+                    ? "Unavailable: archive writes are disabled."
+                    : "Unavailable: control-state jobs are disabled.",
+            };
+        if (effect && readiness.archive_writable === false)
+            return {
+                blocked: true,
+                reason: "Unavailable: required archive storage is read-only.",
+            };
+        return {
+            blocked: false,
+            reason:
+                action === null ||
+                (effect && readiness.archive_writable === null)
+                    ? "Some readiness facts are unknown. Explicit submission receives fresh server checks."
+                    : "Observed readiness available. The server checks authorization freshly.",
+        };
+    }
+
     function retain() {
         if (disposed) return false;
         return slot.set({
+            readiness,
             previewRequest: owner?.request ?? null,
             form,
             finding,
@@ -617,6 +729,8 @@ export function createMaintenanceStore(controller: SessionController) {
                   freshPublication !== null &&
                   finding !== null
                 : review !== null && eligibility === "ready";
+        const previewAvailability = availability(false),
+            applyAvailability = availability(true);
         snapshot = Object.freeze({
             connected,
             authGeneration,
@@ -633,7 +747,15 @@ export function createMaintenanceStore(controller: SessionController) {
             reviewGeneration,
             eligibility,
             confirmed,
-            canPreview: read && free && valid && form.kind !== "repair",
+            readinessPhase,
+            previewAvailability: previewAvailability.reason,
+            applyAvailability: applyAvailability.reason,
+            canPreview:
+                !previewAvailability.blocked &&
+                read &&
+                free &&
+                valid &&
+                form.kind !== "repair",
             canConfirm:
                 connected &&
                 session.canSubmit &&
@@ -641,7 +763,12 @@ export function createMaintenanceStore(controller: SessionController) {
                 ready &&
                 !confirmed,
             canApply:
-                write && free && ready && confirmed && form.kind !== "repair",
+                !applyAvailability.blocked &&
+                write &&
+                free &&
+                ready &&
+                confirmed &&
+                form.kind !== "repair",
             effectRecordId,
             effectObservation:
                 effectRecordId === null
@@ -662,7 +789,12 @@ export function createMaintenanceStore(controller: SessionController) {
                 finding !== null &&
                 valid,
             canRepair:
-                write && free && ready && confirmed && form.kind === "repair",
+                !applyAvailability.blocked &&
+                write &&
+                free &&
+                ready &&
+                confirmed &&
+                form.kind === "repair",
             notice,
         });
         for (const listener of listeners) {
@@ -687,6 +819,7 @@ export function createMaintenanceStore(controller: SessionController) {
         }
     }
     function clearPrivate() {
+        clearReadiness();
         retire();
         unsubscribePreview();
         unsubscribeEffect();
@@ -712,7 +845,14 @@ export function createMaintenanceStore(controller: SessionController) {
             notice =
                 "Authentication or connection changed. Original operations remain in recovery.";
         }
+        const visibilityChanged =
+            next.visibilityEpoch !== session.visibilityEpoch ||
+            next.pageHidden !== session.pageHidden;
         session = next;
+        if (visibilityChanged) {
+            clearReadiness();
+            if (!next.pageHidden && readinessActive) void recheckReadiness();
+        }
         publish();
     });
     function sessionIsCurrent(auth: number): boolean {
@@ -792,6 +932,7 @@ export function createMaintenanceStore(controller: SessionController) {
                 listeners.delete(listener);
             };
         },
+        recheckReadiness,
         setForm(input: unknown): boolean {
             retire();
             if (
@@ -813,6 +954,8 @@ export function createMaintenanceStore(controller: SessionController) {
                 formIssue = null;
                 notice = null;
                 publish();
+                if (readinessActive && form.kind !== previous.kind)
+                    void recheckReadiness();
                 return true;
             } catch (error) {
                 form = previous;
@@ -1150,6 +1293,8 @@ export function createMaintenanceStore(controller: SessionController) {
             publish();
         },
         pause() {
+            readinessActive = false;
+            clearReadiness();
             if (disposed) return;
             retire();
             notice =

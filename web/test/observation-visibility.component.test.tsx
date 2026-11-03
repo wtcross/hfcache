@@ -59,7 +59,7 @@ async function importAndObserve() {
         screen.getByRole("button", { name: "Save original handle" }),
     );
     await userEvent.click(
-        screen.getByRole("button", { name: "Observe original operation" }),
+        screen.getByRole("button", { name: "Recheck original request" }),
     );
 }
 test("mounted document visibility aborts original observation, fences late response, and disposes its listener", async () => {
@@ -67,15 +67,26 @@ test("mounted document visibility aborts original observation, fences late respo
     let signal: AbortSignal | null | undefined;
     const fetcher = vi
         .fn<typeof fetch>()
-        .mockImplementationOnce((_input, options) => {
-            signal = options?.signal;
-            return late.promise;
-        })
-        .mockResolvedValue(jsonResponse(problemWire("HFAPI013", 20), 404));
+        .mockImplementation((input, options) => {
+            if (
+                (input instanceof URL ? input.pathname : "") ===
+                "/api/v1/jobs/readiness"
+            )
+                return Promise.resolve(
+                    jsonResponse(problemWire("HFAPI013", 20), 404),
+                );
+            if (signal === undefined) {
+                signal = options?.signal;
+                return late.promise;
+            }
+            return Promise.resolve(
+                jsonResponse(problemWire("HFAPI013", 20), 404),
+            );
+        });
     const view = mount(fetcher);
     await importAndObserve();
     await waitFor(() => {
-        expect(fetcher).toHaveBeenCalledOnce();
+        expect(fetcher).toHaveBeenCalledTimes(2);
     });
     const saved = localStorage.getItem(OPERATION_STORAGE_KEY);
     expect(saved).toContain(OPERATION_ID);
@@ -91,14 +102,20 @@ test("mounted document visibility aborts original observation, fences late respo
         );
         await late.promise;
     });
-    expect(fetcher).toHaveBeenCalledOnce();
-    expect(screen.getByText("paused · hidden")).toBeInTheDocument();
-    expect(localStorage.getItem(OPERATION_STORAGE_KEY)).toBe(saved);
+    await waitFor(() => {
+        expect(fetcher).toHaveBeenCalledTimes(4);
+    });
+    await screen.findByText(/history missing/u);
+    const after: unknown = JSON.parse(
+        localStorage.getItem(OPERATION_STORAGE_KEY) ?? "null",
+    );
+    expect(JSON.stringify(after)).toContain(OPERATION_ID);
+    expect(saved).toContain(OPERATION_ID);
     await userEvent.click(
-        screen.getByRole("button", { name: "Observe original operation" }),
+        screen.getByRole("button", { name: "Recheck original request" }),
     );
     await waitFor(() => {
-        expect(fetcher).toHaveBeenCalledTimes(2);
+        expect(fetcher).toHaveBeenCalledTimes(5);
     });
     expect(
         fetcher.mock.calls.every(([, options]) => options?.method === "GET"),
@@ -111,21 +128,18 @@ test("mounted document visibility aborts original observation, fences late respo
     unmount = () => {};
     expect(view.removed).toHaveBeenCalledWith("visibilitychange", handler);
 });
-test("an initially hidden mounted page requires explicit Observe after visibility returns", async () => {
+test("an initially hidden mounted page reconciles saved originals using GETs after visibility returns", async () => {
     const fetcher = vi
         .fn<typeof fetch>()
         .mockResolvedValue(jsonResponse(problemWire("HFAPI013", 20), 404));
     const view = mount(fetcher, true);
     await importAndObserve();
     expect(fetcher).not.toHaveBeenCalled();
-    expect(screen.getByText("paused · hidden")).toBeInTheDocument();
     view.setHidden(false);
-    await Promise.resolve();
-    expect(fetcher).not.toHaveBeenCalled();
-    await userEvent.click(
-        screen.getByRole("button", { name: "Observe original operation" }),
-    );
     await waitFor(() => {
-        expect(fetcher).toHaveBeenCalledOnce();
+        expect(fetcher).toHaveBeenCalledTimes(2);
     });
+    expect(fetcher.mock.calls.every(([, init]) => init?.method === "GET")).toBe(
+        true,
+    );
 });

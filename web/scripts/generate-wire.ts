@@ -193,12 +193,13 @@ const nodeFields: Readonly<Record<string, readonly string[]>> = {
     ref: ["name"],
     json_value: ["max_depth", "max_nodes", "object_only"],
 };
-// These four audited ASCII patterns have identical Rust/Python/ECMAScript
+// These audited ASCII patterns have identical Rust/Python/ECMAScript
 // character semantics; runtime.ts supplies true end-of-input behavior.
 const auditedPatterns = new Set([
     "^HF[A-Z]{2,6}[0-9]{3}$",
     "^[A-Za-z0-9][A-Za-z0-9._-]*$",
     "^[a-f0-9]{64}$",
+    "^/api/v1/[a-z0-9_/-]{1,200}$",
     "^[a-z][a-z0-9_.-]{0,63}$",
 ]);
 function nodeInfo(rawNode: unknown, depth: number): Record<string, unknown> {
@@ -406,9 +407,13 @@ const routes = array(ir.routes).map((entry) => {
                 route.response_kind === "ui_bootstrap" &&
                 route.method === "GET")
         ) ||
-        !["read", "acceptance", "operation_result", "ui_bootstrap"].includes(
-            string(route.response_kind),
-        ) ||
+        ![
+            "read",
+            "raw",
+            "acceptance",
+            "operation_result",
+            "ui_bootstrap",
+        ].includes(string(route.response_kind)) ||
         !["none", "opaque"].includes(string(route.cursor))
     )
         throw new Error("Unknown route authority.");

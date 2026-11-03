@@ -325,7 +325,14 @@ test("repair has no blind revision input and cannot submit without an exact find
         "Review original manifest expectations",
     );
     expect(posts(fixture)).toHaveLength(0);
-    expect(fixture.fetcher).not.toHaveBeenCalled();
+    expect(fixture.fetcher).toHaveBeenCalledTimes(2);
+    expect(
+        fixture.fetcher.mock.calls.every(
+            ([url, init]) =>
+                (url instanceof URL ? url.pathname : "") ===
+                    "/api/v1/jobs/readiness" && init?.method === "GET",
+        ),
+    ).toBe(true);
 });
 
 test("leaving maintenance retires confirmation while preserving the original preview handle", async () => {

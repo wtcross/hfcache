@@ -1476,6 +1476,16 @@ No enforcement or acceptance is claimed from these new register entries alone.
   enforcing reader/admission binary; the exact predecessor must refuse new
   admission on the retained new state. Browser schema-1 migration preserves
   all original evidence and remains unverified until fresh bounded GETs.
+  Browser causal refusal proof requires its new submission's typed closed reply
+  and authenticated own-key GET; restored proof requires the same saved
+  disposition ID. Older unknowns cannot borrow a later refusal. Visible recovery
+  uses existing bounded read pools; hidden, superseded or cross-tab callbacks
+  cannot donate freshness. Generic disposition proof never clears independent
+  configuration/host-effect precautions. Reviewed retirement preserves original
+  IDs, receipt identities and summaries as historical evidence; retained-ID
+  review readiness is fresh RAM-only own-key unknown proof. Contradictory
+  not-admitted/admitted bindings remain operator-only conflicts. Closure fences
+  older record-specific observation tokens.
   Server enforcement: [dispositions/store](../src/hfcache/api/operations.py),
   [independent leases](../src/hfcache/api/intents.py),
   [review routes](../src/hfcache/api/intent_routes.py),

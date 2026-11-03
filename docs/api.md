@@ -510,6 +510,13 @@ the original handles and labels the old outcome unknown. See
 [decision 164](adr/decision-164.md) and
 [disposition schemas](schemas.md#133-original-intent-dispositions-schema-1).
 
+The browser wire registry declares these three existing endpoints as closed raw
+JSON authorities, separate from domain Envelopes and202 acceptances. Readiness
+and original-intent responses are clamped to64KiB by the browser transport;
+retirement remains an explicit keyed JSON POST through the session controller.
+Public disposition decoders expose no namespace/request digests or private
+review evidence.
+
 ## Wire validation and errors
 
 Wire models are independently strict and versioned. Shared sanitization removes

@@ -1,4 +1,4 @@
-import { useId, useRef, useSyncExternalStore } from "react";
+import { useId, useRef, useSyncExternalStore, useEffect } from "react";
 import type { FormEvent } from "react";
 import { ChoiceControl } from "./ChoiceControl";
 import {
@@ -58,6 +58,9 @@ export function JobForms({
     onOpenConfiguration?: () => void;
 }) {
     const state = useSyncExternalStore(store.subscribe, store.snapshot);
+    useEffect(() => {
+        void store.recheckReadiness();
+    }, [store, state.authGeneration]);
     const id = useId(),
         input = useRef<HTMLInputElement>(null);
     const form = state.form,
@@ -453,7 +456,23 @@ export function JobForms({
                     {state.notice !== null && (
                         <p role="status">{state.notice}</p>
                     )}
-                    <button type="submit" disabled={!state.canSubmit}>
+                    <p id="job-availability" role="status">
+                        {state.availabilityReason}
+                    </p>
+                    <button
+                        type="button"
+                        disabled={state.readinessPhase === "checking"}
+                        onClick={() => {
+                            void store.recheckReadiness();
+                        }}
+                    >
+                        Recheck job readiness
+                    </button>
+                    <button
+                        type="submit"
+                        aria-describedby="job-availability"
+                        disabled={!state.canSubmit}
+                    >
                         Submit job
                     </button>
                     <button
@@ -489,43 +508,39 @@ export function JobForms({
                             {state.lastAction === null
                                 ? "Not yet observed"
                                 : actionLabels[state.lastAction]}
-                            . Browser recovery record:{" "}
-                            <code>{state.lastRecordId}</code>.
+                            .
                         </p>
-                        {result?.kind === "accepted" && (
+                        <p role="status">
+                            {state.lastRecoveryState === "not_admitted"
+                                ? `Not admitted. ${state.lastRefusalExplanation ?? "The request was refused before admission."} Recheck job readiness before considering a distinct new job.`
+                                : state.lastRecoveryState === "retired_unknown"
+                                  ? "Historical outcome unknown; request retired. A distinct new job requires a separate decision."
+                                  : observed?.receipt?.state === "succeeded"
+                                    ? "Completed. The original job result is preserved."
+                                    : observed?.receipt?.state === "failed"
+                                      ? "Failed. The original admitted result is preserved."
+                                      : observed?.receipt?.state === "running"
+                                        ? "Running. Follow the original job result."
+                                        : result?.kind === "accepted"
+                                          ? "Submitted. This is not domain completion."
+                                          : result?.kind === "refused"
+                                            ? "Not submitted. Local validation refused the request before transmission."
+                                            : "Needs review. Admission is uncertain; preserve the original request in Operations."}
+                        </p>
+                        <details>
+                            <summary>Advanced admission diagnostics</summary>
                             <p>
-                                202 admitted. Original operation ID:{" "}
-                                <code>
-                                    {result.acceptance.operation.operation_id}
-                                </code>
-                                . This is not domain completion.
+                                Browser recovery record:{" "}
+                                <code>{state.lastRecordId}</code>.
                             </p>
-                        )}
-                        {result?.kind === "uncertain" && (
+                            <pre>{JSON.stringify(result, null, 2)}</pre>
                             <p>
-                                Admission is uncertain ({result.reason}). Keep
-                                the original handle and use authenticated
-                                observation; do not submit again to discover an
-                                outcome.
+                                Observation: {observed?.phase ?? "unavailable"}.
+                                Original backend receipt state:{" "}
+                                {observed?.receipt?.state ?? "not yet observed"}
+                                .
                             </p>
-                        )}
-                        {result?.kind === "api_problem" && (
-                            <p>
-                                Admission refused: HTTP {result.status},{" "}
-                                <code>{result.problem.code}</code>. No alternate
-                                request was sent.
-                            </p>
-                        )}
-                        {result?.kind === "refused" && (
-                            <p>Not submitted: {result.reason}.</p>
-                        )}
-                        {observed !== null && (
-                            <p>
-                                Observation: {observed.phase}. Original backend
-                                receipt state:{" "}
-                                {observed.receipt?.state ?? "not yet observed"}.
-                            </p>
-                        )}
+                        </details>
                         <p>
                             Use the original recovery record below for exact
                             events, classified results and reports. Missing or

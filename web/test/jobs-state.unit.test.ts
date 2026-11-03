@@ -405,3 +405,88 @@ test("detached subscribers cannot prevent state changes or private clearing", as
     expect(store.snapshot().candidateFile).toBeNull();
     expect(store.snapshot().form.kind).toBe("installedPlan");
 });
+
+function readinessResponse(changes: Record<string, unknown> = {}) {
+    return jsonResponse({
+        schema_version: 1,
+        archive_id: ARCHIVE_ID,
+        config_fingerprint: "2".repeat(64),
+        archive: true,
+        hub: true,
+        control: true,
+        archive_writable: true,
+        verification_available: true,
+        ...changes,
+    });
+}
+test.each([
+    [{ archive: false }, "archive writes are disabled"],
+    [{ archive_writable: false }, "required archive storage is read-only"],
+    [{ verification_available: false }, "verification worker is unavailable"],
+])(
+    "fresh readiness %j explains a real disabled job without host-read prerequisite",
+    async (changes, reason) => {
+        const fetcher = vi
+            .fn<typeof fetch>()
+            .mockResolvedValue(readinessResponse(changes));
+        const { store } = setup(fetcher);
+        store.setForm({
+            kind: "verification",
+            mode: "full",
+            runId: "",
+            revision: "",
+        });
+        await store.recheckReadiness();
+        expect(store.snapshot().canSubmit).toBe(false);
+        expect(store.snapshot().availabilityReason).toContain(reason);
+        expect(fetcher).toHaveBeenCalledOnce();
+        expect(
+            urlOf(fetcher.mock.calls[0]?.[0] ?? "https://invalid").pathname,
+        ).toBe("/api/v1/jobs/readiness");
+        expect(fetcher.mock.calls[0]?.[1]?.method).toBe("GET");
+    },
+);
+test("unknown advisory readiness permits an explicit fresh server check and expires without background GET", async () => {
+    const fetcher = vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(readinessResponse({ hub: null }));
+    const { store } = setup(fetcher);
+    await store.recheckReadiness();
+    expect(store.snapshot().canSubmit).toBe(true);
+    expect(store.snapshot().availabilityReason).toContain("unknown");
+    expect(fetcher).toHaveBeenCalledOnce();
+    vi.spyOn(performance, "now").mockReturnValue(performance.now() + 30001);
+    store.setForm({ ...defaultJobForm(), selectors: "" });
+    expect(store.snapshot().availabilityReason).toContain(
+        "Readiness unavailable",
+    );
+    expect(store.snapshot().canSubmit).toBe(true);
+    expect(fetcher).toHaveBeenCalledOnce();
+});
+test("hidden readiness GET aborts and late response cannot become current; return owns one fresh GET", async () => {
+    const late = deferred<Response>();
+    const fetcher = vi
+        .fn<typeof fetch>()
+        .mockReturnValueOnce(late.promise)
+        .mockResolvedValue(readinessResponse({ hub: false }));
+    const { store, controller } = setup(fetcher);
+    const reading = store.recheckReadiness();
+    await vi.waitFor(() => {
+        expect(fetcher).toHaveBeenCalledOnce();
+    });
+    controller.setPageHidden(true);
+    expect(fetcher.mock.calls[0]?.[1]?.signal?.aborted).toBe(true);
+    late.resolve(readinessResponse());
+    await reading;
+    expect(store.snapshot().readinessPhase).toBe("unavailable");
+    controller.setPageHidden(false);
+    await vi.waitFor(() => {
+        expect(store.snapshot().availabilityReason).toContain(
+            "Hub access is disabled",
+        );
+    });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher.mock.calls.every(([, init]) => init?.method === "GET")).toBe(
+        true,
+    );
+});

@@ -4,8 +4,8 @@
 | --- | --- |
 | State | active |
 | Active plan | [Job recovery and archive writes](2026-11-03-plan-job-recovery-and-archive-writes.md) |
-| Current task | [WEB-032](tasks/web-032-job-readiness-and-automatic-recovery.md) |
-| Blocker | API-019 complete; WEB-032 ready. Installed prerequisites remain separate |
+| Current task | [OPS-027](tasks/ops-027-explicit-rootless-writer-profile.md) |
+| Blocker | WEB-032 complete; OPS-027 protected runtime work next. Installed acceptance remains separate |
 | Last completed plan | [Ignore root Node dependencies](2026-11-02-plan-root-node-ignore.md) |
 | Branch | main |
 | Updated | 2026-11-03 |

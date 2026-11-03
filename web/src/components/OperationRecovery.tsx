@@ -1,6 +1,7 @@
 import { useId, useState, useSyncExternalStore } from "react";
 import type { FormEvent } from "react";
 import { Notice, Panel } from "../primitives";
+import { refusalExplanation } from "../state/operation-registry";
 import type { RecoveryRecord } from "../state/operation-registry";
 import type {
     SessionController,
@@ -105,6 +106,8 @@ function RecoveryEntry({
         () => controller.observer.snapshot(record.recordId),
     );
     const [message, setMessage] = useState<string | null>(null);
+    const [reviewing, setReviewing] = useState(false);
+    const [pending, setPending] = useState(false);
     const handles = JSON.stringify(
         {
             recordId: record.recordId,
@@ -140,95 +143,192 @@ function RecoveryEntry({
             className="recovery-entry"
             aria-label={`Recovery record ${record.recordId}`}
         >
-            <h3>{record.action ?? "Imported original handle"}</h3>
-            <dl className="recovery-facts">
-                <dt>Recovery state</dt>
-                <dd>{record.state}</dd>
-                <dt>Original operation ID</dt>
-                <dd>
-                    <code>
-                        {record.handles.operationId ?? "Not yet recovered"}
-                    </code>
-                </dd>
-                <dt>Original authority</dt>
-                <dd>
-                    {record.originalAuthority.kind === "web"
-                        ? `${record.originalAuthority.scope.origin}${record.originalAuthority.scope.publicPrefix} · ${record.originalAuthority.scope.subject}`
-                        : record.originalAuthority.kind === "cockpit"
-                          ? "Imported predecessor authority; key namespace remains separate"
-                          : "Creator unknown; ID observation does not prove key ownership"}
-                </dd>
-                <dt>Saved locally</dt>
-                <dd>{new Date(record.createdAt).toISOString()}</dd>
-                <dt>Browser observation</dt>
-                <dd>
-                    {observation.phase}
-                    {observation.pauseReason === null
-                        ? ""
-                        : ` · ${observation.pauseReason.replaceAll("_", " ")}`}
-                </dd>
-                <dt>Last observed backend state</dt>
-                <dd>
-                    {observation.receipt?.state ??
-                        "Not observed in this authenticated session"}
-                </dd>
-                {observation.receipt !== null && (
-                    <>
-                        <dt>Server updated</dt>
-                        <dd>{observation.receipt.updated_at}</dd>
-                        <dt>Domain run ID</dt>
-                        <dd>
-                            <code>
-                                {observation.receipt.domain_run_id ??
-                                    "Not assigned"}
-                            </code>
-                        </dd>
-                    </>
+            <h3>
+                {record.action === "catalogRefresh"
+                    ? "Refresh metadata"
+                    : record.action === "sync"
+                      ? "Sync"
+                      : (record.action?.replace(/([A-Z])/gu, " $1") ??
+                        "Imported original request")}
+            </h3>
+            <p role="status">
+                {record.state === "not_admitted"
+                    ? [
+                          "/api/v1/config/applications",
+                          "/api/v1/host/sync-schedule/changes",
+                          "/api/v1/host/sync-observer/stops",
+                      ].includes(record.route ?? "")
+                        ? "Not admitted. Independent protected effects still need their original outcome review."
+                        : `Not admitted. This request was refused before admission. ${refusalExplanation(record.disposition?.reason ?? null)} Recheck job readiness before considering a distinct new job.`
+                    : record.state === "retired_unknown"
+                      ? [
+                            "/api/v1/config/applications",
+                            "/api/v1/host/sync-schedule/changes",
+                            "/api/v1/host/sync-observer/stops",
+                        ].includes(record.route ?? "")
+                          ? "Historical outcome unknown; request retired. Independent protected effects still need their original outcome review."
+                          : "Historical outcome unknown; request retired. You may start a new job."
+                      : record.state === "conflict"
+                        ? "Needs review. Original request evidence conflicts with retained admission. Preserve original handles and ask an operator to compare the original key and receipt; do not submit a replacement."
+                        : record.state === "terminal"
+                          ? record.terminal?.outcome === "failed"
+                              ? "Failed. The original admitted job result is preserved."
+                              : "Completed. The original job result is preserved."
+                          : observation.receipt?.state === "running"
+                            ? "Running. Follow the original job result."
+                            : ["accepted", "observing"].includes(record.state)
+                              ? "Submitted. Waiting for the original job result."
+                              : "Needs review. The original request outcome is unknown; do not repeat it."}
+            </p>
+            <details>
+                <summary>Advanced diagnostics and original handles</summary>
+                <dl className="recovery-facts">
+                    <dt>Recovery state</dt>
+                    <dd>{record.state}</dd>
+                    <dt>Original operation ID</dt>
+                    <dd>
+                        <code>
+                            {record.handles.operationId ?? "Not yet recovered"}
+                        </code>
+                    </dd>
+                    <dt>Original authority</dt>
+                    <dd>
+                        {record.originalAuthority.kind === "web"
+                            ? `${record.originalAuthority.scope.origin}${record.originalAuthority.scope.publicPrefix} · ${record.originalAuthority.scope.subject}`
+                            : record.originalAuthority.kind === "cockpit"
+                              ? "Imported predecessor authority; key namespace remains separate"
+                              : "Creator unknown; ID observation does not prove key ownership"}
+                    </dd>
+                    <dt>Saved locally</dt>
+                    <dd>{new Date(record.createdAt).toISOString()}</dd>
+                    <dt>Browser observation</dt>
+                    <dd>
+                        {observation.phase}
+                        {observation.pauseReason === null
+                            ? ""
+                            : ` · ${observation.pauseReason.replaceAll("_", " ")}`}
+                    </dd>
+                    <dt>Last observed backend state</dt>
+                    <dd>
+                        {observation.receipt?.state ??
+                            "Not observed in this authenticated session"}
+                    </dd>
+                    {observation.receipt !== null && (
+                        <>
+                            <dt>Server updated</dt>
+                            <dd>{observation.receipt.updated_at}</dd>
+                            <dt>Domain run ID</dt>
+                            <dd>
+                                <code>
+                                    {observation.receipt.domain_run_id ??
+                                        "Not assigned"}
+                                </code>
+                            </dd>
+                        </>
+                    )}
+                </dl>
+                {record.state !== "terminal" && (
+                    <p className="recovery-unknown">
+                        Outcome is unconfirmed for the API receipt until
+                        authenticated original observation establishes it.
+                        Protected host effects are shown separately when
+                        available. Do not repeat the operation to recover a
+                        missing response.
+                    </p>
                 )}
-            </dl>
-            {record.state !== "terminal" && (
-                <p className="recovery-unknown">
-                    Outcome is unconfirmed for the API receipt until
-                    authenticated original observation establishes it. Protected
-                    host effects are shown separately when available. Do not
-                    repeat the operation to recover a missing response.
-                </p>
-            )}
-            {record.terminal !== null && (
-                <p>
-                    Saved result: {record.terminal.command} ·{" "}
-                    {record.terminal.outcome} · exit {record.terminal.exitCode}.{" "}
-                    {record.state === "terminal"
-                        ? "Verified in this session."
-                        : "Saved history requires current authenticated verification."}
-                </p>
-            )}
+                {record.terminal !== null && (
+                    <p>
+                        Saved result: {record.terminal.command} ·{" "}
+                        {record.terminal.outcome} · exit{" "}
+                        {record.terminal.exitCode}.{" "}
+                        {record.state === "terminal"
+                            ? "Verified in this session."
+                            : "Saved history requires current authenticated verification."}
+                    </p>
+                )}
+            </details>
             <div className="recovery-actions">
                 <button
                     type="button"
-                    onClick={observe}
-                    disabled={observation.phase === "observing"}
-                >
-                    Observe original operation
-                </button>
-                <button
-                    type="button"
                     onClick={() => {
-                        controller.stopObserving(record.recordId);
+                        if (controller.canReviewOriginal(record.recordId)) {
+                            setReviewing(true);
+                            return;
+                        }
+                        if (record.handles.kind === "basic-key")
+                            void controller.reconcileOriginal(record.recordId);
+                        else observe();
                     }}
-                    disabled={observation.phase !== "observing"}
+                    disabled={pending || observation.phase === "observing"}
                 >
-                    Stop observing in this browser
+                    {controller.canReviewOriginal(record.recordId)
+                        ? "Review original request"
+                        : "Recheck original request"}
                 </button>
-                <button
-                    type="button"
-                    onClick={() => {
-                        void copy();
-                    }}
-                >
-                    Copy recovery handles
-                </button>
+                <details>
+                    <summary>Observation and export controls</summary>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            controller.stopObserving(record.recordId);
+                        }}
+                        disabled={observation.phase !== "observing"}
+                    >
+                        Stop observing in this browser
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            void copy();
+                        }}
+                    >
+                        Copy recovery handles
+                    </button>
+                </details>
             </div>
+            {reviewing && (
+                <section aria-label="Review original request">
+                    <p>
+                        The historical outcome is unknown. Review asks the
+                        server to verify that no original work or unresolved
+                        protected effects remain and permanently retire this
+                        original request. It cannot retry or cancel work.
+                        Starting a distinct new job remains a separate decision.
+                    </p>
+                    <button
+                        type="button"
+                        disabled={
+                            pending ||
+                            !controller.canReviewOriginal(record.recordId)
+                        }
+                        onClick={() => {
+                            setPending(true);
+                            void controller
+                                .reviewOriginal(record.recordId)
+                                .catch(() => {
+                                    setMessage(
+                                        "Fresh review is unavailable. Recheck the original request before confirming.",
+                                    );
+                                })
+                                .finally(() => {
+                                    setPending(false);
+                                    setReviewing(false);
+                                });
+                        }}
+                    >
+                        Confirm review and retire original request
+                    </button>
+                    <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => {
+                            setReviewing(false);
+                        }}
+                    >
+                        Keep original request
+                    </button>
+                </section>
+            )}
             {configuration !== undefined &&
                 record.handles.kind === "basic-key" &&
                 record.route === "/api/v1/config/applications" && (
@@ -385,6 +485,18 @@ export function OperationRecovery({
                     ))
                 )}
             </Panel>
+            {controller.exportRecoveryMetadata() !== null && (
+                <details>
+                    <summary>Advanced recovery metadata export</summary>
+                    <p>
+                        Validated nonsecret saved metadata. This export supplies
+                        no fresh outcome proof.
+                    </p>
+                    <pre className="recovery-handles">
+                        {controller.exportRecoveryMetadata()}
+                    </pre>
+                </details>
+            )}
             <Panel title="Import original handle">
                 <form onSubmit={importHandle} className="recovery-import">
                     <fieldset className="recovery-choice-fieldset">

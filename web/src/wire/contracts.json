@@ -5111,6 +5111,151 @@
       "kind": "object",
       "semantic_ids": []
     },
+    "JobReadiness": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "schema_version",
+          "node": {
+            "kind": "integer",
+            "maximum": null,
+            "minimum": null,
+            "semantic_ids": [
+              "hfcache.client_models.exact_version"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "archive_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_archive_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "config_fingerprint",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": null,
+                "min_codepoints": null,
+                "pattern": null,
+                "semantic_ids": [
+                  "hfcache.models._parse_sha256"
+                ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "archive",
+          "node": {
+            "choices": [
+              {
+                "kind": "boolean",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "hub",
+          "node": {
+            "choices": [
+              {
+                "kind": "boolean",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "control",
+          "node": {
+            "choices": [
+              {
+                "kind": "boolean",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "archive_writable",
+          "node": {
+            "choices": [
+              {
+                "kind": "boolean",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "verification_available",
+          "node": {
+            "choices": [
+              {
+                "kind": "boolean",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
     "ManagedAssessment": {
       "extra": "forbid",
       "fields": [
@@ -6111,6 +6256,106 @@
       "kind": "object",
       "semantic_ids": []
     },
+    "OriginalIntent": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "schema_version",
+          "node": {
+            "kind": "integer",
+            "maximum": null,
+            "minimum": null,
+            "semantic_ids": [
+              "hfcache.client_models.exact_version"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "archive_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_archive_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "state",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "admitted"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "not_admitted"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "retired_unknown"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "unknown"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "operation",
+          "node": {
+            "choices": [
+              {
+                "kind": "ref",
+                "name": "ClientOperation",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "disposition",
+          "node": {
+            "choices": [
+              {
+                "kind": "ref",
+                "name": "PublicIntentDisposition",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
+    },
     "PlanPayload": {
       "extra": "forbid",
       "fields": [
@@ -6936,6 +7181,161 @@
       "semantic_ids": [
         "hfcache.models.VersionedModel._check_schema_version"
       ]
+    },
+    "PublicIntentDisposition": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "disposition_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.identity.parse_run_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "state",
+          "node": {
+            "choices": [
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "not_admitted"
+              },
+              {
+                "kind": "literal",
+                "semantic_ids": [],
+                "value": "retired_unknown"
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "archive_id",
+          "node": {
+            "kind": "string",
+            "max_codepoints": null,
+            "min_codepoints": null,
+            "pattern": null,
+            "semantic_ids": [
+              "hfcache.models._parse_archive_id"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "route",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": null,
+                "min_codepoints": null,
+                "pattern": "^/api/v1/[a-z0-9_/-]{1,200}$",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "created_at",
+          "node": {
+            "kind": "string",
+            "max_codepoints": 32,
+            "min_codepoints": 20,
+            "pattern": null,
+            "semantic_ids": [
+              "timestamp.wire"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "reason",
+          "node": {
+            "choices": [
+              {
+                "choices": [
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "permission_denied"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "storage_read_only"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "executor_unavailable"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "admission_unavailable"
+                  },
+                  {
+                    "kind": "literal",
+                    "semantic_ids": [],
+                    "value": "invalid_policy"
+                  }
+                ],
+                "kind": "union",
+                "semantic_ids": []
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        },
+        {
+          "name": "review_sha256",
+          "node": {
+            "choices": [
+              {
+                "kind": "string",
+                "max_codepoints": null,
+                "min_codepoints": null,
+                "pattern": null,
+                "semantic_ids": [
+                  "hfcache.models._parse_sha256"
+                ]
+              },
+              {
+                "kind": "null",
+                "semantic_ids": []
+              }
+            ],
+            "kind": "union",
+            "semantic_ids": []
+          },
+          "required": true
+        }
+      ],
+      "kind": "object",
+      "semantic_ids": []
     },
     "PublicationRefresh": {
       "extra": "forbid",
@@ -10317,6 +10717,34 @@
     "RequestInstalledValidationSubmission": {
       "extra": "forbid",
       "fields": [],
+      "kind": "object",
+      "semantic_ids": []
+    },
+    "RequestIntentRetirement": {
+      "extra": "forbid",
+      "fields": [
+        {
+          "name": "schema_version",
+          "node": {
+            "kind": "integer",
+            "maximum": null,
+            "minimum": null,
+            "semantic_ids": [
+              "hfcache.client_models.exact_version"
+            ]
+          },
+          "required": true
+        },
+        {
+          "name": "confirm",
+          "node": {
+            "kind": "literal",
+            "semantic_ids": [],
+            "value": "retire_unknown"
+          },
+          "required": true
+        }
+      ],
       "kind": "object",
       "semantic_ids": []
     },
@@ -15637,6 +16065,51 @@
     },
     {
       "binding_ids": [],
+      "commands": [],
+      "cursor": "none",
+      "failure": [],
+      "id": "job_readiness",
+      "method": "GET",
+      "mode": "default",
+      "path": "/api/v1/jobs/readiness",
+      "path_parameters": [],
+      "query_parameters": [],
+      "request_body": null,
+      "response_kind": "raw",
+      "success": "JobReadiness"
+    },
+    {
+      "binding_ids": [],
+      "commands": [],
+      "cursor": "none",
+      "failure": [],
+      "id": "original_intent",
+      "method": "GET",
+      "mode": "default",
+      "path": "/api/v1/operations/intent",
+      "path_parameters": [],
+      "query_parameters": [],
+      "request_body": null,
+      "response_kind": "raw",
+      "success": "OriginalIntent"
+    },
+    {
+      "binding_ids": [],
+      "commands": [],
+      "cursor": "none",
+      "failure": [],
+      "id": "retire_intent",
+      "method": "POST",
+      "mode": "default",
+      "path": "/api/v1/operations/intent/retire",
+      "path_parameters": [],
+      "query_parameters": [],
+      "request_body": "RequestIntentRetirement",
+      "response_kind": "raw",
+      "success": "OriginalIntent"
+    },
+    {
+      "binding_ids": [],
       "commands": [
         "version"
       ],
@@ -18381,5 +18854,5 @@
       "source_hash": "dff0773c84838ccad3236d517d37a71717ba41c0d3b78c53276fb29fd9ee1c61"
     }
   },
-  "source_digest": "0472c83945af56a0d3033f347716f2cd1f08580553a320aecaead02db312a24b"
+  "source_digest": "53ac5ba8d3d043d8e08a0a49d2a766150f68122d85887304063f9c2d2fb890ed"
 }

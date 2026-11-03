@@ -1,7 +1,7 @@
 # Close original intent without inventing historical execution
 
 - Decision identity: 164.
-- Status: Server implementation and owned source checks; browser and installed conformance pending.
+- Status: Server and browser source implementation; installed conformance pending.
 - Date: 2026-11-03.
 - Introducing change: accepted design at `60d086931dc03d8582751c6a3c9b17eeb6f93715`; server implementation amendment below.
 
@@ -95,3 +95,36 @@ frozen unchanged. The executable exact0.3.1 c23abba reader drill refuses new-sta
 scans/admission while retaining compatible exact-ID reads. These source proofs
 leave browser recovery, protected installer wiring/drain and installed workflow
 conformance with their selected later packages.
+
+## Browser implementation refinement (2026-11-03)
+
+Closed export-only DTOs describe the existing raw readiness and intent wire
+responses through the same audited generator. A single bounded readiness read
+uses existing read coordination and response reservation. Its monotonic30-second
+advisory lifetime does not turn unknown optional facts into denied permission.
+Visible saved originals reconcile with authenticated GETs in the existing pools;
+hide, authentication and cross-tab changes abort and fence their callbacks.
+Late POST acknowledgement preserves handles without donating current proof.
+
+Schema2 migration validates the complete preserving replacement before writing
+once under the fixed storage key. Unverifiable post-commit readback retains the
+exact validated original export and blocks submission; restoring it requires a
+fresh equality read of this migration's own replacement, never a blind overwrite
+of concurrent/unknown storage. Its original scope, handles, summaries and
+32-record/64KiB/reserve limits remain. Causal refusal proof is created only for
+a new current submission's typed closed response followed by its own-key GET;
+a saved matching disposition ID requires fresh verification on restore. An older
+unknown cannot borrow a later refusal. Explicit reviewed retirement remains a
+separate confirmed action. Protected configuration/host-effect precautions remain
+independent even after generic terminal or disposition evidence. These implement
+the accepted protocol; no new architectural choice or dependency is introduced.
+
+Reviewed retirement may preserve an original browser operation ID, receipt
+identity and saved terminal summary when the current own-key intent is unknown.
+These retained fields remain historical evidence; they are never overwritten by
+closure or promoted to fresh outcome proof. A retained-ID Review action requires
+fresh RAM-only own-key unknown evidence under the current authentication and
+visibility context. Conflict remains blocked for operator review; a not-admitted
+projection cannot contradict retained admission. Record-specific observation
+authorizations bind the current disposition, and closure fences older callbacks
+without clearing independent configuration or host-effect precautions.

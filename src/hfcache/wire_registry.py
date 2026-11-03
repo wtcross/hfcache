@@ -80,6 +80,7 @@ AUTHORITIES.update(
     if isinstance(value, type)
     and issubclass(value, BaseModel)
     and value.__module__ == payloads.__name__
+    and name != "IntentRetirement"
 )
 AUTHORITIES.update(
     (name, value)
@@ -156,6 +157,30 @@ READ_ROUTES = (
         "UiBootstrap",
         failure=(),
         binding_ids=("ui.bootstrap",),
+    ),
+    Route(
+        "job_readiness", "GET", PREFIX + "/jobs/readiness", "default", "raw", (), "JobReadiness", ()
+    ),
+    Route(
+        "original_intent",
+        "GET",
+        PREFIX + "/operations/intent",
+        "default",
+        "raw",
+        (),
+        "OriginalIntent",
+        (),
+    ),
+    Route(
+        "retire_intent",
+        "POST",
+        PREFIX + "/operations/intent/retire",
+        "default",
+        "raw",
+        (),
+        "OriginalIntent",
+        (),
+        request_body="IntentRetirement",
     ),
     _read("version", "/version", "version", "VersionPayload"),
     _read("capabilities", "/capabilities", "capabilities", "Capabilities"),
@@ -347,6 +372,7 @@ REQUEST_MODELS = (
             "InitializationSubmission",
         )
     }
+    | {"IntentRetirement": "hfcache.wire_models:IntentRetirement"}
     | {"ConfigApplicationSubmission": "hfcache.config_models:ConfigApplicationSubmission"}
     | {
         name: "hfcache.host_actions_models:" + name

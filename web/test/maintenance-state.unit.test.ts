@@ -515,3 +515,44 @@ test("captured repair attribution replaces the old displayed receipt before a se
     expect(samples[0]).toEqual({ id: null, path: "weights.bin" });
     expect(f.store.snapshot().effectRecordId).not.toBe(old);
 });
+
+test.each([
+    [
+        { control: false },
+        "Unavailable: control-state jobs are disabled.",
+        false,
+    ],
+    [{ archive: false }, "Unavailable: archive writes are disabled.", true],
+    [
+        { archive_writable: false },
+        "Unavailable: required archive storage is read-only.",
+        true,
+    ],
+])(
+    "maintenance readiness %j distinguishes preview control from archive effects",
+    async (changes, reason, previewAllowed) => {
+        const f = setup();
+        f.fetcher.mockResolvedValueOnce(
+            jsonResponse({
+                schema_version: 1,
+                archive_id: f.controller.originalScope().archiveId,
+                config_fingerprint: null,
+                archive: true,
+                hub: true,
+                control: true,
+                archive_writable: true,
+                verification_available: true,
+                ...changes,
+            }),
+        );
+        await f.store.recheckReadiness();
+        expect(f.store.snapshot().canPreview).toBe(previewAllowed);
+        expect(
+            previewAllowed
+                ? f.store.snapshot().applyAvailability
+                : f.store.snapshot().previewAvailability,
+        ).toBe(reason);
+        expect(f.fetcher).toHaveBeenCalledOnce();
+        expect(f.fetcher.mock.calls[0]?.[1]?.method).toBe("GET");
+    },
+);

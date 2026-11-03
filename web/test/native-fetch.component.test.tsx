@@ -1,6 +1,5 @@
 /** Branded browser transport boundary; real mount/controller/client, owned HTTP wires only. */
 import { act, screen, waitFor, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import { mountApplication } from "../src/mount";
 import { bootstrapScope } from "../src/bootstrap";
@@ -67,6 +66,19 @@ function brandedTransport() {
             method,
             originalKey: new Headers(options?.headers).get("Idempotency-Key"),
         });
+        if (url.pathname === "/api/v1/jobs/readiness")
+            return Promise.resolve(
+                jsonResponse({
+                    schema_version: 1,
+                    archive_id: bootstrap.configured_archive_id,
+                    config_fingerprint: null,
+                    archive: null,
+                    hub: null,
+                    control: null,
+                    archive_writable: null,
+                    verification_available: null,
+                }),
+            );
         if (url.pathname === "/api/v1/host/status")
             return Promise.resolve(jsonResponse(hostStatusWire()));
         if (url.pathname === "/api/v1/status") {
@@ -116,9 +128,25 @@ function brandedTransport() {
             next_event_sequence: 1,
             result_recorded: true,
         };
+        if (url.pathname === "/api/v1/operations/intent")
+            return Promise.resolve(
+                jsonResponse({
+                    schema_version: 1,
+                    archive_id: bootstrap.configured_archive_id,
+                    state: "admitted",
+                    operation,
+                    disposition: null,
+                }),
+            );
         const response =
-            url.pathname === "/api/v1/operations/lookup"
-                ? readWire("operations lookup", { operation })
+            url.pathname === "/api/v1/operations/lookup" ||
+            url.pathname === `/api/v1/operations/${operationId}`
+                ? readWire(
+                      url.pathname.endsWith("/lookup")
+                          ? "operations lookup"
+                          : "operations show",
+                      { operation },
+                  )
                 : url.pathname === `/api/v1/operations/${operationId}/result`
                   ? readWire("plan", { repositories: [] })
                   : null;
@@ -178,12 +206,6 @@ test("production default mount restores uncertain key then observes actual typed
     const transport = brandedTransport();
     mount("operations");
     await screen.findByRole("heading", { name: "Original operation recovery" });
-    expect(transport.requests).toEqual([]);
-    await userEvent.click(
-        screen.getByRole("button", {
-            name: "Observe original operation",
-        }),
-    );
     await screen.findByText(/Verified in this session\./u);
     expect(screen.getByText("settled", { exact: true })).toBeInTheDocument();
     const recovery = screen.getByRole("article", {
@@ -201,7 +223,13 @@ test("production default mount restores uncertain key then observes actual typed
         ).getByText(operationId, { exact: true }),
     ).toBeInTheDocument();
     expect(transport.requests).toEqual([
-        { path: "/api/v1/operations/lookup", method: "GET", originalKey },
+        { path: "/api/v1/jobs/readiness", method: "GET", originalKey: null },
+        { path: "/api/v1/operations/intent", method: "GET", originalKey },
+        {
+            path: `/api/v1/operations/${operationId}`,
+            method: "GET",
+            originalKey: null,
+        },
         {
             path: `/api/v1/operations/${operationId}/result`,
             method: "GET",

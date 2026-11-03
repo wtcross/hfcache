@@ -8,6 +8,7 @@ import {
 } from "../src/state/session-controller";
 import type { SessionController } from "../src/state/session-controller";
 import type { SubmissionIntent } from "../src/state/session-controller";
+import { createCrossTabAdvice } from "../src/state/cross-tab";
 import { OPERATION_STORAGE_KEY } from "../src/state/operation-registry";
 import type { OperationStorage } from "../src/state/operation-registry";
 import {
@@ -239,7 +240,7 @@ test("real request validation refusal before fetch releases only its own prepare
     expect(value.snapshot().registry.records).toHaveLength(0);
     expect(value.snapshot().canSubmit).toBe(true);
     expect(value.snapshot().notice).toContain("Not submitted");
-    expect(storage.saved).toBe('{"schemaVersion":1,"records":[]}');
+    expect(storage.saved).toBe('{"schemaVersion":2,"records":[]}');
 });
 
 test("lost acknowledgment is one POST, and explicit observation only looks up its original key", async () => {
@@ -566,7 +567,7 @@ test("reconnect failure and a changed release remain explicit without another su
     expect(fetcher).not.toHaveBeenCalled();
 });
 
-test("reconnected authority requires explicit original-key observation and never replays POST", async () => {
+test("reconnected authority reconciles with one bounded original intent GET and never replays POST", async () => {
     const terminal = receipt({
         state: "succeeded",
         completed_at: at,
@@ -576,6 +577,16 @@ test("reconnected authority requires explicit original-key observation and never
     const fetcher = vi.fn<typeof fetch>().mockImplementation((url, options) => {
         if (options?.method === "POST")
             return Promise.reject(new TypeError("lost acknowledgment"));
+        if (requestUrl(url).endsWith("/intent"))
+            return Promise.resolve(
+                jsonResponse({
+                    schema_version: 1,
+                    archive_id: ARCHIVE_ID,
+                    state: "unknown",
+                    operation: null,
+                    disposition: null,
+                }),
+            );
         if (requestUrl(url).endsWith("/result"))
             return Promise.resolve(planResult());
         const wrapper = readWire(
@@ -608,7 +619,10 @@ test("reconnected authority requires explicit original-key observation and never
     await value.reconnect();
     expect(value.snapshot().connection).toBe("connected");
     expect(value.snapshot().canSubmit).toBe(false);
-    expect(fetcher).toHaveBeenCalledOnce();
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(requestUrl(fetcher.mock.calls[1]?.[0])).toContain(
+        "/operations/intent",
+    );
     value.observe(submitted.recordId);
     await vi.waitFor(() => {
         expect(value.observer.snapshot(submitted.recordId).phase).toBe(
@@ -619,7 +633,7 @@ test("reconnected authority requires explicit original-key observation and never
     expect(
         fetcher.mock.calls.filter(([, options]) => options?.method === "POST"),
     ).toHaveLength(1);
-    expect(requestUrl(fetcher.mock.calls[1]?.[0])).toContain(
+    expect(requestUrl(fetcher.mock.calls[2]?.[0])).toContain(
         "/operations/lookup",
     );
 });
@@ -733,4 +747,276 @@ test("a late acknowledgement does not pause a deliberate Observe made after retu
         "POST",
         "GET",
     ]);
+});
+
+function intentProjection(
+    state: "unknown" | "not_admitted" | "retired_unknown" = "unknown",
+) {
+    return {
+        schema_version: 1,
+        archive_id: ARCHIVE_ID,
+        state,
+        operation: null,
+        disposition:
+            state === "unknown"
+                ? null
+                : {
+                      disposition_id: "d".repeat(32),
+                      state,
+                      archive_id: ARCHIVE_ID,
+                      route: state === "not_admitted" ? "/api/v1/plans" : null,
+                      created_at: at,
+                      reason:
+                          state === "not_admitted" ? "permission_denied" : null,
+                      review_sha256:
+                          state === "retired_unknown" ? "c".repeat(64) : null,
+                  },
+    };
+}
+test("typed closed refusal is one POST plus own-key GET; restoration verifies without replay", async () => {
+    const fetcher = vi.fn<typeof fetch>((url, init) => {
+        if (init?.method === "POST") {
+            const response = jsonResponse(problemWire("HFAPI010"), 403);
+            response.headers.set("Hfcache-Intent", "closed");
+            return Promise.resolve(response);
+        }
+        expect(requestUrl(url)).toContain("/operations/intent");
+        return Promise.resolve(jsonResponse(intentProjection("not_admitted")));
+    });
+    const { value, storage } = controller(fetcher);
+    await value.submit({ action: "installedPlan", request: {} });
+    expect(value.snapshot().canSubmit).toBe(true);
+    expect(value.snapshot().registry.records[0]?.state).toBe("not_admitted");
+    expect(fetcher.mock.calls.map(([, init]) => init?.method)).toEqual([
+        "POST",
+        "GET",
+    ]);
+    const originalKey = new Headers(fetcher.mock.calls[0]?.[1]?.headers).get(
+        "Idempotency-Key",
+    );
+    expect(
+        new Headers(fetcher.mock.calls[1]?.[1]?.headers).get("Idempotency-Key"),
+    ).toBe(originalKey);
+    value.dispose();
+    fetcher.mockClear();
+    const restored = controller(fetcher, storage).value;
+    expect(restored.snapshot().canSubmit).toBe(false);
+    await vi.waitFor(() => {
+        expect(restored.snapshot().canSubmit).toBe(true);
+    });
+    expect(fetcher).toHaveBeenCalledOnce();
+    expect(fetcher.mock.calls[0]?.[1]?.method).toBe("GET");
+});
+test.each(["hidden", "reauth"])(
+    "late closed POST after %s cannot donate causal proof or start reconciliation",
+    async (change) => {
+        const late = deferred<Response>();
+        const fetcher = vi.fn<typeof fetch>().mockReturnValue(late.promise);
+        const { value } = controller(fetcher);
+        const posting = value.submit({ action: "installedPlan", request: {} });
+        if (change === "hidden") {
+            value.setPageHidden(true);
+            value.setPageHidden(false);
+        } else value.disconnect();
+        const response = jsonResponse(problemWire("HFAPI010"), 403);
+        response.headers.set("Hfcache-Intent", "closed");
+        late.resolve(response);
+        await posting;
+        expect(fetcher).toHaveBeenCalledOnce();
+        expect(value.snapshot().canSubmit).toBe(false);
+        expect(value.snapshot().registry.records[0]?.disposition).toBeNull();
+    },
+);
+test("older unresolved original gets automatic GET only, later refusal stays Needs review; retirement is explicit", async () => {
+    const storage = new MemoryStorage();
+    const original = controller(
+        vi.fn<typeof fetch>().mockRejectedValue(new Error("lost")),
+        storage,
+    ).value;
+    await original.submit({ action: "installedPlan", request: {} });
+    original.dispose();
+    const fetcher = vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(jsonResponse(intentProjection("not_admitted")));
+    const value = controller(fetcher, storage).value;
+    await vi.waitFor(() => {
+        expect(fetcher).toHaveBeenCalledOnce();
+    });
+    await vi.waitFor(() => {
+        expect(value.snapshot().registry.records[0]?.state).toBe("uncertain");
+    });
+    expect(value.snapshot().canSubmit).toBe(false);
+    expect(fetcher).toHaveBeenCalledOnce();
+    expect(fetcher.mock.calls[0]?.[1]?.method).toBe("GET");
+    fetcher.mockResolvedValue(
+        jsonResponse(intentProjection("retired_unknown")),
+    );
+    const id = value.snapshot().registry.records[0]?.recordId;
+    if (id === undefined) throw new Error("Original lost");
+    await value.reviewOriginal(id);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher.mock.calls[1]?.[1]?.method).toBe("POST");
+    expect(fetcher.mock.calls[1]?.[1]?.body).toBe(
+        '{"schema_version":1,"confirm":"retire_unknown"}',
+    );
+    expect(value.snapshot().canSubmit).toBe(true);
+    expect(value.snapshot().registry.records).toHaveLength(1);
+});
+
+test("retained-ID review needs a fresh own-key unknown, preserves handles across retirement/reload and never replays a job", async () => {
+    let state: "unknown" | "retired_unknown" = "unknown";
+    const fetcher = vi.fn<typeof fetch>(() =>
+        Promise.resolve(jsonResponse(intentProjection(state))),
+    );
+    const { value, storage } = controller(fetcher);
+    const record = value.importHandle({
+        kind: "basic-key",
+        key: "owned-retained-id",
+        operationId,
+        originalScope: value.originalScope(),
+    });
+    expect(value.canReviewOriginal(record.recordId)).toBe(false);
+    await expect(value.reviewOriginal(record.recordId)).rejects.toThrow();
+    expect(fetcher).not.toHaveBeenCalled();
+    await value.reconcileOriginal(record.recordId);
+    expect(value.canReviewOriginal(record.recordId)).toBe(true);
+    state = "retired_unknown";
+    await value.reviewOriginal(record.recordId);
+    expect(value.snapshot().canSubmit).toBe(true);
+    expect(value.snapshot().registry.records[0]?.handles).toEqual(
+        record.handles,
+    );
+    expect(fetcher.mock.calls.map(([, init]) => init?.method)).toEqual([
+        "GET",
+        "POST",
+    ]);
+    expect(
+        fetcher.mock.calls.every(
+            ([, init]) =>
+                new Headers(init?.headers).get("Idempotency-Key") ===
+                "owned-retained-id",
+        ),
+    ).toBe(true);
+    value.dispose();
+    fetcher.mockClear();
+    const restored = controller(fetcher, storage).value;
+    expect(restored.snapshot().canSubmit).toBe(false);
+    expect(restored.canReviewOriginal(record.recordId)).toBe(false);
+    await vi.waitFor(() => {
+        expect(restored.snapshot().canSubmit).toBe(true);
+    });
+    expect(restored.snapshot().registry.records[0]?.handles).toEqual(
+        record.handles,
+    );
+    expect(fetcher).toHaveBeenCalledOnce();
+    expect(fetcher.mock.calls[0]?.[1]?.method).toBe("GET");
+});
+test.each(["visibility", "authentication"])(
+    "retained-ID unknown review proof is ephemeral across %s",
+    async (boundary) => {
+        let slow: ReturnType<typeof deferred<Response>> | null = null;
+        const fetcher = vi.fn<typeof fetch>(
+            () =>
+                slow?.promise ??
+                Promise.resolve(jsonResponse(intentProjection())),
+        );
+        const { value } = controller(fetcher);
+        const record = value.importHandle({
+            kind: "basic-key",
+            key: "owned-retained-id",
+            operationId,
+            originalScope: value.originalScope(),
+        });
+        await value.reconcileOriginal(record.recordId);
+        expect(value.canReviewOriginal(record.recordId)).toBe(true);
+        slow = deferred<Response>();
+        if (boundary === "visibility") {
+            value.setPageHidden(true);
+            expect(value.canReviewOriginal(record.recordId)).toBe(false);
+            value.setPageHidden(false);
+        } else {
+            value.disconnect();
+            await value.reconnect();
+        }
+        expect(value.canReviewOriginal(record.recordId)).toBe(false);
+        await expect(value.reviewOriginal(record.recordId)).rejects.toThrow();
+        slow.resolve(jsonResponse(intentProjection()));
+        await vi.waitFor(() => {
+            expect(value.canReviewOriginal(record.recordId)).toBe(true);
+        });
+        expect(fetcher.mock.calls.map(([, init]) => init?.method)).toEqual([
+            "GET",
+            "GET",
+        ]);
+    },
+);
+test("late original receipt after reviewed retained-ID retirement cannot replace its disposition or donate freshness", async () => {
+    const late = deferred<Response>();
+    const fetcher = vi.fn<typeof fetch>((url, init) => {
+        if (requestUrl(url).endsWith("/lookup")) return late.promise;
+        return Promise.resolve(
+            jsonResponse(
+                intentProjection(
+                    init?.method === "POST" ? "retired_unknown" : "unknown",
+                ),
+            ),
+        );
+    });
+    const { value } = controller(fetcher);
+    const record = value.importHandle({
+        kind: "basic-key",
+        key: "owned-retained-id",
+        operationId,
+        originalScope: value.originalScope(),
+    });
+    value.observe(record.recordId);
+    await vi.waitFor(() => {
+        expect(fetcher).toHaveBeenCalledOnce();
+    });
+    await value.reconcileOriginal(record.recordId);
+    expect(fetcher.mock.calls[0]?.[1]?.signal?.aborted).toBe(true);
+    await value.reviewOriginal(record.recordId);
+    expect(value.snapshot().canSubmit).toBe(true);
+    late.resolve(operationRead(receipt()));
+    await late.promise;
+    await Promise.resolve();
+    expect(value.snapshot().registry.records[0]?.state).toBe("retired_unknown");
+    expect(value.snapshot().registry.records[0]?.handles).toEqual(
+        record.handles,
+    );
+    expect(value.snapshot().canSubmit).toBe(true);
+    expect(fetcher.mock.calls.map(([, init]) => init?.method)).toEqual([
+        "GET",
+        "GET",
+        "POST",
+    ]);
+});
+
+test("cross-tab advice retires fresh retained-ID review evidence without importing authority or posting", async () => {
+    const fetcher = vi.fn<typeof fetch>(() =>
+        Promise.resolve(jsonResponse(intentProjection())),
+    );
+    const { value } = controller(fetcher);
+    const record = value.importHandle({
+        kind: "basic-key",
+        key: "owned-retained-id",
+        operationId,
+        originalScope: value.originalScope(),
+    });
+    await value.reconcileOriginal(record.recordId);
+    expect(value.canReviewOriginal(record.recordId)).toBe(true);
+    const advice = createCrossTabAdvice({ scope: value.originalScope() });
+    try {
+        expect(advice.publish(record.recordId)).toBe(true);
+        await vi.waitFor(() => {
+            expect(value.canReviewOriginal(record.recordId)).toBe(false);
+        });
+        expect(value.snapshot().notice).toContain(
+            "Another tab changed recovery history",
+        );
+        await expect(value.reviewOriginal(record.recordId)).rejects.toThrow();
+        expect(fetcher).toHaveBeenCalledOnce();
+    } finally {
+        advice.dispose();
+    }
 });
