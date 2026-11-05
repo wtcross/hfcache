@@ -13,13 +13,13 @@ from pathlib import Path
 import pytest
 
 from hfcache.api.auth import CredentialClass, Principal
+from hfcache.api.operations import OperationStore
 from hfcache.client_models import ClientOperation
 from hfcache.paths import ArchiveLayout
 from hfcache.server_config import InstalledPolicy
 from hfcache.services.commands import CommandServices
 from hfcache.services.context import ExecutionContext
 from hfcache.services.requests import CatalogRefreshRequest
-from tests.intent_fixtures import OperationStore
 from tests.unit import test_catalog_lifecycle as lifecycle
 from tests.unit import test_synchronize as sync_fixtures
 from tests.unit.test_mcp_tools import snapshot
@@ -157,7 +157,10 @@ def test_actual_old_binary_catalog_compatibility(  # noqa: PLR0915 - one exact t
     installed = InstalledPolicy(policy, layout.root, service.config.storage.archive_id)
     state = tmp_path / "operation-state"
     context = ExecutionContext.create()
-    with OperationStore(state) as store:
+    # This catalog-only drill needs fresh legacy-shaped receipts, not an
+    # activated public intent store. Never strip authority from existing state;
+    # the selected-predecessor intent drill separately proves its refusal.
+    with OperationStore(state, private=True) as store:
         principal = Principal(CredentialClass.REST_WRITER)
         done = store.admit(
             principal, "completed-refresh", "/api/v1/catalog/refreshes", {}, installed.snapshot
@@ -178,6 +181,7 @@ def test_actual_old_binary_catalog_compatibility(  # noqa: PLR0915 - one exact t
             if key in ClientOperation.model_fields
         }
         public["result_recorded"] = True
+    assert not (state / "intent-dispositions.json").exists()
     controls = {}
     for name in ("control", "extended"):
         root = tmp_path / name

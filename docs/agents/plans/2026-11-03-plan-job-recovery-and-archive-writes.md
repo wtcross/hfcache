@@ -491,3 +491,13 @@ historical evidence collection is a deliverable.
   with explicit scope. REL-018 is selected next. Production deployment, original
   historical-key recovery, selected pilots and bounded backfill remain pending;
   no production completion follows from the owned fixture.
+
+- 2026-11-05: REL-018 completes0.3.2 release source and matching reproducible
+  backend/UI/helper/app artifacts, immutable mode inputs/renders and final-image
+  foundation. Strict gate4 passes9929 backend and all required web/build stages,
+  including16 wheel smoke cases. Three named fixture defects are repaired with
+  assertions retained; failed gates/candidates remain. Exact source2d4c9cc is
+  retained independently of the final evidence commit. Existing unchanged worker,
+  Caddy and WEB-033 compatibility/workflow evidence retain their explicit scopes.
+  OPS-028 is next; protected production stages/deployment, genuine old-key
+  recovery, writable transition and scoped pilots/backfill remain pending.

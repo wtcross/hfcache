@@ -35,6 +35,29 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Job recovery and manual archive writes (2026-11-03)
 
+- [x] REL-018 Prepare0.3.2 matching immutable recovery/writer artifacts
+  (2026-11-05, this commit — [task](plans/tasks/rel-018-job-recovery-writer-release.md),
+  [plan](plans/2026-11-03-plan-job-recovery-and-archive-writes.md)).
+  Clean artifact source2d4c9cc/treea76e9f1 is retained detached; full sourcec425,
+  canonical index5084/UI4156/wheelc207/appimageef3/unchangedCaddyfa2 match.
+  Repeated backend/UI builds pass; immutable guarded/manual inputs and renders
+  share source/image/UI and distinct mode/runtime/expected index identities.
+  Actual final-image foundation passes; prior standard worker notify/PROBE/
+  isolation/drain and Caddy proofs are explicitly reused after exact unchanged
+  runtime/code/layer joins, retaining their original scope. One local OCI export
+  passes34831488; all superseded/failed evidence remains. Strict gate4 passes
+  9929backend/52deselected,216human/29helpers, three locked profiles,179wire,
+  3809webunit/4169combined/16browser/actualzoom/realAPI and16wheel smoke tests
+  in1526.120s with1283 frozen inputs unchanged; rawlog77ab2645. Existing fixture
+  repairs use actual predecessor wheel metadata, provision the mandatory owned
+  worker companion, and separate unactivated legacy catalog state from new
+  intent authority; original assertions remain. No new runtime dependencies,
+  invariants or decisions; INV001/003/007/020/021/023 and ADR121/150/164/165 reviewed.
+  OPS-028 next owns actual protected staging/deployment and genuine old-key
+  recovery, then OPS-029 writer/pilots/backfill. Production unchanged; no tag,
+  push or image publication.
+
+
 - [x] WEB-033 Qualify installed recovery and confined writer profiles
   (2026-11-05, this commit — [task](plans/tasks/web-033-job-recovery-and-writer-acceptance.md),
   [plan](plans/2026-11-03-plan-job-recovery-and-archive-writes.md)).
@@ -3004,6 +3027,19 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-05: REL-018 completes and selects OPS-028 after strict release gate4.
+Exact retained artifact source2d4c9cc supplies0.3.2 guarded/manual inputs; task
+records expected staged indexes, matching imageef3/UI4156/full sourcec425 and
+actual validation scope. Production remains0.3.1/c23abba/NFS-ro/Enforcing with
+original grants/state intact. Current-boot global/API/intent locks are absent;
+historical27:1728 is not current authority. Fresh coordinated backup, complete
+actual executor drain and reviewed manual runtime provisioning precede staging/
+selection. Prepared root backup code refuses until green gate and REL commit;
+no production effect has run. Genuine trusted-terminal/browser authentication
+and preserving historical-key retirement remain actual acceptance prerequisites.
+Do not copy fixture allfalse policy or claim production jobs/backfill succeeded.
+
 
 2026-11-05: WEB-033 owned installed acceptance completes and selects REL-018.
 The fixture is restored to guarded RO after actual successful writer Sync/full

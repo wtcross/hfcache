@@ -4,8 +4,8 @@
 | --- | --- |
 | State | active |
 | Active plan | [Job recovery and archive writes](2026-11-03-plan-job-recovery-and-archive-writes.md) |
-| Current task | [REL-018](tasks/rel-018-job-recovery-writer-release.md) |
-| Blocker | None for REL-018. WEB-033 installed acceptance and strict gate12 pass; release artifacts/build gate next. Production deployment, genuine original-key recovery and scoped writer pilots/backfill remain OPS-028/029; production unchanged |
+| Current task | [OPS-028](tasks/ops-028-install-job-recovery-release.md) |
+| Blocker | None for guarded deployment preparation. REL-018 strict release gate4 and source2d matching artifacts pass. Fresh production backup/drain/current-boot runtime provisioning and guarded installation next; genuine administrator recovery and OPS-029 writer pilots/backfill remain pending. Production unchanged |
 | Last completed plan | [Ignore root Node dependencies](2026-11-02-plan-root-node-ignore.md) |
 | Branch | main |
 | Updated | 2026-11-05 |

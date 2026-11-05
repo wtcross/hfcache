@@ -331,6 +331,8 @@ def _prove(  # noqa: PLR0912, PLR0915 - one explicit owned lifecycle, never hidd
     )
     lock = workspace / "hfcache.lock"
     lock.touch(mode=0o600)
+    companion = workspace / "hfcache.lock.intent"
+    companion.touch(mode=0o600)
     address = runtime / "verification.sock"
     if len(os.fsencode(address)) > _SOCKET_PATH_LIMIT:
         _BUILD.refuse("use a shorter local workspace for the Unix socket")
@@ -363,6 +365,8 @@ def _prove(  # noqa: PLR0912, PLR0915 - one explicit owned lifecycle, never hidd
         f"{states}:/var/lib/hfcache:rw,z",
         "--volume",
         f"{lock}:/run/hfcache/hfcache.lock:rw,z",
+        "--volume",
+        f"{companion}:/run/hfcache/hfcache.lock.intent:rw,z",
         image,
         "-m",
         "hfcache.verification_worker",

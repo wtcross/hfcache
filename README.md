@@ -71,11 +71,21 @@ See [discovery](docs/discovery.md) for provenance, incomplete coverage and rollb
 
 ## Status
 
+Version **0.3.2** is being prepared with accessible job readiness, bounded
+GET-only recovery of original requests and protected rootless writer profiles.
+Owned native/rootless installed acceptance includes actual application writes
+and preserving guarded rollback. Production deployment, recovery of the existing
+historically uncertain request, selected write pilots and bounded metadata
+backfill remain pending. See [deployment status](docs/deployment-status.md).
+
+
 The local host selects **0.3.1**, clean source `c23abba`, with draft-safe
 configuration reloads, compact Library browsing and compatible facet reuse.
 See [release notes](CHANGELOG.md) for user-visible behavior.
 
-The API, private worker, Caddy and confined host helper are ready.
+The following completed0.3.1 acceptance is historical; the active plan records
+the current-boot runtime prerequisites. At that acceptance the API, private
+worker, Caddy and confined host helper were ready.
 Automated installed read-only checks pass verified TLS, REST/MCP credential
 separation and the fourteen-tool listing, API-origin worker PROBE, fixed
 client version, original-operation observation and recorded confinement.

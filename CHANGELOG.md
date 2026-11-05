@@ -4,6 +4,30 @@ Annotated release tags identify reviewed deployed states; application source and
 deployment commits may differ. This file summarizes user-visible changes and
 rollback constraints. Installation targets 0.1.0 and 0.1.1 were not releases.
 
+## 0.3.2 — 2026-11-05, release candidate
+
+- Explain why jobs are unavailable with accessible readiness information and
+  actionable recovery controls. Bounded automatic recovery reads the original
+  request; it never automatically resubmits a job.
+- Preserve original request handles and historical uncertainty. Explicit reviewed
+  retirement installs a permanent disposition before another submission; unknown
+  history remains unknown. Browser recovery records migrate without losing handles.
+- Support protected immutable guarded-readonly/manual-writer siblings and confined
+  rootless writer roles. Actual owned installed Sync/full Verify, restart and
+  guarded rollback checks pass under SELinux Enforcing with hardening intact.
+
+New disposition1/browser2/runtime2/manifest2 formats require capable readers.
+The exact0.3.1 predecessor refuses incompatible state/admission; rollback uses
+matching capable guarded artifacts and preserves dispositions, operation stores,
+credentials and original lock inodes. Archive/configuration/receipt formats are
+unchanged. See [recovery](docs/job-recovery.md) and
+[writer transition](docs/deployment-centos-stream-10.md#manual-writer-transition).
+
+Production still selects0.3.1/sourcec23abba. Production deployment, genuine
+administrator recovery, selected Sync/metadata-refresh pilots and bounded metadata
+backfill remain separate acceptance work. Automatic schedules remain disabled and
+legacy native writers masked. No tag, push or image publication is authorized.
+
 ## 0.3.1 — 2026-11-02, local release with workload holds
 
 The local host selects immutable release 0.3.1 from source `c23abba`, retaining 0.3.0 and

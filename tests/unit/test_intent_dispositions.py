@@ -380,14 +380,37 @@ def test_exact_previous_reader_refuses_marker_even_empty_and_preserves_exact_rea
 ):
     import io  # noqa: PLC0415 - exact predecessor source drill
     import tarfile  # noqa: PLC0415
+    import zipfile  # noqa: PLC0415
 
     old_root = tmp_path / "previous"
     old_root.mkdir()
     archive = subprocess.check_output(
-        ["git", "archive", "c23abba45f8967d058983043b96843bef62e899a", "src/hfcache"]
+        [
+            "git",
+            "archive",
+            "c23abba45f8967d058983043b96843bef62e899a",
+            "src/hfcache",
+            "pyproject.toml",
+            "uv.lock",
+            ".python-version",
+            "README.md",
+            "LICENSE",
+        ]
     )
     with tarfile.open(fileobj=io.BytesIO(archive)) as bundle:
         bundle.extractall(old_root, filter="data")
+    # Source imports alone would resolve the current environment's distribution
+    # metadata. Build/extract the exact predecessor wheel so its version and
+    # reader implementation come from the same immutable release.
+    subprocess.run(
+        ["uv", "build", "--wheel", "--offline", "--out-dir", str(old_root / "dist")],
+        cwd=old_root,
+        check=True,
+        capture_output=True,
+    )
+    installed = old_root / "installed"
+    with zipfile.ZipFile(old_root / "dist/hfcache-0.3.1-py3-none-any.whl") as wheel:
+        wheel.extractall(installed)
     root = tmp_path / "api"
     with OperationStore(root) as store:
         receipt = store.admit(BASIC, "accepted", ROUTE, {}, snapshot).receipt
@@ -423,7 +446,7 @@ with OperationStore(Path(sys.argv[2])) as store:
                 sys.executable,
                 "-c",
                 code,
-                str(old_root / "src"),
+                str(installed),
                 str(root),
                 receipt.operation_id,
                 mode,

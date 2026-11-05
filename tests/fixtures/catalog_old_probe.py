@@ -10,6 +10,7 @@ from pathlib import Path
 from pydantic import ValidationError
 
 import hfcache
+from hfcache.api.operations import OperationStore
 from hfcache.api.runner import OperationRunner
 from hfcache.archive import inspect_archive
 from hfcache.client_models import ClientOperation
@@ -19,7 +20,6 @@ from hfcache.paths import ArchiveLayout
 from hfcache.publication import published_repositories
 from hfcache.server_config import InstalledPolicy
 from hfcache.storage import parse_mount_table
-from tests.intent_fixtures import OperationStore
 
 
 def probe(data):
