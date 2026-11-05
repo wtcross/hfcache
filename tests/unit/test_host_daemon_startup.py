@@ -305,7 +305,8 @@ else:raise AssertionError('help did not exit')
 
 
 @pytest.mark.parametrize(
-    "operation", ["serve", "observe-peer", "observe-guard", "--observer-stop-child"]
+    "operation",
+    ["serve", "observe-peer", "observe-guard", "observe-intent-locks", "--observer-stop-child"],
 )
 def test_main_repairs_before_module_loading_and_preserves_original_budget_clock(
     monkeypatch, operation
@@ -359,7 +360,7 @@ def test_main_repairs_before_module_loading_and_preserves_original_budget_clock(
         events.append("observed")
         return {"observed": True}
 
-    protected_policy = SimpleNamespace(observe_guard=observed)
+    protected_policy = SimpleNamespace(observe_guard=observed, observe_intent_locks=observed)
 
     def loaded():
         assert events == ["clock", "cleared"]
@@ -519,7 +520,8 @@ def test_failure_metadata_bounds_chains_frames_and_rejects_unprotected_locations
     assert str(SCRIPT) not in body
 
 
-def test_failure_metadata_does_not_stringify_arbitrary_exception_classes_or_errnos():
+@pytest.mark.parametrize("operation", ["observe-engine", "observe-intent-locks"])
+def test_failure_metadata_does_not_stringify_arbitrary_exception_classes_or_errnos(operation):
     class PrivateError(OSError):
         def __str__(self):
             raise AssertionError
@@ -529,8 +531,8 @@ def test_failure_metadata_does_not_stringify_arbitrary_exception_classes_or_errn
 
     error = PrivateError(99999999999999999, "PRIVATE")
     error.__context__ = error
-    assert daemon.failure_metadata(error, "observe-engine") == {
-        "operation": "observe-engine",
+    assert daemon.failure_metadata(error, operation) == {
+        "operation": operation,
         "errors": [{"error_class": "OSError", "errno": None, "frames": []}],
     }
 

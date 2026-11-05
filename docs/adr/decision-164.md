@@ -128,3 +128,141 @@ visibility context. Conflict remains blocked for operator review; a not-admitted
 projection cannot contradict retained admission. Record-specific observation
 authorizations bind the current disposition, and closure fences older callbacks
 without clearing independent configuration or host-effect precautions.
+
+## Coordination metadata child refinement (2026-11-04)
+
+Installed native retirement returned503 because the confined root
+helper, limited to SETUID/SETGID, cannot directly traverse the service-owned0700
+runtime directory. Its generic label reader also requires root ownership,
+whereas the companion must remain service-owned. Use the existing bounded
+protected metadata-child launch for a separate fixed `observe-intent-locks`
+role. Only that child changes effective credentials, derives the principal from
+the independently loaded matching deployment/account and inspects both existing
+coordination inodes without opening or locking their bodies. It never requires
+or claims an active read-only guard for manual current-boot operation.
+
+The daemon retains its threaded credentials, validates the closed typed reply
+and actual work/deadline against its captured deployment, independently reads
+the authenticated API PID's exclusive companion flock from `/proc/locks`, and
+pins complete lock metadata/SELinux contexts plus runtime-parent identity
+across review. The child brackets inspection with captured-authority and lock
+revalidation. Expired children retain their existing actual-exit drainage.
+Changing runtime permissions, adding DAC capabilities, switching credentials
+inside the daemon, weakening labels or pretending the guard is held were
+rejected. This is a conformance repair within the accepted helper boundary,
+with no dependency, public operation, grant or architectural decision added.
+Owned source tests model SELinux labels separately from their actual Linux
+USER-namespace DAC/capability proof. Matching installed Enforcing retirement and
+the new final strict source gate remain independently required.
+
+## Whole-host UID review refinement (2026-11-04)
+
+Installed retirement then exposed the whole-host peer observer's missing
+proc-state read authority at the kernel process directory. The
+[decision150 refinement](decision-150.md#whole-host-proc-state-classification-refinement-2026-11-04)
+uses search-only no-follow ancestor handles and the necessary read-only
+process-domain metadata permissions, preserving every existing neverallow and
+the helper's domain/capability/namespace limits. Exactly four UID fields and
+coherent process identity remain required. Failed, vanished or unknown process
+evidence never permits skipping a possible executor. Type-wide proc-file rights
+and their environment/read-gate limits are explicit; they are not new archive,
+Hub or credential object rights. Matching policy installation and fresh actual
+Enforcing metadata and payload-denial evidence remain required.
+
+
+## Rootless vendor-broker review refinement (2026-11-04)
+
+The first installed guarded rootless retirement reaches complete executor review
+but refuses the fixed user broker's specialized unit-file status check. The
+[decision150 refinement](decision-150.md#fixed-rootless-broker-metadata-refinement-2026-11-04)
+adds only that metadata type's read/status rights, retaining the closed broker
+selector and full process proof. Unknown/failed executor evidence still refuses
+retirement. Preserve the original request key and uncertainty, all failed
+responses and every existing disposition/receipt. No job replay, skipped broker,
+new control permission or historical nonexecution inference is authorized.
+Matching gated/installed conformance remains required.
+
+## Notify-worker executor identity refinement (2026-11-04)
+
+Installed rootless retirement reached whole-executor review after the fixed
+broker metadata repair, but compared every unit MainPID to a Podman run command.
+The indexed verification service is Type=notify with container-origin readiness;
+its measured MainPID is conmon, while the exact foreground Podman and payload
+remain separate live processes. Distinguish these identities instead of changing
+the unit or accepting an executable name. Keep all-running inventory, add only
+fixed-name verification inspection to the existing bounded engine child, and
+join inspected ConmonPid/MainPID, payload/CID/image/CreateCommand, exact unique
+foreground Podman command, credentials, cgroups and coherent births. Revalidate
+manager invocation and process identities before returning proof. Exec API/Caddy
+semantics, unknown-process refusal, budgets and every privilege boundary remain
+unchanged. This is source conformance; fresh installed review remains required.
+
+## Inert executable metadata refinement (2026-11-04)
+
+Installed source7 retirement passes the notify-worker join, then refuses an
+unused body read of an inert manager/broker executable. Those bytes never enter
+classification. Replace only this body read with fixed-path protected metadata:
+no-follow O_PATH ancestors and executable leaf, full inode identity/rejoin and
+unchanged exact process/argv/label/parent/cgroup/credential/birth checks. Bracket
+classification with executable-link, metadata and process revalidation, joining
+stat of the exact kernel exe link to the retained fixed leaf before and after.
+Unknown
+paths and failed or changing observations still refuse under unchanged budgets.
+Do not add init_exec_t/dbusd_exec_t body reads or a generic executable exception.
+Actual loaded target-policy queries then establish that `init_exec_t` and
+`dbusd_exec_t` lack even file-getattr rights. Add only those two metadata grants;
+their type-wide scope is not a pathname restriction. Keep every neverallow and
+conmon's existing getattr-only rule unchanged; no body open/read/map/execute or
+control right follows. This changes no capability, unit, dependency or operation.
+Source and copied-policy checks cannot substitute for fresh actual confined
+installed retirement qualification.
+
+## Non-dumpable PAM lineage refinement (2026-11-04)
+
+Installed source8 review authenticates the other inert executables, but the
+stock non-dumpable PAM child denies the ordinary UID observer's kernel exe link.
+Kernel ptrace read gates remain independent of SELinux file-getattr rights.
+Recognize only the exact `(sd-pam)` candidate through a separate protected stock
+user-manager/PAM lineage proof, before any link read. Bind the loaded vendor
+unit/PAMName/User/type/invocation, manager PID/birth, direct parent/init.scope,
+exact init_t:s0, principal credentials, initial maps, own process IDs, no groups/
+tracer/active or inherited capabilities, sleeping/no-pending status and coherent
+no-follow proc objects. Revalidate child/status/context/parent and manager unit.
+The directory remains service-owned and the kernel exe symlink root-owned; the
+latter alone is insufficient. Do not follow it or claim executable-image proof.
+Remove the old generic PAM image clause; the other four inert roles retain full
+protected executable/inode proof. This narrowly relies on the existing trusted
+root stock manager/PAM boundary; it adds no error fallback, skip, capability,
+policy permission, PAM/process change or dependency. Unreadable, unknown, extra
+and changed observations refuse. Actual confined component and installed
+retirement qualification remain independent of modeled source regressions.
+
+## Detached authenticated keeper refinement (2026-11-04)
+
+Installed source9 review passes the closed PAM proof, then refuses the exact
+already engine-authenticated catatonit pause keeper solely because it is adopted
+by PID1 instead of parented by the active user manager. Cgroup placement does
+not establish parentage. Accept only those two specific parent identities, while
+joining captured process UID/GID arrays and maps to the existing prepared
+keeper. Preserve the fixed protected record, PID/birth, namespace owner/maps,
+exact pause argv/domain and protected executable/inode proof, with parent and
+process revalidation. Unknown or duplicate actors, arbitrary parents and changed
+observations still refuse. This adds no read, privilege, policy/unit change or
+dependency; actual five-inert component and installed review remain independent
+of focused source regressions.
+
+## Fixed broker process-context metadata refinement (2026-11-04)
+
+The finite actual helper-domain five-inert component reaches the fixed broker
+context read and records an Enforcing process-getattr denial against
+unconfined_dbusd_t. A separate bounded same-domain/UID diagnostic on both fixed
+brokers proves exe readlink and follow-stat need only lnk_file read, not getattr.
+Add exactly those two helper-to-broker metadata forms. They are type-wide, not
+PID/path-scoped; link read includes following other same-type links, subject to
+independent target-file permissions and kernel read gates. Retain the fixed
+manager/PID/birth/parent, argv, protected image/inode and exact context checks.
+No link-getattr, file-body, ptrace, signal, transition, terminal-ioctl or
+manager-control permission is added.
+Every existing neverallow and capability/namespace limit remains unchanged.
+The failed component and original API refusal remain evidence; metadata-component
+success, copied policy compatibility and full installed retirement are distinct.

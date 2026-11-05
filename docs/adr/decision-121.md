@@ -88,3 +88,15 @@ original-process observer stop, independent durable outcomes and finite diagnost
 reads. It preserves archive serialization, original operation identity and this
 record's unrelated requirements. Implementation and actual installed conformance
 are separately required.
+
+## Masked native inactivity conformance (2026-11-03)
+
+An actual native switch refuses an intentionally masked, inactive legacy
+timer because the quiescence guard recognizes only loaded and absent units.
+Accept masked units only in the inactive state; apply the existing zero-process,
+task and cgroup checks to masked services as well. Keep the original noncreating
+flock and every other drain check. Unmasking legacy writers or calendars to make
+the installer pass would violate their deliberate disabled state. This corrects
+the implementation's recognition of an explained inactive unit; it adds no
+startup, scheduling, execution or rollback authority. Source regression and the
+actual installed switch remain distinct evidence.

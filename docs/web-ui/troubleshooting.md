@@ -264,6 +264,9 @@ protected grant. Never diagnose an uncertain submission by submitting again.
 | --- | --- |
 | HFAPI022 / helper unavailable | Basic job admission lacks fresh protected authority. Preserve any original handle; ask the operator to restore the genuine indexed helper/profile. Read-only metadata does not bypass that boundary. |
 | HFAPI002 / permission refused | The action needs its own effective archive/Hub permission. Do not substitute a token, broaden policy or retry under another key. |
+| Sync or technical refresh is unavailable before submission | Read the reason beside **Submit job**. Archive permission, read-only storage, unavailable readiness, an active job and an original request needing review are separate conditions. Use **Recheck job readiness** after the named condition is resolved; a grant alone does not establish writable storage. |
+| Not admitted after submission | The server retained a durable refusal for this transmission. Keep the original record and refusal reason, then recheck readiness. A later refusal cannot establish what happened to an older unknown request. |
+| Needs review with missing original history | Use **Review original request** when offered. The server must freshly establish executor and protected-effect safety before retiring that intent. If review is unavailable, retain the handle and follow its operator instruction. A confirmed retirement means **Historical outcome unknown; request retired**; a new job remains a separate deliberate action. |
 | Submit job stays disabled after reload although job permission evidence says Allowed | A restored host action may need fresh protected outcome proof. Use its **Observe original host outcome** action and follow [host-action recovery](administration.md#recover-an-original-host-action). A saved terminal summary or generic receipt alone is insufficient; do not repeat Stop or clear history. |
 | Candidate file refused | Correct strict UTF-8, nonempty source and1MiB source/encoded-request bounds. Syntax validity does not establish compatible archive/Hub authority; the file is for sizing, not installation. |
 | HFMNT010 / Busy | Another real executor holds the archive lock. This is not an integrity finding. Keep the original result/handles and inspect that executor; never unlink the lock or silently resubmit. |
@@ -288,8 +291,8 @@ backend work.
 | Problem | Safe next step |
 | --- | --- |
 | Lost acknowledgement or operation ID | Keep the original key and use authenticated original-key lookup. Do not create another key or replay the POST. |
-| Prepared/terminal record reappears after reload | Treat it as unverified until authenticated original observation. A stored summary cannot establish success or nonexecution. |
-| Missing/expired receipt or interrupted operation | Preserve handles and follow operator recovery. Missing API history cannot clear protected configuration outcomes or authorize cleanup. |
+| Prepared/terminal record reappears after reload | On a visible authenticated page, supported releases reconcile it through bounded original GETs. Treat the saved summary as unverified until that observation succeeds. Hidden pages stop these reads; no reconciliation submits or retires a request. |
+| Missing/expired receipt or interrupted operation | Preserve handles. For an own-key original job, follow its explicit reviewed-retirement action when available; missing history alone establishes neither success nor nonexecution. Protected configuration and host outcomes retain their separate confirmation procedures. |
 | Session storage unavailable, corrupt or full | Before transmission, submission is refused. After possible transmission, copy retained in-memory handles and keep the mutation block. Never clear unresolved records as a workaround. |
 | Observation cycle, byte or time limit reached | Retain the original handle. Explicitly resume bounded reads when appropriate; reaching a limit says nothing about execution completion. |
 | Event sequence gap | Preserve the reported gap and observed sequence. Missing retained progress is not an empty event history or a complete execution trace. |

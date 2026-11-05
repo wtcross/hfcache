@@ -148,14 +148,20 @@
 (allow hfcache_host_helper_t locale_t (file (getattr open read map)))
 (allow hfcache_host_helper_t systemd_unit_file_t (dir (getattr search open read)))
 (allow hfcache_host_helper_t systemd_unit_file_t (file (getattr open read map)))
+; Rootless intent review reads the fixed vendor user dbus-broker.service
+; fragment after its manager proof; its specialized SID is not the generic type.
+(allow hfcache_host_helper_t dbusd_unit_file_t (file (getattr open read)))
 ; Fixed indexed unit symlinks require nofollow stat and exact target-text reads.
 (allow hfcache_host_helper_t systemd_unit_file_t (lnk_file (getattr read)))
 (allow hfcache_host_helper_t container_config_t (dir (getattr search open read)))
 (allow hfcache_host_helper_t container_config_t (file (getattr open read map)))
 
-; Only these fixed executable classes may execute without a domain transition.
-; Global engine initialization stats conmon; it does not execute it for inspect.
+; Metadata only: neither conmon selection nor fixed inert-cohort proof reads
+; or executes these files. The two inert type grants are not path restrictions.
 (allow hfcache_host_helper_t conmon_exec_t (file (getattr)))
+(allow hfcache_host_helper_t init_exec_t (file (getattr)))
+(allow hfcache_host_helper_t dbusd_exec_t (file (getattr)))
+; Only these fixed executable classes may execute without a domain transition.
 (allow hfcache_host_helper_t systemd_systemctl_exec_t (file (getattr open read map execute execute_no_trans)))
 (allow hfcache_host_helper_t journalctl_exec_t (file (getattr open read map execute execute_no_trans)))
 (allow hfcache_host_helper_t container_runtime_exec_t (file (getattr open read map execute execute_no_trans)))
@@ -218,6 +224,14 @@
 (allow hfcache_host_helper_t proc_t (dir (getattr search open read)))
 (allow hfcache_host_helper_t proc_t (file (getattr open read)))
 (allow hfcache_host_helper_t proc_t (lnk_file (getattr read)))
+; ADR150/164: fixed whole-host UID4/status classification must cover every
+; process domain, including kernel and unrelated daemons. O_PATH ancestors
+; require search/getattr only, never directory enumeration. These file rights
+; are type-wide proc state (also environ subject to DAC/proc read gates), not
+; status-only pathname MAC. Distinct payload/secret and all other neverallows
+; below remain mandatory; no process/lnk_file/control/capability right follows.
+(allow hfcache_host_helper_t domain (dir (getattr search)))
+(allow hfcache_host_helper_t domain (file (getattr open read)))
 (allow hfcache_host_helper_t proc_net_t (dir (getattr search open read)))
 (allow hfcache_host_helper_t proc_net_t (file (getattr open read)))
 (allow hfcache_host_helper_t proc_net_t (lnk_file (getattr read)))
@@ -248,6 +262,9 @@
 (allow hfcache_host_helper_t unconfined_t (file (getattr open read)))
 (allow hfcache_host_helper_t unconfined_t (dir (getattr search open read)))
 (allow hfcache_host_helper_t unconfined_t (lnk_file (getattr read)))
+; Fixed broker context and kernel exe-link observation; no attachment/control.
+(allow hfcache_host_helper_t unconfined_dbusd_t (process (getattr)))
+(allow hfcache_host_helper_t unconfined_dbusd_t (lnk_file (read)))
 (allow hfcache_host_helper_t unconfined_service_t (process (getattr)))
 (allow hfcache_host_helper_t unconfined_service_t (file (getattr open read)))
 (allow hfcache_host_helper_t unconfined_service_t (dir (getattr search open read)))
@@ -263,6 +280,9 @@
 ; Fixed system-manager metadata only; no manager control rights.
 (allow hfcache_host_helper_t init_t (system (status)))
 (allow hfcache_host_helper_t systemd_unit_file_t (service (status)))
+; The same fixed broker selector needs read-only status under its fragment SID.
+; This type-wide metadata grant adds no broker start/stop or other control.
+(allow hfcache_host_helper_t dbusd_unit_file_t (service (status)))
 ; Fixed argv and v2 live-label proof constrain these type-level manager rights.
 ; No generic-unit start/stop, enable/disable or API/worker/target operation.
 (allow hfcache_host_helper_t init_t (system (reload)))
@@ -423,6 +443,9 @@
 (typeattributeset corenet_unlabeled_type (hfcache_archive_writer_t))
 (typeattributeset mcs_constrained_type (hfcache_archive_writer_t))
 (roletype system_r hfcache_archive_writer_t)
+; Decision 165: ordinary Caddy reaches the writer API's mounted Unix listener.
+; Type-wide peer connection only; stream I/O uses existing own-socket rights.
+(allow container_t hfcache_archive_writer_t (unix_stream_socket (connectto)))
 ; Ordinary transactional archive operations, for actual NFS and owned fixtures.
 (allow hfcache_archive_writer_t nfs_t (dir (getattr search open read write add_name remove_name create setattr rmdir rename)))
 (allow hfcache_archive_writer_t nfs_t (file (getattr open read write append create setattr unlink rename link lock map)))

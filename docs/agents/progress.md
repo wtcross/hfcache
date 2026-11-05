@@ -35,6 +35,32 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Job recovery and manual archive writes (2026-11-03)
 
+- [x] WEB-033 Qualify installed recovery and confined writer profiles
+  (2026-11-05, this commit — [task](plans/tasks/web-033-job-recovery-and-writer-acceptance.md),
+  [plan](plans/2026-11-03-plan-job-recovery-and-archive-writes.md)).
+  Actual native/rootless TLS UI recovery, explicit historical retirement,
+  six-context lost acknowledgments and GET-only original-result recovery pass.
+  Exact c23abba durable/browser readers refuse incompatible admission/migration;
+  existing unchanged parser/registry checks retain their original scope.
+  Rootless epoch3 offline activation and whole-authority restoration, genuine
+  protected PAM/broker joins and confined helper/observer boundaries pass.
+  Source11 manual writer performs actual application Sync and isolated full
+  Verify writes under Enforcing; original global lock waiting/release, sentinel
+  and capacity negatives, missing companion fail-closed restoration, drained
+  restart and guarded RO rollback all pass. Original operation IDs/results,
+  committed journal, reports/catalogs, UUID, locks,15 fences, credentials,
+  predecessor releases/CIDs/images and all failed evidence remain preserved.
+  Gate12 passes9929 backend tests/52 deselected, package/three locked profiles,
+  strict web/179wire/16built-browser/actual zoom/real API React checks in1544.324s,
+  with1283 frozen inputs unchanged; raw log813fc970. Focused documentation checks
+  cover factual closeout. INV003/007/020/021/023 and ADR121/150/164/165 reviewed
+  and amended with contracts in this commit. Copied strict policy still has38
+  standing failures: never called a strict-neverallow pass. Only the measured
+  directed Caddy-to-writer Unix connect edge is added for the final repair.
+  Schedules remain disabled, native writers masked, hardening intact. REL-018
+  is next; actual production deployment/recovery/pilots/backfill remain pending.
+
+
 - [x] WEB-031 Specify executable readiness, original-intent recovery and writer authority
   (2026-11-03, this commit — [task](plans/tasks/web-031-job-readiness-and-recovery-contracts.md),
   [plan](plans/2026-11-03-plan-job-recovery-and-archive-writes.md)).
@@ -2978,6 +3004,34 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-05: WEB-033 owned installed acceptance completes and selects REL-018.
+The fixture is restored to guarded RO after actual successful writer Sync/full
+Verify, drained restart and original-evidence preservation checks. Production
+remains unchanged from the current-boot record below. REL-018 supplies clean
+committed matching immutable siblings; OPS-028/029 still require fresh production
+backups/drain/current-boot runtime provisioning, genuine administrator recovery,
+original-lock handoff, controlled writable transition and scoped pilots/backfill.
+Preserve production configuration/Hub permissions; fixture allfalse policy is
+not a production permission template. No tag, push or registry publication.
+
+
+2026-11-04 current-boot hold: external host boots leave the same selected
+rootless0.3.1/source `c23abba` on boot
+`45d3ce1d-735b-45cc-b731-e2f39860d65f`, with API/helper inactive, worker failed,
+Caddy active and the guard deliberately inactive. Strict preflight3 refuses the
+absent `/run/hfcache/hfcache.lock`; old27:1728 is historical, with no inode
+continuity asserted across boots. Read-only diagnostic
+`production-postboot-readonly1.json` SHA256
+`d40c260efca910e94dc63f8b3c8b856f971307dca8a8e12436ef1094f354651c`
+proves protected configuration and all files/directories in the API, worker and
+scheduled stores exactly unchanged from preflight2. NFS remains read-only/SELinux
+Enforcing, with configuration/Hub grants true and archive/control/schedule/observer
+false. Fresh coordinated backups, actual drain and reviewed current-boot manual
+runtime provisioning remain OPS-028 prerequisites after qualification. No
+production repair, deployment or pilot has run. This evidence-only hold preserves
+the earlier dated records, changes no artifact source and does not activate
+OPS-028 or expand the selected WEB-033 fixture acceptance.
 
 2026-11-03: OPS-027 source/profile/procedure completes after default gate19 and
 selects WEB-033. Guarded/manual immutable siblings, independent writer identity,
@@ -14023,3 +14077,175 @@ unchanged. Owned target-policy/current-active-boolean AV compatibility is bounde
 source evidence with all strict expanded-policy failures preserved; installed
 Enforcing workloads and actual NFS conformance remain separate. ADR165/INV003
 and affected contracts record these implementation details without a new decision.
+
+
+2026-11-04 WEB-033 conformance refinement of decisions150/164: actual rootless
+review refuses the fixed vendor dbus-broker.service status because its fragment
+has dbusd_unit_file_t, distinct from generic systemd_unit_file_t. Original user-
+manager journal identifies service/status; unconfined reads alone do not qualify
+confinement. Extend only that type's read/status metadata permissions, retaining
+fixed selectors, every executor check, all neverallows and payload denials. No
+service start/control, relabel, capability or skip is added; unrelated Podman
+scope-start denials remain denied. New strict gate and immutable installed proof
+are pending; the original request/response and all predecessor evidence remain.
+
+
+2026-11-04 WEB-033 conformance refinement of decision164: actual guarded rootless
+review reaches the worker executor check after the broker metadata repair and
+refuses its legitimate notify control process. The packaged worker uses
+Type=notify/NotifyAccess=all and --sdnotify=container: systemd MainPID is conmon,
+while the exact indexed Podman launcher remains a distinct foreground process
+in that same fixed unit group. API/Caddy Type=exec keep their foreground-Podman
+MainPID requirement. Retain the existing all-running container inventory and
+bounded UID scan, add only a fixed internal worker inspection through the
+existing charged engine child, and join worker CID/image/name/CreateCommand,
+conmon, unique exact foreground command and payload with fresh births/invocation.
+Unknown/duplicate/raced identities refuse; budgets, API authentication, policy,
+capabilities, units and payload denials remain unchanged. An executable-only
+allowance, a skipped worker or unrelated manager-control grant was rejected.
+ADR164/150, INV023 and recovery/host contracts record this conformance repair.
+Focused red regression reproduces the installed failure; all359 final focused
+checks, Ruff/format and focused types pass. Source7 technical inputs are frozen
+for a fresh strict gate and matching installed proof, both still pending. The
+original handles, failed responses, nine-entry marker and source6 evidence stay
+preserved; no recovery success, replay or production effect is inferred.
+
+
+2026-11-04 WEB-033 conformance refinement of decisions150/164: actual installed
+source7 rootless retirement passes the corrected notify-worker proof and then
+refuses an unused OS executable body read in the original inert-cohort scan.
+Replace only that read with protected no-follow O_PATH metadata for the five
+already accepted fixed executables, exact retained ancestor/leaf identity and
+path rejoin, and before/after kernel executable-inode joins. All existing
+process/argv/parent/cgroup/credential/domain/birth checks and budgets remain.
+Actual loaded target policy lacks even init_exec_t/dbusd_exec_t file getattr;
+add exactly those two metadata forms, preserving all38neverallows and conmon
+getattr-only. No body read/open/map/execute, process-control, generic path, unit,
+capability, dependency, durable/public format or job grant follows. ADR150/164,
+INV020/023, recovery, host and security contracts record the bounded repair.
+Five actual-shape body-denial and two policy regressions fail before repair;
+final471 focused tests plus Ruff/format/Pyrefly0errors/diffcheck pass, including
+before/after kernel executable mismatch refusals. Final10path freeze68afa0f5
+pins sourcepeer c50770f3 and CILd07793d2; original intent-lock regression stays
+byte-identical. Copied source7/source8 strict expansion both retain the same38
+standing failures, never reclassified as strict pass. Fresh strict repository
+gate and matching immutable installed qualification remain required. All
+failed requests, original handles, histories/locks/credentials and predecessors
+remain; source7 fixture is backed up and gracefully drained, production unchanged.
+
+
+2026-11-04 WEB-033 source8 metadata-size correction: fresh target public stat
+shows the fixed standard systemd-executor is1413592B. Metadata-only executable
+proof must not retain the obsolete unused body-read1MiB limit. Remove only its
+upper byte ceiling, keep positive/coherent size and every path/ownership/identity/
+race/budget guard; no bodyread or readbudget expansion follows. The previous
+focused proof covered a small host OS executable; it did not qualify this actual
+target size. Preserve the observed mismatch. Root deliberately interrupts
+gate8 via exact owned pytest pidfd/SIGINT, records exit1/partial logs and proves
+its entire private namespace empty before any source edit. This is not a gate
+pass or installed acceptance. A fresh full strictgate9 is required after focused
+actual-size regression. CILd077 and its scoped copied-policy comparisons stay
+unchanged; production remains unchanged.
+
+
+2026-11-04 WEB-033 source8 metadata-size correction qualification: after exact
+gate8 namespace closure, the sole source/test size patch reproduces the actual
+1413592B refusal then passes471 focused checks in4.07s, Ruff/format/types/diff
+checks. Final freeze3 pins peer36078a41/testbb8b089c, all other eight paths and
+CILd077 unchanged. Preserve prior freezes, target observation and interrupted
+gate8. Strictgate9 and matching installed qualification remain required; no
+source8 policy/runtime/production effect follows from focused results.
+
+
+2026-11-04 WEB-033 conformance refinement of decisions150/164: actual source8
+retirement reaches stock protected sd-pam exe-link EACCES at the initial inert
+scan. Service-account reads cannot authenticate that image. Add a separate
+closed typed PAM lineage/metadata proof before executable-link reading: exact
+(sd-pam) argv, fresh fixed protected manager/PAM unit and invocation, manager
+birth/direct parent/init.scope, exact init_t, all credentials/initial maps,
+PID/Tgid/NSpid, no groups/tracer, zero Eff/Prm/Inh/Amb, sleeping/no pending
+signals, pinned/revalidated nofollow directory and root-owned exe SYMLINK facts.
+This makes no executable-image claim. Reject unknown/duplicate/raced actors;
+remove generic PAM image clause, retain full image proofs for other four inert
+roles. CIL, capabilities, NNP, credentials, PAM/processes and all payload denials
+remain unchanged. ADR150/164, INV023 and host/recovery/security contracts record
+the narrow repair. Focused red reproduces immutable source8 readlink refusal;
+505 final tests plus Ruff/format/types pass, including actual nondumpable-child
+EACCES/O_PATH regression. Actual component5 passes4.906s under helper_t/UID983/
+zero E/P/I/A/NNP1 with original lock EX, twice revalidated PAM and fresh manager,
+70files/44006B charged, full exact pidfd/group closure and unchanged originals.
+Components1-4 preserve failed harness results: drop-without-exec, proc/self
+symlink owner, and ProtectHome masking user bus; no failed probe is counted
+passed. Canonical helper uses existing ReadOnlyPaths=/home /root, untouched.
+Strictgate10 and immutable installed recovery remain required. Source8 strictgate9
+is green9874backend and all strict web/build profiles, while its actual retirement
+failed503 and was gracefully drained. All handles/history/predecessors remain;
+canonical apps/helper OFF, guarded all-six-false and production unchanged.
+
+
+2026-11-04 WEB-033 conformance refinement of decisions150/164: actual source9
+passes PAM metadata and refuses the authenticated rootless pause keeper solely
+because the detached catatonit is parented by PID1. Accept only PID1 or the
+verified user-manager parent, joining already captured UID/GID arrays and maps
+to the existing protected-record/PID/birth/namespace-owner proof. Preserve exact
+protected executable/kernel-inode/domain/argv and revalidation; no arbitrary
+orphan or process skip. Actual fixed4 UID983 public facts confirm only the keeper
+fails classification. The first confined five-inert component then reaches the
+broker and exposes two separate existing SELinux omissions: process-getattr for
+attr/current (audit22921) and link-read for both executable readlink/follow-stat
+(audit23093-23096). Add exactly helper_t -> unconfined_dbusd_t process(getattr)
+and lnk_file(read). The type-wide link permission does not authenticate its
+arbitrary target: fixed process/argv/path/root ownership/kernel-inode checks
+remain independent and mandatory. No link getattr, file body read, ptrace,
+signal, terminal ioctl, cert-directory, control, capability, unit, budget or
+dependency expansion follows. ADR150/164, INV020/023 and host/recovery/security
+contracts record the narrow observed repair. All38neverallows remain identical.
+
+Peer74b118a8 and final CILa72eed2d focused regressions reproduce the actual parent
+and broker omissions before repair; peer/engine/policy checks, lint/format/types
+pass. Copied candidate strict comparison04586de4 retains the same38 baseline
+failures, explicitly NOT strict pass. AV-only comparisona05610c3 at recorded331
+booleans leaves26 previous vectors unchanged and adds only those two permissions
+to the full helper/observer effective expansion, removes none. Public host
+continuityc7787b1e unchanged; copied AV binary is never installed.
+
+Under fresh23-root critical backup/full actual source9 drain20retainedCIDs/eight
+images and original1706EX, reviewed owned policy qualification11.619s takes a
+fresh policy/config tar+compare, retains old CILd077/receipt6ba whole inodes
+80332354/61556809, performs one priority400 load and publishes measured version1
+receipt. Actual modulea72/kernelc956f958/receipt4c43d122, new inodes80406104/
+61565241, all other modules/booleans/fcontexts/code/units/stores/locks/credentials/
+masks/Enforcing unchanged; manual rollback prepared, no automatic restore.
+Qualificatione7070e84 is against existing source9 identity; current128213298,
+index5dca/policy443a ALLFALSE and peer e06 intentionally remain stale/OFF until
+final clean source10 genuine bootstrap. No source10 release/readiness claim.
+
+Actual full five-inert component2 now PASSES4.852s, receipt9b0f8a5f: helper_t
+60053/start5632365, fresh UID/GID983/no groups/zero E/P/I/A/Bnd0xc0/NNP1/
+Seccomp2+27filters. Genuine _engine_prepare and fixed auxiliary twice agree;
+manager, typed PAM, keeper(parent1), broker-launch and broker all classify with
+four protected image/kernel-inode proofs and the separate PAM metadata proof,
+474 charged files/91146B. No engine invocation, namespace entry, API/RPC/job/
+retirement/archive/authority effect. Full pidfd/group closure and original13
+fixed metadata/stores/cohort pass. Component1 failed4.770s and the link-only
+diagnostic has qualificationFALSE; both original results/code/units/audits stay.
+Fresh strictgate11 and matching immutable installed original-key retirement are
+required next; all writer/restart/rollback and production outcomes remain pending.
+
+
+2026-11-05 WEB-033 conformance refinement of decision165: source10 actual writer
+worker/API mounts and hardening pass after supported fully drained namespace
+turnover. First strict-TLS installed frontend GET returns502, preserved with
+zero job POSTs. Actual kernel AV query confirms missing container_t to
+hfcache_archive_writer_t Unix-stream connectto; ordinary own-socket I/O does
+not require cross-peer read/write grants. Add exactly one directed connectto
+form, retaining Caddy's original domain, separate MCS ranges, fixed mounted API
+parent/DAC/auth and all38neverallows. The permission is type-wide, not a pathname
+selector; it grants no archive visibility or file/process/capability authority.
+ADR165, container/security contracts and the rootless invariant paragraph record
+this narrow repair. Actual installed frontend remains failed until the corrected
+immutable selection passes; no success inferred from source or runtime startup.
+Source10 read-only SDK checks separately pass actual sentinel/mount/staging/
+capacity and measure3600s lock budget, all write probes skipped. Writer jobs,
+restart/rollback and production release/recovery/pilots/backfill remain pending.
+All original evidence/stores/credentials/locks/predecessors remain preserved.

@@ -4,6 +4,7 @@ import ast
 import copy
 import json
 import os
+import shutil
 import socket
 import subprocess
 import sys
@@ -71,6 +72,19 @@ def test_native_root_capture_does_not_require_other_uid_namespace_links(monkeypa
     assert captured["cgroup"].startswith("/")
     with pytest.raises(PermissionError):
         module._process(os.getpid(), budget())
+
+
+@pytest.mark.parametrize("linked_parent", [True, False])
+def test_search_only_reader_still_refuses_parent_and_leaf_symlinks(tmp_path, linked_parent):
+    parent = tmp_path / "parent"
+    parent.mkdir()
+    leaf = parent / "metadata"
+    leaf.write_bytes(b"metadata must not be followed")
+    link = tmp_path / "alias"
+    link.symlink_to(parent if linked_parent else leaf)
+    selected = link / "metadata" if linked_parent else link
+    with pytest.raises(OSError, match=r"Not a directory|Too many levels of symbolic links"):
+        module._read(selected, budget(), maximum=64)
 
 
 @pytest.mark.parametrize(
@@ -716,6 +730,186 @@ def test_intent_review_rejects_unclassified_init_scope_processes():
         manager | {"argv": ["/usr/lib/systemd/systemd", "--user", "--unclassified"]},
         "/usr/lib/systemd/systemd",
         keeper,
+    )
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        b"",
+        b"Uid: 0 0 0",
+        b"Uid: 0 0 0 0 0",
+        b"Uid: 0 0 0 0\nUid: 0 0 0 0",
+        b"Uid: -1 0 0 0",
+        b"Uid: +1 0 0 0",
+        b"Uid: 00 0 0 0",
+        b"Uid: 4294967295 0 0 0",
+        b"Uid: 0 0 0 unknown",
+    ],
+)
+def test_intent_uid_inventory_refuses_incomplete_or_ambiguous_credentials(body):
+    with pytest.raises(module.PeerError):
+        module._proc_uids(body)
+
+
+@pytest.mark.parametrize("change", [None, "uids", "birth", "foreign", "unreadable", "vanished"])
+def test_intent_uid_inventory_revalidates_birth_and_all_uid_fields(monkeypatch, change):
+    """Fixed manager evidence isolates actual inventory classification and races."""
+    original_iterdir = Path.iterdir
+    monkeypatch.setattr(
+        Path,
+        "iterdir",
+        lambda path: iter([Path("/proc/222")]) if path == Path("/proc") else original_iterdir(path),
+    )
+    monkeypatch.setattr(module, "_indexed", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        module, "_selected", lambda _deployment: Path("/opt/hfcache/releases/0.3.1")
+    )
+
+    def command(argv, *_args, **_kwargs):
+        unit = argv[3]
+        rows = {
+            "Id": unit,
+            "LoadState": "loaded",
+            "ActiveState": "active",
+            "SubState": "running",
+            "MainPID": "100",
+            "ControlPID": "0",
+            "ControlGroup": "/system.slice/" + unit,
+            "InvocationID": "a" * 32,
+            "FragmentPath": "/etc/systemd/system/" + unit,
+            "DropInPaths": "",
+        }
+        return "\n".join(f"{key}={value}" for key, value in rows.items()).encode()
+
+    groups = iter(
+        ["/system.slice/hfcache-api.service", "/system.slice/hfcache-verification.service"]
+    )
+    monkeypatch.setattr(module, "_command", command)
+    monkeypatch.setattr(
+        module,
+        "_process",
+        lambda *_args, **_kwargs: {"pid": 100, "start_ticks": 9, "cgroup": next(groups)},
+    )
+    counts = {"status": 0, "stat": 0}
+
+    def read(path, *_args, **_kwargs):
+        if path.name == "status":
+            if change == "unreadable":
+                raise PermissionError
+            if change == "vanished":
+                raise FileNotFoundError
+            counts["status"] += 1
+            return (
+                b"Uid: 0 0 0 0\n"
+                if change == "uids" and counts["status"] == 2
+                else b"Uid: 0 0 983 0\n"
+            )
+        if path.name == "stat":
+            counts["stat"] += 1
+            fields = (
+                [b"S"]
+                + [b"0"] * 18
+                + [b"10" if change == "birth" and counts["stat"] == 2 else b"9"]
+            )
+            return b"222 (owned) " + b" ".join(fields)
+        assert path.name == "cgroup"
+        return (
+            b"0::/foreign\n" if change == "foreign" else b"0::/system.slice/hfcache-api.service\n"
+        )
+
+    monkeypatch.setattr(module, "_read", read)
+    deployment = {"profile": "native", "api_principal": {"host_uid": 983}}
+    if change is None:
+        assert set(module._intent_executors(deployment, budget())["roles"]) == {
+            "api",
+            "verification",
+        }
+        assert counts == {"status": 2, "stat": 2}
+    else:
+        with pytest.raises((module.PeerError, PermissionError)):
+            module._intent_executors(deployment, budget())
+
+
+def test_actual_zero_cap_proc_inventory_of_mixed_nondumpable_uids_and_search_only_parent(tmp_path):
+    """Owned USER namespace changes real credentials without host privilege."""
+    unshare = shutil.which("unshare")
+    if unshare is None:
+        pytest.skip("owned USER namespace requires util-linux unshare")
+    probe = subprocess.run(
+        [unshare, "--user", "--map-auto", "--map-root-user", "true"],
+        capture_output=True,
+        timeout=10,
+        check=False,
+    )
+    if probe.returncode:
+        pytest.skip("owned multiple-ID USER namespace unavailable")
+    program = r"""import ctypes,os,sys,time
+from pathlib import Path
+from hfcache import host_peer as p
+libc=ctypes.CDLL(None,use_errno=True)
+class Header(ctypes.Structure):_fields_=[('version',ctypes.c_uint32),('pid',ctypes.c_int)]
+class Data(ctypes.Structure):
+ _fields_=[('effective',ctypes.c_uint32),('permitted',ctypes.c_uint32),('inheritable',ctypes.c_uint32)]
+root=Path(sys.argv[1]);parent=root/'search';parent.mkdir();leaf=parent/'metadata'
+leaf.write_bytes(b'fixed metadata');leaf.chmod(0o444);parent.chmod(0o111)
+children=[]
+try:
+ for expected in ((983,0,0,0),(0,983,0,0),(0,0,983,0),(0,0,0,983)):
+  read,write=os.pipe();ready_read,ready_write=os.pipe();pid=os.fork()
+  if pid==0:
+   os.close(write);os.close(ready_read)
+   try:
+    os.setresuid(*expected[:3]);libc.setfsuid(expected[3])
+    assert libc.prctl(4,0,0,0,0)==0
+    os.write(ready_write,b'1');os.close(ready_write)
+    os.read(read,1);os._exit(0)
+   except BaseException:
+    import traceback;traceback.print_exc();os._exit(1)
+  os.close(read);os.close(ready_write);children.append((pid,write,expected))
+  assert os.read(ready_read,1)==b'1';os.close(ready_read)
+ assert libc.prctl(38,1,0,0,0)==0
+ header=Header(0x20080522,0);empty=(Data*2)()
+ assert libc.capset(ctypes.byref(header),empty)==0
+ actual=(Data*2)();assert libc.capget(ctypes.byref(header),actual)==0
+ assert all(item.effective==item.permitted==0 for item in actual)
+ work=p._Budget(time.monotonic()+5,128,1024*1024)
+ try:fd=os.open(parent,os.O_RDONLY|os.O_DIRECTORY)
+ except PermissionError:pass
+ else:os.close(fd);raise AssertionError('zero-cap directory listing bypassed DAC')
+ assert p._read(leaf,work,maximum=64)==b'fixed metadata'
+ for pid,write,expected in children:
+  proc=Path('/proc')/str(pid)
+  assert p._proc_uids(p._read(proc/'status',work,maximum=p.MAX_PROC))==expected
+  assert (proc/'status').stat().st_uid==0
+  assert proc.stat().st_uid==expected[1]
+  assert 983 in expected
+ print('zero-cap search-only traversal and all four nondumpable UID slots pass')
+finally:
+ parent.chmod(0o700)
+ for pid,write,expected in children:
+  os.write(write,b'1');os.close(write)
+ for pid,write,expected in children:
+  assert os.waitpid(pid,0)[1]==0
+"""
+    result = subprocess.run(
+        [
+            unshare,
+            "--user",
+            "--map-auto",
+            "--map-root-user",
+            sys.executable,
+            "-c",
+            program,
+            str(tmp_path),
+        ],
+        capture_output=True,
+        timeout=15,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr.decode()
+    assert (
+        b"zero-cap search-only traversal and all four nondumpable UID slots pass" in result.stdout
     )
 
 

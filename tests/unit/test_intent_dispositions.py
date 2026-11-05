@@ -572,8 +572,6 @@ def native_activation_policy(tmp_path, monkeypatch):
     api = {
         "FragmentPath": str(packaged),
         "DropInPaths": "",
-        "LoadCredential": "",
-        "LoadCredentialEncrypted": "hfcache.api:/etc/credstore.encrypted/hfcache.api",
         "ImportCredential": "hf-token",
         "ExecStart": "{ path="
         + entry
@@ -587,8 +585,24 @@ def native_activation_policy(tmp_path, monkeypatch):
         "_native_show",
         lambda unit, _properties: api.copy() if unit == "hfcache-api.service" else worker.copy(),
     )
+    credentials = {
+        "LoadCredential": [],
+        "LoadCredentialEncrypted": [["hfcache.api", "/etc/credstore.encrypted/hfcache.api"]],
+    }
+    monkeypatch.setattr(
+        activation.subprocess,
+        "run",
+        lambda argv, **_kwargs: SimpleNamespace(
+            stdout=json.dumps({"type": "a(ss)", "data": credentials[argv[-1]]})
+        ),
+    )
     return SimpleNamespace(
-        selected=selected, api=api, worker=worker, server=server, archive=archive
+        selected=selected,
+        api=api,
+        worker=worker,
+        server=server,
+        archive=archive,
+        credentials=credentials,
     )
 
 
@@ -624,7 +638,7 @@ def test_native_policy_refuses_unsupported_or_unmodelled_sources(native_activati
     elif change == "missing-worker":
         host.worker["LoadState"] = "not-found"
     elif change == "cached-credential":
-        host.api["LoadCredential"] = "hf-token:/private-unmodelled-source/token"
+        host.credentials["LoadCredential"] = [["hf-token", "/private-unmodelled-source/token"]]
     elif change == "custom-archive":
         host.archive.write_text(
             host.archive.read_text().replace("/srv/hfcache", "/mnt/custom-native-archive")
@@ -632,6 +646,82 @@ def test_native_policy_refuses_unsupported_or_unmodelled_sources(native_activati
     else:
         host.worker["InaccessiblePaths"] = "-/private-activation-source /custom%masked"
     with pytest.raises((OperationError, ValueError)):
+        activation.native_mask_policy(host.selected)
+
+
+def test_native_credentials_use_fixed_typed_system_bus_metadata(monkeypatch):
+    calls = []
+    expected = {
+        "LoadCredential": [],
+        "LoadCredentialEncrypted": [["hfcache.api", "/etc/credstore.encrypted/hfcache.api"]],
+    }
+
+    def run(argv, **kwargs):
+        calls.append((argv, kwargs))
+        return SimpleNamespace(stdout=json.dumps({"type": "a(ss)", "data": expected[argv[-1]]}))
+
+    monkeypatch.setattr(activation.subprocess, "run", run)
+    assert activation._native_credentials() == expected
+    assert len(calls) == 2
+    for (argv, kwargs), property_name in zip(calls, expected, strict=True):
+        assert argv == [
+            "/usr/bin/busctl",
+            "--system",
+            "--json=short",
+            "--timeout=5",
+            "get-property",
+            "org.freedesktop.systemd1",
+            "/org/freedesktop/systemd1/unit/hfcache_2dapi_2eservice",
+            "org.freedesktop.systemd1.Service",
+            property_name,
+        ]
+        assert kwargs == {
+            "check": True,
+            "stdin": subprocess.DEVNULL,
+            "capture_output": True,
+            "text": True,
+            "timeout": 5,
+            "env": {"PATH": "/usr/bin:/bin", "LANG": "C", "LC_ALL": "C"},
+        }
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "[unprintable]",
+        '{"type":"a(ss)","type":"a(ss)","data":[]}',
+        '{"type":"a(ss)","data":[],"data":[]}',
+        '{"type":"as","data":[]}',
+        '{"type":"a(ss)","data":[],"extra":false}',
+        '{"type":"a(ss)","data":[["hf-token","/custom/token"]]}',
+        '{"type":"a(ss)","data":[["hfcache.api","/etc/credstore.encrypted/hfcache.api"]]}',
+        '{"type":"a(ss)","data":null}',
+        " " * (activation._MAX_NATIVE_METADATA + 1),
+    ],
+)
+def test_native_credential_metadata_refuses_unexplained_or_unsupported_arrays(monkeypatch, body):
+    monkeypatch.setattr(
+        activation.subprocess, "run", lambda *_args, **_kwargs: SimpleNamespace(stdout=body)
+    )
+    with pytest.raises(OperationError):
+        activation._native_credentials()
+
+
+@pytest.mark.parametrize(
+    "entries",
+    [
+        [],
+        [["hfcache.api", "/custom/token"]],
+        [["other", "/etc/credstore.encrypted/hfcache.api"]],
+        [["hfcache.api", "/etc/credstore.encrypted/hfcache.api"], ["extra", "/extra"]],
+    ],
+)
+def test_native_encrypted_credential_delivery_requires_exact_original_pair(
+    native_activation_policy, entries
+):
+    host = native_activation_policy
+    host.credentials["LoadCredentialEncrypted"] = entries
+    with pytest.raises(OperationError):
         activation.native_mask_policy(host.selected)
 
 

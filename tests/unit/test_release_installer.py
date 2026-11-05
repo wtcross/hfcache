@@ -120,9 +120,12 @@ def test_upgrade_then_rollback_uses_same_guard_and_atomic_switch(release_fixture
 
 
 @pytest.mark.parametrize("unit", UNITS)
-def test_any_live_timer_observer_socket_or_executor_refuses_switch(release_fixture, unit):
+@pytest.mark.parametrize("load_state", ["loaded", "masked"])
+def test_any_live_timer_observer_socket_or_executor_refuses_switch(
+    release_fixture, unit, load_state
+):
     prefix, runtime, states, _ = release_fixture
-    states.write_text(json.dumps({unit: {"ActiveState": "active"}}))
+    states.write_text(json.dumps({unit: {"LoadState": load_state, "ActiveState": "active"}}))
     before = (runtime / "hfcache.lock").stat().st_ino
     result = run_library(release_fixture)
     assert result.returncode == 1
@@ -131,10 +134,68 @@ def test_any_live_timer_observer_socket_or_executor_refuses_switch(release_fixtu
     assert (runtime / "hfcache.lock").stat().st_ino == before
 
 
+@pytest.mark.parametrize("load_state", ["loaded", "masked"])
 @pytest.mark.parametrize("field", ["MainPID", "ControlPID", "TasksCurrent"])
-def test_inactive_service_with_leftover_processes_refuses(release_fixture, field):
+def test_inactive_service_with_leftover_processes_refuses(release_fixture, field, load_state):
     _, _, states, _ = release_fixture
-    states.write_text(json.dumps({"hfcache-verification.service": {field: "1"}}))
+    states.write_text(
+        json.dumps({"hfcache-verification.service": {"LoadState": load_state, field: "1"}})
+    )
+    result = run_library(release_fixture)
+    assert result.returncode == 1
+    assert "retains processes" in result.stderr
+
+
+def test_inactive_masked_legacy_units_allow_switch_without_removing_masks(release_fixture):
+    prefix, runtime, states, _ = release_fixture
+    masked = {
+        unit: {
+            "LoadState": "masked",
+            "ActiveState": "inactive",
+            "MainPID": "0",
+            "ControlPID": "0",
+            "TasksCurrent": "[not set]",
+            "ControlGroup": "",
+        }
+        for unit in UNITS[:4]
+    }
+    states.write_text(json.dumps(masked))
+    lock = runtime / "hfcache.lock"
+    identity, payload = lock.stat().st_ino, lock.read_bytes()
+    result = run_library(release_fixture)
+    assert result.returncode == 0, result.stderr
+    assert (prefix / "current").readlink() == Path("releases/0.1.10")
+    assert json.loads(states.read_text()) == masked
+    assert (lock.stat().st_ino, lock.read_bytes()) == (identity, payload)
+
+
+@pytest.mark.parametrize(
+    ("load_state", "active_state"),
+    [("masked", "failed"), ("error", "inactive"), ("bad-setting", "inactive")],
+)
+def test_unexplained_load_or_masked_activity_refuses(release_fixture, load_state, active_state):
+    _, _, states, _ = release_fixture
+    states.write_text(
+        json.dumps({"hfcache-sync.timer": {"LoadState": load_state, "ActiveState": active_state}})
+    )
+    result = run_library(release_fixture)
+    assert result.returncode == 1
+    assert "hfcache-sync.timer" in result.stderr
+
+
+def test_masked_service_without_task_and_cgroup_absence_refuses(release_fixture):
+    _, _, states, _ = release_fixture
+    states.write_text(
+        json.dumps(
+            {
+                "hfcache-sync.service": {
+                    "LoadState": "masked",
+                    "TasksCurrent": "[not set]",
+                    "ControlGroup": "/system.slice/hfcache-sync.service",
+                }
+            }
+        )
+    )
     result = run_library(release_fixture)
     assert result.returncode == 1
     assert "retains processes" in result.stderr

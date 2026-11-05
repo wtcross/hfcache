@@ -45,12 +45,13 @@ require_quiescent() {
         ControlGroup) cgroup=${value} ;;
       esac
     done <<< "${properties}"
-    [[ ${load} == loaded || ${load} == not-found ]] &&
+    [[ ${load} == loaded || ${load} == not-found ||
+      ( ${load} == masked && ${active} == inactive ) ]] &&
       [[ ${active} == inactive || ${active} == failed ]] || {
       release_die "${unit} is active or unexplained; stop admission and drain executors first"
       return 1
     }
-    if [[ ${unit} == *.service && ${load} == loaded ]]; then
+    if [[ ${unit} == *.service && ( ${load} == loaded || ${load} == masked ) ]]; then
       [[ ${main} == 0 && ${control} == 0 ]] &&
         [[ ${tasks} == 0 || ( ${tasks} == '[not set]' && -z ${cgroup} ) ]] || {
         release_die "${unit} retains processes or cannot prove their absence"

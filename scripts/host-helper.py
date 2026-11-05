@@ -703,6 +703,7 @@ def failure_metadata(error, operation):
         "serve",
         "observe-peer",
         "observe-guard",
+        "observe-intent-locks",
         "observe-engine",
         "observer-stop-child",
     }:
@@ -788,7 +789,15 @@ def log_failure(error, operation):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "operation", nargs="?", choices=("serve", "observe-peer", "observe-guard", "observe-engine")
+        "operation",
+        nargs="?",
+        choices=(
+            "serve",
+            "observe-peer",
+            "observe-guard",
+            "observe-intent-locks",
+            "observe-engine",
+        ),
     )
     parser.add_argument("--observer-stop-child", action="store_true")
     args = parser.parse_args()
@@ -797,7 +806,7 @@ def main():
     operation = "observer-stop-child" if args.observer_stop_child else args.operation
     try:
         started_at = time.monotonic()
-        if operation in {"serve", "observe-guard", "observer-stop-child"}:
+        if operation in {"serve", "observe-guard", "observe-intent-locks", "observer-stop-child"}:
             refuse(os.getuid() == os.geteuid() == 0)
         security_work = require_startup_domain()
         startup_work = clear_startup_capabilities()
@@ -823,12 +832,13 @@ def main():
                 bootstrap_work=bootstrap_work, started_at=started_at
             )
             refuse(False)  # noqa: FBT003 - a fixed exec must replace this child
-        if operation in {"observe-peer", "observe-guard"}:
-            observer = (
-                modules["host_peer"].observe_peer
-                if operation == "observe-peer"
-                else modules["host_policy"].observe_guard
-            )
+        if operation in {"observe-peer", "observe-guard", "observe-intent-locks"}:
+            if operation == "observe-peer":
+                observer = modules["host_peer"].observe_peer
+            elif operation == "observe-guard":
+                observer = modules["host_policy"].observe_guard
+            else:
+                observer = modules["host_policy"].observe_intent_locks
             result = observer(bootstrap_work=bootstrap_work, started_at=started_at)
             body = modules["host_protocol"].encode_object(result)
             refuse(len(body) <= MAX_OBSERVER_BYTES)

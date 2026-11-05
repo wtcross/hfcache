@@ -136,6 +136,16 @@ archive/API/worker runtime sources. No bytecode or inherited stdin is supplied; 
 that private runtime and the legacy service token cache is masked.
 Partial/prior authority is preserved, never repaired automatically.
 
+Native credential delivery is measured from the fixed API service's two typed
+system-bus `a(ss)` arrays, using `busctl` from the already required systemd
+package. Human `systemctl show` output can render these arrays as
+`[unprintable]` and cannot establish their contents. Require no unencrypted
+loads and exactly the canonical encrypted writer-name/path pair; malformed,
+unsupported or additional entries refuse. Preserve the canonical executable,
+API no-dropin, imported Hub-credential and source-mask checks, and bind the
+measured arrays into the same before/after revision. This changes metadata
+inspection only and adds no package, credential source or grant.
+
 The writer derives the actual target's stable stock container attributes,
 including network/image/MCS and required proc exception markers, excluding
 compiler-generated private attributes. Its new explicit archive symlink rule
@@ -171,3 +181,44 @@ remain with the installed acceptance task; actual production nfs_t transactional
 writes and current-boot transition/pilots remain later. No unattended boot claim
 is added. Source gate and retained proof identities accompany the implementation commit
 evidence.
+
+
+### Observed rootless mount view (2026-11-04)
+
+The actual owned writer worker reached READY under the dedicated writer domain,
+with a requested rw archive bind, while its archive VFS mount remained ro.
+Host aliases and the shared NFS superblock were rw. The authenticated existing
+pause namespace retained the inherited ro VFS view; this failed acceptance and
+is preserved, not counted as writer success. No archive job ran.
+
+The manual transition therefore requires actual keeper and payload mount proof,
+and, when stale, a reviewed drained namespace handoff. The
+[procedure](../deployment-centos-stream-10.md#rootless-namespace-handoff) retains
+all original locks/state/history and before/after engine configuration evidence.
+The supported engine's known-inert pause retirement is separate from graceful
+workload drain; it cannot terminate an unknown executor. Old actor snapshots are
+retained and superseded by authenticated new namespace evidence. No capability,
+SELinux, seccomp or mount-sandbox bypass, new durable epoch, automatic retry or
+job replay follows. Owned turnover and positive writer qualification remain
+pending; production is unchanged. The existing decision's independently protected
+mode, original-lock and actual NFS acceptance requirements remain in force.
+
+### Confined proxy connection (2026-11-05)
+
+The owned writer startup retained separate private MCS labels for ordinary
+`container_t` Caddy and the `hfcache_archive_writer_t` API. Its first TLS
+bootstrap GET returned 502; the actual policy lacked their directed Unix stream
+connection permission. Add only `container_t` to `hfcache_archive_writer_t`
+`unix_stream_socket connectto`. This narrowly amends the earlier no-generic-
+container-grant statement for IPC; generic container archive rights remain
+unchanged. No reverse connection or cross-type socket I/O permission is added.
+
+Linux checks the client socket against the listening socket for `connectto`;
+I/O and options use each process's own socket rights. The accepted server socket
+retains the server type with the client MLS range, without changing either
+process label ([Linux 6.12 SELinux hooks](https://github.com/torvalds/linux/blob/v6.12/security/selinux/hooks.c)).
+The grant is type-wide, not a Caddy or pathname MAC selector. Fixed runtime
+mounts, DAC, namespaces and API authentication retain the deployed upstream
+boundary. Keep independent MCS categories and constraints, archive exclusion,
+helper/observer payload neverallows and all role hardening unchanged. Actual
+Enforcing proxy/API acceptance remains separate from policy source tests.

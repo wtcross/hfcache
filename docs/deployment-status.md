@@ -2,6 +2,24 @@
 
 ## Current migration checkpoint — 2026-11-02
 
+**2026-11-04 post-boot hold.** Rootless0.3.1/source `c23abba` remains
+selected, but external host boots invalidate the earlier readiness observation.
+On boot `45d3ce1d-735b-45cc-b731-e2f39860d65f`, API/helper are inactive, worker
+failed and Caddy active; the guard remains deliberately inactive. Strict
+preflight3 refuses the absent `/run/hfcache/hfcache.lock`; old27:1728 is
+historical and has no current-boot inode continuity. Read-only diagnostic
+`production-postboot-readonly1.json`, SHA256
+`d40c260efca910e94dc63f8b3c8b856f971307dca8a8e12436ef1094f354651c`,
+proves protected configuration and all API/worker/scheduled store files and
+directories exactly unchanged from preflight2. NFS remains read-only and SELinux
+Enforcing; configuration/Hub grants remain true, archive/control/schedule/observer
+false. Fresh coordinated backups, actual drain and reviewed current-boot manual
+runtime provisioning remain deployment prerequisites after release qualification.
+No production repair, replacement or pilot is claimed. Installed qualification
+remains the active work; this factual hold changes neither its scope nor the
+selected artifact source. The
+following dated readiness evidence retains its original scope.
+
 The selected local rootless release is **0.3.1**, clean source `c23abba45f8967d058983043b96843bef62e899a`,
 app image `716cb3c6aeb267b439c12ba6ca70e1d43c48ca89327623c4938a26a76ba0e6cb`, unchanged Caddy `fa2a5634…`.
 Physical release index: `93772b5c2189e202aae279ba6f628f19f18d8e8cf66c7cb1702d499d5c13eb78`;

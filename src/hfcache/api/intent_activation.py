@@ -11,6 +11,7 @@ it never initializes an archive or repairs partial/previous activation.
 
 import argparse
 import hashlib
+import json
 import os
 import pwd
 import runpy
@@ -197,6 +198,54 @@ def _native_show(unit: str, properties: tuple[str, ...]) -> dict[str, str]:
     return values
 
 
+def _native_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    value = dict(pairs)
+    if len(value) != len(pairs):
+        message = "Duplicate native metadata key"
+        raise ValueError(message)
+    return value
+
+
+def _native_credentials() -> dict[str, list[list[str]]]:
+    """Read fixed typed arrays; human systemctl rendering is not authority."""
+    expected: dict[str, list[list[str]]] = {
+        "LoadCredential": [],
+        "LoadCredentialEncrypted": [["hfcache.api", "/etc/credstore.encrypted/hfcache.api"]],
+    }
+    credentials: dict[str, list[list[str]]] = {}
+    for name, entries in expected.items():
+        result = subprocess.run(  # noqa: S603 - fixed system-bus metadata, no service effect
+            [
+                "/usr/bin/busctl",
+                "--system",
+                "--json=short",
+                "--timeout=5",
+                "get-property",
+                "org.freedesktop.systemd1",
+                "/org/freedesktop/systemd1/unit/hfcache_2dapi_2eservice",
+                "org.freedesktop.systemd1.Service",
+                name,
+            ],
+            check=True,
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            env={"PATH": "/usr/bin:/bin", "LANG": "C", "LC_ALL": "C"},
+        )
+        if len(result.stdout.encode()) > _MAX_NATIVE_METADATA:
+            raise unavailable()
+        try:
+            document = json.loads(result.stdout, object_pairs_hook=_native_object)
+        except ValueError:
+            raise unavailable() from None
+        if document != {"type": "a(ss)", "data": entries}:
+            message = "Native activation requires the fixed packaged API credential delivery"
+            raise unavailable(message)
+        credentials[name] = document["data"]
+    return credentials
+
+
 def native_mask_policy(selected: Path) -> tuple[str, str]:
     """Read-only fixed native authority; no token source is opened or executed.
 
@@ -213,8 +262,6 @@ def native_mask_policy(selected: Path) -> tuple[str, str]:
             "FragmentPath",
             "DropInPaths",
             "ExecStart",
-            "LoadCredential",
-            "LoadCredentialEncrypted",
             "ImportCredential",
         ),
     )
@@ -226,10 +273,9 @@ def native_mask_policy(selected: Path) -> tuple[str, str]:
         + entry
         + " serve --server-config /etc/hfcache/server.toml ; ignore_errors=no ;"
     )
+    credentials = _native_credentials()
     if (
         api["DropInPaths"]
-        or api["LoadCredential"]
-        or api["LoadCredentialEncrypted"] != "hfcache.api:/etc/credstore.encrypted/hfcache.api"
         or api["ImportCredential"] != "hf-token"
         or api["FragmentPath"]
         not in {
@@ -277,6 +323,7 @@ def native_mask_policy(selected: Path) -> tuple[str, str]:
                 "server": hashlib.sha256(raw).hexdigest(),
                 "archive": hashlib.sha256(NATIVE_ARCHIVE_CONFIG.read_bytes()).hexdigest(),
                 "api": api,
+                "credentials": credentials,
                 "worker": worker,
                 "packaged": hashlib.sha256(packaged).hexdigest(),
                 "masks": mask_text,

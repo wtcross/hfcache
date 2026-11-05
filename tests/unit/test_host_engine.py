@@ -651,3 +651,52 @@ def test_typed_entry_requires_exact_two_namespace_bits(entered_engine, field, wr
         module._engine_enter(entered_engine.prepared, budget())
     assert ("close", 123) in entered_engine.events
     assert not any(event[0] == "unshare" for event in entered_engine.events)
+
+
+@pytest.mark.parametrize(("review", "worker"), [(False, True), (True, False)])
+def test_fixed_worker_inspection_does_not_replace_running_inventory(review, worker):
+    argv = module._engine_argv(review=review, worker=worker)
+    assert argv[4:] == (
+        ["container", "inspect", "hfcache-verification"] if worker else ["ps", "--format=json"]
+    )
+
+
+@pytest.mark.parametrize(("review", "worker"), [(True, True), (False, "hfcache-api"), (1, False)])
+def test_engine_inspection_selector_conflicts_and_untyped_values_refuse(review, worker):
+    with pytest.raises(module.PeerError):
+        module._engine_argv(review=review, worker=worker)
+
+
+@pytest.mark.parametrize("selectors", [{"intent_worker": True}, {"intent_review": True}])
+def test_typed_engine_child_executes_only_fixed_worker_or_inventory(
+    storage, monkeypatch, selectors
+):
+    configured = configure_engine_exec(storage, monkeypatch, "translated")
+    body = json.loads(module.sys.stdin.buffer.read()) | selectors
+    monkeypatch.setattr(
+        module.sys, "stdin", SimpleNamespace(buffer=io.BytesIO(json.dumps(body).encode()))
+    )
+    with pytest.raises(ReachedFixedExecError):
+        module.observe_engine()
+    assert storage.opened == set()
+    assert configured.calls[0][1] == module._engine_argv(
+        review=selectors.get("intent_review", False), worker=selectors.get("intent_worker", False)
+    )
+
+
+@pytest.mark.parametrize(
+    "selectors", [{"intent_worker": True, "intent_review": True}, {"intent_worker": "hfcache-api"}]
+)
+def test_typed_engine_child_refuses_selectors_before_any_namespace_or_exec(monkeypatch, selectors):
+    monkeypatch.setattr(
+        module,
+        "sys",
+        SimpleNamespace(stdin=SimpleNamespace(buffer=io.BytesIO(json.dumps(selectors).encode()))),
+    )
+    monkeypatch.setattr(
+        module,
+        "_engine_prepare",
+        lambda *_: pytest.fail("invalid selector entered engine preparation"),
+    )
+    with pytest.raises(module.PeerError):
+        module.observe_engine()

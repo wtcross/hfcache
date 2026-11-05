@@ -57,7 +57,10 @@ def test_policy_has_no_optional_global_or_permissive_escape():
         "hfcache_archive_writer_t",
     }
     forbidden_targets = {"domain", "file_type", "exec_type", "unconfined_domain_type", "*", "all"}
-    assert all(target not in forbidden_targets for _, target, _, _ in access_rules("allow"))
+    assert {rule for rule in access_rules("allow") if rule[1] in forbidden_targets} == {
+        (SUBJECT, "domain", "dir", frozenset({"getattr", "search"})),
+        (SUBJECT, "domain", "file", frozenset({"getattr", "open", "read"})),
+    }
     assert all(
         "*" not in permissions and "all" not in permissions
         for _, _, _, permissions in access_rules("allow")
@@ -187,6 +190,7 @@ def test_container_compatibility_is_closed_to_inputs_endpoint_and_hub_state():
         ("hfcache_host_helper_runtime_t", "file"): {"getattr", "open", "read"},
         ("hfcache_host_helper_runtime_t", "sock_file"): {"getattr", "open", "read", "write"},
         (SUBJECT, "unix_stream_socket"): {"connectto"},
+        ("hfcache_archive_writer_t", "unix_stream_socket"): {"connectto"},
     }
     observed = {
         (target, cls): set(rights)
@@ -287,6 +291,8 @@ def _assert_fixed_session_broker_permissions():
     rules = access_rules("allow")
     broker = "unconfined_dbusd_t"
     assert [rule for rule in rules if broker in rule[:2]] == [
+        (SUBJECT, broker, "process", frozenset({"getattr"})),
+        (SUBJECT, broker, "lnk_file", frozenset({"read"})),
         (SUBJECT, broker, "unix_stream_socket", frozenset({"connectto"})),
         (SUBJECT, broker, "dbus", frozenset({"send_msg"})),
     ]
@@ -313,7 +319,7 @@ def _assert_fixed_session_broker_permissions():
     }
 
 
-def test_fixed_session_broker_has_only_connection_and_driver_message_permissions():
+def test_fixed_session_broker_has_only_ipc_and_process_context_metadata_permissions():
     _assert_fixed_session_broker_permissions()
 
 
@@ -794,6 +800,7 @@ def test_fixed_manager_control_is_only_reload_and_the_dedicated_sync_timer_type(
     assert metadata == {
         (SUBJECT, "init_t", "system", frozenset({"status"})),
         (SUBJECT, "systemd_unit_file_t", "service", frozenset({"status"})),
+        (SUBJECT, "dbusd_unit_file_t", "service", frozenset({"status"})),
         (SUBJECT, "init_t", "system", frozenset({"reload"})),
         (
             SUBJECT,
@@ -804,9 +811,24 @@ def test_fixed_manager_control_is_only_reload_and_the_dedicated_sync_timer_type(
     }
     assert not any(rights & {"enable", "disable", "kill", "load"} for _, _, _, rights in metadata)
     assert not any(
-        target == "systemd_unit_file_t" and rights & {"start", "stop", "reload"}
+        target in {"systemd_unit_file_t", "dbusd_unit_file_t"}
+        and rights & {"start", "stop", "reload"}
         for _, target, _, rights in metadata
     )
+
+
+def test_fixed_user_broker_unit_has_only_file_read_and_status_permissions():
+    # The fixed dbus-broker.service selector binds its vendor fragment and bytes.
+    # Its stock specialized SID mediates both GetAll/status and the later read;
+    # generic unit-file permissions do not cover either access to this type.
+    assert [
+        (source, cls, rights)
+        for source, target, cls, rights in access_rules("allow")
+        if target == "dbusd_unit_file_t"
+    ] == [
+        (SUBJECT, "file", frozenset({"getattr", "open", "read"})),
+        (SUBJECT, "service", frozenset({"status"})),
+    ]
 
 
 def test_configuration_creation_transitions_and_writes_are_closed():
@@ -1152,3 +1174,68 @@ def test_explicit_writer_domain_preserves_mcs_and_archive_only_write_extension()
             and rights & {"read", "open", "map", "write", "create"}
             for src, dst, cls, rights in access_rules("allow")
         )
+
+
+@pytest.mark.parametrize("target", ["init_exec_t", "dbusd_exec_t"])
+def test_inert_executable_types_have_only_file_metadata_without_body_or_control(target):
+    assert {
+        (source, role, cls, permissions)
+        for source, role, cls, permissions in access_rules("allow")
+        if source == SUBJECT and role == target
+    } == {(SUBJECT, target, "file", frozenset({"getattr"}))}
+
+
+def test_fixed_broker_context_and_image_link_have_only_observed_metadata_rights():
+    assert [
+        rule
+        for rule in access_rules("allow")
+        if rule[0] == SUBJECT
+        and rule[1] == "unconfined_dbusd_t"
+        and rule[2] in {"process", "lnk_file"}
+    ] == [
+        (SUBJECT, "unconfined_dbusd_t", "process", frozenset({"getattr"})),
+        (SUBJECT, "unconfined_dbusd_t", "lnk_file", frozenset({"read"})),
+    ]
+
+
+def _assert_writer_proxy_peer_permissions():
+    """Decision 165 permits peer connect only; stream I/O uses own-socket rights."""
+    client, server = "container_t", "hfcache_archive_writer_t"
+    assert {
+        rule for rule in access_rules("allow") if rule[:2] in {(client, server), (server, client)}
+    } == {(client, server, "unix_stream_socket", frozenset({"connectto"}))}
+
+
+def test_writer_proxy_can_connect_to_api_without_other_peer_authority():
+    _assert_writer_proxy_peer_permissions()
+
+
+@pytest.mark.parametrize(
+    "replacement",
+    [
+        "",
+        "(allow container_t hfcache_archive_writer_t (unix_stream_socket (connectto read write)))",
+        (
+            "(allow container_t hfcache_archive_writer_t (unix_stream_socket (connectto)))\n"
+            "(allow hfcache_archive_writer_t container_t (unix_stream_socket (connectto)))"
+        ),
+        (
+            "(allow container_t hfcache_archive_writer_t (unix_stream_socket (connectto)))\n"
+            "(allow container_t hfcache_archive_writer_t (sock_file (write)))"
+        ),
+        (
+            "(allow container_t hfcache_archive_writer_t (unix_stream_socket (connectto)))\n"
+            "(allow container_t hfcache_archive_writer_t (process (signal)))"
+        ),
+    ],
+    ids=["missing", "peer-io", "reverse", "socket-file", "signal"],
+)
+def test_writer_proxy_rejects_missing_or_broader_peer_rights(replacement, tmp_path, monkeypatch):
+    rule = "(allow container_t hfcache_archive_writer_t (unix_stream_socket (connectto)))"
+    source = POLICY.read_text()
+    assert source.count(rule) == 1
+    candidate = tmp_path / "candidate.cil"
+    candidate.write_text(source.replace(rule, replacement))
+    monkeypatch.setitem(globals(), "POLICY", candidate)
+    with pytest.raises(AssertionError):
+        _assert_writer_proxy_peer_permissions()

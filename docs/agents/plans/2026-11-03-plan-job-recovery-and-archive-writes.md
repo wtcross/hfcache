@@ -481,3 +481,13 @@ historical evidence collection is a deliverable.
   bounded source evidence; strict Enforcing workloads/native transient/mounts and
   actual NFS writer proof remain WEB-033/OPS-029. No production state changes,
   deployment, tag or push. WEB-033 is selected next.
+
+- 2026-11-05: WEB-033 closes actual native/rootless recovery, permanent-fence
+  compatibility and isolated activation, Enforcing rootless application writes,
+  original-lock waiting, storage negatives, missing-companion refusal/restoration,
+  drained restart and compatible guarded RO rollback with original evidence intact.
+  Strict gate12 passes on final technical inputs; factual closeout uses focused
+  documentation checks. Existing unchanged decoder/browser evidence is reused
+  with explicit scope. REL-018 is selected next. Production deployment, original
+  historical-key recovery, selected pilots and bounded backfill remain pending;
+  no production completion follows from the owned fixture.

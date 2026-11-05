@@ -1110,7 +1110,7 @@ def _guard_unit(budget: InspectionBudget) -> dict[str, str]:
     return value
 
 
-def _guard_child(budget: InspectionBudget) -> dict[str, Any]:
+def _guard_child(budget: InspectionBudget, *, intent_locks: bool = False) -> dict[str, Any]:
     """An expired read child remains owned until it actually exits; never signal."""
     seconds = budget.remaining(MAX_COMMAND_SECONDS)
     request = json.dumps(
@@ -1130,7 +1130,7 @@ def _guard_child(budget: InspectionBudget) -> dict[str, Any]:
         "PYTHONDONTWRITEBYTECODE": "1",
     }
     with subprocess.Popen(  # noqa: S603 - one fixed protected read-only internal role
-        [GUARD_HELPER, "observe-guard"],
+        [GUARD_HELPER, "observe-intent-locks" if intent_locks else "observe-guard"],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
@@ -1187,6 +1187,7 @@ class _Inspection:
         self.unit_states: dict[str, dict[str, str]] = {}
         self.observer_configuration: dict[str, str] | None = None
         self.observer_loaded_dropins: str | None = None
+        self.intent_locks: dict[str, Any] | None = None
 
     def authority_read(self, path: Path, maximum: int = 16777216) -> bytes:
         relative = path.relative_to(self.selected).as_posix()
@@ -1973,12 +1974,16 @@ def inspect_authority(
         raise InspectionError(msg) from None
 
 
-def _archive_lock_context(capture: _Capture, uid: int, gid: int) -> tuple[tuple[int, ...], bytes]:
+def _archive_lock_context(
+    capture: _Capture, uid: int, gid: int, *, path: Path | None = None
+) -> tuple[tuple[int, ...], bytes]:
     """Observe the fixed service-owned lock without opening or locking its body."""
+    path = LOCK if path is None else path
+    _need(path in {LOCK, LOCK.with_name(LOCK.name + ".intent")}, "facts-unavailable")
     capture.budget.consume(files=1)
-    parent = capture.parent(LOCK, owners={OWNER, uid})
+    parent = capture.parent(path, owners={OWNER, uid})
     try:
-        before = os.stat(LOCK.name, dir_fd=parent, follow_symlinks=False)
+        before = os.stat(path.name, dir_fd=parent, follow_symlinks=False)
         _need(
             stat.S_ISREG(before.st_mode)
             and (before.st_uid, before.st_gid) == (uid, gid)
@@ -1986,7 +1991,7 @@ def _archive_lock_context(capture: _Capture, uid: int, gid: int) -> tuple[tuple[
             and before.st_nlink == 1,
             "facts-unavailable",
         )
-        context = os.getxattr(LOCK, "security.selinux", follow_symlinks=False)
+        context = os.getxattr(path, "security.selinux", follow_symlinks=False)
         capture.budget.consume(size=len(context))
         _need(
             0 < len(context) <= MAX_SELINUX_CONTEXT
@@ -1997,7 +2002,7 @@ def _archive_lock_context(capture: _Capture, uid: int, gid: int) -> tuple[tuple[
         )
         identity = _identity(before)
         _need(
-            _identity(os.stat(LOCK.name, dir_fd=parent, follow_symlinks=False)) == identity,
+            _identity(os.stat(path.name, dir_fd=parent, follow_symlinks=False)) == identity,
             "facts-unavailable",
         )
         return identity, context
@@ -2005,10 +2010,10 @@ def _archive_lock_context(capture: _Capture, uid: int, gid: int) -> tuple[tuple[
         os.close(parent)
 
 
-def observe_guard(
-    *, bootstrap_work: dict[str, int] | None = None, started_at: float | None = None
-) -> dict[str, Any]:
-    """Fixed CLI child only: original predicate under protected mixed credentials."""
+def _lock_observer(
+    bootstrap_work: dict[str, int] | None, started_at: float | None
+) -> tuple[_Inspection, bytes, int, int]:
+    """Closed budget and independently protected principal for fixed child roles."""
     _need(os.getresuid() == (0, 0, 0) and os.getresgid() == (0, 0, 0), "facts-unavailable")
     raw = sys.stdin.buffer.read(MAX_GUARD_INPUT + 1)
     _need(len(raw) <= MAX_GUARD_INPUT, "facts-unavailable")
@@ -2046,7 +2051,6 @@ def observe_guard(
     inspection.deployment = _deployment(body)
     inspection.selected = PREFIX / inspection.deployment["release"]["selector_target"]
     inspection.capture.link(PREFIX / "current", inspection.deployment["release"]["selector_target"])
-    inspection.legacy = inspection.legacy_namespace()
     principal = inspection.deployment["api_principal"]
     uid, gid = principal["host_uid"], principal["host_gid"]
     account = pwd.getpwnam("hfcache")
@@ -2059,6 +2063,16 @@ def observe_guard(
         (account.pw_uid, account.pw_gid, account.pw_dir) == (uid, gid, expected_home),
         "facts-unavailable",
     )
+    return inspection, body, uid, gid
+
+
+def observe_guard(
+    *, bootstrap_work: dict[str, int] | None = None, started_at: float | None = None
+) -> dict[str, Any]:
+    """Fixed CLI child only: original predicate under protected mixed credentials."""
+    inspection, body, uid, gid = _lock_observer(bootstrap_work, started_at)
+    inspection.legacy = inspection.legacy_namespace()
+    budget = inspection.capture.budget
     unit = _guard_unit(budget)
     _need(
         unit["LoadState"] == "loaded"
@@ -2116,6 +2130,49 @@ def observe_guard(
             "mode": stat.S_IMODE(before.st_mode),
         },
         "work": {"files": budget.files, "bytes": budget.bytes},
+    }
+
+
+def observe_intent_locks(
+    *, bootstrap_work: dict[str, int] | None = None, started_at: float | None = None
+) -> dict[str, Any]:
+    """ADR164: fixed metadata child; no guard assertion or lock-body access."""
+    inspection, body, uid, gid = _lock_observer(bootstrap_work, started_at)
+    capture = inspection.capture
+    paths = {"archive_lock": LOCK, "intent_lock": LOCK.with_name(LOCK.name + ".intent")}
+    groups = os.getgroups()
+    os.setgroups([])
+    try:
+        os.setresgid(0, gid, 0)
+        os.setresuid(0, uid, 0)
+        _need(os.getresuid() == (0, uid, 0) and os.getresgid() == (0, gid, 0), "facts-unavailable")
+        locks = {
+            name: _archive_lock_context(capture, uid, gid, path=path)
+            for name, path in paths.items()
+        }
+        capture.revalidate()
+        _need(
+            all(
+                _archive_lock_context(capture, uid, gid, path=path) == locks[name]
+                for name, path in paths.items()
+            ),
+            "facts-unavailable",
+        )
+        capture.revalidate()
+    finally:
+        os.setresuid(0, 0, 0)
+        os.setresgid(0, 0, 0)
+        os.setgroups(groups)
+    capture.budget.remaining()
+    return {
+        "schema_version": 1,
+        "deployment_sha256": hashlib.sha256(body).hexdigest(),
+        "locks": {
+            name: {"identity": list(identity), "context": context.decode("ascii")}
+            for name, (identity, context) in locks.items()
+        },
+        "runtime_parent": list(capture.parents[LOCK.parent]),
+        "work": {"files": capture.budget.files, "bytes": capture.budget.bytes},
     }
 
 
@@ -2747,43 +2804,76 @@ def confirm_schedule(
 
 def review_intent_locks(snapshot: AuthoritySnapshot, pid: int) -> dict[str, Any]:
     """Metadata-only companion proof: actual authenticated API owns EX flock."""
-    capture = snapshot._inspection.capture  # noqa: SLF001 - shared protected snapshot
-    path = LOCK.with_name(LOCK.name + ".intent")
+    inspection = snapshot._inspection  # noqa: SLF001 - shared protected snapshot
+    capture = inspection.capture
     uid, gid = snapshot.api_principal
-    parent = capture.parent(path, owners={OWNER, uid})
-    try:
-        before = os.stat(path.name, dir_fd=parent, follow_symlinks=False)
+    _need(type(pid) is int and pid > 1, "facts-unavailable")
+    proof = _object(
+        _guard_child(snapshot.budget, intent_locks=True),
+        {"schema_version", "deployment_sha256", "locks", "runtime_parent", "work"},
+    )
+    _need(
+        type(proof["schema_version"]) is int
+        and proof["schema_version"] == 1
+        and proof["deployment_sha256"] == snapshot.deployment_sha256,
+        "facts-unavailable",
+    )
+    work = _object(proof["work"], {"files", "bytes"})
+    _need(all(type(number) is int and number >= 0 for number in work.values()), "facts-unavailable")
+    snapshot.budget.consume(files=work["files"], size=work["bytes"])
+    locks = _object(proof["locks"], {"archive_lock", "intent_lock"})
+    for value in locks.values():
+        record = _object(value, {"identity", "context"})
+        identity, context = record["identity"], record["context"]
         _need(
-            stat.S_ISREG(before.st_mode)
-            and before.st_uid == uid
-            and before.st_gid == gid
-            and before.st_nlink == 1
-            and stat.S_IMODE(before.st_mode) == LOCK_MODE,
+            type(identity) is list
+            and len(identity) == len(METADATA)
+            and all(type(number) is int and number >= 0 for number in identity)
+            and identity[1] > 0
+            and stat.S_ISREG(identity[2])
+            and stat.S_IMODE(identity[2]) == LOCK_MODE
+            and identity[3:6] == [uid, gid, 1]
+            and type(context) is str
+            and re.fullmatch(r"[A-Za-z0-9_]+:object_r:" + ARCHIVE_LOCK_TYPE + r":s0\0?", context),
             "facts-unavailable",
         )
-        capture.label(path, ARCHIVE_LOCK_TYPE)
-        device = (os.major(before.st_dev), os.minor(before.st_dev), before.st_ino)
-        matches = 0
-        for line in capture.accounting(LOCKS).splitlines():
-            fields = line.split()
+    parent = proof["runtime_parent"]
+    _need(
+        type(parent) is list
+        and len(parent) == len(PARENT_METADATA)
+        and all(type(number) is int and number >= 0 for number in parent)
+        and parent[1] > 0
+        and stat.S_ISDIR(parent[2])
+        and parent[3] in {OWNER, uid}
+        and not parent[2] & 0o022,
+        "facts-unavailable",
+    )
+    observation = {"locks": locks, "runtime_parent": parent}
+    _need(
+        inspection.intent_locks is None or inspection.intent_locks == observation,
+        "facts-unavailable",
+    )
+    companion = locks["intent_lock"]["identity"]
+    device = (os.major(companion[0]), os.minor(companion[0]), companion[1])
+    matches = 0
+    for line in capture.accounting(LOCKS).splitlines():
+        fields = line.split()
+        if (
+            len(fields) == 8  # noqa: PLR2004 - exact proc locks fields
+            and fields[1:4] == ["FLOCK", "ADVISORY", "WRITE"]
+            and fields[4] == str(pid)
+            and fields[6:] == ["0", "EOF"]
+        ):
+            parts = fields[5].split(":")
             if (
-                len(fields) == 8  # noqa: PLR2004 - exact proc locks fields
-                and fields[1:4] == ["FLOCK", "ADVISORY", "WRITE"]
-                and fields[4] == str(pid)
-                and fields[6:] == ["0", "EOF"]
+                len(parts) == len(device)
+                and (int(parts[0], 16), int(parts[1], 16), int(parts[2])) == device
             ):
-                parts = fields[5].split(":")
-                if (
-                    len(parts) == len(device)
-                    and (int(parts[0], 16), int(parts[1], 16), int(parts[2])) == device
-                ):
-                    matches += 1
-        after = os.stat(path.name, dir_fd=parent, follow_symlinks=False)
-        _need(matches == 1 and _identity(before) == _identity(after), "facts-unavailable")
-    finally:
-        os.close(parent)
-    original, _ = _archive_lock_context(capture, uid, gid)
+                matches += 1
+    _need(matches == 1, "facts-unavailable")
+    inspection.intent_locks = observation
+    original = locks["archive_lock"]["identity"]
     return {
-        "intent_lock": {"device": before.st_dev, "inode": before.st_ino},
+        "intent_lock": {"device": companion[0], "inode": companion[1]},
         "archive_lock": {"device": original[0], "inode": original[1]},
     }

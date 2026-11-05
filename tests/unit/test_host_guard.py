@@ -331,7 +331,8 @@ def test_non_root_guard_role_refuses_before_any_metadata(native, monkeypatch):
     assert native.calls == []
 
 
-def test_parent_timeout_retains_exact_read_child_until_natural_exit(monkeypatch):
+@pytest.mark.parametrize("intent_locks", [False, True])
+def test_parent_timeout_retains_exact_read_child_until_natural_exit(monkeypatch, intent_locks):
     original = subprocess.Popen
     owned = []
     arguments = []
@@ -353,9 +354,10 @@ def test_parent_timeout_retains_exact_read_child_until_natural_exit(monkeypatch)
     started = time.monotonic()
     budget = policy.InspectionBudget(deadline_ns=time.monotonic_ns() + 50_000_000)
     with pytest.raises(TimeoutError):
-        policy._guard_child(budget)
+        policy._guard_child(budget, intent_locks=intent_locks)
     assert time.monotonic() - started >= 0.15
-    assert arguments == [["/usr/local/libexec/hfcache-host-helper", "observe-guard"]]
+    role = "observe-intent-locks" if intent_locks else "observe-guard"
+    assert arguments == [["/usr/local/libexec/hfcache-host-helper", role]]
     assert owned[0].returncode == 0
 
 

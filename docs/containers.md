@@ -149,6 +149,26 @@ allows required actual NFS operations without generic container-domain writes.
 Helper/observer payload neverallows remain mandatory. No NAS relabel, chown,
 copyup, label-disable, privileged mode or assumed policy boolean is permitted.
 
+Caddy keeps its ordinary `container_t` domain and private MCS categories. Its
+existing Unix API upstream requires only the directed SELinux
+`container_t` to `hfcache_archive_writer_t` `unix_stream_socket connectto`
+permission. This permission is type-wide, not restricted by MAC to Caddy or the
+API pathname. The fixed API runtime bind, DAC, namespace/mount isolation and
+API authentication retain that narrower deployed boundary. It adds no archive
+mount or file access to Caddy. Both processes use their existing own-socket
+permissions for I/O; no cross-type read/write or reverse connection is granted.
+Keep MCS constraints and generated categories unchanged.
+
+A host remount and Podman's `Mounts[].RW` field do not prove the payload's
+per-mount access. An existing rootless pause namespace can retain an inherited
+read-only archive mount after the host and NFS superblock become writable.
+Before writer admission, inspect both the authenticated keeper's mount view
+and each actual API/worker payload's mountinfo. A stale read-only view stops
+startup qualification and jobs. Use the reviewed drained
+[namespace handoff](deployment-centos-stream-10.md#rootless-namespace-handoff)
+instead of changing confinement or remounting inside a container. Preserve the
+failed process/container evidence; a successful NotifyREADY is insufficient.
+
 Manifest schema 2 also requires `release_id` exactly `<version>-<archive_mode>`.
 Stage immutable sibling directories `releases/0.3.2-guarded-readonly` and
 `releases/0.3.2-manual-writer` with the same source/app-image/UI bytes and distinct

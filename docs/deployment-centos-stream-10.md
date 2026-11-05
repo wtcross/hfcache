@@ -212,6 +212,12 @@ absolute shebang/home paths. Do not use a service interpreter under `/home` with
 ProtectHome. Environment overrides select deliberate trusted layouts/tools;
 they never waive classification, quiescence, original locks or retained handles.
 
+Switching, same-version rebuilding and offline intent activation accept an
+intentionally masked unit only when it is inactive. A masked service must still
+prove zero main/control processes and no remaining tasks, with the same cgroup
+checks as a loaded service. Other unexplained states refuse. Keep legacy writers
+and calendars masked; never unmask them to satisfy the installer.
+
 Explicit `--with-mcp` stages server+MCP only during build/stage. It is refused with
 list/switch, does not enable config/provision credentials/start services and cannot
 add dependencies to an existing target. Before enabling native MCP, deliberately
@@ -598,6 +604,13 @@ Stop on missing or contradictory facts; retain every failed/partial artifact.
    `prepare-intent-state --archive-id <configured UUID>` once. Native uses
    `install-release.sh --prepare-intent-state --archive-id <UUID>`; rootless uses
    `install-container-release.py prepare-intent-state --archive-id <UUID>`.
+   Native preparation reads the fixed API service's typed credential arrays
+   through `busctl` from the existing systemd package: no unencrypted loads and
+   exactly the packaged encrypted writer credential are accepted. Human
+   `systemctl show` may print those arrays as `[unprintable]`; that rendering
+   never proves credential delivery. Missing/unsupported typed metadata refuses
+   before state effects, with the canonical startup/no-dropin/source-mask and
+   before/after revision checks retained.
    Native preparation accepts only fixed packaged/cached API startup and covered
    credential sources under the reviewed effective verifier masks; custom source
    masks are retained and absent standard stores are optional. Nonstandard native
@@ -618,10 +631,12 @@ Stop on missing or contradictory facts; retain every failed/partial artifact.
    Select the already staged manual-writer sibling through `switch` while NFS-ro,
    rebind the protected helper/index/policy/receipt to its exact release_id, and
    reacquire/retain the same original flock for the separate mount transition.
-   Remove only the reviewed bridge dependency that would start the lock-holding
-   guard; preserve unrelated dependencies and its recorded original bytes. Keep
-   the independent guard deliberately inactive and available. Do not start a
-   writer through the user default target or infer readiness from an exited bridge.
+   If starting through the bridge, remove only its reviewed dependency that would
+   start the lock-holding guard, retaining its original bytes and unrelated
+   dependencies. Alternatively, preserve that dependency byte-for-byte, keep
+   bridge/targets/guard inactive and start the fixed roles individually. Keep the
+   guard available. Do not activate the user default target or infer readiness
+   from an exited bridge.
 7. Root adjusts only the protected local persistent mount override and remounts
    the existing NFS connection rw without unmount/disconnect/NAS changes. Prove
    host/export/mount identity, mapped ownership, unchanged sentinel UUID, actual
@@ -646,3 +661,41 @@ Runtime/companion recreation after a reboot is a separate manual provisioning
 operation under the same fresh drain and protected authority review. An existing
 healthy disposition file is preserved; first-activation preparation is never
 rerun to recreate a missing companion. No unattended startup claim is made.
+
+### Rootless namespace handoff
+
+A host rw remount can leave an existing rootless pause namespace's archive
+mount read-only. Check the actual keeper and payload mountinfo, including both
+VFS and superblock access; an intended rw bind or READY notification is not
+proof. Preserve a failed container and stop the transition before jobs.
+
+Under a fresh coordinated backup, stop admission and gracefully drain every
+application/helper/engine client. Preserve original domain/companion/store/runtime
+and engine lock inodes, credentials, all operation history, stopped containers,
+images and original namespace evidence. Prove the old pause PID/birth/executable,
+namespace ownership and absence of workloads in that namespace. Keep independent
+job permissions denied. Never use forced termination to drain a job.
+
+For the observed Podman 6.1 implementation, a separately reviewed, no-option
+`podman system migrate` can retire the known inert pause namespace. Its
+[implementation](https://raw.githubusercontent.com/containers/podman/v6.1.0/libpod/runtime_migrate_linux.go)
+removes namespace handles and the pause record and kills that inert keeper;
+it must run only after the workload drain, not to accomplish that drain.
+It also has
+[container-configuration migration logic](https://raw.githubusercontent.com/containers/podman/v6.1.0/libpod/runtime_migrate.go).
+Before effects, retain a coherent private database/sidecar/configuration backup
+and review the exact changed fields. Permit only the specifically reviewed
+Conmon PID-file path migration when necessary; retain original configuration
+records and every stopped CID. No runtime change, database migration, renumber,
+reset or prune flag is authorized. Recheck the installed version and its actual
+semantics; unexpected changes or incomplete backup/closure stop the procedure.
+
+Do not manually unlink the canonical pause record, signal arbitrary PIDs,
+remount inside a container, or weaken capabilities, seccomp or SELinux. After
+turnover, verify original engine lock/SHM inodes and labels by metadata only;
+never read, hash or map those bodies. Create the replacement namespace through
+normal rootless engine startup from the proven host mount view. Authenticate
+its new PID/birth/maps/namespace, preserve the old evidence and supersede the old
+actor snapshot explicitly. Rejoin actual mount flags before helper READY and
+ordered role startup. A mount change is not a durable-format activation or
+permission grant; do not repeat disposition provisioning or replay any job.

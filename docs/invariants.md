@@ -444,7 +444,14 @@ History: `synchronization` (`54e4671`), decision 94.
   [Decision 165](adr/decision-165.md) accepts a separately protected manual-writer
   mode for fixed API/worker archive writes, dedicated confined writer domains,
   unchanged helper/observer neverallows and a still-read-only installation window.
-  Runtime/index/helper/mount/guard facts must agree; unknown facts refuse. Schema2
+  Caddy retains its existing container domain and distinct MCS range; one directed
+  Unix-stream connect permission to the writer type enables the fixed mounted API
+  socket. This type-wide permission grants no archive visibility or peer I/O;
+  original parent/inode, DAC, mounts and API authentication remain mandatory.
+  Runtime/index/helper/mount/guard facts must agree; unknown facts refuse. Mount
+  proof includes the rootless keeper and actual payload VFS access, not merely
+  host/superblock state or an intended rw bind. A stale namespace requires the
+  reviewed fully drained handoff with original lock/state preservation. Schema2
   siblings bind an exact version-mode release_id without changing package/UI
   version or image bytes. Protected staging and selection retain the original
   noncreating flock and fresh NFS-ro executor/helper/cgroup/libpod drain. The
@@ -1216,9 +1223,19 @@ old-reader/rollback refusals and unknown original state.
   selected CIL and independent root installation receipt; root policy/label
   changes require fresh receipt/index and restart. Preserve existing capability,
   namespace and credential restrictions; this adds no category grant.
+  Whole-host executor UID classification uses only read-only process-domain
+  file state and search/getattr on process directories, with no-follow `O_PATH`
+  ancestors. These type-wide permissions include other proc files subject to
+  DAC/read gates; attachment denial alone is not universal environment secrecy.
+  Distinct payload object denials and every existing neverallow remain mandatory.
   Fixed unit-link validation permits only `systemd_unit_file_t:lnk_file`
   `getattr`/`read`, with root ownership, stable metadata and exact indexed target
   checks. This type-wide metadata/follow grant adds no link mutation or target-file permission.
+  Fixed rootless vendor-broker validation permits `dbusd_unit_file_t:service`
+  `status` and file `getattr/open/read` only. These type-wide metadata rights
+  retain the closed vendor selector, protected fragment/drop-in and live-process
+  proof; they grant no unit control, mutation or payload authority. User-manager
+  journal denials remain evidence even when its audit channel is unavailable.
   Only the trusted system manager gains directory `mounton` on the custom
   secret, Hub-state, archive and runtime types to install the existing fixed
   inaccessible masks and writable runtime bind before helper exec. The helper
@@ -1304,7 +1321,10 @@ old-reader/rollback refusals and unknown original state.
   user-manager socket. Bus responses never replace the independent
   manager/process/container and original socket-pidfd checks. The stock
   `unconfined_dbusd_t` session-broker variant receives only type-wide
-  `unix_stream_socket connectto` and `dbus send_msg` from the helper domain.
+  `unix_stream_socket connectto` and `dbus send_msg` from the helper domain,
+  plus process-getattr for its fixed inert-role context and link-read for the
+  exact kernel exe read/follow. These type-wide metadata rights add no link
+  getattr, file-body, ptrace, signal, transition, ioctl or manager-control right.
   The message permission covers the broker's driver/fallback authorization;
   it is not restricted by SELinux to a path, UID, unit, method or read-only
   operation. The protected indexed UID/bus address, closed metadata argv,
@@ -1320,7 +1340,8 @@ old-reader/rollback refusals and unknown original state.
   threads or children; steady root effective/permitted/bounding sets contain
   only SETUID/SETGID. A separate fixed engine child may enter only the verified
   service account's USER namespace, never MNT/PID/NET. At fixed read-only
-  API-container exec, only DAC_READ_SEARCH and SYS_ADMIN remain in that USER
+  API/verification inspection or complete running-inventory exec, only
+  DAC_READ_SEARCH and SYS_ADMIN remain in that USER
   namespace's effective/permitted/bounding sets (bits2+21, mask0x200004);
   inheritable/ambient are empty with locked securebits0xCE.
   [Decision151](adr/decision-151.md) supersedes only the former SYS_ADMIN-only
@@ -1467,8 +1488,34 @@ No enforcement or acceptance is claimed from these new register entries alone.
   whole-worker/helper protected-effect proof, exclusive cross-process
   admission/executor interlock, original archive flock and final store rescan.
   Independent shared open-file-description leases overlap queue/worker handoffs;
-  helper exchanges never run under store/runner/domain/config locks. Prior
-  uninterlocked executors require actual reviewed deployment drain. Retirement
+  helper exchanges never run under store/runner/domain/config locks.
+  Coordination proof uses a fixed bounded metadata child for service-owned
+  runtime traversal; the threaded helper retains its credentials. No lock body
+  is opened or locked by that child and no active guard is assumed. Closed
+  replies bind the same deployment, complete lock metadata/contexts and parent
+  identity across review; the daemon checks the actual API PID's exclusive
+  companion flock in `/proc/locks`. Missing or changed objects refuse without
+  provisioning or permission repair. Whole-host review requires exact
+  real/effective/saved/filesystem UIDs with coherent PID birth and UID observations
+  through classification; ownership, kernel labels, or failed reads never
+  authorize skipping a process. Rootless notify-worker review joins the indexed
+  unit MainPID to inspected ConmonPid and a separate unique exact foreground
+  Podman command, full CID/image/payload and coherent births; exec API/Caddy
+  MainPID semantics remain unchanged. Missing, duplicate or changing joins
+  refuse under the existing bounded read-only engine transport. Fixed inert
+  cohort executable proof retains/rejoins protected no-follow O_PATH metadata,
+  never unused executable bodies; the kernel exe inode joins that retained leaf
+  before/after classification. Only init/dbus executable file-getattr grants
+  are added. Exact role/process joins and budgets remain. Unknown paths,
+  substitutions and failed observations refuse. The non-dumpable stock PAM child
+  instead
+  requires a separate exact protected-manager/parent/init.scope/command/init_t
+  and credential/proc lineage proof, revalidated without following its exe link
+  or claiming image identity; no readlink-error or unknown-process fallback.
+  The already engine-authenticated pause keeper accepts only PID1 adoption or
+  its authenticated manager as parent, with captured owner/maps joined to the
+  prepared namespace proof and unchanged exact executable/argv/domain checks.
+  Prior uninterlocked executors require actual reviewed deployment drain. Retirement
   preserves historical uncertainty and handles; no job replay, cleanup or
   protected-effect confirmation follows. Original refusal fields never change;
   its null review may gain one complete historical-retirement proof. A later

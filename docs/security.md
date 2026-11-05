@@ -862,6 +862,18 @@ Actual peer/recovery review binds selected writer command, payload PID/start,
 cgroup and SELinux domain; unknown facts refuse closure/effects. Helper and
 observer archive/secret payload neverallows remain unchanged.
 
+Caddy remains `container_t` with its own generated MCS categories, separate
+from the writer API. One directed `container_t` to
+`hfcache_archive_writer_t` `unix_stream_socket connectto` permission supports
+the existing Unix API upstream. SELinux checks this peer permission when
+connecting; stream I/O, socket options and shutdown use existing own-socket
+rights. No cross-type socket read/write, reverse connection, file, process or
+capability permission is added. The permission covers these types systemwide;
+it does not authenticate Caddy or select an API pathname. Fixed role mounts,
+DAC, namespaces and API authentication supply that narrower boundary. Caddy
+still receives no archive mount or management credential. Neither type loses
+`mcs_constrained_type`, changes categories or gains an MCS exemption.
+
 The owned target-policy drill distinguishes syntax/binary compatibility from
 strict neverallow validation and real confinement. Strict expansion also fails
 for the retained distribution/helper baseline; unchanged assertions are retained,
@@ -870,8 +882,8 @@ copied host compiler configuration plus bounded allow-vector comparison at
 freshly observed **active** boolean values establishes only that snapshot's
 compatibility and type permissions. The observed existing `virt_use_nfs=true`
 already permits stock container NFS rights; this change adds no generic
-`container_t` grant and cannot claim the writer is the sole systemwide writer
-type. MCS/DAC/mount/namespace/seccomp and actual enforcing positive/negative
+`container_t` archive grant and cannot claim the writer is the sole systemwide
+writer type. MCS/DAC/mount/namespace/seccomp and actual enforcing positive/negative
 workloads remain independent installed requirements. Do not change a boolean or
 weaken confinement to make those checks pass.
 
@@ -1187,13 +1199,35 @@ ceiling, then the fixed entry clears every ambient/inheritable bit before
 threads or children. Steady root effective/permitted/bounding sets contain
 exactly SETUID/SETGID. Delegated branches retain empty ambient/inheritable sets.
 
+Whole-executor image-authenticated inert classification inspects only the four
+closed OS executable paths through protected no-follow `O_PATH` metadata handles. It never
+opens their bodies. Only file-getattr authority is added for `init_exec_t` and
+`dbusd_exec_t`; these are type-wide metadata grants, not pathname restrictions.
+No open/read/map/execute or control right follows. Root ownership, safe ancestors, regular single-link executable metadata, full
+path rejoin and unchanged exact process/argv/label/parent/cgroup/credential/birth
+checks remain mandatory; unknown paths and changed/unreadable facts refuse.
+
+The non-dumpable stock `(sd-pam)` child has a separate closed, revalidated
+manager/PAM lineage proof as specified in [job recovery](job-recovery.md).
+It binds the protected vendor unit/PAMName, invocation and exact parent/init.scope,
+command, init_t:s0, credentials, initial maps and proc metadata. It neither
+reads/follows its exe link nor claims image authentication. No generic EACCES,
+unknown process, command-name or root-owned-link exception is allowed. The
+existing trusted root manager/PAM boundary and all capability/MAC restrictions
+remain unchanged.
+
 Only the separate fixed engine child may enter the verified service account's
 existing USER namespace. The original host observer remains in initial USER
 and the helper's masked MNT; neither enters MNT, PID or NET. The engine child
 pins pause PID/start/liveness, namespace owner and exact protected mappings,
 then retains only namespace-local DAC_READ_SEARCH and SYS_ADMIN in effective/
-permitted/bounding sets at fixed API-container exec (bits2+21, mask0x200004);
-inheritable/ambient are empty. Lock NOROOT false, NO_SETUID_FIXUP true and
+permitted/bounding sets at fixed read-only Podman exec (bits2+21,
+mask0x200004); inheritable/ambient are empty. The closed internal modes are
+`container inspect hfcache-api`, `ps --format=json` and
+`container inspect hfcache-verification`. The last mode joins the indexed notify
+worker's conmon MainPID, separate exact foreground Podman command and actual
+payload/CID; conflicting or caller-selected resources refuse. These commands
+retain the same aggregate budgets and cannot control or enter a container. Lock NOROOT false, NO_SETUID_FIXUP true and
 NO_CAP_AMBIENT_RAISE true (securebits0xCE). [Decision151](adr/decision-151.md)
 replaces only the earlier SYS_ADMIN-only engine rule. The read/search bit
 bypasses DAC directory read/search and regular-file read for all reachable
@@ -1214,6 +1248,20 @@ policy/label changes require fresh installation evidence and restart; the receip
 is not a per-exchange hash of the entire kernel policy. See the
 [mandatory isolation contract](host-administration.md#mandatory-selinux-isolation).
 
+Read-only whole-host executor review additionally requires process-domain
+directory `getattr`/`search` and file `getattr`/`open`/`read`. Ancestor traversal
+uses no-follow `O_PATH` rather than directory reads. The `domain` attribute
+scope is type-wide: proc environments and other process-labelled files share
+these rights, subject to DAC and proc read gates. The unchanged attachment
+`ptrace` neverallow does not itself deny all environment reads. Fixed protected
+code selects only bounded numeric PID metadata and never returns foreign
+process contents. It must classify exact real/effective/saved/filesystem UIDs,
+retain PID/UID coherence, and refuse unreadable or changing evidence rather
+than skip root, kernel or unknown processes. Distinct archive/NFS, Hub and
+credential/secret object neverallows, all capabilities, namespace limits and
+the single helper domain remain unchanged. Expanded-policy and installed
+Enforcing metadata/payload-denial checks qualify this boundary independently.
+
 Rootless fixed manager reads select the independently indexed account's
 existing session bus through a closed environment and
 `SYSTEMCTL_FORCE_BUS=1`. Explicit DBUS_SESSION_BUS_ADDRESS alone does not
@@ -1224,6 +1272,13 @@ private socket exposure, broad user_tmp_t socket permission, relabel or
 ambient-address fallback is authorized by this transport selection.
 The stock `unconfined_dbusd_t` session-broker variant additionally needs only
 `unix_stream_socket connectto` and `dbus send_msg` from `hfcache_host_helper_t`.
+Its fixed inert-role observation separately requires only `process getattr`
+for context and `lnk_file read` for kernel exe readlink/follow-stat. These are
+type-wide permissions, not PID/path restrictions; link read also permits
+following other same-type links, with target-file permissions and kernel read
+gates remaining independent. Exact fixed manager/process/parent/argv/image/inode
+and context joins remain mandatory. No link-getattr, file-body, ptrace, signal,
+transition, ioctl or manager-control right follows.
 The broker authorizes its driver/fallback destination before method dispatch.
 Both rights are type-wide IPC authority; MAC does not limit them to a socket
 path, UID, unit, method or read-only request. The protected indexed UID/address,
@@ -1237,8 +1292,14 @@ is unavailable; absence of audit records alone proves no message authorization.
 
 The fixed manager reads require `init_t:system status` when systemd has no
 unit-file access context, and `systemd_unit_file_t:service status` when the unit
-fragment carries that file type. These are type-wide metadata authorizations,
-not unit-name or property-name restrictions. Systemctl requests
+fragment carries that file type. Rootless whole-executor review additionally
+reads the fixed vendor `dbus-broker.service`, whose fragment carries
+`dbusd_unit_file_t`. That type needs only `service status` and file
+`getattr/open/read` for the existing protected fragment validation. These are
+type-wide metadata authorizations, not pathname restrictions; protected code
+retains the fixed vendor selector, root-owned fragment/drop-in checks and strict
+process/manager joins. No start/stop/reload, unit mutation, capability, transition
+or payload permission follows. Property selectors also remain code constraints. Systemctl requests
 [all unit properties](https://github.com/systemd/systemd/blob/70bae7648f2c18010187c9cf20093155eaa26029/src/shared/bus-map-properties.c#L228-L240)
 and applies its
 [selected-output filter afterward](https://github.com/systemd/systemd/blob/70bae7648f2c18010187c9cf20093155eaa26029/src/systemctl/systemctl-show.c#L2256-L2265).

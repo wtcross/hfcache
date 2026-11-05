@@ -122,6 +122,52 @@ fixed `container` component used by the supported stock Podman layout. Preserve
 the original path in the peer proof. Other children, deeper descendants, CID
 prefixes and another container's scope refuse; a matching path alone is never
 sufficient process authority.
+Whole-executor intent review additionally distinguishes the indexed notify
+worker from the exec API/Caddy units. The worker MainPID must equal the actual
+fixed-name worker inspection's ConmonPid. Its separate exact foreground Podman
+run command must occur once in the fixed service cgroup; the complete CID,
+image, role, CreateCommand, payload PID/parent and coherent process births must
+join and remain unchanged through review. The existing fixed engine child may
+select only API inspection, all-running inventory, or fixed verification
+inspection; conflicting selectors refuse. These read-only modes retain their
+original aggregate work/deadline bounds. No executable-only conmon allowance,
+caller-selected container or unknown-process skip is permitted.
+
+Intent review's image-authenticated inert proof uses only the four fixed OS
+paths: systemd, catatonit, dbus-broker-launch and dbus-broker. No-follow `O_PATH` handles retain
+root-owned non-writable ancestors and a root-owned single-link regular
+executable leaf, with full metadata and final path rejoin across classification.
+Executable bodies are not opened or read. The original kernel executable link,
+exact role argv/label/parent/cgroup, credentials and birth are revalidated.
+Stat of the exact kernel `/proc/PID/exe` link must match the retained leaf inode
+metadata before and after classification; matching text alone is insufficient.
+Metadata or process drift refuses. The loaded target policy lacks even metadata
+rights for init/dbus executable types; add only `file getattr` for
+`init_exec_t` and `dbusd_exec_t`. These grants cover every file of those two
+types, not five pathnames; the fixed protected code supplies the path boundary.
+Executable open/read/map/execute permissions remain absent for those types.
+
+The fixed engine preparation already authenticates the pause keeper's record,
+PID/birth, owner, USER namespace and maps. That same keeper may have parent PID1
+after detachment, or the authenticated user manager; other parents refuse.
+Classification joins its captured UID/GID arrays and maps to the prepared keeper,
+retains exact catatonit pause argv/domain and protected executable/inode proof,
+and revalidates its observed parent/cgroup/process identity. A matching user
+scope is not evidence of parentage and never admits an unknown orphan.
+
+The non-dumpable stock `(sd-pam)` child uses a distinct typed lineage proof
+before any exe-link operation. The fixed protected vendor user manager must be
+active `Type=notify-reload`, `User=UID`, `PAMName=systemd-user`, with matching
+invocation and manager PID/birth. Require its sole exact child argv, direct
+parent, init.scope, exact init_t:s0 context, principal four UID/GIDs, own
+Pid/Tgid/NSpid, initial identity maps, no groups/tracer or active/inheritable/
+ambient capabilities, sleeping/no-pending status and coherent no-follow proc
+objects. The proc directory remains service-owned; only its kernel exe symlink
+is root-owned. No image identity is asserted or obtained by following that link.
+Revalidate all observations and manager authority; unknown/duplicate/changed
+facts refuse. This is the existing trusted stock manager/PAM boundary, not a
+generic readlink-error fallback, root-ownership exemption or init-domain grant.
+
 Engine-owner administration is trusted; this boundary cannot prevent that
 administrator injecting into an already authorized API process.
 Native proof likewise authenticates the original API process, not the integrity
@@ -232,8 +278,13 @@ kernel-event attribution where required. No actual secret may be probed. A
 kernel permission query, source test or earlier SYS_ADMIN-only result does not
 establish these actual denials or complete native/rootless helper/API acceptance.
 
-The internal fixed engine branch replaces only that child with the base
-invocation `/usr/bin/podman --remote=false container inspect hfcache-api`.
+The internal fixed engine branch replaces only that child with
+`/usr/bin/podman --remote=false` and exactly one read-only command:
+`container inspect hfcache-api`, `ps --format=json` for the complete running
+inventory, or `container inspect hfcache-verification` for the notify-worker
+identity join. These are closed internal modes; callers cannot supply a resource
+name, CID, command or conflicting modes. All work remains charged to the same
+aggregate deadline/file/byte ceilings.
 Its sole supported extra housekeeping option is
 `--storage-opt=overlay.skip_mount_home=true`, which suppresses storage's private
 bind-mount attempt without permitting that mount. Because CLI storage options
@@ -325,6 +376,16 @@ Hub, credential and container-secret objects, including aliases. It grants only
 required fixed helper inputs, local engine/runtime and manager/proc metadata.
 No arbitrary domain transition, relabel or policy-administration right follows.
 
+Fixed inert broker classification must read its actual process SELinux context.
+For the supported `unconfined_dbusd_t` broker variant, this needs only the
+helper-to-broker `process getattr` permission, plus `lnk_file read` for the exact
+kernel exe link read/follow. These are type-wide permissions, not PID/path
+restrictions; the link right also permits following other links of that type,
+subject to independent target-file permissions and kernel read gates. Fixed
+manager/PID/birth/parent/argv/image/inode and context checks supply the application
+boundary. No link-getattr, file-body, ptrace, signal, transition, ioctl or
+manager-control permission follows. Failed or changed observations still refuse.
+
 Protected systemd bindings may be symlinks. The helper requires only
 `systemd_unit_file_t:lnk_file` `getattr` and `read` to inspect their metadata and
 target text. It still verifies root ownership, unchanged inode metadata and the
@@ -336,8 +397,14 @@ type and spelling when diagnosing startup refusal.
 
 The fixed manager reads require `init_t:system status` when systemd has no
 unit-file access context, and `systemd_unit_file_t:service status` when the unit
-fragment carries that file type. These are type-wide metadata authorizations,
-not unit-name or property-name restrictions. Systemctl requests
+fragment carries that file type. Rootless whole-executor review additionally
+reads the fixed vendor `dbus-broker.service`, whose fragment carries
+`dbusd_unit_file_t`. That type needs only `service status` and file
+`getattr/open/read` for the existing protected fragment validation. These are
+type-wide metadata authorizations, not pathname restrictions; protected code
+retains the fixed vendor selector, root-owned fragment/drop-in checks and strict
+process/manager joins. No start/stop/reload, unit mutation, capability, transition
+or payload permission follows. Property selectors also remain code constraints. Systemctl requests
 [all unit properties](https://github.com/systemd/systemd/blob/70bae7648f2c18010187c9cf20093155eaa26029/src/shared/bus-map-properties.c#L228-L240)
 and applies its
 [selected-output filter afterward](https://github.com/systemd/systemd/blob/70bae7648f2c18010187c9cf20093155eaa26029/src/systemctl/systemctl-show.c#L2256-L2265).
@@ -348,6 +415,12 @@ mutation, capability or domain transition. Systemd's
 uses the unit-file context when known and its own context otherwise. A denied
 manager read must be diagnosed from `USER_AVC` as well as kernel `AVC` records;
 an unrelated ioctl or certificate lookup denial does not justify a grant.
+An unprivileged user manager may log its original service-status denial only in
+its journal. Preserve the sender context, actual command, target fragment/type
+and denied class/permission; a successful unconfined query is not a confined
+read proof. Podman's read-only inspection can also attempt a transient scope:
+its denied start request does not authorize a service-start or unitless manager
+permission. Diagnose the actual failing fixed query separately.
 
 The existing service-account session bus may have a broker in
 `unconfined_dbusd_t`. Permit only helper-to-that-domain
@@ -1166,6 +1239,51 @@ selector, archive payload access, effect, cleanup or stored credential is added.
 Unproven facts return an actionable refusal. The detailed freshness, bounds and
 review sequence are fixed by the [protocol](job-recovery.md). Source and installed
 conformance remain pending.
+
+For original-intent coordination metadata, the fixed internal
+`observe-intent-locks` child shares the protected guard-child transport and
+budget. Only that separate child uses the protected mixed service credentials
+to traverse the service-owned runtime parent. It checks the original archive
+and companion inode ownership,0600/single-link metadata and exact coordination
+labels without opening their bodies, acquiring flocks or requiring an active
+guard. The threaded daemon retains its credentials, validates the closed reply
+against the same deployment, pins full metadata and parent identity across
+review, and proves the authenticated API PID's exclusive companion flock from
+`/proc/locks`. Bootstrap/inspection work and deadlines remain charged; an expired
+child remains owned until actual exit. This adds no public helper opcode,
+capability, label grant, file creation or runtime permission change.
+
+Whole-host executor classification needs read-only proc state across the
+`domain` type attribute: directory `getattr`/`search` and file
+`getattr`/`open`/`read` only. The fixed peer reader traverses ancestors with
+no-follow `O_PATH` descriptors and retains its protected ownership and budget
+checks. No domain-wide directory open/read/listing, symlink read, process
+permission, capability, write, control or transition follows. All existing
+archive/Hub/secret, attachment and domain-escape neverallows remain unchanged;
+expanded policy checks must prove the payload object types stay excluded.
+
+These are type-wide proc-state permissions, including other process-labelled
+files such as `environ`; they are not pathname MAC for `status`. Proc read-mode
+gates and DAC still apply, but the attachment-class `ptrace` neverallow is not
+universal environment secrecy. Protected source reads bounded fixed numeric
+`status`/`stat`/`cgroup` paths, requires exactly four real/effective/saved/fs UIDs,
+and retains PID-birth/UID coherence through classification. Unreadable, malformed,
+vanished, changed or unclassifiable evidence refuses. `/proc/PID` directory
+ownership reflects effective ownership, including its world-readable-directory
+nondumpability exception; it cannot substitute for all four UIDs. Other proc
+inode ownership may instead map to namespace root for nondumpable tasks.
+Neither ownership nor a kernel/unknown domain authorizes skipping a process.
+Actual matching Enforcing metadata reads and independent payload denials remain
+separate from source and policy compilation evidence.
+
+For native current-boot review, keep the four canonical `/etc/systemd/system/`
+sync/verify service and timer symlinks exactly bound to the indexed release,
+including their original inode metadata and xattrs. Replacing those bindings
+with ordinary `/etc` masks fails protected binding validation. Separately
+provisioned higher-priority `/run/systemd/system.control/` links for those four
+unit names to `/dev/null` can provide `masked-runtime` and inactive state while
+preserving the canonical bindings. Verify those actual manager states and
+disabled calendars; runtime masks provide no unattended-boot acceptance.
 
 [Decision 165](adr/decision-165.md) accepts an independent protected
 profile_evidence.archive_mode binding. Existing absent fields mean only

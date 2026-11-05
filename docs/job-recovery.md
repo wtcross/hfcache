@@ -197,6 +197,98 @@ corrupt, unknown or unclassifiable protected effects refuse. It also verifies
 legacy writers masked, calendars inactive and no unknown selected-role/process/
 cgroup/libpod executor. This review uses existing bounded inspection machinery
 and outcome stores; no generic commands, paths, effect or cleanup is admitted.
+Native current-boot masking must preserve the four canonical indexed `/etc`
+unit bindings; separately verified higher-priority runtime control masks may
+provide `masked-runtime`/inactive state as described in
+[host administration](host-administration.md). Runtime masks do not establish
+unattended-boot safety, and calendars remain disabled.
+
+Rootless executor review must distinguish the indexed service types. API and
+Caddy use `Type=exec`: their MainPID must retain the exact selected foreground
+Podman run command. Verification uses `Type=notify`, `NotifyAccess=all` and
+container-origin readiness: its MainPID is the independently inspected worker
+`State.ConmonPid`, not the foreground Podman PID. Review retains the complete
+running-container inventory and a separate fixed-name worker inspection through
+the existing bounded engine child. The worker name, complete CID, image, role,
+CreateCommand, conmon PID and payload PID must agree. Exactly one foreground
+Podman process in the fixed verification service cgroup must match the indexed
+run command. Its identity, conmon and payload births, exact UID/GID credentials,
+CID cgroup and payload-parent join are revalidated with the manager invocation.
+A conmon executable name or matching cgroup alone grants no exception. Missing,
+duplicate, changing or unknown identities refuse within the unchanged budgets;
+no public resource selector or new engine control command is admitted.
+
+The fixed inert manager, rootless keeper and session-broker classification must
+inspect only protected executable metadata. Its four closed OS paths use no-follow `O_PATH` handles for every root-owned, non-writable
+ancestor and the root-owned single-link regular executable leaf. Retain and
+rejoin complete inode metadata across classification; do not open or read
+executable bodies whose bytes contribute no proof. Exact kernel executable
+links, argv, process label, parent, cgroup, credentials and birth remain required
+and are revalidated. Before and after classification, stat of the exact kernel
+`/proc/PID/exe` link must also join the retained fixed leaf inode metadata;
+matching target text alone cannot substitute an old/different image. Unknown
+paths, unreadable metadata, substitutions and races refuse within the same cumulative work and deadline budgets. Only the two
+missing `init_exec_t`/`dbusd_exec_t` file-getattr permissions are added; their
+type-wide scope does not select paths. No executable body-read/execute permission
+or generic executable exception is introduced.
+
+The already authenticated rootless pause keeper may be detached and adopted
+by PID1, or remain a child of the authenticated user manager. No other parent
+is accepted. Its fixed protected pause record, PID/birth, owner, USER namespace
+and mappings remain established by the existing engine preparation. Join the
+captured process UID/GID arrays and maps to that prepared proof, and retain the
+exact catatonit pause argv, protected executable/inode and domain checks.
+Observed cgroup and parent remain coherent through revalidation; placement in a
+user scope alone never establishes parentage or grants an unknown process an
+exception. No new read, capability, policy grant or broader orphan allowance
+follows.
+
+The stock user manager's non-dumpable `(sd-pam)` child has a separate closed
+lineage proof; it is selected by that exact sole argv before any executable-link
+operation. Require the protected vendor `user@UID.service` and supported vendor
+drop-ins, active `Type=notify-reload`, `User=UID`, `PAMName=systemd-user`, invocation,
+and coherent manager PID/birth. The child must have the exact direct parent and
+`init.scope`, `system_u:system_r:init_t:s0`, principal real/effective/saved/fs
+UID/GIDs, own Pid/Tgid/NSpid and initial identity maps, no groups/tracer, empty
+effective/permitted/inheritable/ambient capabilities, sleeping state and no
+pending signals. Pin/rejoin its service-owned proc directory and root-owned
+kernel exe symlink with no-follow metadata handles only, and revalidate status,
+context, process/parent and manager unit/invocation. No image link is read or
+followed, and no executable image identity is claimed for this child. This relies
+on the existing trusted protected stock manager/PAM boundary, not a command name,
+root-owned link, generic init label or readlink failure alone. Unknown, extra,
+changed or unreadable actors refuse; no EACCES fallback or new privilege follows.
+
+Whole-host executor classification reads exactly the four real, effective,
+saved and filesystem UIDs from each bounded numeric `/proc/PID/status`.
+Unreadable, malformed, vanished or identity-changing processes refuse review;
+directory ownership, root ownership, kernel domain or an unknown label never
+justifies skipping one. Process birth and UID observations must remain coherent
+through cgroup classification. Ancestor handles use no-follow `O_PATH`, without
+directory listing rights. The confined helper's necessary all-domain proc-state
+read permissions are type-wide, not pathname restrictions to `status`: other
+proc files such as `environ` share those process labels. DAC and proc read gates
+remain independent; attachment denial alone does not promise environment
+secrecy. Fixed protected code selects metadata only and returns no foreign
+process contents. Distinct archive, Hub and credential/secret object denials,
+unchanged capability/namespace/domain restrictions and actual Enforcing payload
+denial qualification remain mandatory.
+
+The threaded helper never changes its credentials to cross the service-owned
+runtime directory. A fixed internal metadata child reuses the guard observer's
+bounded protected launch, independently loads the same deployment/account and
+uses its mixed effective service credentials. It inspects only the existing
+original archive lock and companion: ordinary single-link0600 files with exact
+service ownership and coordination SELinux contexts. It opens neither file body
+and takes no archive or companion flock. This role never asserts an active
+read-only guard; current-boot manual operation may deliberately have none.
+The daemon parses a closed typed reply, charges actual bootstrap/inspection
+work, joins its deployment digest and independently checks `/proc/locks` for
+the actual authenticated API PID's exclusive companion flock. Both observations
+within the review must retain the complete lock metadata/contexts and runtime
+parent identity. Child metadata and captured authority are revalidated around
+inspection; timeout retains ownership until actual child exit. Missing or
+changed objects refuse without creation or permission repair.
 
 Keep the exclusive lease while collecting proof. After helper/worker exchanges
 finish, acquire the noncreating original archive flock and freshly validate its
