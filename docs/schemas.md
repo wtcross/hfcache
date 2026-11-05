@@ -797,6 +797,15 @@ rather than replaying intentions (`AD-14`).
 | `checkpoints[].evidence` | object | Archive-relative paths and durable facts that can be re-observed to confirm the checkpoint |
 | `error` | object \| null | `{ "code", "message", "at" }`; message is redacted of any secret |
 
+Schema-1 preserves the exact successful committed prune sequence produced before
+2026-07-27: today's steps1–9 followed by `prune_completed`, with no
+`containers_removed`. The compatibility exception requires `state="committed"`,
+null error and an actual completion timestamp at or after the last checkpoint;
+it grants no new work or mutation authority. Open, failed, needs-operator,
+unknown/reordered/other incomplete sequences do not gain this exception. New
+writers retain the current complete sequence. See
+[decision166](adr/decision-166.md); no serialized field/version changes.
+
 Checkpoint records are **idempotent**: re-recording a checkpoint whose evidence
 already holds is a no-op, which is what allows `recover --apply` to be run
 repeatedly without harm.

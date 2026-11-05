@@ -85,3 +85,13 @@ Implementation or shipped-artifact evidence:
 Relevant verification:
 [tests/unit/test_retention.py](../../tests/unit/test_retention.py),
 [tests/unit/test_crash_injection.py](../../tests/unit/test_crash_injection.py).
+
+## 2026-11-05 historical compatibility amendment
+
+[Decision166](decision-166.md) recognizes only the exact successful committed
+schema-1 prune sequence produced before this decision added containers_removed.
+Original completed journals retain their bytes. Null error and actual completion
+at/after the last checkpoint are mandatory; the exception is resolved history
+only. Current writer ordering, post-commit cleanup and empty-directory-only
+rmdir semantics remain unchanged. No open, failed, needs-operator, reordered,
+othermissing or unknown sequence gains replay or deletion authority.

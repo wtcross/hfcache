@@ -4,7 +4,7 @@
 | --- | --- |
 | Status | in_progress |
 | Plan | [Job recovery and archive writes](../2026-11-03-plan-job-recovery-and-archive-writes.md) |
-| Depends on | OPS-028 and recorded production-write/pilot authority |
+| Depends on | OPS-028, REL-020 and recorded production-write/pilot authority |
 | Execution | `gpt-6.1-sol` / `high`; explicit task-agent setting required |
 
 ## Scope and acceptance
@@ -98,3 +98,69 @@ block remains. Select this task for fresh writer-specific backup/drain and
 original-lock handoff. New immutable writer indexa638f833, guardedf1c55ed2,
 source1652b8f/app661da09f/UIc9df46e1. Existing inventories remain preparation,
 not writer proof; recheck actual limits/identity at effects. No writer effects yet.
+
+2026-11-05 actual writer transition in progress: fresh coherent backup705edb6a/
+full API-first drain35d55b87, writer selection and measured binding2bb5565d,
+local persistent remount829920b8 all pass with original guards. Archive grant
+remained false through inert namespace maintenance. Installed vendor Podman
+6.0.2-1.el10 no-option migrate executes once after real drain/private coherent
+SQLite backup; old1953/birth889 namespace is empty/retired and original pause
+inode63:60 retained. Upstream-predicted conmon changes were not performed by the
+vendor binary: actual full DB bytes/schema/rows unchanged, verification1d2671ea
+passes without repeat. New keeper434678 authenticated through one normal info,
+user4026532694/mnt4026532695/maps0->981/1->589824 and actual NFS RW view,
+receiptf830eb1c. Engine lock/SHM original inodes/labels preserved, bodies unread.
+
+Independent archive-only false->true grant and ordered helper/worker/API/Caddy
+receipt6715fe87 passes; index8cc9f9a4/policyc1356315, other grants unchanged.
+Original guard/bridge inactive, calendars disabled/native writers masked,
+Enforcing. Actual writer SDK read-only storage preflight passes both application
+roles, UUID/config165/retention3/reserve3864256000819B, available10419185909760B,
+receipt d2535e93. Worker IP socket is denied ENOSYS under actual confinement;
+initial observer omitted ENOSYS from its expected errno set, failure retained,
+no policy change or SDK repetition. Original retirement/stores/credentials remain.
+No Sync/refresh/backfill job has run at this point.
+
+Finite NFS validation scope: six existing read-only mount/sentinel/staging/skip/
+no-write assertions in tests/system/test_live_mount.py; no mutating health probes,
+init, Hub or CLI/API job from the test runner. That opt-in suite still invoked
+retired local --config doctor syntax; adapt its subprocess helper to the supported
+application storage SDK, preserving actual kernel-mount assertions and separate
+guarded application path for unselected mutating cases. This is test-only; actual
+installed rootless preflight/pilot acceptance remains separate. Required default
+repository gate follows this source edit; no repeated strict web/release matrix.
+
+2026-11-05 actual selected sizingdd09e42f and Sync943f7560 succeed through genuine
+installed administrator UI. Reviewed upstream1886570b is current,1030096B/eight
+files, zero new bytes, one retained/max3; Sync skips up-to-date, downloads/prunes
+nothing and preserves publicationb4d95efd/gen1. HFWRN011 remains accurate. Genuine
+technical-refresh4050dbaa/run a8ec217e is admitted then fails HFVER007/exit40.
+Original result/handles retained, no automatic retry/replay. Read-only actual
+CatalogWriter diagnosis narrows refusal to checkpoint-order validation of two
+committed2026-07-26 prune journals. Their raw hashes and old producer5dc8d0a^
+prove valid original10-step shape, missing only next-day containers_removed.
+Never edit/delete/rewrite those archive records. Necessary REL020 now selected;
+this task is blocked only on that source/artifact dependency, not authentication.
+
+Read-only actual six scoped NFS checks pass2.20s after supported SDK test helper
+repair. OPS029 default gate1 result will retain its exact scope; it is not the
+new compatibility release gate. Genuine backfill inventory156 current/232retained
+and3327465B exact manifest API projections is prepared with32/32/32/32/28 proposed
+batches, no job submitted. Root-protected checkpoint0a233d0b preserves sizing,
+Sync, failed refresh, screenshots and full inventory. Original12 store files and
+permanent original retirementb5217fb9 retain exact bytes/inodes. No backfill or
+metadata acceptance is claimed. Current writer state/Enforcing/masks/grants remain
+as above pending fresh protected deployment of the compatibility release.
+
+2026-11-05 REL020 strict release gate and matching immutable0.3.4 artifacts pass;
+resume this task. Fresh backup/full real drain and original-lock handoff precede
+a temporary connected RO install window, both official stages and writer
+selection/exact labels/measured matching helper binding. Preserve current writer
+grants and persistent override; restore actual RW and revalidate the existing
+434678 namespace before ordered helper/roles. No extra activation or migrate.
+Fresh affected current-version sizing/Sync validates the changed supplemental
+journal guard, then a distinct new explicit metadata pilot after fresh GET of
+original failed4050dbaa. One bounded backfill reuses that exact pilot observation,
+five UI batches32/32/32/32/27 cover155 remaining; raw156-manifest prebaseline
+74067423 is retained for exact postcomparison. No automatic replay. The earlier
+156-current API projection baseline and root checkpoint remain authoritative.

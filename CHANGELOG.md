@@ -4,6 +4,15 @@ Annotated release tags identify reviewed deployed states; application source and
 deployment commits may differ. This file summarizes user-visible changes and
 rollback constraints. Installation targets 0.1.0 and 0.1.1 were not releases.
 
+## 0.3.4 — 2026-11-05, compatibility release candidate
+
+Restore recognition of the exact successful committed prune-journal sequence
+written before container cleanup was added in July. Original journal bytes stay
+unchanged. New writer ordering and all unfinished/unknown refusals remain strict;
+no format, permission or dependency changes. The installed writer0.3.3 Sync
+pilot passes, but technical refresh is blocked by this compatibility defect.
+Matching0.3.4 deployment, successful refresh and bounded backfill remain required.
+
 ## 0.3.3 — 2026-11-05, guarded local deployment
 
 - Correct original-request review for larger valid journal histories. Enumeration

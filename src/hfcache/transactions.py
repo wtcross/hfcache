@@ -14,6 +14,10 @@ a normative sequence of named checkpoints (§7.3-§7.7), and a journal whose nam
 are not a prefix of its operation's sequence is a combination no valid execution
 produces — `HFTXN002`, which stops the machine (§7.9).
 
+The exact successful committed prune sequence predating container cleanup
+remains valid resolved history; current open writers still follow the full
+normative sequence (decision166). No historical journal is rewritten.
+
 **Evidence is re-observable.** `TX-03` requires a checkpoint to carry facts that
 can be checked against the filesystem, so recovery confirms rather than trusts.
 The key naming convention that makes that mechanical is
@@ -365,6 +369,30 @@ def checkpoint_order_problems(journal: TransactionJournal) -> list[Problem]:
     parses, or written by a build whose ordering differed.
     """
     names = [checkpoint.name for checkpoint in journal.checkpoints]
+    # Decision166: this exact completed producer form predates 2026-07-27.
+    # It is resolved history, never permission for today's open writer to skip cleanup.
+    if (
+        journal.operation == "prune"
+        and journal.state == "committed"
+        and journal.error is None
+        and journal.completed_at is not None
+        and journal.last_checkpoint_at is not None
+        and journal.completed_at >= journal.last_checkpoint_at
+        and tuple(names)
+        == (
+            "plan_persisted",
+            "cache_revision_deleted",
+            "revision_ref_removed",
+            "tree_tombstoned",
+            "manifest_tombstoned",
+            "catalog_published",
+            "prune_logically_committed",
+            "audit_record_written",
+            "trash_removed",
+            "prune_completed",
+        )
+    ):
+        return []
     if journal.operation == "recovery":
         return _recovery_order_problems(journal, names)
 

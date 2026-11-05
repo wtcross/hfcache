@@ -35,6 +35,20 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Job recovery and manual archive writes (2026-11-03)
 
+- [x] REL-020 Restore exact historical committed prune compatibility and prepare0.3.4
+  (2026-11-05, this commit — two actual July26 prune records match producer53afd690,
+  before next-day cleanup checkpoint. Exact committed10-step/nullerror/completion
+  recognition preserves immutable bytes and current11-step open-writer ordering;
+  all other unknown/unfinished guards retained. Genuine red2fail/10pass; focused
+  165 pass; strict gate9948 backend,179 wire,3809/4169 web,16 built browser,
+  actual200% zoom/real API React/16 wheel/three locked profiles passes,1287 frozen
+  inputs unchanged. Clean9756c70, wheeleb031be2/UI40c4324a/app418edbe7;
+  mode inputs/renders/OCI0214a4d6 prepared, actual new-image foundatione227db97
+  passes14.29s.93 nonapp pins/124 other wheel members unchanged; proof reuse
+  scoped. TX03–07/INV018/contracts/ADR068+166 updated. OPS029 next owns actual
+  protected deployment and successful metadata/backfill acceptance; original
+  eight scope and retired_unknown original request remain, no full-plan claim.)
+
 - [x] OPS-028 Install guarded recovery release and resolve original request
   (2026-11-05, this commit — actual0.3.3/source1652b8f/app661da09f/UIc9df46e1,
   guardedindexf1c55ed2 and writerindexa638f833 staged. Fresh coordinated backup
@@ -3060,6 +3074,31 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-05 actual metadata hold: genuine selected Sync943f7560 succeeds/up-to-date
+with original publication preserved and HFWRN011. Genuine metadata pilot4050dbaa
+fails HFVER007/exit40. Exact read-only diagnosis identifies two valid committed
+pre-container-cleanup prune journals, original hashes retained. REL020 selected
+for narrow original-producer compatibility and matching0.3.4 artifacts; never
+modify original archive journals or replay failed/unknown submissions. Bounded
+156-current inventory and immutable API manifest projections prepared; backfill
+unstarted. Root checkpoint0a233d0b retains original pilot handles/results/screens/
+inventory; original12 store bytes/inodes and retirementb5217fb9 unchanged.
+Production manual-writer0.3.3/RW/Enforcing, original grants/masks/calendars remain.
+OPS029 waits only for this dependency, no authentication or human input blocker.
+
+
+2026-11-05 current writer transition: actual manual-writer0.3.3/indexa638f833,
+helperindex8cc9f9a4/policyc1356315. Fresh backup705edb6a/full drain35d55b87,
+selection2bb5565d/localRWremount829920b8, reviewed inertnamespace closure1d2671ea
+and newkeeper434678/f830eb1c pass. Original pause63:60 retained, allDBbytes
+unchanged, engine locks/SHM metadata preserved without body reads. Archive-only
+grant and ordered startup6715fe87, actual writer SDK/storage/confinementd2535e93
+pass. No original replay and no new Sync/refresh/backfill yet. OPS029 remains
+in_progress for genuine selected pilots and one bounded backfill. NFSRW/Enforcing,
+other grants unchanged, guard+bridge inactive, calendars disabled/writers masked.
+Earlier guardedRO statements below are historical; no boot qualification inferred.
+
 
 2026-11-05 latest actual checkpoint: OPS028 complete; selected guarded0.3.3,
 source1652b8f/app661da09f/UIc9df46e1, indexf1c55ed2/helperindexae3bc6ab/
@@ -14402,3 +14441,16 @@ Source10 read-only SDK checks separately pass actual sentinel/mount/staging/
 capacity and measure3600s lock budget, all write probes skipped. Writer jobs,
 restart/rollback and production release/recovery/pilots/backfill remain pending.
 All original evidence/stores/credentials/locks/predecessors remain preserved.
+
+
+166. **Preserve the exact successful committed prune sequence predating container cleanup**
+    (2026-11-05, REL-020, this commit). Actual metadata pilot fails HFVER007 on
+    two committed2026-07-26 prune journals whose exact10-step shape matches
+    producer53afd690, before5dc8d0a added containers_removed on2026-07-27.
+    Recognize only that exact successful committed shape with nullerror and
+    completion at/after lastcheckpoint. Current writer checkpoint sequence and
+    all other unknown/incomplete/unfinished refusals remain; no replay/deletion
+    authority. Reject rewriting/deleting old evidence and blanket resolved-state
+    bypass. [Decision166](../adr/decision-166.md) amends decision068 without
+    changing its current post-commit rmdir rule. Contracts/invariant/schema and
+    regressions accompany implementation; no new format/dependency/permission.

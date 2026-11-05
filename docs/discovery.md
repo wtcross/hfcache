@@ -188,7 +188,12 @@ journal may remain open only at `journals_reconciled`; other unfinished journals
 refuse supplemental writes. A repair journal waiting at `repair_committed` is
 safe only with its canonical, matching pending retirement record and exact
 retained replacement manifest. Its grace cleanup remains open. Corrupt journal
-schemas, identities and checkpoint order refuse capture.
+schemas, identities and unsupported checkpoint order refuse capture. The exact
+successful committed prune sequence from before 2026-07-27 remains valid resolved
+history under [decision166](adr/decision-166.md); only the later
+`containers_removed` boundary is absent. Its actual completion timestamp and
+null error remain mandatory. This recognition never exempts unfinished work,
+unknown sequences or today's writer from the current checkpoint requirements.
 
 Capture reads the current validated installed curation once under the same lock,
 after the archive work, and projects only tags, source fingerprint and time.

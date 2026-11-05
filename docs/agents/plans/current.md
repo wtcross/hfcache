@@ -5,7 +5,7 @@
 | State | active |
 | Active plan | [Job recovery and archive writes](2026-11-03-plan-job-recovery-and-archive-writes.md) |
 | Current task | [OPS-029](tasks/ops-029-enable-manual-archive-jobs.md) |
-| Blocker | None for next authorized step. OPS-028 actual guarded0.3.3 recovery/installed checks complete. OPS-029 begins fresh writer-specific backup/drain/original-lock transition; NFSRO/archivefalse remain until verified protected change |
+| Blocker | None for next authorized step. REL-020 strict gate and matching0.3.4 artifacts pass. OPS-029 resumes fresh protected backup/drain/temporary RO stage+selection, matched writer startup/preflight, successful affected Sync/refresh and one bounded backfill. Production currently writer0.3.3/RW/Enforcing; original retired_unknown preserved |
 | Last completed plan | [Ignore root Node dependencies](2026-11-02-plan-root-node-ignore.md) |
 | Branch | main |
 | Updated | 2026-11-05 |

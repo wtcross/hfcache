@@ -236,6 +236,11 @@ control-state jobs and confer no deletion authority; retention remains unchanged
   and supported by re-observable evidence. Each state-changing step has its
   own atomic boundary; no ordering between separate renames is assumed.
   Recovery validates the evidence and is idempotent.
+  The exact successful committed schema-1 prune sequence from before2026-07-27
+  remains valid resolved history without the later containers_removed boundary,
+  only with null error and completion at/after its last checkpoint. No replay or
+  deletion authority follows. Open/failed/needs-operator/other unknown or missing
+  sequences and new-writer cleanup requirements remain unchanged (decision166).
 - **`TX-06`, `AD-16`, `FS-19`** — Prefer reportable over-retention to losing
   content. Unknown files, unsupported state, impossible checkpoint sequences,
   inconsistent evidence, and ambiguous targets must be reported and preserved,

@@ -240,6 +240,7 @@ explicit task ownership and nonoverlapping file scopes in the active records.
 | 6 | REL-018 — [rel-018-job-recovery-writer-release.md](tasks/rel-018-job-recovery-writer-release.md) | WEB-033 | `gpt-6.1-sol` / `medium` | Clean committed source and reproducible immutable matching backend/UI/image/helper artifacts; documented rollback compatibility using existing release tooling |
 | 6a | REL-019 — [rel-019-original-review-journal-accounting.md](tasks/rel-019-original-review-journal-accounting.md) | REL-018 | existing coordinator | Necessary actual-host conformance fix: count at most1024 fully validated journals with separate enumeration/read accounting; prepare matching immutable0.3.3 release, preserving the original eight-package acceptance scope |
 | 7 | OPS-028 — [ops-028-install-job-recovery-release.md](tasks/ops-028-install-job-recovery-release.md) | REL-018 and REL-019 | `gpt-6.1-sol` / `high` | Guarded local installation while NFS stays read-only; actual Basic/UI/helper negative-permission behavior and reviewed recovery of the reported key |
+| 7a | REL-020 — [rel-020-legacy-prune-compatibility.md](tasks/rel-020-legacy-prune-compatibility.md) | OPS-028 | existing coordinator | Actual metadata pilot conformance: preserve exact committed pre-container-cleanup prune journals, restore narrow compatibility and prepare immutable0.3.4; original eight criteria unchanged |
 | 8 | OPS-029 — [ops-029-enable-manual-archive-jobs.md](tasks/ops-029-enable-manual-archive-jobs.md) | OPS-028 and recorded production-write/pilot authority | `gpt-6.1-sol` / `high` | Controlled writer transition, selected real metadata/Sync pilots, one bounded backfill of existing current publications and final operational handoff |
 
 No push, release tag, registry publication, schedule activation, other-host work,
@@ -528,3 +529,18 @@ historical evidence collection is a deliverable.
   disabled Sync/refresh UI and authenticated helper/config GETs pass. OPS-029
   activates for fresh controlled writer transition/pilots/one bounded backfill;
   production still NFSRO/Enforcing/archivefalse. No full-plan completion claim.
+
+- 2026-11-05: Actual writer transition/preflight and genuine selected Sync pass.
+  Technical-refresh pilot fails HFVER007 on two valid committed2026-07-26 prune
+  journals. Source5dc8d0a^ proves their exact producer sequence predates the
+  next-day containers_removed checkpoint. Add REL-020 before OPS029 completion;
+  preserve original journal bytes, original failed receipt and every original
+  eight acceptance criterion. Backfill is unstarted; bounded156-current inventory
+  is prepared. No automatic replay or manual archive modification.
+
+- 2026-11-05: REL020 completes exact successful committed legacy-prune
+  compatibility and matching immutable0.3.4 artifacts after strict gate9948
+  backend/all web/build checks;1287 frozen inputs unchanged. Existing reader/
+  writer boundaries and current checkpoint ordering remain. OPS029 resumes
+  protected compatibility deployment, fresh affected installed Sync/refresh and
+  one bounded backfill. Original eight acceptance criteria remain unchanged.

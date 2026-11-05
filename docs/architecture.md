@@ -1076,6 +1076,16 @@ after lowering the limit until no eligible excess remains.
 | 10 | `containers_removed` | `rmdir` | The emptied `revisions/<sha>/` and `manifests/<sha>/`: those removed, and those kept because something remained |
 | 11 | `prune_completed` | — | `state = "committed"` |
 
+**Historical committed compatibility.** Before 2026-07-27, successful schema-1
+prunes used exactly steps1–9 followed by `prune_completed`; `containers_removed`
+did not exist. Recognize that exact complete sequence only for `state="committed"`,
+with no error and a completion timestamp at or after its last checkpoint. It
+remains resolved history and supplies no replay, cleanup or deletion authority.
+Current writers still record every checkpoint in this table: an open transaction
+cannot use the historical exception to omit container cleanup. Other missing,
+reordered, unknown or unfinished sequences retain their existing refusal.
+[Decision166](adr/decision-166.md) records the compatibility boundary.
+
 **The per-SHA reference is removed before the tree is tombstoned** (step 3 before
 step 4). The reverse order would leave a window in which a reference names a tree
 that has already been renamed away, violating `FS-10`. Recovery does not need the
