@@ -32,3 +32,6 @@ htmlcov/
 
 # Scratch space
 .scratch/
+
+# Environment variables
+.env

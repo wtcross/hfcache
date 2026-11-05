@@ -33,6 +33,21 @@ The startup paragraph above is the build-out record, superseded by
 changes and plan implementations also review the affected invariants and ADRs
 using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
+## Authorized publication (2026-11-05)
+
+- [x] DOC-021 Preserve local environment ignore and prepare publication
+  (2026-11-05, this commit — [plan](plans/2026-11-05-plan-publish-job-recovery.md),
+  [task](plans/tasks/doc-021-publish-job-recovery.md)). The user's existing
+  three-line ignore change is preserved; `.env` remains untracked/ignored and
+  excluded from staging. Exact ignore bytes match strict green gate79c38bf1;
+  new factual records pass alignment217human/29helpers and69 focused checks7.66s.
+  Both configured remote main
+  refs are7fceb8d, a proven local ancestor. User explicitly authorizes normal
+  main pushes to Forgejo/GitHub after commit, with final ref verification and
+  outcome reported directly. No tags, credentials, production effects, new
+  authority/format/dependency/invariant or architectural change; INV011 and
+  technical invariant/ADR indexes reviewed. Original recovery plan stays complete.
+
 ## Job recovery and manual archive writes (2026-11-03)
 
 - [x] OPS-029 Complete actual manual writer, selected UI/API pilots and one bounded backfill
