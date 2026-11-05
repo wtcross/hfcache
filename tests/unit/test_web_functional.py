@@ -311,8 +311,8 @@ def current_provisioned(provisioned, request, helper, monkeypatch):  # noqa: PLR
         "scripts/release-profile.py",
         "web/test/functional-api/driver.mjs",
         "web/test/auth-api/sandbox.mjs",
-        "docs/agents/plans/support/web-ui/acceptance-cases.json",
-        "docs/agents/plans/support/web-ui/task-index.json",
+        "tests/fixtures/web-acceptance/requirements.json",
+        "tests/fixtures/web-acceptance/coverage-groups.json",
     }
     for name in tool_names:
         target = root / name
@@ -1101,9 +1101,9 @@ def test_through_requirement_refuses_incomplete_or_substituted_evidence(helper, 
 )
 def test_through_selection_refuses_unsafe_task_or_owner_inventory(helper, damage):
     requirements = json.loads(
-        (ROOT / "docs/agents/plans/support/web-ui/acceptance-cases.json").read_bytes()
+        (ROOT / "tests/fixtures/web-acceptance/requirements.json").read_bytes()
     )
-    tasks = json.loads((ROOT / "docs/agents/plans/support/web-ui/task-index.json").read_bytes())
+    tasks = json.loads((ROOT / "tests/fixtures/web-acceptance/coverage-groups.json").read_bytes())
     stage = {"unknown-stage": "WEB-999", "early-stage": "WEB-003", "final-stage": "WEB-026"}.get(
         damage, "WEB-022"
     )

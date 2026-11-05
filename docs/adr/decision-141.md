@@ -5,19 +5,15 @@ The superseded browser interface has been removed under
 remain governed by their current contracts.
 
 - Decision identity: 141.
-- Status: Amended; implemented with scoped owned native/rootless fixture acceptance.
+- Status: Accepted; amended as described below.
 - Date: 2026-10-20.
 
-## Recorded implementation scope (2026-11-01)
+## Deployment and compatibility prerequisites
 
-The fixed protected reader, managed configuration path and native host controls
-are implemented. [Human acceptance](../web-ui/test-release-acceptance.md) records
-actual native effects and guarded rootless refusals; the
-[migration guide](../web-ui/migration-and-rollback.md#compatibility-and-backups)
-records old-client, refusal and installed rollback limits. Earlier pending
-statements retain the introducing design's historical scope. Original failures,
-unknown durable outcomes and separate production/other-platform holds remain.
-These observations do not claim an optional instrumented-runner pass.
+Deployment requires independently protected profile bindings and validation.
+The [migration guide](../web-ui/migration-and-rollback.md#compatibility-and-backups)
+defines old-client/format refusals and compatible rollback. Preserve original
+failed or unknown outcomes; rollback cannot erase uncertainty.
 
 ## Read-only managed reconstruction amendment
 
@@ -27,8 +23,6 @@ descriptor-pinned capture and bracketed exact revalidation without taking or
 creating a configuration lock. Persistent preparation and installation retain
 this record's original-lock requirements. No installation or automatic replay
 follows from a successful preview.
-
-## 2026-10-21 protected-reader amendment
 
 ## Context and decision
 
@@ -110,17 +104,16 @@ reason to hide unimplemented supported-profile behavior.
 
 ## Evidence and relationships
 
-At baseline `6b8fae2e0997403ae5c716a2e92148af0a972af9`, these REST/helper
-surfaces do not exist. This commit accepts the design, with executable
-conformance pending. Configuration-file, receipt/helper crash, peer/namespace,
-native positive and rootless denied tests are required before availability claims.
+The design was introduced in `c4dd806` against baseline
+`6b8fae2e0997403ae5c716a2e92148af0a972af9`. Configuration-file, receipt/helper
+crash, peer/namespace, native positive and rootless denied tests are required.
 Amends [119](decision-119.md), [122](decision-122.md),
 [135](decision-135.md), [138](decision-138.md), [139](decision-139.md)
 and [127](decision-127.md) only for the replacement transport; their current
 guards and historical evidence remain. See [server](../server.md),
 [security](../security.md#browser-administration-design),
 [API](../api.md#web-ui-and-administration-design),
-[schemas](../schemas.md#18-web-ui-and-administration-design-records),
+[schemas](../schemas.md#18-web-ui-and-administration-records),
 [web UI status](../web-ui/README.md) and [authentication](decision-140.md).
 
 ## Guarded application amendment (2026-10-25)
@@ -140,8 +133,7 @@ are separately required.
 
 ## Original-intent and writer amendment (2026-11-03)
 
-Accepted design in [decision 164](decision-164.md), [decision 165](decision-165.md); implementation and installed conformance remain
-pending. One fixed read-only intent-review opcode observes detached helper cohorts and protected pending effects without effect-category or optional host-read grants. A separately protected manual-writer runtime is recognized only with matching mode/mount/guard proof; helper payload neverallows and fresh execution authorization remain.
+Amended by [decision 164](decision-164.md), [decision 165](decision-165.md). One fixed read-only intent-review opcode observes detached helper cohorts and protected pending effects without effect-category or optional host-read grants. A separately protected manual-writer runtime is recognized only with matching mode/mount/guard proof; helper payload neverallows and fresh execution authorization remain.
 See the [executable recovery contract](../job-recovery.md). Original rationale
 and unrelated requirements above remain in force.
 

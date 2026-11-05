@@ -10,7 +10,7 @@ Current contracts and later qualifications below govern.
 
 ## Decision, context, and consequences
 
-Both
+The credential names `.` and `..` both
 match the published `[A-Za-z0-9._-]{1,64}` grammar, and both name a directory
 rather than a credential. Neither is exploitable — no `/` is permitted, so the
 worst case resolves to `$CREDENTIALS_DIRECTORY` itself and fails as "not a

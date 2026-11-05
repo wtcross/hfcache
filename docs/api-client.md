@@ -240,6 +240,7 @@ only; malformed responses or validated remote problems do not trigger replay.
 
 For library use after separately provisioning the configured API source:
 
+<!-- executable-example: reader-version -->
 ```python
 from hfcache.client import ApiClient
 from hfcache.client_config import resolve_client_config
@@ -253,6 +254,43 @@ with ApiClient(resolve_client_config()) as client:
 Construction loads settings/credentials but sends no request; the explicit
 negotiation and version calls above contact only the configured management API.
 The client has no artifact-byte transfer or local archive reader.
+
+### Observe a sizing request after an uncertain acknowledgement
+
+For an authorized installed-policy sizing request, save a unique nonsecret key
+before sending. Replace the illustrative `original_key` below with that saved
+key. This example makes one POST, which contacts the Hub and writes an operation
+receipt; it preserves archive content. Run it once for the intended request.
+After a lost acknowledgement, its only next step is authenticated lookup of the
+same key, followed by finite observation of that original operation.
+
+<!-- executable-example: uncertain-sizing -->
+```python
+from hfcache.client import ApiClient
+from hfcache.client_config import resolve_client_config
+from hfcache.client_errors import UncertainSubmission
+
+original_key = "replace-with-your-saved-sizing-key"
+with ApiClient(resolve_client_config()) as client:
+    client.require_capabilities("read", "operations", "operation_history")
+    try:
+        submission = client.submit("/api/v1/plans", {"selectors": []}, key=original_key)
+    except UncertainSubmission as error:
+        operation = client.lookup(error.key)
+    else:
+        operation = submission.acceptance.operation
+    operation_id = operation.operation_id
+    envelope = client.poll(operation_id, timeout=30).envelope
+```
+
+Inspect `envelope.exit_code`, warnings and errors to interpret the sizing result.
+An observation timeout or failed lookup leaves the saved key and any known
+operation ID as recovery handles; it does not prove nonexecution. Do not rerun
+this submission block to recover. Use the read-only `operations lookup/show/wait`
+commands in [reconnect after lost acknowledgement](api.md#reconnect-after-lost-acknowledgement).
+Missing/expired or interrupted history remains uncertain and needs
+[recovery review](recovery.md#preserve-four-kinds-of-authority), never a new-key
+submission. The same rule applies to mutating jobs.
 
 The CLI uses these primitives for operational CLI modes and explicit resumable
 observation. The independent [consumer helper](consumers.md) still owns bulk
@@ -282,6 +320,9 @@ there is no local archive fallback or automatic daemon start.
 | `list [selectors] [--type] [--revisions]` | API inventory plus exact revision rows when requested; consistent join or visible refusal |
 | `runs list [--limit N] [--cursor TOKEN]` | One exact authenticated inventory page and bounded separate read metadata |
 | `runs show [--] RUN_ID` | Exact authenticated durable report, with requested/run/archive identity checks |
+| `search`, `tags` | Catalog search/facets, completely collected within bounded pages |
+| `catalog show`, `catalog variants` | Catalog detail and exact-publication technical observations |
+| `catalog refresh` | Writer-only keyed offline supplemental capture; no Hub request or integrity verification |
 | `archive init --inspect` | Configured writer inspection, no required client root; optional root only checks returned authority |
 | `verify --estimate` | API metadata; no client hashing/probes |
 | `config validate` | Installed writer policy/source validation through API |

@@ -1,6 +1,6 @@
 # Find models and datasets in the Library
 
-The Library in unreleased source reads the existing local catalog and inventory
+The Library reads the existing local catalog and inventory
 APIs through the authenticated HTTPS interface. It does not search the live Hub,
 download content, refresh observations or change configuration. Check
 [interface availability](README.md) before using an installed release.
@@ -9,21 +9,6 @@ and bounded README display. [Configuration and tag editing](configuration-and-ta
 is a separate explicit workflow; filtering never stages an edit. Use
 [Operations](operations.md#choose-a-job-and-its-effects) to review and submit a
 job deliberately.
-
-The current [desktop source-fixture screenshot](images/library-source-fixture-after-1440x1000.png)
-and [mobile source-fixture screenshot](images/library-source-fixture-after-390x844.png)
-show the built source interface at 1440×1000 and 390×844 CSS pixels. The fixed
-synthetic fixture loads25 rows,50 known matches and incomplete technical coverage;
-these are illustrative owned fixtures, not installed or production measurements.
-Matching [desktop before](images/library-source-fixture-before-1440x1000.png) and
-[mobile before](images/library-source-fixture-before-390x844.png) captures preserve
-the earlier layout on that same default fixture. Search and the first repository
-identity now fit in both initial viewports with filters collapsed.
-
-The earlier [desktop](images/library-desktop.png) and
-[mobile](images/library-mobile.png) screenshots remain historical build0.2.20
-images from an isolated deployment with real Caddy/API and simulated storage
-metadata. They are not relabelled as the current layout.
 
 Search, repository type/scope, known matches and results lead the Library.
 **Filters and page size**, **Scope and coverage** and **Operator tags** use

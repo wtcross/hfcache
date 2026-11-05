@@ -1,22 +1,9 @@
 # hfcache web interface
 
-For read errors, see [troubleshooting](troubleshooting.md), including the
-difference between a failed domain read and unavailable or unsupported evidence.
-
-The independent interface ships with a matching protected backend/asset release.
-The local host selects 0.3.1; check [current installed scope](../deployment-status.md)
-for actual service readiness and administrator acceptance. Repository source or
-fixture success does not migrate services, enable schedules or grant archive
-write permission.
-
-Use the independent web interface described here. The superseded interface has
-been removed from the repository; its old public entrypoint was retired during
-the earlier authorized migration. Current selection and acceptance remain explicit.
-The [migration guide](migration-and-rollback.md) covers original handles and
-rollback evidence for a separately authorized transition.
-
-See the [candidate test-release acceptance summary](test-release-acceptance.md)
-for completed scoped test-system acceptance and separate production holds.
+Open the provisioned HTTPS URL and sign in with your administrator username and
+password. Ask the operator for the URL, credentials and certificate trust setup.
+Browser access requires an enabled web interface with matching backend/assets;
+local builds do not change an installed service.
 
 When enabled, open `/ui/` on the existing HTTPS endpoint, or
 `/management/ui/` for an installation whose public prefix is `/management`.
@@ -27,7 +14,7 @@ require administrator authentication. REST bearer and read-only MCP access remai
 separate on the same Caddy endpoint.
 
 For a reviewed build and operator transition, use the
-[operator handoff](deployment.md#operate-the-web-interface).
+[build and deployment procedure](deployment.md#operate-the-web-interface).
 
 For an interface transition or release rollback, follow the
 [migration and compatibility guide](migration-and-rollback.md). Preserve original
@@ -99,12 +86,8 @@ not prove publication membership or verification. [README capture](readme-cards.
 supports bounded, sanitized upstream presentation through the existing writer
 workflow in matching releases. The exact read API preserves publication identity;
 the interface adds a bounded Rendered README and Sanitized source
-view in Overview. Check the release before using it. Neither view loads external media.
+view in Overview. Neither view loads external media.
 
-Installed functional and compatibility checks pass on the disposable native and
-rootless candidates described in the [acceptance summary](test-release-acceptance.md).
-Those fixtures do not establish production JavaScript/Apply, NAS workload or
-current installed administrator acceptance. Production selection and rollback
-require separate operator authorization. See [deployment profiles](../deployment-centos-stream-10.md),
-[current installed scope](../deployment-status.md), and the
-[documentation index](../README.md) for supported procedures today.
+For access, read or permission errors, use [troubleshooting](troubleshooting.md).
+Operators can follow [deployment](deployment.md) and
+[migration and rollback](migration-and-rollback.md) for profile-specific procedures.

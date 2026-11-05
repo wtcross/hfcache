@@ -1,8 +1,8 @@
 # Script reference
 
-Choose the deployment profile before choosing a helper. The selected recorded
-installation is [guarded rootless](deployment-status.md); native system services
-remain supported separately. Build/test tooling and independent consumers do not
+Choose the deployment profile before choosing a helper.
+[Native and rootless profiles](deployment-centos-stream-10.md) use separate
+managers, artifact layouts and installation helpers. Build/test tooling and independent consumers do not
 select a deployment. Run repository commands from its root. All helpers are
 retained because each has a supported installation, build, test or consumer use.
 

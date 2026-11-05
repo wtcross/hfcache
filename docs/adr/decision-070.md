@@ -10,8 +10,7 @@ Current contracts and later qualifications below govern.
 
 ## Decision, context, and consequences
 
-Not a deviation from the plan — the plan is right and the code
-disagreed with it. `docs/architecture.md` §7.9 says a state recovery cannot
+`docs/architecture.md` §7.9 says a state recovery cannot
 resolve unambiguously stops the machine, and `TX-06` says a transaction that
 can fail either way leaves more rather than less. This path did neither.
 
@@ -39,11 +38,9 @@ work. Where a function has to answer "is there any", callers that will act on
 `unreadable_retirements` exists to be asked the second question and the
 remediation is `BLOCKED` with `HFTXN003` when the answer is yes.
 
-Found by running `operational tooling`'s drill rather than by the suite, and it took a
-real deployment to surface: every test that damages a retirement record
-damages it while checking something else, so nothing had ever asked recovery
-what it made of one. That is the same argument  made for rolling out
-before declaring anything done, and this is the fifth defect it has produced.
+Regression coverage must ask recovery directly about an unreadable retirement
+record; tests that damage one only while checking another command do not prove
+this decision boundary.
 
 ## Provenance and governing evidence
 

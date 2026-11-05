@@ -3,7 +3,7 @@
 - Decision identity: 147.
 - Status: Amended; product conformance uses the acceptance method below.
 - Date: 2026-10-20.
-- Introducing evidence: this commit; source and isolated acceptance remain separate.
+- Record introduced: `07d10e0053f9f577a67fb513cdfebad40c314c8e`.
 
 This decision fixes the concrete asset, bootstrap and routing contracts. It
 establishes no installed release or production availability by itself.
@@ -277,10 +277,13 @@ principal grant, never generic bearer write. effective is true exactly when gran
 and the corresponding UI feature/server authority is implemented and enabled;
 reason is allowed iff effective, not_granted iff !granted, otherwise
 feature_unavailable. No helper/network probe is made to produce this projection.
-Initially all five are granted to the one administrator but effective=false and
-reason=feature_unavailable: host/config/observer controls have not been implemented
-yet. Later owning features update exact availability and independent enforcement.
-Disabled controls explain this fixed reason; they do not imply authorization.
+The initial asset-only design used `effective=false` and
+`reason=feature_unavailable` for all five grants. Current feature availability
+follows [decision 150](decision-150.md), [decision 154](decision-154.md),
+[decision 156](decision-156.md) and the [server contract](../server.md). This
+bootstrap projection makes no live helper-policy observation: fixed controls
+still require fresh independent authority. Disabled controls explain their
+reason; a displayed grant never authorizes an effect.
 
 UiBuildIdentity exact keys are `asset_manifest_sha256` (the pinned fingerprint)
 and `metadata` (exact UiBuildMetadata from the validated manifest). Validate build
@@ -373,7 +376,7 @@ path encoder to MCP slash redirect and UI alias; no Host/query reflection.
 
 GET/HEAD `/ui` is an authenticated307 to the trusted encoded `/ui/` (no query).
 GET/HEAD `/ui/` and the current exact workspace paths library, operations,
-maintenance and administration receive rendered index.html. WEB013 also explicitly
+maintenance and administration receive rendered index.html. The detail route also
 recognizes `/ui/repositories/{model|dataset}/{namespace}/{name}` using the existing
 repository component grammar. No additional segments, traversal or encoded
 separators are accepted. The browser-only bounded fragment chooses a paired full
@@ -474,8 +477,9 @@ reported by the already loaded runtime in that state. These runtime messages are
 separate from the inert fallback needed when the entry module never loaded.
 Never reload automatically, clear unsaved drafts or discard/replay original
 operation handles. All errors retain safe original IDs and uncertainty.
-Feature-owned future draft and handle registries remain required; static-serving
-acceptance alone cannot claim their later acceptance.
+Feature-owned draft and original-handle registries preserve that state under
+[decision 145](decision-145.md). Static-serving checks alone do not establish
+their separate behavior.
 
 ## Protected capture and finite response ownership
 
@@ -586,9 +590,8 @@ Integration/functional: built artifact -> the same real Caddy trusted TLS -> the
 installed API Unix upstream, one lifespan/store/runner/auth pool, three native
 engines root and nonroot, deep-link refresh, missingJS404, API/MCP neverHTML,
 Basic plus simultaneous appropriate REST/MCP bearers, plaintext/untrustedCA
-refusal, no external requests, finite owned process/worker/listener drain. Add
-provider-neutral application/platform runner with later95-case coverage explicitly
-pending; no placeholder success. Native/rootless platform profile needs actual
+refusal, no external requests, finite owned process/worker/listener drain. The optional provider-neutral application/platform runner requires complete
+95-case coverage for its final selection; no placeholder success. Native/rootless platform profile needs actual
 installed behavior, not source-ASGI or existing direct-TLS browser substitution.
 
 The selected capture design, fixed notices MIME exception and honest dirty

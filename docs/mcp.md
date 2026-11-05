@@ -163,6 +163,73 @@ publication_id to inspect full evidence. search_datasets accepts format and the
 shared label/scope filters; get_catalog_facets with facet=tag returns distinct
 repository counts. Returned descriptions, paths and source values remain data.
 
+### Pin one publication
+
+After the protected connection above negotiates, an MCP `tools/call` request
+uses the registered name and exact argument fields. For example:
+
+<!-- schema-example: mcp-current-request -->
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "get_current_reference",
+    "arguments": {
+      "repository_type": "model",
+      "repository_id": "organization/model-name"
+    }
+  }
+}
+```
+
+A successful result has `isError=false` and this representative
+`structuredContent` value (identities and timestamps are synthetic):
+
+<!-- schema-example: mcp-current-response -->
+```json
+{
+  "schema_version": 1,
+  "request_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "archive_id": "3f2a1c88-7b40-4a2e-9c1d-0e5b6a7f8d90",
+  "config_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "envelope": {
+    "schema_version": 1,
+    "command": "reference read",
+    "started_at": "2026-11-05T12:00:00.000000Z",
+    "completed_at": "2026-11-05T12:00:00.000000Z",
+    "run_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "exit_code": 0,
+    "outcome": "success",
+    "warnings": [],
+    "errors": [],
+    "data": {
+      "locator_base": "published/",
+      "reference": {
+        "schema_version": 1,
+        "repository_type": "model",
+        "repository_id": "organization/model-name",
+        "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+        "publication_id": "9f14c0b7a2d4423fa0e6b1c8d95e3f27",
+        "publication_generation": 1,
+        "tree": "repos/models/organization/model-name/revisions/0123456789abcdef0123456789abcdef01234567/9f14c0b7a2d4423fa0e6b1c8d95e3f27",
+        "manifest": "manifests/models/organization/model-name/0123456789abcdef0123456789abcdef01234567/9f14c0b7a2d4423fa0e6b1c8d95e3f27.json",
+        "updated_at": "2026-11-05T11:59:00.000000Z"
+      }
+    }
+  },
+  "next_cursor": null
+}
+```
+
+Check both MCP `isError` and the nested domain outcome. Preserve the returned
+`commit_sha` and `publication_id` together for `get_revision_manifest`; read its
+files and dependencies pages at that pair. `next_cursor=null` completes this
+single reference read, not a manifest walk or integrity check. `tree` and
+`manifest` are relative to `published/`, not HTTP URLs. Use the read-only export
+and [verified-copy procedure](consumers.md) to obtain payload bytes.
+
 ### Metadata output and pages
 
 Every successful tool returns strict frozen `MetadataRead`: independent integer
@@ -330,10 +397,10 @@ or Hub credential; custom source locations require explicit isolation acceptance
 Rollback to a server-only or pre-MCP runtime requires deliberately disabling MCP
 before normal drain/restart. There is no automatic fallback or schema migration.
 Preserve previous trees, receipt stores, scheduled handles and shared lock inodes.
-The selected deployment remains guarded/read-only; see the dated
-[deployment status](deployment-status.md) for recorded scope and outstanding
-NAS, isolation, consumer and browser acceptance. Repository fixtures do not prove
-installed SELinux/NFS, credential delivery, cgroups or real drain/rollback.
+The [deployment guide](deployment-centos-stream-10.md) and
+[container guide](containers.md) define provisioning and isolation checks.
+Repository fixtures do not establish installed SELinux/NFS, credential delivery,
+cgroups or real drain/rollback behavior.
 
 ## Disposable example workflow
 

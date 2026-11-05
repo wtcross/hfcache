@@ -27,8 +27,8 @@ rejected; resource-safe maintained framing is the correctness benefit.
 
 ## Relationships and technical evidence
 
-Recorded installed scope and remaining acceptance are described in
-[deployment status](../deployment-status.md).
+Deployment prerequisites are defined in the
+[deployment guide](../deployment-centos-stream-10.md).
 
 - [HTTPX custom transports](https://www.python-httpx.org/advanced/transports/)
 
@@ -48,7 +48,11 @@ not change operational policy identity or grant installation/write authority.
 
 ## Empty Unix writes amendment (2026-10-20)
 
+The Unix transport treats an empty write as a no-op. Closing the stream on an
+empty end-of-message write could prematurely close a valid response; retaining
+the connection preserves HTTP framing and response ownership.
+
 ## Replacement UI design amendment (2026-10-20)
 
 [Decision 141](decision-141.md) amends this record for the accepted
-replacement design. Accepted managed-edit/helper design extends future configuration administration while preserving exact candidate/base bytes, installed authority and original key canonicalization. New helper/API conformance is pending.
+replacement design. Managed-edit/helper design supports configuration administration while preserving exact candidate/base bytes, installed authority and original key canonicalization.

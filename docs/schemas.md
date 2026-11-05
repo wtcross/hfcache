@@ -1039,8 +1039,8 @@ and [receipt rationale](adr/decision-114.md).
 
 ### 13.3 Original-intent dispositions schema 1
 
-This accepted independent local family is pending implementation; existing
-receipt/event/result schema 1 is unchanged. Fixed `intent-dispositions.json`
+This independent local family leaves existing receipt/event/result schema 1
+unchanged. Fixed `intent-dispositions.json`
 lives in the API operation store, under its original flock, service ownership,
 0700 parent and no-follow regular single-link 0600 file rules. It has exactly
 `schema_version:1`, `archive_id` and `entries`. Each entry has exactly:
@@ -1171,7 +1171,7 @@ descriptor, duplicate-free JSON and stable metadata. Caller/runtime-directory
 checks fail closed. Release artifact identity has a separate protected manifest;
 its settled format/compatibility evidence is recorded with the implementation.
 No archive durable format or operation replay rule changes. Installed acceptance
-is separately scoped by [deployment status](deployment-status.md).
+is separately scoped by [deployment guide](deployment-centos-stream-10.md).
 
 
 ## 16. Rootless release manifest and artifact index
@@ -1382,22 +1382,21 @@ and control history, validate actual target behavior and follow
 [discovery rollback](discovery.md#guarded-rollback-and-backup); a stable version
 number alone does not establish compatibility.
 
-## 18. Web UI and administration design records
+<a id="18-web-ui-and-administration-design-records"></a>
 
-**RepositoryCard writer capture and read projection §18.1, protected status/configuration
-reconstruction and outcomes §18.2, static manifest/bootstrap §18.3,
-administrator record §18.4 and managed projections §18.5 are implemented in
-unreleased source.** Current archive durable formats above remain unchanged;
-source implementation is not installed compatibility or release acceptance.
-The card GET uses an independent read projection below; the unreleased browser
-also renders that projection. Recorded installed fixture checks and old-reader
-compatibility limits are in the
+## 18. Web UI and administration records
+
+RepositoryCard writer capture and read projections, protected host/configuration
+exchanges, static manifest/bootstrap and administrator records are independent
+formats. They leave existing archive durable formats unchanged. The browser
+renders the card GET's independent read projection. Deployment prerequisites and
+old-reader compatibility limits are in the
 [migration guide](web-ui/migration-and-rollback.md#compatibility-and-backups).
 The independent card/helper/static/bootstrap
 families below must each validate their own strict integer version, reject
 unknown fields/duplicate JSON keys/coercions, enforce bounds before allocation
-and preserve unsupported/unsafe existing evidence. Design alone is not migration
-or installed compatibility proof. See decisions [140](adr/decision-140.md),
+and preserve unsupported/unsafe existing evidence. Version equality alone does
+not establish installed compatibility. See decisions [140](adr/decision-140.md),
 [141](adr/decision-141.md), [142](adr/decision-142.md),
 [143](adr/decision-143.md) and [UI availability](web-ui/README.md).
 
@@ -1484,9 +1483,9 @@ No unsanitized payload or HTML representation is authorized. See
 
 ### 18.2 Private helper protocol and outcomes
 
-Protected `status`, editable `config-read` and read-only `config-prepare` are
-implemented in unreleased source, together with fixed `config-apply` and
-read-only `config-outcome`. Other opcodes remain reserved and denied. Protocol1 exact framing,
+The protected helper supports `status`, editable `config-read`, read-only
+`config-prepare`, fixed `config-apply` and read-only `config-outcome`, plus the
+fixed host-action operations listed below. Protocol 1 exact framing,
 kernel credentials/original peer pidfd, protected address binding, independent
 deployment/policy schemas and inspection budgets are specified in the
 [host contract](host-administration.md). The revision key is a separately
@@ -1503,8 +1502,8 @@ archive_id,base_revision,candidate_revision,candidate,editable,required_selector
 Candidate text stays private to the API/helper exchange and never enters public
 responses or generic receipts. `candidate_revision` is a domain-separated HMAC
 over the exact base identity and reconstructed bytes. Stale bases yield the closed
-`config-conflict` denial; unknown/mixed/coercive edits refuse. Other opcodes remain
-reserved. Non-persisting preparation uses pinned capture and bracketed exact
+`config-conflict` denial; unknown/mixed/coercive edits refuse. Unregistered opcodes
+are denied. Non-persisting preparation uses pinned capture and bracketed exact
 revalidation; persistent staging/application retains the original configuration
 lock. See [decision153](adr/decision-153.md) and [decision154](adr/decision-154.md).
 
@@ -1512,8 +1511,9 @@ Protocol schema 1 is length-prefixed UTF-8 JSON, at most 2 MiB per encoded frame
 one request per connection, finite deadline and no descriptor passing. Request
 fields are `schema_version`, `request_id`, `operation`, strict operation-specific
 `body`; response binds the same identity and closed outcome. Operations are
-`status`, `config-read`, `config-prepare`, `config-apply`, `config-outcome`,
-`schedule-validate`, `schedule-change`, `observer-stop`, `journal-read`.
+`status`, `intent-review`, `config-read`, `config-prepare`, `config-apply`,
+`config-outcome`, `schedule-validate`, `schedule-change`, `schedule-outcome`,
+`observer-status`, `observer-stop`, `observer-outcome` and `journal-read`.
 No operation accepts caller-selected path/command/unit/manager/UID/credential.
 Preparation sends managed edits and opaque base token, never a maximal raw
 base/candidate pair; helper reconstructs privately. Every encoded response is
@@ -1832,7 +1832,9 @@ for exact constants, bounds and required installed evidence. These are new
 helper-only records, with no change to existing archive/operation formats or
 public REST/MCP credential schemas.
 
-### 18.5 Managed configuration projections schema 1
+<a id="185-managed-configuration-projections-schema-1"></a>
+
+### 18.6 Managed configuration projections schema 1
 
 These public DTOs are independent of legacy literal/installed validation and plan
 payloads. Every field is required, versions are integer1, unknown/coercive fields
@@ -1853,7 +1855,9 @@ state, resolved immutable SHAs and all numeric sizing facts. Partial/refused siz
 cannot be a complete preview. Public projections contain no candidate text or
 secret-dependent full-document hash. See [managed API](api.md#managed-configuration-read-and-assessment-responses).
 
-### 18.6 Browser recovery metadata schema 1
+<a id="186-browser-recovery-metadata-schema-1"></a>
+
+### 18.7 Browser recovery metadata schema 1
 
 This independent browser-local storage format is not an archive record, API receipt or
 execution ledger. Its fixed storage key is `hfcache.web.operations.v1`; the exact
@@ -1901,7 +1905,9 @@ never trigger automatic record cleanup. Passwords, tokens, request/result bodies
 configuration drafts and raw logs are forbidden. See [browser recovery](web-ui/operations.md).
 
 
-### Browser recovery metadata schema 2
+<a id="browser-recovery-metadata-schema-2"></a>
+
+#### 18.7.1 Browser recovery metadata schema 2
 
 The accepted [reconciliation protocol](job-recovery.md#browser-reconciliation-and-compatibility)
 migrates the same `hfcache.web.operations.v1` storage key atomically to top-level
@@ -1935,7 +1941,9 @@ projection cannot contradict retained admission. Record-specific observation
 authorizations bind the current disposition, and closure fences older callbacks
 without clearing independent configuration or host-effect precautions.
 
-### 18.7 Fixed host-action projections schema 1
+<a id="187-fixed-host-action-projections-schema-1"></a>
+
+### 18.8 Fixed host-action projections schema 1
 
 
 `SchemaOne`: exact integer1 (not bool). `Id`: lowercase32hex. `Digest/Revision`:
@@ -1947,7 +1955,7 @@ unknown. Only confirmed/unchanged AND pending=false can settle effect certainty.
 Confirmed+pending=true MUST remain valid for crash after durable outcome and
 before marker removal. Outcome read never removes that marker.
 
-## Exact request/validation models
+#### Exact request/validation models
 
 - `ScheduleValidationRequest {on_calendar:Calendar, randomized_delay_sec:Delay|null}`
 - `ScheduleValidation {schema_version:1, archive_id:ArchiveId,
@@ -1966,7 +1974,7 @@ before marker removal. Outcome read never removes that marker.
 - `ObserverStopRequest {expected:ObserverExpected}`. No unit/path/manager/UID
   field is accepted. Fixed unit is derived server-side.
 
-## Read-only observer status
+#### Read-only observer status
 
 `HostObserverStatus {schema_version:1, archive_id:ArchiveId,
  profile:native|rootless|null, host_binding:HostBinding|null,
@@ -2002,7 +2010,7 @@ a known running observer with an inactive claim or make schedule authority depen
 on this optional observer provisioning. Exact manager/process SIDs remain private
 authority checks; they add no caller-controlled field to ObserverExpected.
 
-## Keyed outcome projections
+#### Keyed outcome projections
 
 Common required fields on each distinct model:
 `schema_version:1, archive_id:ArchiveId, operation_id:Id,
@@ -2054,7 +2062,7 @@ GET /host/sync-observer/stops/{operation_id}
 The two mutation routes use existing AcceptanceResponse/operation GET/events/
 result unchanged, with new exact payload authorities/command bindings.
 
-## Bounded journal
+#### Bounded journal
 
 `JournalSource`: sync-observer | verify-observer, fixed to system sync/verify
 service only. No API/worker/helper or caller-selected sources are accepted.
@@ -2088,7 +2096,9 @@ labels are optional protected provisioning for the new capabilities; old read/
 configuration-only evidence remains valid without new grants. See
 [decision156](adr/decision-156.md).
 
-## Protected writer runtime schema 2
+<a id="protected-writer-runtime-schema-2"></a>
+
+### 18.9 Protected writer runtime schema 2
 
 The accepted [writer decision](adr/decision-165.md) requires independent runtime
 schema 2 with exactly `schema_version`, `service_uid`, `service_gid`, `app_image`,

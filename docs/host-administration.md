@@ -1,7 +1,7 @@
 # Protected host administration contract
 
-The host reader ships in 0.3.0. Installed support
-requires the native and rootless acceptance described here. Status is a bounded
+This reference defines the protected helper protocol, independently provisioned
+authority and supported native/rootless execution boundaries. Status is a bounded
 administrative observation; it does not establish archive health, writable
 storage, workload permission or operation completion. Human setup and use are
 covered by the [administration guide](web-ui/administration.md).
@@ -332,13 +332,11 @@ bundle also requires both measured vendor directories from
 | `/usr/share/containers/storage.conf.d` | `00-vendor.conf` | 29 | `358b7ba3201aea7dba1d8e0e42c8a11e21acdff1b2ca71a4f8b826f41ae5bc80` |
 | `/usr/share/containers/storage.rootless.conf.d` | `00-vendor-rootless.conf` | 186 | `f346071a81b5fdb96796397b08f9dc40c9f450166c7f041ddcaa92f115e92ca8` |
 
-The preserved production host uses Podman6.0.2 with all three exact stock hashes
-above. Its 0.3.0 migration passes actual confined API-origin HostStatus and managed
-configuration reads with the bound existing home/store. This qualifies that
-observed fixed profile; matching configuration bytes alone would not establish it.
-No package update, broader version guarantee or relaxed source check follows.
-New-host all-phase IP/inode-alias negative companion acceptance remains separate;
-see the [recorded deployment scope](deployment-status.md).
+Podman version alone does not establish compatibility. The fixed stock bytes,
+bound existing account/home/store, actual confined API-origin reads and applicable
+IP/inode-alias denial proofs must agree. A matching configuration digest does
+not substitute for those runtime observations; see the
+[deployment prerequisites](deployment-centos-stream-10.md).
 
 Both directories must be root0:0/0755, each with exactly its named root0:0/0644,
 single-link leaf. Fresh bounded no-follow capture checks every entry, exact
@@ -1083,10 +1081,11 @@ Check fresh helper/policy before new metadata offload/admission, and again at qu
 dispatch before domain lock or verifier handoff. Pure snapshot comparison binds
 the observed archive UUID and selected deployment; no helper I/O runs under the
 store, runner-condition, archive or configuration locks. Existing installed-policy
-fingerprint and final domain guard checks remain. The accepted
-[original-intent amendment](job-recovery.md) observes an exact admitted duplicate
+fingerprint and final domain guard checks remain. The
+[original-intent protocol](job-recovery.md) observes an exact admitted duplicate
 before fresh effect checks and durably fences validated fresh refusals;
-implementation and installed acceptance remain pending. GET original-key/ID/result recovery remains available
+its offline activation and shared execution leases are prerequisites.
+GET original-key/ID/result recovery remains available
 when policy/helper is down. Body conflicts and at-most-once enqueue retain their
 original rules. Checks are not an atomic revocation lease across lock waiting.
 
@@ -1237,8 +1236,9 @@ runs under operation-store, runner, archive or configuration locks. The helper's
 internal short pending/history guards remain its own authority. No arbitrary
 selector, archive payload access, effect, cleanup or stored credential is added.
 Unproven facts return an actionable refusal. The detailed freshness, bounds and
-review sequence are fixed by the [protocol](job-recovery.md). Source and installed
-conformance remain pending.
+review sequence are fixed by the [protocol](job-recovery.md). Deployment requires
+offline intent-state activation and independently provisioned original/companion
+coordination inodes, protected history guards and capable readers.
 
 For original-intent coordination metadata, the fixed internal
 `observe-intent-locks` child shares the protected guard-child transport and

@@ -1,13 +1,11 @@
 # Deploy the optional web interface
 
-This describes optional authentication and immutable asset serving in matching
-reviewed releases. The local host selects 0.3.1; actual readiness and acceptance
-remain in the deployment record. A source build does not install assets, select
-a release or enable `[web]`. Do not change a
-running installation merely to try the developer preview. See
-[current installed scope](../deployment-status.md) before planning a migration.
+Enable browser administration with a protected administrator record and matching
+immutable backend/assets. Choose the native or rootless delivery steps below;
+verify TLS, sign-in, permissions and exact-publication reads before use. A source
+build does not install assets, select a release or enable `[web]`.
 
-The replacement uses one whole-archive human administrator. The browser handles
+The interface uses one whole-archive human administrator. The browser handles
 the HTTP Basic challenge over verified HTTPS. Page scripts receive neither its
 password nor a REST/Hub token. Signing in grants no storage writability, protected
 host policy, Hub access or permission to bypass a guard. REST writer/reader and
@@ -561,13 +559,10 @@ shared command initialization recognize it; it does not authorize directory
 creation, relabeling, enumeration or network setup. Keep the original state and
 configuration rather than modifying them to bypass an unavailable read.
 
-Rootless engine inspection initially supports only the measured Podman6.1 stock
-storage configuration described in the
-[engine configuration contract](../host-administration.md). The recorded 0.3.0
-host additionally passes confined HostStatus/configuration reads on Podman6.0.2
-with that same exact bundle and its bound existing home; this is qualified
-installed read acceptance, with the remaining limits in
-[deployment status](../deployment-status.md). It verifies the
+Rootless engine inspection accepts only the exact pinned stock configuration
+bundle in the [engine configuration contract](../host-administration.md), with
+its bound existing home. A matching version string alone is insufficient.
+It verifies the
 stock main file and both exact RPM vendor drop-in bundles afresh, preserving
 the original overlay/`nodev` configuration and skipping only private-mount
 housekeeping. Each vendor directory must contain exactly its pinned leaf with
@@ -597,7 +592,7 @@ restart. Keep old indexes, keys, bindings and original operation handles through
 rollback review; do not remove unknown records to force an older binary to start.
 
 Use the [interface migration guide](migration-and-rollback.md#select-a-rollback-scope)
-to select the rollback scope and review the recorded old-client and durable-state
+to select the rollback scope and review the target-client and durable-state
 compatibility limits before selecting a target.
 
 A selector rollback alone does not restore `/usr/local` bootstrap copies. If the
@@ -752,8 +747,8 @@ bootstrap or protected bindings.
 
 Source and disposable fixture acceptance grant no production migration authority.
 The [production checklist](migration-and-rollback.md#production-migration-checklist)
-remains operator work. The boxes below are a procedure template; actual completed
-observations and outstanding holds are in the [deployment record](../deployment-status.md):
+remains operator work. Use the boxes below as a procedure template; retain actual observations and
+any outstanding restrictions in the operator's deployment records:
 
 - [ ] Authorize the production profile, target identities and migration scope.
 - [ ] Verify a coordinated protected backup and preserve original handles,

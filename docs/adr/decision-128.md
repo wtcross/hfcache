@@ -61,4 +61,4 @@ NAS workloads and rollback0.2.0's limitation remain separate.
 - [Decision 129](decision-129.md)
 - [Decision 148](decision-148.md)
 
-See [deployment status](../deployment-status.md) for recorded scope and remaining acceptance.
+See [deployment guide](../deployment-centos-stream-10.md) for recorded scope and remaining acceptance.

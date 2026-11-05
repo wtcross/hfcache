@@ -4,7 +4,7 @@ Repository details combine the existing local metadata APIs through the
 authenticated HTTPS interface. Check [interface availability](README.md) before
 using an installed release. These reads do not contact the Hub, refresh metadata,
 transfer payload files or submit a job. The bounded [README view](readme-cards.md)
-is implemented in unreleased source. Use [Configuration and tags](configuration-and-tags.md)
+is available for captured cards. Use [Configuration and tags](configuration-and-tags.md)
 for deliberate managed edits and [Operations](operations.md#choose-a-job-and-its-effects)
 for job forms; opening repository details submits neither.
 
@@ -166,8 +166,8 @@ browser-reformatted JSON. If that read refuses, the digest remains unavailable;
 an independently valid manifest need not disappear with it.
 
 Follow [copy and verify](../consumers.md#2-the-contract-in-one-paragraph) for actual
-payload consumption. The copy helper reads its own reference once per copy
-attempt and verifies the complete copied path set, sizes and SHA256 digests.
+payload consumption. The copy helper selects current only, reading its own reference once per copy
+attempt; it cannot copy an arbitrary retained selection. It verifies the complete copied path set, sizes and SHA256 digests.
 Copying a browser locator neither transfers files nor replaces that verification.
 
 ## Interpret integrity and history conservatively
@@ -207,23 +207,3 @@ remain bounded; a newer publication cannot inherit a predecessor's report entry.
 
 For a vanished publication, refused artifact, unavailable supplemental panel or
 changed session, see [detail troubleshooting](troubleshooting.md#repository-details).
-
-## Example screens
-
-These screens show synthetic model and dataset metadata from an isolated test
-installation of native test build 0.2.22. Their identifiers, tags, sizes and
-observations are examples, not live archive facts.
-
-![Model overview with exact publication identity, attributed declarations and labelled consumer locators](images/repository-model-desktop.png)
-
-The dataset overview keeps static declarations and historical operator tags
-distinct from current configuration and payload integrity.
-
-![Dataset overview with source-attributed formats, configuration, features and splits](images/repository-dataset-desktop.png)
-
-On a narrow screen, file metadata uses a bounded local page and a horizontally
-scrollable table. Copy the locator whose labelled base matches your mount.
-This capture shows loaded Files, while the separate coverage panel still shows
-Loading; it does not establish supplemental metadata coverage.
-
-![Narrow-screen files tab with keyboard-accessible local paging and consumer locator bases](images/repository-files-mobile.png)

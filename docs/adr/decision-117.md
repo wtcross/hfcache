@@ -75,5 +75,5 @@ publication identity, grace period, audit format or lock semantics. See the
 - [queued-scope/proof/idempotency tests](../../tests/unit/test_api_maintenance_adversarial.py)
 - [shared-service tests](../../tests/unit/test_command_services.py)
 
-Recorded installed scope and remaining acceptance are described in
-[deployment status](../deployment-status.md).
+Deployment prerequisites are defined in the
+[deployment guide](../deployment-centos-stream-10.md).

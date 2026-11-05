@@ -4,9 +4,8 @@ Open **Administration** to inspect the archive, API readiness, software identiti
 and protected host permissions; edit configuration; run explicit diagnostics; and
 use the fixed schedule, observer and journal controls supported by the installed
 profile. Opening or refreshing a read panel never submits a job or changes a
-timer. The interface remains unreleased source until installed through the
-[deployment procedure](deployment.md). Keep the recorded installed release until
-replacement acceptance and migration are complete.
+timer. Provision it through the
+[deployment procedure](deployment.md), using matching backend/assets.
 
 The human administrator signs in with the configured browser Basic account.
 That account is separate from service bearer credentials and host policy. Login
@@ -284,7 +283,7 @@ operation to test whether the first one ran. See
 The accepted [job recovery contract](../job-recovery.md) provides independently
 authorized action-readiness and Basic-own-key retirement without requiring
 optional host-read or enabling archive/control/schedule/observer grants. These
-are design requirements pending installed acceptance. An original request's
+controls require the protected profile prerequisites. An original request's
 retirement cannot settle unknown configuration or host effects. Administration
 continues to require their separate original-key outcomes. Writer mode is a
 protected deployment operation, never an administration-page permission toggle.

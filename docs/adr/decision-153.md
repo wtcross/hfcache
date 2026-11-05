@@ -3,7 +3,7 @@
 - Decision identity: 153.
 - Status: Accepted design.
 - Date: 2026-10-25.
-- Introducing change: this commit.
+- Record introduced: `7a86fc2d20eccf18dc1615a764f88283e91f1aab`.
 - Amends the read/prepare portion of [decision141](decision-141.md) and
   [decision150](decision-150.md); guarded application remains separate.
 

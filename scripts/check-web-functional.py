@@ -756,8 +756,8 @@ def source_identity(value: object, *, root: Path = ROOT, legacy: bool = True) ->
                 "scripts/release-profile.py",
                 "web/test/functional-api/driver.mjs",
                 "web/test/auth-api/sandbox.mjs",
-                "docs/agents/plans/support/web-ui/acceptance-cases.json",
-                "docs/agents/plans/support/web-ui/task-index.json",
+                "tests/fixtures/web-acceptance/requirements.json",
+                "tests/fixtures/web-acceptance/coverage-groups.json",
             }
             <= files.keys(),
             "functional tooling inventory is incomplete",
@@ -5299,10 +5299,8 @@ def acceptance_executions(results: list[dict[str, Any]]) -> list[dict[str, Any]]
 def requirement_ids(
     through: str | None = None, *, root: Path = ROOT
 ) -> tuple[list[str], list[str]]:
-    requirements = json_bytes(
-        bounded(root / "docs/agents/plans/support/web-ui/acceptance-cases.json")
-    )
-    task_index = json_bytes(bounded(root / "docs/agents/plans/support/web-ui/task-index.json"))
+    requirements = json_bytes(bounded(root / "tests/fixtures/web-acceptance/requirements.json"))
+    task_index = json_bytes(bounded(root / "tests/fixtures/web-acceptance/coverage-groups.json"))
     return select_requirement_ids(requirements, task_index, through)
 
 

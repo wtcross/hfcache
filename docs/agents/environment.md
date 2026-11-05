@@ -1,266 +1,64 @@
-# The writer VM and the live archive
+# Working near a live archive
 
-Interface-only instructions and source references have been omitted from this
-retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
-original document path SHA-256 `88d28c85bdae71f0da504a78d01a64961edb7415e444841833395426250c8b37`,
-original content SHA-256 `08495d9c4304ac16f25c3120b4a10b4a74cec13569e91687076d53c4971308b6`.
-Historical proof hashes identify the original artifacts, not this edited record.
-
-`hfcache` is deployed on the host that usually holds this working copy. That
-is unusual enough to say plainly: **a session editing this repository may be
-sitting on the production writer**, one `sudo` away from a live archive. This
-document is what such a session must know, and what it must not do.
-
-## Where am I?
+For coding agents whose checkout may be on a production writer. Determine the
+host and mount before any work outside the repository:
 
 ```bash
-hostname                 # hfcachewriter.lab.example.com → the production writer
-findmnt /srv/hfcache     # live NFSv4.2 mount of tank/huggingface-archive when deployed
+hostname
+findmnt /srv/hfcache
 ```
 
-On any other machine this document is background — but the hard limits below
-apply wherever the archive mount exists.
-
-## The deployment, in facts
-
-**2026-11-05 completed current checkpoint:** manual-writer0.3.4/source9756c70/
-app418edbe7/UI40c4324a/indexbea2840d, NFSRW/Enforcing. Protected backup/full drain/
-original-lock RO install window and restored RW pass, existing keeper434678 and
-persistent override unchanged. Genuine selected installed UI/API Sync and
-technical refresh succeed. One bounded backfill writes156 bound observations:
-7 complete,27 partial,8 unsupported,114 failed interpretations; all diagnostics
-retained, zero observation-write failures. Raw manifests/current/retained/
-verification inventory and old journals are unchanged. Original request remains
-retired_unknown without replay; original credentials/config/stores/lock inodes,
-predecessors/masks/calendars/unrelated grants preserved. Final host6c739daa and
-coveragee6a0ca95 pass. The [deployment status](../deployment-status.md) and
-[completed task](plans/tasks/ops-029-enable-manual-archive-jobs.md) own exact
-evidence and independent holds. Current-boot manual startup only; no boot claim.
-The0.3.3 and earlier statements below retain their historical scope.
-
-**2026-11-05 writer transition checkpoint:** selected manual-writer0.3.3,
-source1652b8f/app661da09f/UIc9df46e1/indexa638f833. Fresh backup/full actual
-drain/original-lock selection, local NFSRW remount and reviewed inert namespace
-handoff pass; old pause63:60 retained, engineDB byte-identical. New keeper434678
-has authenticated RW namespace. Archive-only grant true, other grants unchanged;
-helper READY then worker/API/Caddy and actual writer storage preflight pass.
-SELinux Enforcing/masks/calendars/inactive guard+bridge intact. Pilots/backfill
-remain pending; no full-plan completion. The guarded acceptance below is earlier.
-
-**Earlier guarded checkpoint:** selected guarded0.3.3/source1652b8f,
-app661da09f/UIc9df46e1/indexf1c55ed2, measured helperindexae3bc6ab/policy058b53d0.
-Fresh backup/full actual drain/original-lock handoff and installed29-case checks
-pass. Genuine administrator installed UI retires original request as
-retired_unknown, preserving handles/historical uncertainty, zero job replay;
-original user browser storage remains untouched. Disabled-job UI/helper/config
-GET checks pass. OPS029 now owns fresh writer transition/pilots/backfill;
-NFSRO/Enforcing/archivefalse remains. Original global27:3904/companion27:4393,
-API27:1761/worker64768:69642176/config64768:138322689/hostguard64768:138519863
-must remain. Never rerun activation, remove permanent dispositions/backups or
-restore old store bytes. Guard/bridge inactive, calendars disabled/writers masked.
-See [current checkpoint](../deployment-status.md#current-migration-checkpoint--2026-11-05)
-and [completed guarded acceptance](plans/tasks/ops-028-install-job-recovery-release.md).
-The following0.3.1 facts are historical.
-
-As of 2026-11-02 the selected physical release is rootless 0.3.1, clean source
-`c23abba45f8967d058983043b96843bef62e899a`, app image `716cb3c6…`, UI `bca416c4…` and physical index `93772b5c…`.
-The API, private worker, Caddy and confined host helper are ready.
-Automated installed read-only checks pass verified TLS, REST/MCP credential
-separation and the fourteen-tool listing, API-origin worker PROBE, fixed
-client version, original-operation observation and recorded confinement.
-
-Genuine trusted-terminal administrator Basic, indexed UI assets, stable bootstrap
-identity, API-origin helper status and managed configuration reads pass in
-11 GETs, all HTTP 200, over verified TLS with the original permissions preserved.
-This validation runs no browser JavaScript, Apply, job or NAS workload.
-
-The deliberate inactive guard setting is restored through reviewed
-zero-executor handoff; no domain-lock holder is intentionally retained.
-The reviewed graceful restart and repeated automated checks pass.
-
-NFS remains read-only, legacy writers masked and calendars disabled. Preserve
-all 165 configured model selections, original candidates/backups, stores,
-handles, secret identities and local lock inodes. Production JavaScript/Apply,
-NAS workloads, reboot, other-host and independent confinement companion
-acceptance remain separate. Automatic boot recovery is unconfigured: root
-must provision runtime objects and helper parents after recreation, then
-establish helper READY before bridge/API. Persistent labels alone are not
-startup ordering or boot acceptance.
-
-The explicit local publication scope retains the no-tag instruction: 0.3.1
-has no new release tag. Exact source/artifact identities identify this
-selection; existing tags remain unchanged.
-The current [deployment checkpoint](../deployment-status.md#current-migration-checkpoint--2026-11-05)
-and selected task own current scope. Historical facts below cannot establish
-current guard, runtime or permission state.
-
-The historical 0.2.2 deployment was guarded rootless 0.2.2 from clean source
-`1c685018803a365bbb8b0c1aad4b94709f60e7d7`. Actual host TLS/authentication,
-API-origin worker PROBE and confinement checks passed; the
-[rollout evidence](plans/support/host-rollout/acceptance-record.md) records
-the exact artifacts and remaining closeout checks. See also
-[deployment status](../deployment-status.md) and [script inventory](../scripts.md).
-These facts do not authorize another rollout or production archive access.
-
-- Rootless releases use `/opt/hfcache/releases/<version>` and atomic `current`,
-  `container-release.json`, an artifact index and protected rendered runtime metadata.
-  Use `install-container-release.py` for that profile. The native installer and
-  native hardening refuse container/mixed/unknown layouts before effects.
-- Host client: `/usr/local/libexec/hfcache-client`; image executable:
-  `/opt/hfcache/.venv/bin/hfcache`. API/worker/Caddy use the hfcache **user** manager;
-  the system target/bridge and independent read-only guard are separate host controls.
-- API socket: `/run/hfcache/api/api.sock`; worker-created private listener:
-  `/run/hfcache/verification/verification.sock`. API follows notify-ready worker
-  service. The indexed user socket artifact remains dormant; native FD3 support stands.
-- Protected Podman secrets are explicit file mounts. API receives separate REST,
-  MCP and Hub sources, client REST only, worker none. No command copies token values.
-- Preserve NAS read-only, independent original-inode host guard, writer masks,
-  disabled calendars, both operation stores and all scheduled handles. Neither
-  wrapper exit nor free lock proves executor termination. No schedule is enabled here.
-- The protected historical frontend policy grants configuration permission only; archive,
-  Hub, control, schedule and observer permissions remain false. Existing candidate,
-  backup and configuration lock evidence remains. Production PAM/browser candidate
-  validation or installation has not been proved by the host checks.
-- Never run `systemd-analyze --user verify` with a live `XDG_RUNTIME_DIR`.
-  Use fully owned isolated runtime, bus and unit/generator paths; preserve a stale
-  endpoint for review rather than unlinking it or blindly restarting its manager.
-  See [static user-unit verification](../containers.md#static-user-unit-verification).
-- Native remains supported separately: system services, host release `.venv`,
-  uv-managed pinned Python and systemd credential delivery. Positive native
-  source/current/target proof precedes staging, manager access and switching.
-  Help/list/dry-run need no source, archive, root or manager; dry-run is intent only.
-- SELinux remains enforcing. Default hardening entrypoints are static; explicit
-  inventory/workload modes have the security contract's scope and restrictions.
-  Owned repository tests are not actual installed/container/NFS acceptance.
-
-Historical rollout evidence and outstanding operator work remain in
-**Operator handoff** in `docs/agents/progress.md`; history is not current authority.
+Treat an existing archive as live. Repository implementation does not authorize
+host operations, deployment, archive jobs, NAS changes or schedule enablement.
+Determine current installed state from protected host configuration and the
+operator's execution context; repository history is not current authorization.
 
 ## Hard limits
 
-**API-014 source/deployment boundary (2026-10-18).** The branch now packages API
-and private verification socket/services plus API-only scheduled clients. Installed
-facts above are historical deployment evidence, not proof these units are running.
-The actual verifier, not its client wrapper, needs no-IP/offline/credential-source
-masking acceptance. Custom development credential paths need explicit masks/probes.
-Preserve API/verifier/scheduled state and shared runtime locks. Stopping a client
-or seeing a free lock does not prove execution ended; follow actual server/worker
-drain and exact operation evidence before release/mount work. Real activation,
-cgroup no-IP/no-credential, SELinux/NFS and installed hardening remain operator
-deployment holds. See [decision 121](../adr/decision-121.md) and
-[deployment quiescence](../deployment-centos-stream-10.md#upgrade-and-drain).
-This task authorizes no host operations or production archive work.
+- Never write under `/srv/hfcache` outside the application's transactional code
+  paths: no manual creation, deletion, chmod, relabel or repair.
+- Never run `hfcache archive init` against the existing archive. Its sentinel
+  and configured UUID establish identity.
+- Never weaken SELinux, systemd confinement, credential separation or file
+  permissions to make a check pass. Keep SELinux enforcing.
+- No reboots, network-stack or `remote-fs.target` restarts, live mount
+  disconnections or NAS-side changes as repository tests.
+- Do not enable verification or sync calendars without explicit operator scope.
+  Pause individual timers during approved deployment; do not stop
+  `hfcache.target` to quiesce the archive.
+- Preserve original lock inodes, both operation stores, scheduled observation
+  handles, candidate/backup files and original credential identities.
+  Stopping a client or finding a free lock does not prove executor termination.
+- Build and test as the login user. Root installation/configuration work needs
+  an explicitly authorized deployment scope. Use owned fixtures and the
+  disposable archive procedure in [recovery](../recovery.md), never the live
+  archive, for mutable rehearsals.
 
-Carried from plan §36.4–§36.5 and not relaxed by §36's supersession
-(decision 82). These bind any session on this host.
+## Profile and manager boundaries
 
-- **Never write under `/srv/hfcache`** outside the application's own
-  transactional code paths — no manual creation, deletion, chmod, or "repair"
-  of anything there. The application refuses to delete what it cannot explain
-  (`FS-19`); a session does not get a lower bar.
-- **Never run `hfcache archive init`.** It was performed once, under explicit
-  pre-authorization, and the sentinel plus the configured UUID now prove
-  identity (`FS-21`–`FS-23`). Re-initialization is refused by design; do not
-  test that against the live mount.
-- **Never weaken SELinux or systemd hardening** to make something pass
-  (plan §22.5, §23). A probe failure is information about the sandbox, not an
-  obstacle.
-- **No reboots**, no restarting the network stack or `remote-fs.target`, and
-  no NFS disconnection tests against the live mount (plan §26.4–§26.5) —
-  those are operator-supervised items, and some would terminate the session
-  itself.
-- **Do not enable `hfcache-verify.timer`** — operator handoff item 8 owns the
-  calendar decision. Quiesce during deploys by stopping `hfcache-sync.timer`,
-  never `hfcache.target` (decision 65).
-- **No NAS-side changes.** Everything on `nas.lab.example.com` — exports,
-  snapshots, quotas, scrubs — is operator work, tracked in the handoff.
-- Build and test as the login user; `sudo` is for installation and system
-  configuration steps. Rehearsals that need a mutable archive use the
-  throwaway loopback archive of `docs/recovery.md` §6, never `/srv/hfcache`.
+Native services use the system manager and a host release interpreter.
+Rootless API, worker and Caddy use the service account's user manager; the
+protected host helper, system bridge and independent guard are distinct controls.
+The fixed host client is `/usr/local/libexec/hfcache-client`; image execution
+uses `/opt/hfcache/.venv/bin/hfcache`. Follow the selected profile in
+[deployment](../deployment-centos-stream-10.md) and [containers](../containers.md).
+Never run the native installer against an unknown, mixed or container layout.
 
-API-017 consolidates these unchanged limits in the
-[operator rollout checklist](../deployment-centos-stream-10.md#acceptance-checklist).
-The API/MCP feature branch and throwaway installed wheels are repository evidence,
-not a production release or permission to manipulate host services/state. Keep
-both operation stores and scheduled observation handles through approved drain/
-rollback, and preserve the disabled verification calendar. No repository plan
-closure clears the actual no-IP/credential/NFS/SELinux/TLS/firewall holds.
+Protected Podman credentials are file mounts with separate REST, MCP and Hub
+sources. The client receives REST only and the verifier receives none. Do not
+print secret values. Prove actual API/worker/helper and container/cgroup drain
+before switching artifacts or transferring an original guard lock. Unknown
+activity refuses further work; no forced cleanup, replay or automatic rollback.
 
-## Historical scoped local rollout authority (OPS-014, 2026-10-18)
+A guarded rootless profile requires independently proven host read-only storage,
+writer masks and READY guard ownership; a private read-only mount view is not
+host proof. Writer mode needs separately protected authority. Preserve the
+selected profile and existing calendar restrictions through a switch.
 
-Tyler's newer authorization selects the
-[local rootless rollout](plans/2026-10-18-plan-local-rootless-rollout.md),
-qualifying the earlier feature task's no-host-action boundary. Only root performs
-reviewed local host mutations. No NAS content or metadata writes, other-host
-changes, remote push/registry publication or ACME issuance is permitted. Reuse
-appropriate existing local secrets without printing them; credential classes
-remain separate. The actual rootless Caddy/API/worker/client design follows in
-OPS-015, after the guard task is completed and committed.
-
-Before rollout, record local state, block legacy scheduling/writers, prove actual
-executor quiescence and retain the noncreating local flock. Enforce a client-side
-read-only remount plus persistent local mount-unit override without unmount,
-disconnect, NAS file I/O or server policy changes. Keep sync stopped and verify
-timer disabled. Never use NAS chown/relabel/copyup or a write probe to prove this
-barrier; preserve SELinux/hardening, lock inodes, both operation stores and pending
-observation handles. Unknown activity/state refuses further work. Host-local
-throwaway tests are distinct from forbidden real storage acceptance; see
-[decision 126](../adr/decision-126.md) and the selected task for actual evidence.
-
-OPS-016 makes the guard permanent host policy outside the app's current selector:
-UID/GID 981 holds the original noncreating flock and proves host NFS-ro via
-/proc/1/mountinfo before READY. A protected bridge dependency and no user-default
-app-target enablement preserve normal boot order; root alone performs the
-quiescent holder handoff with NAS-ro/masks continuous. The guard is not a
-continuous monitor and a private read-only sandbox view is not host proof.
-At OPS-016, application artifacts were clean 481fcc4; the later 0.2.1 artifacts
-were clean 4088994. Unchanged independent host policy, its original activation
-and residual holds are separately recorded in
-[OPS-016](plans/tasks/ops-016-local-rootless-deployment.md).
-
-The selected [listener correction](plans/2026-10-18-plan-container-worker-listener.md)
-follows the local 0.2.0 partial release. OPS-017 is source/owned-fixture work only:
-explicit PID1 worker-created listener and container READY under existing
-confinement, preserving strict native FD3 activation. Root alone performs
-guarded selection/host acceptance. Completed OPS-018 selected 0.2.1 and closed
-the connection hold through actual installed API-container PROBE; no host-origin
-probe or source test supplied that proof. No NAS file I/O/jobs, policy/label/seccomp
-weakening, other-host change, remote publication or automatic backlog activation.
-
-Completed OPS-019 supplies fresh REL-013 artifacts under Tyler's UBI 10 requirement.
-All built service FROM stages use pinned micro, with only reviewed binary/Red
-Hat CA-data donors; [decision 129](../adr/decision-129.md) governs implementation.
-Old Debian candidates/stopped gate are superseded evidence. That 0.2.1 deployment
-retained Enforcing policy, permanent guard, NAS-ro and writer masks.
-No source/base work permits NAS file I/O/jobs, other-host change or remote push.
-
-### 0.2.1 local checkpoint (OPS-018, 2026-10-18)
-
-Actual installed API-container PROBE/notify/TLS/drain in
-[OPS-018](plans/tasks/ops-018-container-worker-rollout.md) closes connection
-hold 22 for clean 0.2.1 UBI artifacts. Every NAS-ro/guard/writer-mask/state/hardening
-boundary remains; no NAS I/O/job or other-host/remote action is authorized.
-
-## Later local replacement authorization (2026-10-20)
-
-The user subsequently explicitly requests merge to main and pushes to both remotes,
-then deployment on this host in place of the existing release. This narrowly
-supersedes earlier no-host-operation language for the reviewed local replacement;
-it does not renew NAS workload or other-host authority. The completed repair is
-merged/published at cdc35a4; REL-015 prepared clean immutable 0.2.2 source 1c68501.
-The reviewed guarded switch now selects that release, with actual host acceptance
-and remaining closeout evidence in the
-[rollout record](plans/support/host-rollout/acceptance-record.md).
-Keep NASro, original independent guard/locks, masks, disabled calendars, stores,
-handles, candidate/backup and secret separation. Back up required configuration
-locally/private before effects; no automatic replay/rollback/cleanup after uncertainty.
-Only root makes protected host changes, only after exact actual-executor drain and
-original-lock handoff; builders/gates run as login user with NAS shadowed. No image
-registry, forced termination, live/NAS workload, archive init or security weakening.
-The required deployed local tag follows actual acceptance and stays local unless
-publication is separately authorized. Completed plans/history remain unchanged.
-The new guard holds the original domain lock; the original configuration,
-candidate, backup and root configuration lock remain preserved. A reviewed
-zero-executor user-manager restoration retained the service manager's PID and
-invocation; the unrelated stale login-user manager was left unchanged. This does
-not prove the original production PAM/browser symptom fixed or permit NAS jobs.
+Never run `systemd-analyze --user verify` with a live `XDG_RUNTIME_DIR`.
+Use owned isolated runtime, bus and unit/generator paths as described in
+[static verification](../containers.md#static-user-unit-verification).
+Preserve a stale endpoint for review rather than unlinking it or restarting
+its manager blindly. Persistent labels alone do not establish startup ordering
+or unattended boot support. Provision runtime parents and establish helper READY
+before bridge/API startup according to the selected deployment procedure.

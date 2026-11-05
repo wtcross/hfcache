@@ -131,12 +131,11 @@ readable-group membership check. It preserves explicit sources and every
 other credential/identity/lifetime rule, with descriptor ACL and metadata
 rechecks. This policy is implemented with the scoped owned native/rootless
 application acceptance recorded under [decision152](decision-152.md) and in
-[human acceptance](../web-ui/test-release-acceptance.md), as of 2026-11-01.
+[deployment validation](../web-ui/deployment.md), as of 2026-11-01.
 Production rollout remains separate.
 
 ## Original-intent and writer amendment (2026-11-03)
 
-Accepted design in [decision 164](decision-164.md); implementation and installed conformance remain
-pending. Own-intent recovery uses the unchanged Basic stable-subject key namespace, requires the configured administrator and independent review proof, and grants no archive/control/schedule/observer authority. Existing bearer digests, Basic provider limits and public receipt schemas remain unchanged.
+Amended by [decision 164](decision-164.md); Own-intent recovery uses the unchanged Basic stable-subject key namespace, requires the configured administrator and independent review proof, and grants no archive/control/schedule/observer authority. Existing bearer digests, Basic provider limits and public receipt schemas remain unchanged.
 See the [executable recovery contract](../job-recovery.md). Original rationale
 and unrelated requirements above remain in force.

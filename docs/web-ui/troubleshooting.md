@@ -1,27 +1,13 @@
 # Troubleshoot browser access and web reads
 
-During isolated functional acceptance, a Playwright `Network.getResponseBody`
-error can describe lost test-tool response bytes after navigation. It does not
-establish an API outage or permission denial. Preserve the failed invocation,
-original process handles, CIDs and sanitized diagnostic. A tooling correction
-needs a fresh source gate and a new disposable fixture; do not replay the failed
-invocation, weaken TLS, rotate live credentials or restart production services
-because of this diagnostic. The host test reads its explicit status reply inside
-the browser page after navigation and still checks the real interface state.
-
-An untrusted-TLS test that reports WebKit navigation cancellation has not proved
-certificate refusal. Preserve that failed run. The test settles its initial blank
-page, then makes one HTTPS navigation and records the matching failed transport
-request. Acceptance requires a specific certificate error and no HTTP response;
-generic cancellation, timeout or connection failure remains a failure. A changed
-test tool needs a fresh gate and disposable fixture, without replaying the old run.
+Start with the symptom below. Preserve safe error codes and original operation
+handles; an unavailable page or timed-out observer does not prove a job stopped.
+For provisioning, use the [deployment guide](deployment.md).
 
 ## Administrator login
 
-The optional administrator provider and authenticated asset routes are implemented
-in unreleased source; installed systems retain their recorded release. See
-[protected provisioning](deployment.md) and [interface availability](README.md)
-first. `/ui/` requires explicit enablement with matching immutable assets.
+The administrator provider and authenticated asset routes require
+[protected provisioning](deployment.md). `/ui/` requires explicit enablement with matching immutable assets.
 
 | Problem | Meaning and safe next step |
 | --- | --- |
@@ -217,10 +203,9 @@ Use the authorized [upgrade and drain procedure](../deployment-centos-stream-10.
 
 Check [interface availability](README.md) before using this guide. The shared
 query, Library, repository details and original-operation observation state are
-available in unreleased source, including bounded README rendering and
-[supported jobs/history](operations.md). Installed production
-services retain their recorded releases. A read result describes observed information, never
-permission to modify an archive or proof that an accepted job has finished.
+available with matching enabled backend/assets, including bounded README rendering
+and [supported jobs/history](operations.md). A read result describes observed
+information, never permission to modify an archive or proof that an accepted job has finished.
 
 | Message | Meaning | Safe next step |
 | --- | --- | --- |

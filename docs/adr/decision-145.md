@@ -1,12 +1,11 @@
 # Derive precise browser contracts and preserve numeric source before decoding
 
 - Decision identity: 145.
-- Status: Amended; source implementation is present. Executable acceptance is
-  recorded in the introducing task and commit.
+- Status: Accepted; amended as described below.
 - Date: 2026-10-20.
 - Fresh-byte parsing amendment: [decision157](decision-157.md).
 - Compatible facet reuse: [2026-11-02 clarification](#compatible-library-facet-reuse-clarification-2026-11-02).
-- Introducing evidence: this commit; source acceptance is recorded separately.
+- Record introduced: `2050d59cdd204cdecdcd438275cbb44b92e67314`.
 
 ## Context and decision
 
@@ -121,7 +120,7 @@ uses the original authenticated key or ID. Restored metadata requires fresh
 observation; ID import proves no creator/key association. Reconnect refreshes
 current authenticated read context while retaining original admitted authority.
 Local auth-generation invalidation applies even when server scope values match.
-The [session contract](../schemas.md#186-browser-recovery-metadata-schema-1) and
+The [session contract](../schemas.md#187-browser-recovery-metadata-schema-1) and
 [user guide](../web-ui/operations.md) refine the recovery design of
 [decision134](decision-134.md) and query semantics of [decision137](decision-137.md).
 No server DTO, receipt format, REST/MCP permission or execution authority changes.
@@ -196,8 +195,8 @@ existing pagination virtualization. The server still sends one complete bounded
 manifest; an oversized/unsafe artifact remains an explicit refusal. No arbitrary
 file route, download, source-digest invention or publication fallback is added.
 Existing finite pagination remains appropriate for other bounded detail/report
-collections. Actual keyboard, zoom, reader, DOM/retention and real-Caddy evidence
-belongs to task020, not this decision text.
+collections. Keyboard, zoom, screen-reader, DOM/retention and real-Caddy checks must
+exercise the selected artifact.
 
 ### Repository text contrast refinement (2026-10-27)
 
@@ -216,7 +215,7 @@ no new invariant, public wire shape, dependency or architectural authority.
 
 Primary repository actions retain white text on a dark accent background when
 hovered. Their hover rule must take precedence over the generic pale repository
-button hover background. The source8 installed cancellation/fresh-return case
+button hover background. An installed cancellation/fresh-return case
 exposes the former cascade conflict as a serious contrast violation on **Select
 current publication**. This correction fulfills the existing text-contrast
 requirement; matching built-browser checks remain required for the new source.
@@ -250,8 +249,7 @@ Observe for the preserved original. An admission acknowledgement crossing a hide
 transition still saves its original key/ID, but cannot automatically begin reads
 after return. This makes the existing `hidden` pause reason effective at the
 mount-owned document boundary and avoids hidden polling without adding a retry
-loop, credential store, API, dependency or authority. Actual lifecycle and
-installed-browser evidence belong to task020; this amendment alone claims none.
+loop, credential store, API, dependency or authority. Lifecycle and installed-browser checks must exercise the selected artifact.
 
 ### Document navigation refinement (2026-10-29)
 
@@ -449,7 +447,6 @@ draft safeguard. See [configuration guidance](../web-ui/configuration-and-tags.m
 
 ## Original-intent and writer amendment (2026-11-03)
 
-Accepted design in [decision 164](decision-164.md); implementation and installed conformance remain
-pending. Visible authenticated restored/reconnected records may reconcile automatically through bounded GETs, narrowly superseding deliberate-only return observation. Hidden pages still abort/fence reads; late acknowledgements save handles only. Versioned atomic schema-1-to-2 migration preserves original evidence; no POST replay or generic protected-outcome clearance follows.
+Amended by [decision 164](decision-164.md). Visible authenticated restored/reconnected records may reconcile automatically through bounded GETs, narrowly superseding deliberate-only return observation. Hidden pages still abort/fence reads; late acknowledgements save handles only. Versioned atomic schema-1-to-2 migration preserves original evidence; no POST replay or generic protected-outcome clearance follows.
 See the [executable recovery contract](../job-recovery.md). Original rationale
 and unrelated requirements above remain in force.

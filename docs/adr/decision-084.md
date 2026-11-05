@@ -54,4 +54,4 @@ Implementation or shipped-artifact evidence:
 [README.md](../../README.md).
 
 Verification or recorded operational evidence:
-[recorded deployment scope](../deployment-status.md).
+[deployment prerequisites](../deployment-centos-stream-10.md).

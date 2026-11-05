@@ -87,4 +87,4 @@ Implementation or shipped-artifact evidence:
 [packaging/systemd/hfcache-failure@.service.example](../../packaging/systemd/hfcache-failure@.service.example).
 
 Verification or recorded operational evidence:
-[recorded deployment scope](../deployment-status.md).
+[deployment prerequisites](../deployment-centos-stream-10.md).

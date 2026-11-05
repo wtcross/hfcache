@@ -58,8 +58,6 @@ unbounded reconstruction. Raw host filenames and arbitrary journal messages are
 unnecessary browser authority. Complete inventory accumulation and automatic
 cursor restart are rejected; stale/refused reads stay visible.
 
-## Consequences and relationships
-
 ## Application Operations/report composition (2026-10-26)
 
 The application-owned browser reuses existing typed operation/run reads and exact

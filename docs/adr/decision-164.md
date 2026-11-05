@@ -1,7 +1,7 @@
 # Close original intent without inventing historical execution
 
 - Decision identity: 164.
-- Status: Server and browser source implementation; installed conformance pending.
+- Status: Accepted; refined as described below.
 - Date: 2026-11-03.
 - Introducing change: accepted design at `60d086931dc03d8582751c6a3c9b17eeb6f93715`; server implementation amendment below.
 
@@ -56,8 +56,8 @@ Amends [114](decision-114.md), [115](decision-115.md), [118](decision-118.md),
 See [schemas](../schemas.md#133-original-intent-dispositions-schema-1),
 [API](../api.md#original-intent-dispositions-and-readiness),
 [invariants](../invariants.md#original-intent-closure).
-Design and predecessor source inspection are evidence of the chosen protocol;
-they are not executable race/crash or installed acceptance.
+Race/crash and installed-confinement checks remain independent of design and
+predecessor source inspection.
 
 ## Historical refusal qualification (2026-11-03)
 
@@ -89,12 +89,9 @@ renderer/installer must supply the fixed invocation/mounts/label after actual
 previous-executor drain. Owned tests are neither installed helper confinement nor
 browser/deployed retirement proof.
 
-The server source gate25 passes9644 backend tests, three locked wheel profiles and
-all required strict web/source-browser/real-API read checks with1276 source files
-frozen unchanged. The executable exact0.3.1 c23abba reader drill refuses new-state
-scans/admission while retaining compatible exact-ID reads. These source proofs
-leave browser recovery, protected installer wiring/drain and installed workflow
-conformance with their selected later packages.
+The exact 0.3.1 reader at `c23abba` refuses new-state scans/admission while
+retaining compatible exact-ID reads. The compatibility drill must preserve that
+distinction; source validation cannot establish installed helper confinement.
 
 ## Browser implementation refinement (2026-11-03)
 
@@ -152,8 +149,7 @@ inside the daemon, weakening labels or pretending the guard is held were
 rejected. This is a conformance repair within the accepted helper boundary,
 with no dependency, public operation, grant or architectural decision added.
 Owned source tests model SELinux labels separately from their actual Linux
-USER-namespace DAC/capability proof. Matching installed Enforcing retirement and
-the new final strict source gate remain independently required.
+USER-namespace DAC/capability proof. Actual Enforcing retirement and the source gate require independent validation.
 
 ## Whole-host UID review refinement (2026-11-04)
 
@@ -199,9 +195,8 @@ unchanged. This is source conformance; fresh installed review remains required.
 
 ## Inert executable metadata refinement (2026-11-04)
 
-Installed source7 retirement passes the notify-worker join, then refuses an
-unused body read of an inert manager/broker executable. Those bytes never enter
-classification. Replace only this body read with fixed-path protected metadata:
+An inert manager/broker executable body read is unnecessary: its bytes never
+enter classification and may be denied by the sandbox. Replace only this body read with fixed-path protected metadata:
 no-follow O_PATH ancestors and executable leaf, full inode identity/rejoin and
 unchanged exact process/argv/label/parent/cgroup/credential/birth checks. Bracket
 classification with executable-link, metadata and process revalidation, joining
@@ -219,8 +214,8 @@ installed retirement qualification.
 
 ## Non-dumpable PAM lineage refinement (2026-11-04)
 
-Installed source8 review authenticates the other inert executables, but the
-stock non-dumpable PAM child denies the ordinary UID observer's kernel exe link.
+The stock non-dumpable PAM child denies the ordinary UID observer's kernel
+executable link even when other inert executable identities are readable.
 Kernel ptrace read gates remain independent of SELinux file-getattr rights.
 Recognize only the exact `(sd-pam)` candidate through a separate protected stock
 user-manager/PAM lineage proof, before any link read. Bind the loaded vendor
@@ -239,9 +234,8 @@ retirement qualification remain independent of modeled source regressions.
 
 ## Detached authenticated keeper refinement (2026-11-04)
 
-Installed source9 review passes the closed PAM proof, then refuses the exact
-already engine-authenticated catatonit pause keeper solely because it is adopted
-by PID1 instead of parented by the active user manager. Cgroup placement does
+The already engine-authenticated catatonit pause keeper can be adopted by PID1
+instead of remaining parented by the active user manager. Cgroup placement does
 not establish parentage. Accept only those two specific parent identities, while
 joining captured process UID/GID arrays and maps to the existing prepared
 keeper. Preserve the fixed protected record, PID/birth, namespace owner/maps,
@@ -270,15 +264,13 @@ success, copied policy compatibility and full installed retirement are distinct.
 
 ## Archive journal accounting conformance (2026-11-05)
 
-Actual guarded production review reaches621 resolved transaction journals but
-its1024 shared MetadataReader operations cover both enumeration and reading,
-so it refuses despite only2.9MB of metadata. State the intended logical bound
-explicitly: at most1024 fully validated journals and one sentinel, charged as
+Charging enumeration and reading against one 1024-operation counter would
+refuse valid histories before the intended journal limit. Keep the logical
+bound explicit: at most1024 fully validated journals and one sentinel, charged as
 2049 work operations with unchanged1MiB artifact/8MiB total ceilings. Check the
 journal count before journal reads. Unknown, corrupt, unfinished and over-budget
 histories remain blocking; no checkpoint subset, journal cleanup, unbounded scan
 or manual fence is accepted. This preserves INV023 and existing architectural
-choice, introduces no format/dependency/grant, and requires fresh gated matching
-release and actual retirement acceptance. Independently provisioned root history
+choice, introduces no format/dependency/grant, with source and actual retirement validation required for the matching release. Independently provisioned root history
 coordination and all packaged history roots are a separate host prerequisite;
 read-only review cannot initialize missing objects or enable native effects.

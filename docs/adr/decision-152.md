@@ -1,19 +1,19 @@
 # Validate the exact read-only service ACL on a protected credential
 
 - Decision identity: 152.
-- Status: Accepted; implemented and proved in owned native/rootless fixtures.
+- Status: Accepted.
 - Date: 2026-10-22.
-- Introducing change: this commit.
+- Record introduced: `9af58cb23776302793271f86e01007f676c92a8e`.
 - Amends credential-source validation only in [decision112](decision-112.md)
   and [decision146](decision-146.md).
 
 ## Context and decision
 
 Systemd can retain root ownership and grant a service UID read access through
-a POSIX ACL. Stat group bits then represent the ACL mask. An isolated native
-comparison opened a root:root `0440` synthetic credential as the service UID,
-but both readers rejected its readable-group membership. Actual ACL capture
-remains required; this result proves no original application startup cause.
+a POSIX ACL. Stat group bits then represent the ACL mask. A reader that requires
+owning-group membership therefore rejects a legitimate named-user credential
+even when the service can open it. The exception must prove the exact ACL rather
+than infer access from readable group bits.
 
 Preserve explicit sources, no-follow descriptor traversal, regular/trusted
 inode, mode, single-link, size, bounded reads and stable metadata. Ordinary
@@ -60,19 +60,18 @@ of already admitted ordinary group-authorized files is separate scope.
 
 ### Directory traversal refinement (2026-10-24)
 
-An owned installed rootless comparison verifies a service-owned `0400` Basic
-record can be opened for reading, while its protected parent directory refuses
-an `O_RDONLY` directory open. The original reader returns `HFAPI003` before any
-payload read. Directory data and listings are unnecessary for descriptor-relative
+An `O_RDONLY` directory open can be denied even when the service can traverse
+the protected parent and open its `0400` Basic record for reading. Directory
+data and listings are unnecessary for descriptor-relative
 no-follow traversal. Open only directory components with Linux `O_PATH`, retaining
 `O_DIRECTORY`, `O_NOFOLLOW` and `O_CLOEXEC`; open the credential leaf with its
 existing readable flags. Preserve every leaf, ACL, bound and metadata check.
 This is an implementation refinement of the existing protected-source contract,
 not a new source or authentication authority. It needs no directory-read MAC/DAC
 grant, permission change, credential copy or runtime dependency. Retain the
-original comparison and require fresh unit and installed application proof.
-The refinement and owned native/rootless application acceptance are included
-in this commit. Production rollout remains separate.
+search-only and readable-leaf regression coverage. Independently provision
+parent search, leaf read and selected-role SELinux access; the reader grants
+none of these permissions.
 
 REST writer/reader, MCP reader and Basic share this protected reader. Source
 grammar, classes, stable subject, authentication, CSRF, redaction and restart
@@ -80,10 +79,9 @@ lifetime remain. Hub/archive authority, operation identity and recovery remain.
 No root API, capability, SELinux, systemd or filesystem permission grant follows.
 
 Require shape/refusal, real owned ACL, descriptor/path replacement, ACL/metadata
-race and existing bearer/Basic tests. A fresh native measurement must capture
-the synthetic ACL and show original refusal and proposed success under retained
-hardening, followed by normal executor closure. Installed native/rootless UI
-acceptance remains separate.
+race and existing bearer/Basic tests. Native and rootless credential delivery
+must be verified under their actual hardening, followed by normal executor
+closure; a synthetic ACL test alone cannot establish complete UI authentication.
 
 This decision preserves INV-002/003 and FW-03/04. See the
 [credential contract](../server.md#credentials-and-capabilities),

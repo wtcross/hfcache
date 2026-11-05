@@ -1,13 +1,12 @@
 # Rootless container runtime
 
-The selected local profile uses rootless Caddy, an API server and a separately
+The rootless profile uses Caddy, an API server and a separately
 confined private verifier. The default `guarded-readonly` profile and installation
 windows keep the archive read-only. The separately protected `manual-writer`
 profile permits fixed application-role archive writes after the reviewed
-transition and per-job authorization. See the dated
-[deployment status](deployment-status.md) for actual selected source, mode,
-confinement and production acceptance; fixture checks alone do not authorize
-NAS workloads. [Runtime rationale](adr/decision-127.md) explains the isolation
+transition and per-job authorization. Provision and validate the intended mode
+using the [deployment procedure](deployment-centos-stream-10.md); fixture checks
+alone do not authorize NAS workloads. [Runtime rationale](adr/decision-127.md) explains the isolation
 and lifecycle choices.
 
 ## Roles and lifecycle
@@ -24,8 +23,8 @@ and lifecycle choices.
 Host service UID/GID come from protected runtime metadata and the helper caller.
 `keep-id` maps them to container `981:981`; 981 is not a universal host UID.
 Persistent roles run under the service account's user manager. The protected
-system bridge is one startup path; the qualified current-boot manual writer
-procedure keeps bridge/targets inactive and starts fixed roles individually. The finite client is launched by the fixed host
+system bridge is one startup path; the current-boot manual writer
+procedure can keep bridge/targets inactive and start fixed roles individually. The finite client is launched by the fixed host
 wrapper running under the selected service identity.
 
 The following matrix describes the default guarded profile; the writer section
@@ -139,9 +138,8 @@ recorded separately from that companion.
 ### Protected manual writer profile
 
 [Decision 165](adr/decision-165.md) accepts a closed `manual-writer` mode beside
-the default `guarded-readonly`. The source implements profile selection;
-installed and actual NFS qualification remain separate and are recorded in
-[deployment status](deployment-status.md). Existing
+the default `guarded-readonly`. Profile selection requires
+separate installed and actual NFS qualification. Existing
 runtime schema 1 means guarded-readonly. Writer runtime schema 2 requires
 `archive_mode:"manual-writer"`, with the same fixed image/UID/GID fields and
 no generic paths/options. The immutable release/index/rendered profile and
@@ -175,8 +173,8 @@ instead of changing confinement or remounting inside a container. Preserve the
 failed process/container evidence; a successful NotifyREADY is insufficient.
 
 Manifest schema 2 also requires `release_id` exactly `<version>-<archive_mode>`.
-Stage immutable sibling directories `releases/0.3.2-guarded-readonly` and
-`releases/0.3.2-manual-writer` with the same source/app-image/UI bytes and distinct
+Stage immutable sibling directories `releases/<version>-guarded-readonly` and
+`releases/<version>-manual-writer` with the same source/app-image/UI bytes and distinct
 rendered runtime/index hashes. `current`, helper `selector_target`, physical
 root and index joins use release_id; package/UI version stays semver. Schema-1
 version-only paths remain readable. Run initial read-only acceptance in the
@@ -332,18 +330,16 @@ syntax verification does not prove that the running manager remains reachable.
 If a private endpoint becomes stale, preserve the endpoint and actual manager
 PID/starttime/invocation evidence; do not blindly unlink the socket or restart
 the manager. Restoration requires reviewed actual executor quiescence and
-authenticated observation through the existing user bus. The scoped 0.2.2
-restoration used an explicit no-reply `Reexecute` only after zero-executor proof,
-retaining the service manager's PID and invocation. It is not an automatic retry
-procedure; an unrelated stale login-user manager was left unchanged.
+authenticated observation through the existing user bus. Restoration is a separate operator procedure; never use a manager restart or
+socket deletion to discover whether accepted work is still running.
 
 ## Protected host boot guard
 
 The selected data-preserving deployment also needs the fixed root-owned
 /usr/local/libexec/hfcache-readonly-guard and system
 hfcache-readonly-guard.service, independent of current. They are host control
-policy, not application code in the image. The recorded host guard uses UID/GID 981; this host-specific identity must
-match the protected service identity. Type=notify
+policy, not application code in the image. The guard's configured UID/GID must
+match the protected service identity; measure them for this host. Type=notify
 READY follows strict original-lock ownership/inode checks and a host NFS-ro
 observation from /proc/1/mountinfo. The guard retains its noncreating flock until
 reviewed stop; it does not continuously monitor mount/inode changes. Keep strict
@@ -398,8 +394,9 @@ artifact/binding dormant RefuseManualStart=yes, preserving nine bindings; native
 socket activation stays unchanged. Infinite non-killing drain and stop ordering
 remain. Actual container-proxied notification and separate API-container PROBE
 under Enforcing SELinux are proof obligations, not supplied by host probes or
-podman exec isolation alone. See the recorded deployment scope below. No NAS job is authorized; rollback
-to 0.2.0 retains its connection limitation.
+podman exec isolation alone. Qualify the actual API-to-worker connection before admitting verification jobs.
+Older targets may retain a connection limitation; test the intended target
+without weakening SELinux.
 
 
 ## Filesystem, secrets and resource limits
@@ -415,7 +412,7 @@ values. API alone receives Hub plus distinct REST/optional MCP authority, Caddy 
 only, client API only. Worker/client additionally mask /run/credentials,
 /etc/credstore, /etc/credstore.encrypted and /etc/hfcache/credentials with empty
 inaccessible read-only mounts; custom sources need explicit review/masking.
-The optional Basic provider in 0.3.0 can read its protected hash
+The optional Basic provider can read its protected hash
 record at `/etc/hfcache/credentials/ui-administrator.json` through the API's
 existing policy-directory bind. Provision its actual mapped service owner and
 mode0400/0600; it is not a plaintext password or bearer. Worker/client masks hide
@@ -446,8 +443,8 @@ copyup or attempted write-denial probe is allowed.
 Rootless/UID/peer/listener/TLS/secret/seccomp/SELinux/drain acceptance requires
 owned local fixtures without a NAS bind and checks of actual installed executors.
 Bare-host success and configuration alone do not prove containers. Live NAS
-publication/report/catalog/hardening/full-verification workloads remain unaccepted;
-see [deployment acceptance](deployment-status.md).
+publication/report/catalog/hardening/full-verification workloads require separate
+[deployment acceptance](deployment-centos-stream-10.md#acceptance-checklist).
 
 ## Staging and selection
 
@@ -645,8 +642,10 @@ allow native socket only for AF_UNIX/domain 1, retaining all other baseline
 restrictions. Appended same-default ERRNO rules were insufficient in actual proof;
 Network=none alone also does not deny socket creation. No AF_NETLINK allow rule.
 Explicit --remote=false selects the local engine for build/probe/runtime actions.
-Before API/worker startup the runtime guard checks kernel mount metadata only and
-requires actual NFS read-only; it never opens the archive to test this boundary.
+Before API/worker startup the runtime guard checks kernel mount metadata without
+opening archive files. Guarded mode requires NFS read-only; protected manual-writer
+mode requires its indexed writable mount and deliberately inactive host guard.
+Installation and selection still require the NFS-read-only window.
 
 
 The worker's recognized architecture map is native-only, matching prior
@@ -657,11 +656,11 @@ policy enforcement; unrelated errors never constitute passing isolation.
 
 ## UBI 10 image inputs
 
-The web UI replacement retains this image boundary: built static UI assets must
+The web UI retains this image boundary: built static UI assets must
 ship inside the existing API image based on pinned UBI 10 micro, with no separate
 frontend image or runtime Node/package manager. Optional source serving now
-requires an explicit matching artifact directory and pinned manifest hash; it
-does not add an asset COPY step to the current release builder. Release packaging
+requires an explicit matching artifact directory and pinned manifest hash; the
+[builder](../scripts/build-container.py) captures the verified assets in the image. Release packaging
 must still bind a clean source build to the independently verified backend wheel
 and prove ancestry, installed asset identity and runtime contents before claiming
 release acceptance. Dirty owned fixtures remain labeled as such. Browser test
@@ -755,26 +754,6 @@ UBI build layer before final COPY. Keep original verified archive/context bytes.
 No wildcard/system cleanup or domain-required library/app change. Foundation
 must prove PATH and module absence of pip/ensurepip/uv; failed previews stay
 preserved and new contexts/images are built, never relabelled as passing.
-
-### Recorded installed scope
-
-Current 0.2.2 host acceptance includes verified TLS, thirteen authentication/class
-checks, the exact fourteen read-only MCP tools, an API-container-origin private
-PROBE and actual worker PID1 offline/mask/capability/read-only-root observations
-under Enforcing SELinux. The new notify guard holds the original domain inode;
-NAS read-only, writer masks, disabled calendars and original configuration,
-candidate, backup, locks and durable stores remain. Historical protected policy
-grants remain unchanged. This does not prove an original production browser
-candidate flow or permit a NAS workload. The [deployment status](deployment-status.md) records
-the installed identities, local tag and remaining holds.
-
-Historical 0.2.1 checks include the installed API-container private PROBE under
-Enforcing SELinux before and after drain/restart, verified TLS/authentication,
-MCP/client connectivity, worker readiness and confinement observations. This
-closes the listener connection limitation for 0.2.1; rollback to 0.2.0 retains it.
-The independent guard, NAS read-only mount and writer masks remain. No general
-NAS workload, NFS interruption or other-host acceptance follows from these checks.
-See [deployment status](deployment-status.md) for outstanding acceptance.
 
 ### Managed configuration reads and previews
 

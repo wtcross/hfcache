@@ -62,8 +62,8 @@ outstanding NAS/domain/isolation acceptance; 0.2.0 rollback retains its limitati
 - [Decision 148](decision-148.md) separates filesystem socket ownership from the
   inherited listener's kernel peer; it preserves this execution boundary.
 
-Recorded installed scope and remaining acceptance are described in
-[deployment status](../deployment-status.md).
+Deployment prerequisites are defined in the
+[deployment guide](../deployment-centos-stream-10.md).
 
 ## Fixed host-effect amendment (2026-10-27)
 
@@ -75,7 +75,6 @@ are separately required.
 
 ## Original-intent and writer amendment (2026-11-03)
 
-Accepted design in [decision 164](decision-164.md); implementation and installed conformance remain
-pending. Independent shared companion-flock leases span durable admission, queue and actual API/private-worker execution with overlapping handoff. Exclusive reviewed retirement serializes all processes while retaining the original domain flock and exact-worker reconciliation. This is not a resumable queue.
+Amended by [decision 164](decision-164.md). Independent shared companion-flock leases span durable admission, queue and actual API/private-worker execution with overlapping handoff. Exclusive reviewed retirement serializes all processes while retaining the original domain flock and exact-worker reconciliation. This is not a resumable queue.
 See the [executable recovery contract](../job-recovery.md). Original rationale
 and unrelated requirements above remain in force.

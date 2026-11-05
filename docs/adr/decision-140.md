@@ -6,7 +6,7 @@ remain governed by their current contracts.
 
 - Decision identity: 140.
 - Asset/bootstrap refinement: [decision147](decision-147.md).
-- Status: Accepted, amended; source and scoped owned-fixture replacement acceptance recorded. Production migration remains separate.
+- Status: Accepted; amended as described below.
 - Provider refinement: [decision146](decision-146.md) fixes the optional-server
   verifier, protected record, admission and legacy key-ownership contract.
 - Date: 2026-10-20.
@@ -85,8 +85,8 @@ prefix/deep-link, route isolation, CSRF, challenge and release-switch cases.
 
 ## Evidence and relationships
 
-Baseline source is `6b8fae2e0997403ae5c716a2e92148af0a972af9`.
-Introducing design is this commit; executable conformance evidence remains pending.
+Design baseline: `6b8fae2e0997403ae5c716a2e92148af0a972af9`; introduced in
+`c4dd806`.
 Amends [112](decision-112.md), [113](decision-113.md),
 [123](decision-123.md) and the browser transport in [122](decision-122.md),
 while retaining their existing implementation requirements until replacement.
@@ -102,12 +102,7 @@ See [server](../server.md#web-ui-design-and-current-availability),
 
 ## Recorded replacement acceptance (2026-11-01)
 
-[Human acceptance](../web-ui/test-release-acceptance.md) records the completed
-source checks and scoped native/rootless product evidence under the adopted
-acceptance method. Final read-only Chromium/root observations verify the
-retained coherent test candidate in both profiles; unchanged deeper browser and
-prefix evidence retains its original scope. Earlier pending text describes the
-introducing design. Original failures, uncertainty and browser qualifications
-remain. The [migration guide](../web-ui/migration-and-rollback.md) records actual
-old-client/format/rollback limits. This is unreleased source and disposable
-acceptance, not a newly installed production release or a global platform claim.
+Deployment requires independently protected profile bindings and validation.
+The [migration guide](../web-ui/migration-and-rollback.md#compatibility-and-backups)
+defines old-client/format refusals and compatible rollback. Preserve original
+failed or unknown outcomes; rollback cannot erase uncertainty.

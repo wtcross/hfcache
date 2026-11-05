@@ -34,8 +34,8 @@ names a path under `runs/` that a consumer deliberately cannot follow.
 
 ## Later history and current interpretation
 
-The source was extended by configuration validation to correct durable-schema examples as well as
-The original path-base rule. Both parts are preserved below.
+The later configuration-validation change corrected durable-schema examples
+under the original path-base rule. Both decisions retain their provenance below.
 
 ## Provenance and governing evidence
 

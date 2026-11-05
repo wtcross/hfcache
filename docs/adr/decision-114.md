@@ -5,13 +5,12 @@
   preserving legacy bearer digests and strict receipts without an attribution store.
 
 - Amendment: [decision 140](decision-140.md) accepts a separately domain-scoped
-  stable-subject key namespace for the future Basic provider only. Existing
+  stable-subject key namespace for the Basic provider only. Existing
   bearer class lookup/digests and strict public receipt schemas remain unchanged;
-  implementation conformance is pending. Historical receipts gain no human
+  historical receipts gain no human
   attribution from this design amendment.
 
 - Status: Amended; current scope includes the amendments referenced below.
-- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Execution/reconciliation extension: [decision 115](decision-115.md), bounded runner and private verifier.
 - Public CLI observation clarification: [decision 120](decision-120.md), CLI operation observation.
 - Date: 2026-10-17.
@@ -59,12 +58,11 @@ authority and is explicitly excluded.
 - [durable golden model fixtures](../../tests/unit/test_models.py)
 - [Decision 118](decision-118.md)
 
-Recorded installed scope and remaining acceptance are described in
-[deployment status](../deployment-status.md).
+Deployment prerequisites are defined in the
+[deployment guide](../deployment-centos-stream-10.md).
 
 ## Original-intent and writer amendment (2026-11-03)
 
-Accepted design in [decision 164](decision-164.md); implementation and installed conformance remain
-pending. Permanent separately versioned original-intent fences use the existing store flock without changing strict receipts. Existing admissions precede fresh refusal; missing history remains unknown. Retention cannot revive closed keys; the exact predecessor refuses admission on the retained new filename.
+Amended by [decision 164](decision-164.md). Permanent separately versioned original-intent fences use the existing store flock without changing strict receipts. Existing admissions precede fresh refusal; missing history remains unknown. Retention cannot revive closed keys; the exact predecessor refuses admission on the retained new filename.
 See the [executable recovery contract](../job-recovery.md). Original rationale
 and unrelated requirements above remain in force.

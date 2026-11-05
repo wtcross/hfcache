@@ -34,7 +34,7 @@ provide technical evidence, not a claim of installed-host acceptance.
 | Consumers and serving | [AD-10 — Publish immutable ordinary-file trees for consumers](ad-10.md) | [Keep consumer verification independent of the writer runtime](decision-067.md), [Consumer revision creation and serving promotion have separate ownership boundaries](decision-099.md), [Serving consumes the verified ordinary-file tree through read-only container mounts](decision-100.md), [Keep public prefixes separate from native Unix REST paths](decision-123.md), [Add an optional authenticated MCP transport after REST acceptance](decision-124.md), [Expose nine typed metadata tools through a narrow read capability](decision-125.md) |
 | Framework, dependencies, and development | [FW-01 — Keep deterministic functions and a closed runtime dependency set](fw-01.md) | [Typed services and maintained transport implementations](decision-108.md), [Bounded non-resuming operation receipts](decision-109.md), [Scope execution correlation and offline process initialization](decision-111.md), [Add an optional authenticated MCP transport after REST acceptance](decision-124.md), [Separate server authority and verified bearer capabilities](decision-112.md), [Serve bounded metadata through one authenticated lifespan](decision-113.md), [Persist non-resuming admission without discarding uncertainty](decision-114.md), [Execute one bounded lane and reconcile the exact verifier](decision-115.md), [Admit typed command routes without widening server authority](decision-116.md), [Revalidate explicit maintenance authority at execution](decision-117.md), [Observe one API authority without replaying uncertain submissions](decision-118.md), [Preserve server read identity and separate candidate validity from authority](decision-119.md), [Separate command execution from resumable CLI observation](decision-120.md), [Activate one server and retain scheduled observation without replay](decision-121.md), [Python 3.14 pin confirmed; `hf-xet` is a required dependency, not an extra](decision-007.md), [Use one provider-neutral executable quality gate](decision-008.md), [Finish owned foreground socket cleanup before replaying default SIGTERM](decision-149.md) |
 | Local discovery and supplemental metadata | [Separate curation from publication authority](decision-133.md) | [AD-12](ad-12.md), [AD-14](ad-14.md), [AD-17](ad-17.md), [Candidate identity](decision-119.md), [Guarded client candidates](decision-122.md), [MCP read capability](decision-125.md), [Publication-bound README design](decision-142.md), [Fresh-byte bounded parsing reuse](decision-157.md) |
-| Replacement browser UI design | [Authenticated same-Caddy application assets](decision-140.md) | [Bounded Basic provider](decision-146.md), [Bounded capture and bootstrap](decision-147.md), [Narrow host/config helper](decision-141.md), [Inert exact-publication cards](decision-142.md), [Separate strict assets and real acceptance](decision-143.md), [Independent native runtime copies](decision-158.md), [Dedicated rootless archive-lock metadata](decision-159.md), [Precise generated browser contracts](decision-145.md); [Source removal](decision-161.md); source and installed conformance remain explicitly scoped |
+| Replacement browser UI design | [Authenticated same-Caddy application assets](decision-140.md) | [Bounded Basic provider](decision-146.md), [Bounded capture and bootstrap](decision-147.md), [Narrow host/config helper](decision-141.md), [Inert exact-publication cards](decision-142.md), [Separate strict assets and real acceptance](decision-143.md), [Independent native runtime copies](decision-158.md), [Dedicated rootless archive-lock metadata](decision-159.md), [Precise generated browser contracts](decision-145.md); [Source removal](decision-161.md); protected provisioning and profile compatibility remain prerequisites |
 | Original-intent recovery and manual writes | [Permanent key closure](decision-164.md) | [Protected rootless writer mode](decision-165.md), [recovery contract](../job-recovery.md) |
 
 ## Architecture records
@@ -66,12 +66,12 @@ provide technical evidence, not a claim of installed-host acceptance.
 | Verification policy | [Quarterly full verification reads the retained archive offline](offline-verification.md) |
 | Scheduling authority | [Keep host scheduling in systemd timers and drop-ins](systemd-scheduling.md) |
 
-## Numbered progress decisions
+## Numbered decisions
 
 These entries retain their original chronology. Read the individual record's
 status and current-contract links before applying a historical choice.
 
-| Source decision | Record |
+| Decision | Record |
 | --- | --- |
 | 1 | [Separate durable schemas from operator configuration](decision-001.md) |
 | 2 | [Keep the CLI reference separate from operational workflows](decision-002.md) |
@@ -201,28 +201,27 @@ status and current-contract links before applying a historical choice.
 | 137 | [Validate read presentation and separate deployment identities](decision-137.md) |
 | 138 | [Transport guarded configuration bytes without NUL text frames](decision-138.md) |
 | 139 | [Confirm installed configuration through a pipe and bounded local collector](decision-139.md) |
-| 140 | [Serve an authenticated SPA through the existing application and Caddy](decision-140.md) — source and scoped owned-fixture acceptance recorded; production separate |
-| 141 | [Separate privileged host administration from the unprivileged API](decision-141.md) — implemented; scoped owned native/rootless acceptance |
-| 142 | [Capture publication-bound inert README presentation records](decision-142.md) — writer capture, exact card reads and bounded rendering implemented; scoped owned-browser acceptance |
-| 143 | [Keep strict web assets separate from Python runtime and require real acceptance](decision-143.md) — strict source/build and scoped direct installed acceptance recorded |
+| 140 | [Serve an authenticated SPA through the existing application and Caddy](decision-140.md) |
+| 141 | [Separate privileged host administration from the unprivileged API](decision-141.md) |
+| 142 | [Capture publication-bound inert README presentation records](decision-142.md) |
+| 143 | [Keep strict web assets separate from Python runtime and require real acceptance](decision-143.md) |
 | 145 | [Derive precise browser contracts and preserve numeric source before decoding](decision-145.md) |
 | 146 | [Verify one protected administrator without widening legacy credential classes](decision-146.md) |
-| 147 | [Serve a bounded authenticated UI artifact with an independent bootstrap](decision-147.md) — accepted |
+| 147 | [Serve a bounded authenticated UI artifact with an independent bootstrap](decision-147.md) |
 | 148 | [Configure socket ownership separately from inherited listener credentials](decision-148.md) |
 | 149 | [Finish owned foreground socket cleanup before replaying default SIGTERM](decision-149.md) |
-| 150 | [Authenticate a fixed host reader independently of the online API](decision-150.md) — fixed protected reader; owned native/rootless conformance; amended by151 for engine capability retention,153 for managed reads and159 for archive-lock metadata |
-| 151 | [Retain mapped-inode read and search only inside the verified engine USER namespace](decision-151.md) — implemented; owned native/rootless conformance |
-| 152 | [Validate the exact read-only service ACL on a protected credential](decision-152.md) — implemented; owned native/rootless conformance |
-| 153 | [Reconstruct bounded managed configuration privately from exact installed bytes](decision-153.md) — accepted design |
-| 154 | [Install exact managed configuration once and observe durable host outcomes](decision-154.md) — implemented; scoped guarded Apply and original-outcome acceptance |
-| 155 | [Render archived Markdown through a bounded closed React pipeline](decision-155.md) — bounded renderer implemented; scoped owned-browser acceptance |
-| 156 | [Bind fixed host effects to original intent and independently observable outcomes](decision-156.md) — credential-mount teardown implemented; scoped native observer qualification and guarded-rootless denials |
-| 157 | [Reuse parsed metadata only after reading identical authoritative bytes](decision-157.md) — implemented; final matching installed performance and profile acceptance remain separate |
+| 150 | [Authenticate a fixed host reader independently of the online API](decision-150.md) |
+| 151 | [Retain mapped-inode read and search only inside the verified engine USER namespace](decision-151.md) |
+| 152 | [Validate the exact read-only service ACL on a protected credential](decision-152.md) |
+| 153 | [Reconstruct bounded managed configuration privately from exact installed bytes](decision-153.md) |
+| 154 | [Install exact managed configuration once and observe durable host outcomes](decision-154.md) |
+| 155 | [Render archived Markdown through a bounded closed React pipeline](decision-155.md) |
+| 156 | [Bind fixed host effects to original intent and independently observable outcomes](decision-156.md) |
+| 157 | [Reuse parsed metadata only after reading identical authoritative bytes](decision-157.md) |
 | 158 | [Copy a separate native interpreter for each immutable web release](decision-158.md) |
 | 159 | [Preserve a dedicated rootless archive-lock label for metadata-only guard proof](decision-159.md) |
 | 161 | [Remove the superseded interface and its documentation](decision-161.md) |
 | 162 | [Bind a preserved rootless service-account home to the protected index](decision-162.md) |
 | 164 | [Close original intent without inventing historical execution](decision-164.md) |
 | 165 | [Select rootless archive writes through independent protected authority](decision-165.md) |
-
 | 166 | [Preserve the exact successful committed prune sequence predating container cleanup](decision-166.md) |

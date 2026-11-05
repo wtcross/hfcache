@@ -1,8 +1,7 @@
 # Review and apply archive maintenance
 
 Open **Maintenance** on the existing authenticated HTTPS interface. These controls
-are available in unreleased source; an installed system needs a matching reviewed
-release. See [interface availability](README.md) and
+require an enabled interface with matching backend/assets. See [interface availability](README.md) and
 [deployment](deployment.md). Opening the workspace starts no maintenance job.
 
 Maintenance can remove archive content, resolve transactions or replace a damaged

@@ -160,8 +160,8 @@ wire versions/identity under finite per-response/page/read-retry/poll budgets.
 Old operation observations retain admitted UUID/fingerprint and exact domain
 Envelope/run identity. Keys exist before POST; uncertainty preserves the original
 key/route without automatic replay or cancellation of accepted work. No local
-archive fallback or automatic daemon startup exists. API-backed reader CLI uses the global CLI
-choices for reader/candidate modes and CLI operation observation completes operational CLI/observation.
+archive fallback or automatic daemon startup exists. The API-backed CLI uses
+global reader/candidate mode options and independent operation-observation commands.
 This client changes no FS/TX,
 durable shape, dependency, publication copy rule or writer authority.
 
@@ -204,8 +204,8 @@ reads and retries. Timeout/Ctrl-C/connection loss retain handles and uncertainty
 client departure never cancels or replays accepted work. The optional legacy init
 UUID comes only from authenticated inspection while root/confirmation remain
 explicit; no-confirm refusal submits nothing. Native activated services and selected rootless worker-created listeners are
-separate profiles. See [deployment status](deployment-status.md) for recorded
-installed scope and outstanding isolation/NAS/workload acceptance.
+separate profiles. Follow the [deployment guide](deployment-centos-stream-10.md)
+for profile-specific isolation, NAS and workload validation before use.
 
 ## 3. Architecture decisions
 
@@ -254,7 +254,7 @@ history depth, not every commit. Catching every commit would require either
 polling far more aggressively or reading Git history.
 
 **Consequences.** Retention depth is measured in observations, not commits.
-Operators tune depth by tuning the timer, and the plan documents this explicitly.
+Operators tune observation frequency through the sync timer.
 
 ### AD-04 — Retention defaults to three unique published revisions per repository
 
@@ -1413,7 +1413,9 @@ home-grown engine accreted inside `hfcache`. Reaching for a general abstraction
 before one of those three conditions holds is the failure mode this boundary
 exists to prevent.
 
-### 2026-10-17 REST service boundary amendment
+<a id="2026-10-17-rest-service-boundary-amendment"></a>
+
+### REST service and execution boundary
 
 Decisions [108](adr/decision-108.md) and [109](adr/decision-109.md) narrowly
 qualify FW-01/FW-03. Typed services retain ordinary domain functions and archive
@@ -1436,7 +1438,9 @@ replay, checkpoint orchestration, or in-app scheduler is permitted. A receipt
 never supersedes archive evidence. [API](api.md) and [server](server.md) state
 current contracts and capabilities.
 
-### 2026-10-18 Optional MCP transport
+<a id="2026-10-18-optional-mcp-transport"></a>
+
+### Optional MCP transport
 
 [Decision 124](adr/decision-124.md) implements decision 108's standalone FastMCP
 exception for the optional metadata protocol. The optional `mcp` extra
@@ -1448,7 +1452,9 @@ conversion, command/job path, workflow framework or durable authority is added;
 exactly fourteen curated read-only tools have no execution authority. Existing
 FS/TX and whole-archive rules stand.
 
-### 2026-10-18 Curated MCP metadata capability
+<a id="2026-10-18-curated-mcp-metadata-capability"></a>
+
+### Curated MCP metadata capability
 
 [Decision 125](adr/decision-125.md) and its discovery amendment expose fourteen explicit typed metadata
 tools through a narrow read protocol and app-owned bounded metadata offload.
@@ -1461,7 +1467,9 @@ never become newer current content. Existing FS-08–12/16, unknown confidence,
 whole-archive authorization and consumer verification remain; no domain algorithm,
 durable/config schema, dependency, job authority or production change is added.
 
-### Execution context and process boundaries (2026-10-17)
+<a id="execution-context-and-process-boundaries-2026-10-17"></a>
+
+### Execution context and process boundaries
 
 [Decision 111](adr/decision-111.md) amends the process-per-CLI assumption in
 logging decision 64. The module-level event vocabulary remains closed, but its
@@ -1489,7 +1497,9 @@ is no network-enabled ASGI fallback. Durable `invocation_mode` remains
 `systemd`/`interactive` and describes the executing host process, not submitter
 or timer provenance. Separate API receipts carry credential-class submitter metadata.
 
-### Server configuration and authentication primitives (2026-10-17)
+<a id="server-configuration-and-authentication-primitives-2026-10-17"></a>
+
+### Server configuration and authentication primitives
 
 [Decision 112](adr/decision-112.md) implements the scoped dependency addition:
 HTTPX is a direct base dependency; FastAPI/Uvicorn and required transitives are
@@ -1507,19 +1517,26 @@ reader/writer capability principals; required writer failure stops startup and
 an unprovisioned optional reader grants no access. Opaque values are registered
 for redaction, duplicate credentials refuse startup, and comparisons are
 constant-time. A small optional FastAPI bearer adapter reuses the verifier.
-This design adds no runtime route or listener: metadata lifecycle owns HTTP protection and
-bounded runner and private verifier owns execution. Later receipts store nonsecret principal identity, never
+The HTTP lifespan owns listener protection; the bounded runner and private
+verifier own execution. Receipts store nonsecret principal identity, never
 credential values. Whole-archive authorization, AD-21 and immutable archive
 schemas retain their existing meaning. [Server](server.md) records every key
 and the current resource and deployment boundaries.
 
-[Decision152](adr/decision-152.md) accepts a narrow root:root0440 credential
-alternative with an exact read-only effective-UID ACL and descriptor-pinned
-ACL/metadata rechecks. Unreleased source implements this policy; installed
-application acceptance remains pending;
-ordinary protected files, credential classes and host authority remain unchanged.
+[Decision 152](adr/decision-152.md) permits a root:root `0440` credential
+alternative with exactly five Linux version-2 ACL entries: owner-read,
+effective-service-UID read, owning-group none, read mask and other none.
+The protected reader checks the ACL through its pinned readable descriptor
+before and after the bounded read, then rechecks inode metadata. Parent
+traversal uses no-follow `O_PATH` handles and requires search access; the leaf
+requires actual read access and the configured sandbox's SELinux permission.
+Provision the source and its access independently: authentication changes no
+ACL, directory permission or confinement. Ordinary group-authorized sources,
+credential classes and host authority retain their existing policy.
 
-### Unix client resource ownership (2026-10-18)
+<a id="unix-client-resource-ownership-2026-10-18"></a>
+
+### Unix client resource ownership
 
 [Decision 119](adr/decision-119.md) promotes already-locked HTTPCore 1.0.9 to a
 direct base dependency (`>=1.0.9,<2`). A narrow Unix-only HTTPX public transport
@@ -1530,7 +1547,9 @@ HTTPX; no IP fallback, private pool mutation, global patch or suppressed resourc
 warning is permitted. This is the scoped FW-03/FW-04 amendment; no new package,
 version, orchestration framework or durable authority is added.
 
-### Authenticated metadata transport amendment (2026-10-17)
+<a id="authenticated-metadata-transport-amendment-2026-10-17"></a>
+
+### Authenticated metadata transport
 
 [Decision 113](adr/decision-113.md) adds an injectable read application and
 explicit foreground `serve` bootstrap. One authenticated lifespan, private daemon
@@ -1545,8 +1564,9 @@ Wire pages and bounded parsed-evidence JSON streams remain separate from durable
 archive models. Cursors bind scope/policy and paged-row content; stale walks fail
 409. Exact reference locators remain published-relative and manifest tree fields
 remain archive-relative. Archive inspection is diagnostic, not sentinel proof
-for every metadata request. No bulk file server, write/job route, new dependency,
-MCP or production deployment is added. The daemon bootstrap has no success
+for every metadata request. Metadata reads have no bulk-file, job-submission or
+mutation capability; typed command routes and curated MCP have separate
+boundaries. The daemon bootstrap has no success
 stdout Envelope; its classified startup failures retain normal JSON errors.
 
 [Decision 149](adr/decision-149.md) keeps exact foreground Unix ownership through
@@ -1558,7 +1578,9 @@ custom/ignored handlers, PID1 and manager-owned activation retain their existing
 semantics. No forced-death cleanup or deletion of an unknown/replaced node is
 promised.
 
-### Authenticated web artifact amendment (2026-10-20)
+<a id="authenticated-web-artifact-amendment-2026-10-20"></a>
+
+### Authenticated web artifacts
 
 [Decision 147](adr/decision-147.md) adds an optional strict-TypeScript React SPA
 served by that same application lifespan, Unix upstream and existing Caddy TLS
@@ -1594,7 +1616,9 @@ URI-path encoder. Reject leading double-slash prefixes globally; UI-only origin
 and prefix ceilings do not narrow backend-only configurations. No archive format,
 publication identity, job authority, host permission or no-replay rule changes.
 
-### Protected host-reader amendment (2026-10-21)
+<a id="protected-host-reader-amendment-2026-10-21"></a>
+
+### Protected host reader
 
 [Decision150](adr/decision-150.md) supplies the separate fixed root reader from
 decision141. The online API remains unprivileged; only it receives the protected
@@ -1610,11 +1634,13 @@ admission and queue dispatch, outside metadata/store/domain locks. Existing
 bearer and read-only MCP semantics stand; operation observation needs no helper.
 Known pre-handoff denial fails the original receipt without executing or invoking
 worker reconciliation. Possible handoff retains original uncertainty/no-replay
-rules. Future configuration/schedule writes keep separate durable contracts and
-remain denied. [Host administration](host-administration.md) owns exact protocol,
+rules. Configuration and schedule writes require their separate durable
+effect/outcome contracts and protected grants. [Host administration](host-administration.md) owns exact protocol,
 deployment/policy/address schemas, budgets and supported-profile obligations.
 
-### Durable admission and observation amendment (2026-10-17)
+<a id="durable-admission-and-observation-amendment-2026-10-17"></a>
+
+### Durable admission and observation
 
 [Decision 114](adr/decision-114.md) implements decision 109's bounded registry
 without adding an execution engine. Independently versioned local JSON receipts
@@ -1641,7 +1667,9 @@ See [schemas §13](schemas.md#13-service-private-operation-control-state),
 [API lifecycle](api.md#admission-idempotency-and-lifecycle) and
 [uncertain-submission recovery](recovery.md#preserve-four-kinds-of-authority).
 
-### Bounded lane and private verifier amendment (2026-10-17)
+<a id="bounded-lane-and-private-verifier-amendment-2026-10-17"></a>
+
+### Bounded lane and private verifier
 
 [Decision 115](adr/decision-115.md) implements the one-lane exception without
 replacing local cross-process locking. Trusted context-scoped hooks give the
@@ -1674,7 +1702,9 @@ Startup offline initialization
 is only a library switch. See [server](server.md), [API lifecycle](api.md#admission-idempotency-and-lifecycle),
 INV-014/015 and the [supervised recovery boundary](#782-explicit-cancellation-of-an-interrupted-download).
 
-### Fixed host-action lane amendment (2026-10-27)
+<a id="fixed-host-action-lane-amendment-2026-10-27"></a>
+
+### Fixed host-action lane
 
 [Decision156](adr/decision-156.md) adds one separately bounded non-archive lane
 for the two fixed schedule/observer routes, reusing the same admission store and

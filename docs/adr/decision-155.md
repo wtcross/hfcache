@@ -3,7 +3,7 @@
 - Decision identity:155.
 - Status:Accepted.
 - Date:2026-10-26.
-- Introducing change:this commit.
+- Record introduced: `1ca6287fbe0b873acf01678da6d18a2da34690a9`.
 
 ## Context and decision
 

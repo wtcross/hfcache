@@ -5,17 +5,16 @@ The superseded browser interface has been removed under
 remain governed by their current contracts.
 
 - Decision identity: 139.
-- Status: Amended; source FD/status regressions and actual enforcing disposable installation/confirmation passed; original installed symptom remains separate.
-- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
+- Status: Accepted; amended as described below.
 - Date: 2026-10-20.
 
 ## 2026-10-21 protected-reader amendment
 
-[Decision150](decision-150.md) implements only protected host/config-base reads;
-future configuration writes must retain exact guarded confirmation and durable
-uncertainty from this record. No collector, live plugin or installed confirmation
-path is removed. Original candidates, backups and operation handles remain
-evidence; helper availability never proves an uncertain apply did not occur.
+[Decision150](decision-150.md) supplies protected host/config-base reads; fixed
+configuration writes in [decision154](decision-154.md) retain exact guarded
+confirmation and durable uncertainty from this record. Original candidates,
+backups and operation handles remain evidence; helper availability never proves
+an uncertain apply did not occur.
 
 ## Context and decision
 

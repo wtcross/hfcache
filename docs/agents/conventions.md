@@ -53,18 +53,20 @@ it.
   change updates the fixture in the same change.
 - **Crash behaviour is tested by injection.**
   `tests/unit/test_crash_injection.py` interrupts transactions at named
-  checkpoints; `tests/unit/test_failure_matrix.py` maps plan §26.6's injection
+  checkpoints; `tests/unit/test_failure_matrix.py` maps the recovery contract's injection
   points to the tests covering them and asserts that every name it holds still
   resolves — extend the matrix when adding a failure mode, and let its
   assertions catch renames.
 - **Warnings are errors** (`filterwarnings = ["error"]`), markers and config
   are strict, and property-based tests (Hypothesis) cover grammar-shaped
   input spaces such as identifiers and repository paths.
-- Coverage runs with branch measurement. `verification.py` and `reporting.py`
-  stood at 100% branch coverage at 0.1.3; do not let core-module coverage
-  regress.
+- Coverage runs with branch measurement. Preserve meaningful coverage of core
+  verification and reporting behavior.
 
 ## Documentation
+
+The root router uses inert backticked paths for progressive loading;
+CLAUDE.md is a symlink to AGENTS.md so the two entrypoints cannot drift.
 
 - **`docs/` is normative.** `architecture.md`, `configuration.md`,
   `schemas.md`, `cli.md`, and `security.md` are contracts the implementation
@@ -77,25 +79,19 @@ it.
   ADRs in the same work package. Reuse existing requirement IDs; retain
   historical reasoning and link its replacement. The workflow and ADR index
   specify the record format and review obligations.
-- **Plans and tasks have one authority each.** Follow
-  `docs/agents/planning.md`: `docs/agents/plans/current.md` selects the active plan,
-  the dated plan defines scope/order, and task files own execution status and
-  acceptance evidence. Use existing work-package IDs and retain completed
-  records. `docs/agents/progress.md` holds the completed audit, Decisions, and
-  Operator handoff rather than duplicate active-task checkboxes.
+- **Preserve agent planning records.** Follow `docs/agents/planning.md`.
+  Keep short-lived coordination external and retain repository plans, selectors,
+  task records, progress logs, reviews and historical snapshots under
+  `docs/agents/`. Human documentation remains independent of those records.
 - **Two tests read the docs at run time.**
   `tests/unit/test_transactions.py` parses the §7.3–§7.5 checkpoint tables of
   `docs/architecture.md` and requires the documented sequence to be the
   implemented sequence; `tests/unit/test_verification.py` reads
   `docs/cli.md`. Editing those regions is editing test input — run the gate.
-- **Amendments, not rewrites, for historical records.** Where later reality
-  makes standing plan text wrong, add a dated, attributed amendment beside it
-  and record the decision; `docs/agents/history/plan.md` §30 and §36 carry the pattern.
-  Living runbooks are edited directly.
-  The explicit WEB-027 removal instruction is the narrow exception recorded in
-  [decision 161](../adr/decision-161.md): superseded interface records leave the
-  current tree, with original text and hashes retained in Git and sanitized
-  shared evidence labeled as a current projection.
+- **Preserve rationale and compatibility.** Keep useful design history in
+  ADRs and current requirements in human contracts. Preserve original agent
+  execution records and snapshots; extracting a requirement does not authorize
+  deleting its historical record.
 - **Voice.** Dense, declarative, reasons attached. Tables hold enumerable
   facts; prose holds reasoning. Requirements say **must** and **never** and
   carry stable IDs so code and tests can cite them.

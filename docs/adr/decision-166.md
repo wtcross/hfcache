@@ -3,7 +3,7 @@
 - Decision identity: 166.
 - Status: Accepted.
 - Original decision date: 2026-11-05.
-- Introducing change: this commit.
+- Record introduced: `7e40849dafe340312244f181f66530ad8be672e6`.
 
 ## Context and decision
 
@@ -41,5 +41,5 @@ historical amendment. Governing contracts: [architecture7.4](../architecture.md)
 Verification: [legacy journal regression](../../tests/unit/test_legacy_prune_journals.py)
 and existing [supplemental guard tests](../../tests/unit/test_catalog_storage.py).
 The actual old-journal hashes and installed failed operation remain in protected
-local evidence and task records. Source validation and prepared artifacts do not
+operator evidence outside maintained documentation. Source validation and prepared artifacts do not
 establish installed metadata-refresh/backfill acceptance.

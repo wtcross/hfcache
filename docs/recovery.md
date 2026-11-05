@@ -1,9 +1,9 @@
 # Recovering hfcache
 
-Start with execution state, then archive evidence. The selected deployment's
-[guarded/read-only restrictions](deployment-status.md) remain in force. A generic
-recovery procedure does not authorize NAS I/O, restore, writer enablement or
-changes to guards, services, mounts or credentials.
+Start with execution state, then archive evidence. Preserve original operation
+handles before changing services or storage. Recovery needs the applicable
+operator authority; it does not grant permission to change guards, mounts,
+credentials or schedules.
 
 ## Establish execution state
 
@@ -87,10 +87,11 @@ payload hashing, archive lock or receipts:
 ```
 
 Status may succeed while reporting degradation, unknown confidence, quarantined
-bytes, unfinished transactions or unexplained entries. Existing reports are read
-through authenticated `/api/v1/runs` and `/api/v1/runs/{run_id}` resources or SDK
-methods; there is no public `runs` command. Inspect the exact publication and
-original report identity, independently of the current query fingerprint.
+bytes, unfinished transactions or unexplained entries. Use `runs list` to obtain
+a domain run ID and `runs show` to read that exact report, as shown in
+[operations](operations.md#read-status-and-inventory). Operation and request IDs
+cannot substitute for domain run IDs. Inspect exact publication and original
+report identity independently of the current query fingerprint.
 
 Recovery preview is a reader-capable keyed job. It reads metadata and persists
 receipt/event/result history, although it changes no archive state:
@@ -277,7 +278,7 @@ sync can then establish writer readiness; it is not mandatory on the guarded
 installation and must never lift its restrictions. Finish separately with an
 independent consumer copy pinned to one exact publication and full local path/
 size/hash verification before serving. See [consumers](consumers.md) and the
-[deployment acceptance scope](deployment-status.md).
+[deployment acceptance checklist](deployment-centos-stream-10.md#acceptance-checklist).
 
 ## Supplemental discovery during recovery and rollback
 
@@ -295,10 +296,9 @@ any separately authorized switch; no evidence deletion or automatic replay.
 
 ## Retire historical original intent
 
-The accepted [original-intent protocol](job-recovery.md) adds a narrowly reviewed
-Basic-own-key retirement path. Its actual installed acceptance is recorded in
-[deployment status](deployment-status.md); the original historical request is
-retired with its uncertainty and handles preserved.
+The [original-intent protocol](job-recovery.md) provides a narrowly reviewed
+Basic-own-key retirement path for historical requests. It preserves uncertainty
+and original handles; retirement requires the protected profile prerequisites.
 A missing receipt still means unknown. Only fresh actual-executor, worker,
 protected-effect and original-lock proof can fence an old key; unavailable or
 ambiguous proof remains Needs review with a concrete operator next step. A

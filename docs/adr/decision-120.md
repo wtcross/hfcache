@@ -44,5 +44,5 @@ cancellation/replay on timeout, Ctrl-C or connection loss.
 - [actual CLI socket integration](../../tests/unit/test_interface_integration.py)
 - [public diagnostics fixtures](../../tests/unit/test_cli_diagnostics.py)
 
-Recorded installed scope and remaining acceptance are described in
-[deployment status](../deployment-status.md).
+Deployment prerequisites are defined in the
+[deployment guide](../deployment-centos-stream-10.md).

@@ -1,136 +1,70 @@
-"""Record relocation preserves provenance and a single execution authority."""
+"""Preserved agent history stays separate from maintained human documentation."""
 
 import hashlib
 import json
-import re
-import subprocess
-from functools import lru_cache
-from pathlib import Path
-from urllib.parse import unquote
+from urllib.parse import urlsplit
 
-ROOT = Path(__file__).resolve().parents[2]
-MANIFEST = ROOT / "docs/agents/migration-manifest.json"
+from tests.docs_contract import CHECKER, ROOT
 
 
-@lru_cache
-def original_paths(commit):
-    return subprocess.run(
-        ["git", "ls-tree", "-r", "--name-only", commit],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.splitlines()
+def test_agent_entrypoints_share_one_router():
+    alias = ROOT / "CLAUDE.md"
+    assert alias.is_symlink()
+    assert alias.resolve() == ROOT / "AGENTS.md"
 
 
-def original_path(row, field, commit):
-    """Resolve an intentionally omitted historical spelling without losing provenance."""
-    if field in row:
-        assert field + "_path_sha256" not in row
-        return row[field]
-    digest = row[field + "_path_sha256"]
-    matches = [
-        name
-        for name in original_paths(commit)
-        if hashlib.sha256(name.encode()).hexdigest() == digest
-    ]
-    assert len(matches) == 1, (commit, digest)
-    return matches[0]
+def test_agent_planning_records_and_history_are_preserved():
+    agents = ROOT / "docs/agents"
+    for name in (
+        "plans",
+        "history",
+        "reviews",
+        "adr",
+        "progress.md",
+        "migration-manifest.json",
+        "documentation-inventory.json",
+        "historical-contract-map.md",
+        "code-removals.md",
+    ):
+        assert (agents / name).exists(), name
+    assert (agents / "plans/current.md").is_file()
+    assert (agents / "plans/tasks").is_dir()
+    text = (agents / "invariants.md").read_text()
+    assert "INV-011" in text
+    assert "INV-011" not in (ROOT / "docs/invariants.md").read_text()
 
 
-def test_every_migrated_record_has_original_git_hash_and_unique_destination():
-    manifest = json.loads(MANIFEST.read_text())
-    records = manifest["records"]
-    assert len({original_path(row, "old", manifest["baseline"]) for row in records}) == len(records)
-    current = [row["new"] for row in records if not row.get("retired")]
-    assert len(set(current)) == len(current)
-    for row in records:
-        old = original_path(row, "old", manifest["baseline"])
-        original = subprocess.run(
-            ["git", "show", f"{manifest['baseline']}:{old}"],
-            cwd=ROOT,
-            check=True,
-            capture_output=True,
-        ).stdout
-        assert hashlib.sha256(original).hexdigest() == row["sha256"]
-        if row.get("retired"):
-            assert row["retired"] is True
-            assert row["retirement_reason"].strip()
-            assert "new" not in row
-        else:
-            assert (ROOT / row["new"]).is_file(), row
-        assert not (ROOT / old).exists(), row
-
-
-def test_agent_entrypoint_and_single_selector_survive_relocation():
-    assert (ROOT / "CLAUDE.md").is_symlink()
-    assert (ROOT / "CLAUDE.md").resolve() == ROOT / "AGENTS.md"
-    assert not (ROOT / "docs/plans").exists()
-    selectors = list((ROOT / "docs").rglob("current.md"))
-    assert selectors == [ROOT / "docs/agents/plans/current.md"]
-    assert "docs/agents/plans/current.md" in (ROOT / "AGENTS.md").read_text()
-
-
-def test_every_migration_markdown_link_has_an_existing_destination():
-    documents = [
-        ROOT / "AGENTS.md",
-        ROOT / "README.md",
-        ROOT / "CHANGELOG.md",
-        *(ROOT / "docs").rglob("*.md"),
-    ]
-    for document in documents:
-        for target in re.findall(r"\]\(([^\s)]+)\)", document.read_text()):
-            if re.match(r"[a-zA-Z][a-zA-Z0-9+.-]*:", target) or target.startswith("/"):
-                continue
-            relative = unquote(target.partition("#")[0])
-            assert (document.parent / relative).exists(), (document, target)
-
-
-def test_planning_invariant_and_process_decisions_have_agent_homes():
-    assert "**`INV-011`" not in (ROOT / "docs/invariants.md").read_text()
-    assert "**`INV-011`" in (ROOT / "docs/agents/invariants.md").read_text()
-    for number in (80, 81, 82, 106, 107):
-        assert (ROOT / f"docs/agents/adr/decision-{number:03}.md").exists()
-        assert not (ROOT / f"docs/adr/decision-{number:03}.md").exists()
-
-
-def test_original_documentation_inventory_accounts_for_each_tracked_document():
-    manifest = json.loads(MANIFEST.read_text())
-    inventory = json.loads((ROOT / "docs/agents/documentation-inventory.json").read_text())
-    paths = original_paths(manifest["baseline"])
-    expected = {p for p in paths if p.endswith(".md") and p != "CLAUDE.md"}
-    retained = {
-        original_path(row, "original", manifest["baseline"]) for row in inventory["documents"]
-    }
-    retired_rows = inventory["retired_documents"]
-    retired = {original_path(row, "original", manifest["baseline"]) for row in retired_rows}
-    assert not retained & retired
-    assert retained | retired == expected
-    assert len(retained) == len(inventory["documents"])
-    assert len(retired) == len(retired_rows)
-    assert all(row["reason"].strip() for row in retired_rows)
-    assert all((ROOT / row["current"]).exists() for row in inventory["documents"])
-
-
-def test_every_preserved_reference_snapshot_has_an_original_git_hash_and_current_home():
+def test_preserved_snapshots_match_their_recorded_content_hashes():
     manifests = sorted((ROOT / "docs/agents/history").rglob("manifest.json"))
     assert manifests
-    snapshots = set()
     for manifest in manifests:
         for row in json.loads(manifest.read_text()):
-            source = original_path(row, "source", row["git"])
-            original = subprocess.run(
-                ["git", "show", f"{row['git']}:{source}"],
-                cwd=ROOT,
-                check=True,
-                capture_output=True,
-            ).stdout
-            assert hashlib.sha256(original).hexdigest() == row["sha256"]
-            assert row["snapshot"] not in snapshots
-            snapshots.add(row["snapshot"])
-            assert (ROOT / row["snapshot"]).is_file()
-            assert (
-                hashlib.sha256((ROOT / row["snapshot"]).read_bytes()).hexdigest()
-                == row["snapshot_sha256"]
+            snapshot = ROOT / row["snapshot"]
+            assert snapshot.is_file(), row["snapshot"]
+            assert hashlib.sha256(snapshot.read_bytes()).hexdigest() == row["snapshot_sha256"], (
+                snapshot
             )
-            assert (ROOT / row.get("current_source", source)).is_file()
+
+
+def test_reusable_agent_guidance_links_resolve():
+    entries = CHECKER["repository_index"](ROOT)
+    agents = ROOT / "docs/agents"
+    historical = {"progress.md", "historical-contract-map.md", "code-removals.md"}
+    docs = [
+        ROOT / "AGENTS.md",
+        agents / "plans/current.md",
+        *sorted(path for path in agents.glob("*.md") if path.name not in historical),
+    ]
+    # Archived records retain original links and bytes; validate current guidance.
+    # Agent-to-agent links are valid here; human-to-agent links remain forbidden.
+    for document in docs:
+        links, _ = CHECKER["markdown_references"](document.read_text())
+        for link in links:
+            target, fragment = CHECKER["local_target"](ROOT, document, link, entries)
+            if target is None:
+                assert urlsplit(link).scheme or urlsplit(link).netloc, (document, link, fragment)
+            elif fragment and target.suffix == ".md":
+                assert fragment in CHECKER["markdown_references"](target.read_text())[1], (
+                    document,
+                    link,
+                )

@@ -1,63 +1,34 @@
 # Technical contract maintenance
 
-WEB-027 is a narrow explicit removal exception: obsolete interface-only records
-leave the current tree, while shared records are labeled sanitized projections.
-Original text, exact invocations and original hashes remain in pre-removal Git.
-See [decision 161](../adr/decision-161.md) and the
-[provenance record](history/removed-interface-records.md). This does not authorize
-history rewriting or removal of unrelated reasoning.
+For agents changing invariants, contracts and architecture decision records.
+Review affected sections of `docs/invariants.md` and relevant records in
+`docs/adr/README.md` before implementing. Update contracts, invariant register,
+ADRs and index in the same coherent change. A documentation correction that
+introduces no architectural choice needs no placeholder ADR.
 
-## Maintenance rules
+Preserve technical identifiers. Explicitly retire, amend or supersede a changed
+rule; never reuse or renumber its ID. New architectural choices get individual
+ADRs. Continue the existing `decision-NNN.md` namespace using the next unused
+number; a new `AD-nn` rule also receives its matching `ad-nn.md` record and
+architecture section. No progress log or task record establishes authority.
 
-For every change or new plan being implemented:
+An ADR identifies:
 
-1. Review the affected invariant sections and relevant ADRs before implementing.
-   Record this review in the work-package evidence. When no invariant or
-   architectural choice changes, do not create a placeholder ADR.
-2. Add every new invariant to `docs/invariants.md` in the same work package;
-   update changed constraints and detailed contracts together. Preserve IDs,
-   and explicitly record any retirement, replacement, or narrow exception.
-3. Record each new architectural choice in the numbered progress Decisions
-   log and in `decision-NNN.md`, using the same number, padded to at least
-   three digits. Add it to the human ADR index and relevant topic row, or the agent ADR
-   index for a purely process decision. A new
-   `AD-nn` architectural rule also receives its corresponding `ad-nn.md` and
-   architecture section, with links between the rule and its progress record.
-4. Amend an existing ADR's status and amendment links when the choice evolves.
-   Retain its original context, decision, rationale, and evidence. A replacement
-   decision gets a new record; link both directions and identify whether it
-   supersedes the whole record or just one policy. Never reuse an identifier.
-5. Keep contracts, invariants, ADRs, index, plan amendments where needed, and
-   the task/plan/current records and completed `docs/agents/progress.md` evidence
-   together in the implementation commit. Run the repository
-   gate and verify local documentation links and record coverage before
-   committing, as required by [the workflow](workflow.md).
+- Stable ID, title, original date and decision status.
+- Context, selected approach, rationale and alternatives. Say when an original
+  source documents no alternative rather than inventing one.
+- Consequences, tradeoffs, compatibility requirements and limitations.
+- Relevant contracts, source, tests, actual introducing/amending commits when
+  known, and predecessor or replacement decisions.
 
-Each new record must identify:
+When a decision evolves, retain useful original rationale and link the amendment
+or superseding record in both directions. Cite code and tests directly; avoid
+unexplained "this commit", mutable task references and implementation-stage
+summaries. Record execution evidence externally, in agent records or in change
+descriptions.
 
-- **Identity and status:** stable source ID, title, original decision date,
-  work package, and `Proposed`, `Accepted`, `Amended`, or `Superseded` status
-  (qualified historical status is appropriate for backfilled records).
-- **Context and decision:** the problem or constraint and the selected approach.
-- **Rationale and alternatives:** why it was selected and what was rejected.
-  If the historical source does not document an alternative, say so.
-- **Consequences:** resulting behaviour, tradeoffs, compatibility, and limits.
-- **Evidence and relationships:** source contract/plan/progress links, relevant
-  implementation and tests, introducing/amending commits, and any predecessor
-  or replacement. A new uncommitted decision cites its work package and
-  "this commit"; do not invent a hash before the commit exists.
-
-The human ADR index retains the legacy AD/decision namespaces and named records.
-Do not create a third sequence for new decisions; use the progress number.
-
-## Audience and migration evidence
-
-Human documents and generated public help contain no work-package IDs, agent
-tracking paths or execution-stage introductions. `scripts/check-docs.py` owns the
-explicit audience and helper-inspection classification; it has no transitional
-leakage baseline. Technical identifiers and domain plans remain valid. Pure agent
-records stay below `docs/agents/`, with AGENTS/CLAUDE as entrypoint exceptions.
-Preserved reference manifests record both original Git source hashes and the
-current reference-repaired snapshot hashes. Repairing a historical link requires
-updating its snapshot hash deliberately; never replace preserved rationale with
-a new mutable execution queue.
+Preserve agent execution artifacts, snapshots and provenance manifests under
+`docs/agents/`. Giving their durable requirements a current contract, test or ADR
+home does not authorize deleting the original records. Removal requires explicit
+user authorization. Age or length alone is not a reason to delete a document.
+Preserve licensing and attribution; Git history supplements retained records.

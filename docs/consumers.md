@@ -20,7 +20,7 @@ nothing else:
 ```bash
 sudo mkdir -p /mnt/hfcache
 sudo mount -t nfs4 -o ro,hard,nosuid,nodev,noexec \
-  nas.lab.example.com:/mnt/tank/huggingface-archive/published /mnt/hfcache
+  nas.example.com:/exports/hfcache/published /mnt/hfcache
 ```
 
 Read-only is enforced **by the server**, not by this mount option and not by file
@@ -165,40 +165,66 @@ operator convention.
 
 ### Copy and verify
 
+The helper selects **only the current publication**, reading `current.json`
+once per attempt. It has no SHA or retained-publication selection flag. Browser,
+REST and MCP discovery can inspect exact retained publications, but passing a
+retained locator to this helper is not supported.
+
+Continue with the model store created above. Choose a new destination for each
+attempted workflow; this example creates a UUID-named path without creating the
+destination directory itself:
+
 ```bash
-python3 /path/to/copy-revision.py \
+MODEL_ROOT=/var/lib/hfcache-models/unsloth/Qwen3.8-27B-NVFP4
+REVISION_ID=$(python3 -c 'import uuid; print(uuid.uuid4().hex)')
+VERIFIED_MODEL="$MODEL_ROOT/revisions/$REVISION_ID"
+sudo -u vllm python3 /usr/local/libexec/hfcache/copy-revision.py \
   --mount /mnt/hfcache \
-  --type model --repository hf-internal-testing/tiny-random-gpt2 \
-  --destination ./tiny-random-gpt2
+  --type model --repository unsloth/Qwen3.8-27B-NVFP4 \
+  --destination "$VERIFIED_MODEL" --json
 ```
 
-Success reports the exact commit SHA/publication ID, generation, file count,
-byte count and destination. `--json` emits that result as one JSON object for a
-scheduler:
+Stop if the command fails. Success reports `verified: true`, the exact commit
+SHA/publication ID, publication generation, file count, byte count and destination.
+Keep that result with the destination. The helper assembles a temporary sibling
+and renames it only after complete path, size and SHA-256 checks. Immediately
+before rename it removes an existing destination, so never select a live serving
+path, `current`, the model root or a previous copy.
 
-```bash
-python3 /path/to/copy-revision.py --mount /mnt/hfcache --type dataset \
-  --repository hf-internal-testing/fixtures_ade20k --destination ./new-ade20k --json
-```
-
-The copy is assembled in a temporary directory beside `--destination` and renamed
-into place only after it verifies, so an interrupted run never leaves something
-that looks finished. `verified: true` means every byte was read and hashed on
-this host — not that the archive says so.
+For a dataset, use `--type dataset`, its repository ID and another new destination;
+the same verification contract applies. No API credential is needed for copying.
 
 ### Serve a verified local model
 
-`scripts/consumer-serve-hfcache-model.sh` starts the OpenAI-compatible vLLM
-server in a foreground container. It accepts the vLLM image, an already
-verified local model directory, and a vLLM YAML configuration file, in that
-order:
+Serving is optional and runs on the consumer host. It requires a compatible
+NVIDIA GPU, configured container GPU support and an operator-selected vLLM image
+that supports the model. Choose a trusted pinned image for your deployment.
+Create `qwen3.8-vllm.yaml` with your reviewed vLLM settings, for example:
+
+```yaml
+host: 0.0.0.0
+port: 8000
+```
+
+These settings make the container listen on its published port; use the consumer
+host's firewall and serving authentication policy before exposing it. The helper
+publishes host port 8000. It does not configure authentication.
+
+After the successful copy above, pass the **same** verified directory to the
+launcher. The example uses root on the consumer to read the private `vllm` store
+and apply the launcher's private SELinux labels. Set `VLLM_IMAGE` to the selected
+pinned image first:
 
 ```bash
-scripts/consumer-serve-hfcache-model.sh \
-  docker.io/vllm/vllm-openai:latest \
-  ~/.cache/hfcache/unsloth/Qwen3.8-27B-NVFP4/ \
+sudo scripts/consumer-serve-hfcache-model.sh \
+  "$VLLM_IMAGE" \
+  "$VERIFIED_MODEL" \
   ./qwen3.8-vllm.yaml
 ```
+
+The destination is already a revisioned serving path; no mutable `current`
+pointer is needed for this example. Changing a production serving pointer is a
+separate privileged promotion, permitted only after independent verification.
 
 The launcher prefers Podman when both Podman and Docker are installed; use
 `--runtime docker` or `--runtime podman` to select one explicitly. It gives an
@@ -224,6 +250,9 @@ reported `verified: true`.
 
 A complete copy must reject changed bytes, missing files and extra files. Test
 these cases only on owned disposable trees; never damage published content.
+
+Representative helper diagnostics below illustrate the failure classes; they are
+not results from your archive.
 
 A file's bytes changed:
 
@@ -257,9 +286,11 @@ published revision gets into a directory you are about to trust.
 ## 5. Repairs, the grace period, and retrying
 
 A `repair` replaces a damaged publication instance with a re-downloaded and
-re-verified one, then switches `current.json` to it by atomic rename. The retired
-instance **stays readable at its original path** for a grace period (seven days by
-default), so a copy that resolved the old locator can finish.
+re-verified one, then atomically updates its retained reference. It also updates
+`current.json` when that SHA is current; repairing a noncurrent retained SHA
+leaves the current choice unchanged. The retired instance **stays readable at
+its original path** for a grace period (seven days by default), so a copy that
+resolved the old locator can finish.
 
 If your copy outlives the grace, or the tree disappears for any other reason, the
 helper treats it as retryable — discards the partial copy, re-reads the reference,
@@ -272,9 +303,9 @@ error: giving up after 2 attempts: the published tree went away while it was bei
 exit=1
 ```
 
-And resolution follows the reference. With `current.json` switched to a new
-instance while the old one was still present — which is exactly the state a repair
-leaves during the grace — the helper took the new one:
+Each new attempt follows its newly read reference. After repair switches
+`current.json`, the helper selects the new publication even while the old locator
+remains readable during grace. For example:
 
 ```text
 current.json now names instance ffffffffffffffffffffffffffffffff; the old instance e0b802874ceb4b1dbb48e0376923c766 still exists (grace).
@@ -282,10 +313,9 @@ current.json now names instance ffffffffffffffffffffffffffffffff; the old instan
  verified: True  files: 10
 ```
 
-A verification failure is also retried, for the same reason: the likeliest cause
-of a mismatch against a complete manifest is that the instance was replaced while
-the copy was in flight. Persistent failure after `--attempts` is a real problem —
-see §8.
+A verification failure is also retried. A new attempt may select a newer or
+repaired current publication; the mismatch itself does not establish its cause.
+Persistent failure after `--attempts` requires investigation — see §8.
 
 ---
 
@@ -399,8 +429,11 @@ snapshot, and neither is something a consumer can or should attempt.
 | Copy and verify a dataset | `copy-revision.py --mount /mnt/hfcache --type dataset --repository <org>/<name> --destination <dir>` |
 | Machine-readable result | add `--json` |
 | More retries on a busy archive | add `--attempts 5` |
-| Which revision is current | `cat /mnt/hfcache/repos/<type>/<org>/<repo>/refs/current.json` |
+| Which revision is current | `cat /mnt/hfcache/repos/<models-or-datasets>/<org>/<repo>/refs/current.json` |
 | What the archive holds | `cat /mnt/hfcache/catalog/repositories.json` |
+
+In export paths, use plural `models` or `datasets`; the helper's `--type`
+argument uses singular `model` or `dataset`.
 
 Helper exit codes — these are the helper's own, not the application’s CLI exit codes:
 

@@ -18,8 +18,8 @@ being hidden by a broader release claim.
 
 The version matched the tested/staged/deployed artifact and deliberately did not
 claim outstanding consumer, reboot, data-protection or calendar acceptance.
-Original release provenance remains below; current scope is recorded separately
-in the changelog and deployment status.
+Original release provenance remains below; release changes belong in the changelog and actual installed evidence belongs
+in the operator's deployment context.
 
 ## Provenance and governing evidence
 
@@ -37,7 +37,7 @@ Implementation or shipped-artifact evidence:
 [scripts/install-release.sh](../../scripts/install-release.sh).
 
 Verification or recorded operational evidence:
-[recorded deployment scope](../deployment-status.md).
+[deployment prerequisites](../deployment-centos-stream-10.md).
 
 ## 2026-10-18 data-preserving local rollout amendment
 

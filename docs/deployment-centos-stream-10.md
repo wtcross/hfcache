@@ -1,17 +1,15 @@
 # Deploying hfcache on CentOS Stream 10
 
-Choose a deployment profile before selecting tools, paths or service managers.
-The [recorded local deployment](deployment-status.md) is rootless 0.3.0 with NFS
-read-only and its separately recorded guard setting. This guide describes supported provisioning and acceptance;
-it does not authorize changing that installation, running NAS workloads, enabling
-calendars or initializing its existing archive. Historical observed output is not
-an acceptance result for a different profile or release.
+Provision a writer, reader or consumer using the matching profile below. Review
+storage, identities and protected credential delivery before installing services.
+Use deployment-specific hostnames, IDs and release artifacts. This procedure
+does not initialize an existing archive or grant workload/schedule authority.
 
 ## Deployment profiles
 
 | Profile | Host executable | Manager and listeners | Credential delivery |
 | --- | --- | --- | --- |
-| Selected rootless | `/usr/local/libexec/hfcache-container-service`, `/usr/local/libexec/hfcache-client` | System bridge to service account user manager; API `/run/hfcache/api/api.sock`, worker `/run/hfcache/verification/verification.sock`, Caddy TLS 8443 | Fixed named Podman secrets mounted as files; no host credential import into clients |
+| Rootless service | `/usr/local/libexec/hfcache-container-service`, `/usr/local/libexec/hfcache-client` | System bridge to service account user manager; API `/run/hfcache/api/api.sock`, worker `/run/hfcache/verification/verification.sock`, Caddy TLS 8443 | Fixed named Podman secrets mounted as files; no host credential import into clients |
 | Native service | `/opt/hfcache/current/.venv/bin/hfcache` and release Python | System manager; API `/run/hfcache/api.sock` plus optional TCP, worker `/run/hfcache/verification.sock`; strict socket activation | Named systemd credentials or explicit protected server-local files |
 | Reader | Installed API-only client | Explicit authenticated Unix endpoint or verified HTTPS/public prefix | Protected REST reader file or named API credential; no archive/Hub access |
 | Consumer | Independent copy helper | Read-only NFS `published/` export and consumer-owned destination | Whole-export entitlement; no writer/API credential needed for copying |
@@ -26,7 +24,7 @@ records actual UID/network/mount/state/secret boundaries.
 
 The web UI's [administrator provisioning guide](web-ui/deployment.md)
 describes its optional protected hash source, exact HTTPS origin, explicit
-`[web]` asset selection and separate native/rootless delivery. Version 0.3.0
+`[web]` asset selection and separate native/rootless delivery. The API
 serves authenticated `/ui/` only when enabled with a matching protected
 artifact and manifest hash. Static assets belong in the existing pinned UBI 10
 micro API image behind the same existing Caddy and Unix upstream; no frontend
@@ -88,8 +86,7 @@ pair, never both. Network ordering belongs on the mount, not the automount:
 Review `systemd-analyze verify` output, not just exit status, because it can report
 cycles with exit 0. If the archive path changes, rename mount units with
 `systemd-escape --path`, update `Where=`, every `RequiresMountsFor`/read-write path
-and archive policy together. The selected host retains its protected read-only
-mount and independent guard.
+and archive policy together. Preserve the profile's required mount mode and independent guard.
 
 Review the shipped tmpfiles, journald and dirty-page policy fragments before
 separately authorized installation. Boot `f` rules create missing local locks
@@ -122,7 +119,7 @@ approval; they do not activate services or provision secrets:
 ```bash
 python3 scripts/install-container-release.py render --manifest /path/to/container-release.json --output /path/to/new-render
 sudo python3 scripts/install-container-release.py stage --manifest /path/to/container-release.json
-sudo python3 scripts/install-container-release.py switch --version 0.2.1
+sudo python3 scripts/install-container-release.py switch --version '<reviewed-release-id>'
 ```
 
 Render creates a new local artifact tree. Stage authenticates sources/recomputed
@@ -176,14 +173,14 @@ never creates its own grants. Missing policy, unsupported target or drift denies
 effects. See [web provisioning](web-ui/deployment.md) and the
 [host administration contract](host-administration.md).
 
-The selected guarded profile retains archive denial. Explicit permissions in a
+The guarded profile retains archive denial. Explicit permissions in a
 disposable fixture permit only submission; existing read-only mounts and API
 gates may still refuse the operation. Current rootless bindings do not prove the
 system scheduled observer/timer, so schedule and observer permissions remain
 denied even if requested by policy. Do not install a native `.venv` client,
 redirect to a user unit, alter masks or clear the guard to satisfy this check.
 Source implementation does not provision policy, select a release or change
-the recorded installed holds. Any deployment/provisioning remains a separate
+the installation's independently set restrictions. Any deployment/provisioning remains a separate
 operator action with its own evidence and authorization.
 
 ## Native installation
@@ -201,7 +198,7 @@ For an explicitly native provisioning/staging window:
 ```bash
 sudo scripts/install-release.sh --no-switch
 scripts/install-release.sh --list
-sudo scripts/install-release.sh --switch 0.2.1
+sudo scripts/install-release.sh --switch '<reviewed-version>'
 ```
 
 The installer verifies the uv pin, obtains the pinned interpreter under
@@ -456,33 +453,18 @@ readers before switching. Preserve all independent compatibility domains:
 | Quarantine cleanup (0.1.8–0.1.10) | Formats remain compatible; older tools lack cleanup and do not restore removed redundant entries |
 | API receipts and scheduled handles | Retain separate stores/handles and a compatible observer/reconciler; absent old commands/modules never prove nonexecution |
 | Tags and supplemental discovery | Old strict configs refuse even empty tags; old initialization inspection flags the optional namespace, while ordinary inventory can remain readable. Old client receipt allowlists refuse refresh kinds although generic stores preserve them. Require actual target validation, preserved backups/handles and a compatible observer; never delete evidence to force acceptance. See [observed compatibility](discovery.md#observed-pre-feature-compatibility). |
-| RepositoryCard schema1 (unreleased) | The isolated 0.2.2 released-source drill preserves cards and keeps status/inventory readable, but its catalog read refuses the new namespace with `HFVER007`/exit40. Preserve adjuncts and a compatible catalog reader before rollback; never delete cards to make the old reader accept the archive. |
+| RepositoryCard schema1 | The isolated 0.2.2 released-source drill preserves cards and keeps status/inventory readable, but its catalog read refuses the new namespace with `HFVER007`/exit40. Preserve adjuncts and a compatible catalog reader before rollback; never delete cards to make the old reader accept the archive. |
 | Optional MCP | Disable deliberately before server-only/pre-MCP startup; no automatic fallback or schema migration |
 | Protected host reader | For a predecessor with host-reader support, preserve current bootstrap inodes before restoring matching copies/labels and the reviewed release/index/policy binding; retain the original key and six explicit permission values. For a pre-helper target, restore a preserved target-compatible server configuration and keep the helper stopped while retaining its files, policy, receipt, key and evidence. Review SELinux policy compatibility separately; a selector rollback alone is insufficient. |
 | Web administration configuration | The exact released0.2.2 / source `1c68501` strict server model rejects newer `host_helper`, `basic` and `web` fields. Preserve the installed original and validate a separate target-compatible server configuration; never discard newer metadata, receipts or private helper outcomes to force old startup. |
 | Explicit verifier socket owner | An older strict server rejects the new configuration key. Validate the intended target with a preserved compatible server configuration before selection; do not change socket ownership or discard operation state to force rollback. |
 | Rootless 0.2.0 | Recorded API-to-worker SELinux connection limitation returns; do not weaken policy to bypass it |
 
-The README throwaway-archive drill rebuilt the exact recorded released source
-`1c685018803a365bbb8b0c1aad4b94709f60e7d7` offline. The rebuilt0.2.2 wheel is
-`b88ffd0f8605d2410a16aa17379eb8a31362310f7143ca07dfab8ebf17bb6503`,
-with90 installed package files matching that commit. It is not a claim about the
-deployed artifact. Actual old CLI status, inventory and catalog reads pass before
-the card is added; afterward status/inventory still pass while catalog refuses.
-All archive file bytes and full metadata remain unchanged. The fixture's separate
-initialization inspection already refuses its populated layout before cards, so
-that result is not attributed to the card extension. Exact commands/results:
-`/var/tmp/hfcache-web009-format-_h1hjuvg/RESULT.json` (SHA256
-`b4c2e6d525f6060aea6e6fb8e92ccd2d1cd8706705388d0b749557f5cf7453d2`).
-This is an isolated read/format drill, not production, NFS workload or old-writer
-effect acceptance. The [card guide](web-ui/readme-cards.md) describes preservation.
-
 The [interface migration guide](web-ui/migration-and-rollback.md#compatibility-and-backups)
-records the later retained-wheel copied-state results, actual old-client TLS
-successes/refusals and disposable indexed77/78 rollback scope. Old generic receipt
-readability does not supply missing private helper readers or establish safe
-rollback with unresolved outcomes; retain their original evidence and a compatible
-observer. These observations grant no production selection or data migration.
+explains target-binary compatibility checks for published metadata, server
+configuration and protected outcomes. Generic receipt readability does not
+supply a missing private outcome reader. Preserve original evidence and a
+compatible observer whenever outcome history is unresolved.
 
 Native switch refuses retained scheduled handles if target Python lacks
 `hfcache.scheduled_client`; unknown/future/temp/symlink evidence stays preserved.
@@ -513,15 +495,14 @@ read-only profile refuses archive-write probes. Inventory and transient probes d
 not certify installed PID1, peer, SELinux, NFS or workload behavior. See
 [hardening diagnostics](security.md#hardening-diagnostics).
 
-The [dated deployment status](deployment-status.md) records the narrower local
-0.2.1 evidence and outstanding acceptance. No repository gate substitutes for
-those host checks. [Web deployment](web-ui/deployment.md) and
-[operations](operations.md) use the same profile distinctions and safety rules.
+No repository gate substitutes for installed host checks.
+[Web deployment](web-ui/deployment.md) and [operations](operations.md)
+use the same profile distinctions and safety rules.
 
 ## Manual writer transition
 
-The accepted [protected writer design](adr/decision-165.md) keeps installation
-and selection NFS-read-only. It is not current writer acceptance. Before any
+The [protected writer profile](adr/decision-165.md) keeps installation
+and selection NFS-read-only. Qualify actual storage and confinement separately. Before any
 authorized transition, back up/inventory configuration, candidates, credentials'
 identities, both stores, dispositions, helper outcomes, browser handles, prior
 artifacts and original locks. Stop API admission, drain actual API work while
@@ -699,17 +680,3 @@ its new PID/birth/maps/namespace, preserve the old evidence and supersede the ol
 actor snapshot explicitly. Rejoin actual mount flags before helper READY and
 ordered role startup. A mount change is not a durable-format activation or
 permission grant; do not repeat disposition provisioning or replay any job.
-
-
-2026-11-05 actual local acceptance: the
-[protected deployment evidence](deployment-status.md#protected-current-acceptance-evidence)
-records current-boot manual-writer0.3.4 selection and genuine UI/API jobs. The
-initial writer transition reviewed installed Podman6.0.2-1.el10 independently of
-the6.1 source example above: full actual drain precedes its one no-option migrate,
-original pause inode63:60 is retained whole and the engine database stays
-byte-identical. New keeper434678 is authenticated; the subsequent0.3.4 upgrade
-retains that namespace and persistent RW override through a temporary connected
-RO install window, freshly proving VFS/superblock RW before ordered roles. No
-additional migrate, intent activation or CIL load occurs. The
-[current deployment status](deployment-status.md) records exact writer/pilot/
-backfill acceptance and remaining independent holds; no unattended boot claim.

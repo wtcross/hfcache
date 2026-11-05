@@ -9,7 +9,7 @@ Existing inventory, immutable artifacts and the original nine MCP calls retain
 their behavior. Discovery never downloads, loads models, verifies payloads or
 installs configuration.
 
-The unreleased [browser Library](web-ui/library.md) presents these existing local
+The [browser Library](web-ui/library.md) presents these existing local
 reads, with explicit configured/archived/all and current/retained scopes. Its
 default repository scope is `all`, sent explicitly rather than changing the
 API's `archived` default. Search, paging and loading more facets never submit
@@ -17,9 +17,39 @@ refresh or other jobs. [Repository details](web-ui/repository-details.md) pin
 derived panels to an exact retained publication and preserve authoritative
 inventory when supplemental metadata is unavailable. The interface adds [bounded README display](web-ui/readme-cards.md#read-a-card-in-repository-details).
 
+## Find and inspect a repository
+
+Use the authenticated client from the [quickstart](quickstart.md), retaining its
+`H()` wrapper and `quickstart-client.toml`:
+
+```bash
+H search --scope configured --tag coding
+H search --type model --format gguf --quantization Q4_K_M
+H catalog show model:organization/model-name
+H catalog variants model:organization/model-name
+```
+
+Replace the repository placeholder with a returned ID. `configured` includes
+enabled, disabled and unpublished entries. Technical search uses retained
+observations; select an exact SHA/publication pair when examining variant detail.
+A representative summarizes a repository and does not describe every retained
+variant. Preserve coverage and tag provenance when interpreting results: zero
+known matches with partial or unknown coverage do not prove absence.
+
+The [Library guide](web-ui/library.md) gives the equivalent browser workflow.
+Discovery transfers metadata only. Follow [consumer copying](consumers.md) to
+obtain files and verify them independently.
+
+## Reference navigation
+
+The sections below define [card capture](#repository-card-design),
+[operator tags](#operator-tags) and [durable supplemental records](#durable-supplemental-records).
+Use the [CLI](cli.md), [API](api.md) or [MCP](mcp.md) reference for exact transport
+arguments, response fields and pagination rules.
+
 ## Repository card design
 
-**Writer capture and exact card API reads are implemented in unreleased source.** Existing technical
+Writer capture and exact card API reads preserve publication identity. Existing technical
 observations retain declarations; an independent
 [RepositoryCard schema 1](schemas.md#181-repositorycard-schema-1) extends the
 optional namespace with
@@ -122,7 +152,7 @@ canonical representation. A separate curation fingerprint hashes a schema-1
 canonical representation of all configured `(type, id, normalized tags)` entries,
 including empty and disabled entries, sorted by identity. Candidate installation
 continues to compare complete candidate and base bytes, never policy hashes alone.
-The unreleased [managed configuration API](web-ui/configuration-and-tags.md)
+The [managed configuration API](web-ui/configuration-and-tags.md)
 supports guarded edits and exact-preview application while preserving protected
 fields and original outcomes. It introduces no separate tag store or tag CRUD
 endpoint. Library filtering itself neither edits tags nor installs configuration;
@@ -661,9 +691,8 @@ this does not claim recognition of unregistered arbitrary secrets.
 
 ## Manual refresh readiness and recovery
 
-The accepted [job recovery contract](job-recovery.md) changes refresh admission
-explanations and original-intent observation, pending implementation and installed
-acceptance. It does not change extractor fields, publication bindings, budgets
+The [job recovery contract](job-recovery.md) defines refresh admission
+explanations and original-intent observation. It does not change extractor fields, publication bindings, budgets
 or integrity confidence. Readiness GETs never refresh metadata. An explicit
 writer-authorized refresh retains the 256-repository/512-publication limits and
 shared extraction/write budgets. Current-publication backfill is an enumerated

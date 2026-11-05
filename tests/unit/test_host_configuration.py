@@ -336,7 +336,20 @@ def test_unknown_legacy_paths_refuse_without_overwrite(writer, name):
     with pytest.raises(ValueError, match="protected configuration"):
         writer.apply(writer.request())
     assert path.read_bytes() == b"unknown original evidence"
-    assert path.lstat() == before
+    after = path.lstat()
+    # Inspection and the content assertion may update access time.
+    for field in (
+        "st_dev",
+        "st_ino",
+        "st_mode",
+        "st_uid",
+        "st_gid",
+        "st_nlink",
+        "st_size",
+        "st_mtime_ns",
+        "st_ctime_ns",
+    ):
+        assert getattr(after, field) == getattr(before, field), field
     assert configuration.CONFIGURATION.read_bytes() == writer.original
 
 

@@ -47,6 +47,8 @@ MCP = "mcp-reader-" + "M" * 48
 PRIVATE_INPUT = "unregistered-private-input-DO-NOT-ECHO"
 INVENTORY_ARGUMENTS = {"selectors", "repository_type", "limit", "cursor"}
 PAGE_ARGUMENTS = {"limit", "cursor"}
+# Keep observation finite while tolerating scheduling pauses in the full suite.
+MCP_TEST_TIMEOUT = 10
 TOOLS = {
     "get_archive_status": (INVENTORY_ARGUMENTS, set()),
     "list_repositories": (INVENTORY_ARGUMENTS, set()),
@@ -315,7 +317,7 @@ async def mounted(archive):
             transport=StreamingASGITransport(archive.app),
             trust_env=False,
             headers=headers,
-            timeout=timeout or httpx2.Timeout(3),
+            timeout=timeout or httpx2.Timeout(MCP_TEST_TIMEOUT),
             auth=auth,
             **options,
         )
@@ -325,7 +327,7 @@ async def mounted(archive):
     )
     async with (
         run_asgi_lifespan(archive.app),
-        Client(transport, timeout=3, init_timeout=3) as client,
+        Client(transport, timeout=MCP_TEST_TIMEOUT, init_timeout=MCP_TEST_TIMEOUT) as client,
     ):
         yield client
 

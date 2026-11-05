@@ -61,8 +61,8 @@ remains available, then worker; a stopped observer is never executor termination
 - [Decision 132](decision-132.md)
 - [Decision 148](decision-148.md)
 
-Recorded installed scope and remaining acceptance are described in
-[deployment status](../deployment-status.md).
+Deployment prerequisites are defined in the
+[deployment guide](../deployment-centos-stream-10.md).
 
 ## 2026-10-26: Cooperative scheduled-observer interruption
 

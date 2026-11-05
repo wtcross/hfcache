@@ -42,5 +42,5 @@ filesystem proof was rejected.
 - [real HTTP/domain tests](../../tests/unit/test_api_commands.py)
 - [adversarial concurrency/disconnect tests](../../tests/unit/test_api_command_adversarial.py)
 
-Recorded installed scope and remaining acceptance are described in
-[deployment status](../deployment-status.md).
+Deployment prerequisites are defined in the
+[deployment guide](../deployment-centos-stream-10.md).

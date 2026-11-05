@@ -360,7 +360,7 @@ strict [refresh payload](schemas.md#173-offline-refresh-result). Refresh perform
 no recovery/repair/prune/cleanup or integrity hashing. Observer departure cannot
 cancel it; startup never replays it. Preserve uncertain handles and original state.
 
-In unreleased source, `technical=true` also captures the exact publication's
+`technical=true` also captures the exact publication's
 manifest-listed root `README.md` into an independent
 [RepositoryCard](schemas.md#181-repositorycard-schema-1). A bounded fresh source
 SHA-256 comparison establishes only README provenance; it does not verify the
@@ -368,8 +368,8 @@ publication or update integrity confidence. No Hub request or payload download
 is added. Card failure uses existing `HFWRN011` warnings and the existing partial
 result rules. Publication observation fields and counts retain their original
 meaning; there is no card count, refresh flag or additional refresh route.
-The exact card read API and bounded inert browser display are implemented in
-unreleased source. Rendering follows its separate closed presentation policy;
+The exact card read API and bounded inert browser display use this adjunct.
+Rendering follows its separate closed presentation policy;
 see the [capture and display guide](web-ui/readme-cards.md).
 
 The canonical route identifies this operation kind; its Envelope command is
@@ -495,10 +495,11 @@ and the [recovery runbook](recovery.md#preserve-four-kinds-of-authority).
 
 ## Original-intent dispositions and readiness
 
-The accepted [job recovery contract](job-recovery.md) adds bounded advisory
+The [job recovery contract](job-recovery.md) defines bounded advisory
 `GET /api/v1/jobs/readiness`, original-key `GET /api/v1/operations/intent` and
-explicit Basic-own-key `POST /api/v1/operations/intent/retire`. These are implemented in source; browser and installed acceptance remain
-pending. Existing receipt,
+explicit Basic-own-key `POST /api/v1/operations/intent/retire`. Readiness is an
+observation, not an execution grant; retirement requires the separately
+provisioned protected review described in that contract. Existing receipt,
 acceptance, problem and lookup wire schemas remain unchanged. Durable
 pre-admission refusals hint closure with `Hfcache-Intent: closed`; only a fresh
 validated intent GET proves it. Ordinary problems and missing history remain
@@ -635,18 +636,16 @@ POST. [Server lifecycle](server.md#restart-and-drain) governs actual executor dr
 ## Web UI and administration design
 
 Optional Basic authentication and the indexed `/ui/` navigation/assets/bootstrap
-surface are implemented in unreleased source, preserving existing REST/MCP
-credential classes and strict public schemas. Protected host status and managed
-configuration read/validation/preview, guarded application and exact-publication
-card reads are implemented in unreleased source. Other host controls below retain their
-separate design and acceptance obligations. These source additions do not change an installed release or grant
-host authority.
-See [UI availability](web-ui/README.md), [authentication decision](adr/decision-140.md),
+surface preserve existing REST/MCP credential classes and strict public schemas.
+The routes below provide protected host status, managed configuration
+read/validation/preview, guarded application, exact-publication card reads and
+fixed host controls. Availability depends on explicit server configuration,
+matching release artifacts and independent protected host permissions.
+See [browser setup and tasks](web-ui/README.md), [authentication decision](adr/decision-140.md),
 [host/configuration decision](adr/decision-141.md) and
-[card decision](adr/decision-142.md). Each addition requires executable
-unit/integration and real installed functional evidence before support is claimed.
+[card decision](adr/decision-142.md).
 
-Preserve all current endpoints and wrappers. Add only these surfaces, with the
+These surfaces use the
 configured public prefix before `/api/v1` or `/ui/`:
 
 | Method/path | Required authority and outcome |
@@ -909,7 +908,7 @@ MCP, HostStatus1 and operation-receipt schemas. Every route authenticates the
 Basic administrator before decoding input. The online API remains unprivileged;
 actual effects require the independently provisioned protected native helper.
 Read [host administration](host-administration.md#fixed-schedule-observer-and-journal-operations)
-and the [exact independent schema](schemas.md#187-fixed-host-action-projections-schema-1).
+and the [exact independent schema](schemas.md#188-fixed-host-action-projections-schema-1).
 
 | Method and path under `/api/v1` | Capability and behavior |
 | --- | --- |

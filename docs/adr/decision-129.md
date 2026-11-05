@@ -2,7 +2,7 @@
 
 - Decision identity: 129.
 
-- Status: Accepted; current profile is qualified by the recorded deployment scope.
+- Status: Accepted; amended as described below.
 - Date: 2026-10-18.
 
 ## Context, decision and rationale
@@ -63,4 +63,4 @@ is distinct from these input/build checks and from NAS/domain acceptance.
 - [fetch](../../tests/unit/test_fetch_container_python.py)
 - [foundation](../../tests/unit/test_container_foundation.py)
 
-See [deployment status](../deployment-status.md) for recorded scope and remaining acceptance.
+See [deployment guide](../deployment-centos-stream-10.md) for recorded scope and remaining acceptance.

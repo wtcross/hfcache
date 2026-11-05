@@ -1,7 +1,7 @@
 # Select rootless archive writes through independent protected authority
 
 - Decision identity: 165.
-- Status: Source implementation; installed and actual NFS conformance pending.
+- Status: Accepted; actual NFS and confinement are deployment prerequisites.
 - Date: 2026-11-03.
 - Introducing change: `60d086931dc03d8582751c6a3c9b17eeb6f93715` (accepted design); source implementation amendment below.
 
@@ -176,11 +176,9 @@ subsequently addressed through stock markers). All failures and assertions stay
 preserved. Existing `virt_use_nfs=true` already gives stock containers broader NFS
 rights; `domain_can_mmap_files=false` is part of the measured snapshot, not a
 permanent proof. No strict-neverallow pass or sole-systemwide-writer claim is made.
-Actual owned Enforcing role/mount/MCS/secret/network and recovery/rollback drills
-remain with the installed acceptance task; actual production nfs_t transactional
-writes and current-boot transition/pilots remain later. No unattended boot claim
-is added. Source gate and retained proof identities accompany the implementation commit
-evidence.
+Actual Enforcing role/mount/MCS/secret/network, recovery/rollback and `nfs_t`
+transactional-write checks are deployment prerequisites. Current-boot validation
+does not establish unattended-boot safety.
 
 
 ### Observed rootless mount view (2026-11-04)
@@ -199,9 +197,8 @@ The supported engine's known-inert pause retirement is separate from graceful
 workload drain; it cannot terminate an unknown executor. Old actor snapshots are
 retained and superseded by authenticated new namespace evidence. No capability,
 SELinux, seccomp or mount-sandbox bypass, new durable epoch, automatic retry or
-job replay follows. Owned turnover and positive writer qualification remain
-pending; production is unchanged. The existing decision's independently protected
-mode, original-lock and actual NFS acceptance requirements remain in force.
+job replay follows. Independently protected mode, original-lock continuity and actual NFS validation
+remain required after namespace turnover.
 
 ### Confined proxy connection (2026-11-05)
 

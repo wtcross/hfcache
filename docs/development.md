@@ -1,45 +1,5 @@
 # Development and validation
 
-## Browser authentication fixture
-
-`uv run --locked --extra server --extra mcp python scripts/check-web-auth-fixture.py --help`
-is safe inspection. Running the check requires a separately provisioned disposable
-guest and an explicit protected manifest; it never discovers a live installation
-or downloads missing dependencies. Run it inside that guest with
-`--manifest ABSOLUTE_PROVISIONED_JSON` using the installed-wheel environment.
-The manifest binds exact source inventory, wheel/installed package bytes,
-private TLS fixture, numeric loopback origins and fixed offline browser launcher.
-Provision pinned Node24.18.1 and Playwright1.64.1 package/browser closure first.
-Missing engines, wrong ownership/hashes or unsupported trust are failures.
-
-The check runs Chromium, Firefox and WebKit sequentially for root and
-`/management` paths. Native `httpCredentials` handles the actual first401 challenge
-and retry; page scripts never receive the password. It verifies trusted TLS and
-untrusted-CA refusal, authorized same-origin reads/JSON POST and real foreign-origin
-form/text/multipart/preflight refusal. No `Authorization` injection, ignored TLS
-errors, browser sandbox disablement or network pull establishes acceptance.
-Reports retain exact engine versions, case outcomes, artifact identities and
-observed browser/API drain. Test passwords remain in memory/owned pipes; do not
-enable traces/HAR or record credential headers. The fixed launcher uses rootless
-non-root browser tooling entirely inside the owned CentOS guest; any host-network
-mode refers only to that guest's isolated loopback. Keep SELinux/seccomp active.
-
-This mandatory authentication subset accompanies the complete source gate.
-The required source gate also runs `pnpm --dir web run test:auth-sandbox`, bounded
-Node metadata/drain unit tests whose retained TAP must show a positive all-pass
-count and zero failures, cancellation, skips or TODOs. Those tests supplement the
-actual browser sandbox proof; fabricated process metadata cannot establish it.
-The pinned Chromium can rewrite child command lines as lossy process titles,
-including truncation immediately after one literal space. Preserve the exact
-raw title and its observed-only qualifier. Tokenization may recognize that one
-terminal separator; internal or repeated empty tokens, other whitespace,
-quotes, backslashes and disabling flags still refuse. A title never reconstructs
-original argv or replaces the independent live sandbox/namespace proof.
-It proves direct API TLS/authentication; shared-Caddy and complete installed
-UI/platform acceptance follow with authenticated static serving. Synthetic fixture
-storage supplies no live NAS evidence. Preserve failed workspaces and original
-operation handles; never drain or reuse an older unknown guest.
-
 ## Python development environment
 
 Use the pinned Python and `uv.lock`. Install both optional transport extras
@@ -66,8 +26,8 @@ server and server-plus-MCP wheels. `--with-build` adds isolated wheel-install
 tests. The current browser workspace is validated through the required web
 checks below.
 
-Use `scripts/check.sh --require-web --with-build` for replacement web interface
-acceptance. `--require-web` first requires the web package manifest, frozen
+Use `scripts/check.sh --require-web --with-build` for web interface
+validation. `--require-web` first requires the web package manifest, frozen
 pnpm lock, TypeScript configuration, Node and pnpm. It checks the authoritative
 Python contract export after locked Python synchronization, then retains every
 backend check above. Its web stage runs frozen
@@ -102,7 +62,7 @@ that cannot be expressed cleanly with pytest fixtures and deterministic doubles.
 
 ## Web workspace
 
-The replacement interface has a separate [web package](../web/package.json)
+The web interface has a separate [web package](../web/package.json)
 and frozen [pnpm lock](../web/pnpm-lock.yaml). Node and pnpm are build/test
 tools only. Base Python wheel builds and reader/server installations do not
 invoke Node or install frontend dependencies. Production serving remains owned
@@ -358,6 +318,46 @@ boundary only; it does not replace same-Caddy/TLS, Basic or installed native/
 rootless acceptance. The [troubleshooting guide](web-ui/troubleshooting.md)
 explains the visible read states.
 
+### Browser authentication fixture
+
+`uv run --locked --extra server --extra mcp python scripts/check-web-auth-fixture.py --help`
+is safe inspection. Running the check requires a separately provisioned disposable
+guest and an explicit protected manifest; it never discovers a live installation
+or downloads missing dependencies. Run it inside that guest with
+`--manifest ABSOLUTE_PROVISIONED_JSON` using the installed-wheel environment.
+The manifest binds exact source inventory, wheel/installed package bytes,
+private TLS fixture, numeric loopback origins and fixed offline browser launcher.
+Provision pinned Node24.18.1 and Playwright1.64.1 package/browser closure first.
+Missing engines, wrong ownership/hashes or unsupported trust are failures.
+
+The check runs Chromium, Firefox and WebKit sequentially for root and
+`/management` paths. Native `httpCredentials` handles the actual first401 challenge
+and retry; page scripts never receive the password. It verifies trusted TLS and
+untrusted-CA refusal, authorized same-origin reads/JSON POST and real foreign-origin
+form/text/multipart/preflight refusal. No `Authorization` injection, ignored TLS
+errors, browser sandbox disablement or network pull establishes acceptance.
+Reports retain exact engine versions, case outcomes, artifact identities and
+observed browser/API drain. Test passwords remain in memory/owned pipes; do not
+enable traces/HAR or record credential headers. The fixed launcher uses rootless
+non-root browser tooling entirely inside the owned CentOS guest; any host-network
+mode refers only to that guest's isolated loopback. Keep SELinux/seccomp active.
+
+This mandatory authentication subset accompanies the complete source gate.
+The required source gate also runs `pnpm --dir web run test:auth-sandbox`, bounded
+Node metadata/drain unit tests whose retained TAP must show a positive all-pass
+count and zero failures, cancellation, skips or TODOs. Those tests supplement the
+actual browser sandbox proof; fabricated process metadata cannot establish it.
+The pinned Chromium can rewrite child command lines as lossy process titles,
+including truncation immediately after one literal space. Preserve the exact
+raw title and its observed-only qualifier. Tokenization may recognize that one
+terminal separator; internal or repeated empty tokens, other whitespace,
+quotes, backslashes and disabling flags still refuse. A title never reconstructs
+original argv or replaces the independent live sandbox/namespace proof.
+It proves direct API TLS/authentication; shared-Caddy and complete installed
+UI/platform acceptance follow with authenticated static serving. Synthetic fixture
+storage supplies no live NAS evidence. Preserve failed workspaces and original
+operation handles; never drain or reuse an older unknown guest.
+
 ### Installed product workflow acceptance
 
 After the full source gate, exercise the selected built release on explicitly
@@ -397,153 +397,27 @@ rollout remain separate statuses.
 
 ### Installed shared-Caddy functional fixture
 
-The existing instrumented runner is optional. Its private manifest, run-ID,
-fresh-fixture, join-summary and lifecycle/transfer-proof requirements remain
-strict if invoked; they do not prescribe additional test-tool implementation
-for the direct installed acceptance path above. Legacy reports retain their
-original scope and failures. Inspect its runtime-free interface with:
+The optional instrumented runner checks an explicitly provisioned disposable
+fixture. Its protected manifest, full profile/prefix/browser matrix, source and
+installed artifact bindings, lifecycle proof and finite stream checks are
+specified in [web functional testing](web-functional-testing.md). Use its safe
+inspection mode before provisioning:
 
 ```bash
 python -S scripts/check-web-functional.py --help
 ```
 
-The runner accepts explicit `--profile` and `--manifest ABSOLUTE_JSON` selectors,
-with optional `--workspace NEW_OWNED_SCRATCH_DIR` and `--final`; use `--help` for
-its existing profile choices. Platform selects
-both native and rootless deployments. Each selected profile runs empty and
-`/management` prefixes in Chromium, Firefox and WebKit through real Caddy/TLS,
-one installed API over Unix and actual restricted workers. Node-side bearer
-REST/MCP compatibility requests run concurrently with the authenticated browser;
-page JavaScript receives no bearer or password. No route interception, TLS ignore,
-frontend server, dependency download or production binding is permitted.
-
-For host acceptance, navigate the built UI first, then issue one explicit
-same-origin status GET inside that browser page. Read its status, headers and
-JSON body together in the page execution context. This avoids a later browser
-protocol body lookup across navigation; eager response-event capture alone does
-not prevent Chromium's `Network.getResponseBody` failure. Keep the UI's rendered
-host-state and permission-reason assertions, the passive network observer,
-native Basic credential cache and normal TLS verification. This deliberate read
-does not retry a failed read or replay an operation. A failed capture ends the
-invocation and retains its original evidence. Check API problem exit codes
-against the CLI taxonomy: a known `HFAPI002` denial is HTTP403/exit10, while
-unavailable protected authority is `HFAPI022`/HTTP503/exit20.
-
-For this optional runner, provision an explicitly owned isolated guest before
-invocation. Its protected
-manifest binds the exact source/wheel/installed bytes, built artifact, guest
-boot, Caddy origin/configuration, private-CA trust, pinned browser/tool closure,
-fixed role launchers and confined image identities. The negative browser profile
-must refuse the same Caddy certificate before the trusted profile succeeds.
-Role proof must record actual PID/start identities, worker-origin denials,
-listener/peer facts, API lifecycle/pool/stream drains and exact browser/container
-termination. A process wrapper exiting or a released lock is insufficient.
-
-Modern shared-Caddy functional role records also retain the live privileged
-helper as a separate prerequisite: root UID/GID, only caps `c0`, no ambient or
-inheritable caps, NNP/seccomp and the fixed helper domain. This never permits a
-root API, worker or Caddy. Selected helper copies, deployment/policy/SELinux
-receipt, live executable identities and canonical image inputs must join the
-same protected release. The helper stays live with the same PID/start/invocation
-while the owned application roles drain. Raw enforcing state and actual bind
-projections accompany the existing authority/network denials. Native inaccessible
-masks are identified by held path descriptors and mount IDs; their hidden lower
-archive mounts are not treated as effective archive access. Missing installed
-captures leave installed hardening and release acceptance incomplete; these
-source checks add no browser or platform acceptance by themselves.
-
-Execution tooling and application artifacts have separate provenance. A current
-fixture keeps `source` as the runner checkout's exact input inventory, parent
-commit and existing validated source label. Its `installed` object has exactly
-`wheel`, `package_root` and `release`; `release` is the existing `{path, sha256}`
-record for the original canonical `web-release.json` in a complete, protected
-release bundle below that checkout's private `.scratch`. The bundle retains
-`source/`, `wheels/`, `ui/` and `host-helper/`. Its original source commit, source
-map and UI identity remain unchanged when only test tools change. Runtime Python,
-helper, packaging and browser application inputs in the tooling checkout must
-still match that release's source map; test-tool updates cannot relabel a build.
-
-Only this explicit release form permits `package_root` outside `.scratch`. It
-must be the ordinary physical `hfcache` package in the native release selected by
-the fixed `/opt/hfcache/current` selector. The runner checks the existing native
-layout classifier, exact original native index and root-owned, nonwritable,
-no-follow local ancestry before reading package bytes. The selector is the sole
-link exception and must retain its exact relative release target. The runner
-must execute through that verified installed package. This read-only exception
-does not permit other `/opt` paths, external selectors, writable workspaces or
-evidence outside the protected `.scratch` boundary.
-
-The existing fixture marker binds its canonical fixture UUID, repository,
-explicit guest identity and actual boot, checked before any fixed native-prefix
-read. Native role principals come from the
-fixed `hfcache` account and the explicit protected Caddy fixture account, plus
-their independently observed units and kernel identities. Current application
-and native profile bindings require `caddy_account`: a bounded local account
-name whose nonzero UID and matching primary GID join both the actual unit's
-`User`/`Group` and process credentials. No account named `caddy` is assumed.
-Current rootless principals retain the indexed container
-role configuration and actual host/namespace mapping. Network positive-control
-unit names derive from that fixture and generation, never an arbitrary caller
-unit. Current rootless profile bindings add exactly `network`, containing
-`worker_policy` and `stock_control` file records under the owned `.scratch`.
-They also require `storage_driver`, exactly `overlay` or `vfs`, matching the
-inspected engine; an unknown storage driver refuses acceptance.
-Their independently read bytes, exact policy derivation, applied security option,
-read-only mounts, image/process identities and complete control drain must all
-join. Historical initial-fixture inputs retain their exact old source, installed,
-guest and profile shapes; they grant no current installed-path exception.
-
-Rootless capability proof preserves raw engine inspection metadata. The pinned
-fixture may report literal `ALL` or its exact measured eleven-name expansion;
-it must not rewrite that list or accept arbitrary capability lists. The original
-create request still drops ALL with no capability addition, and the actual role
-process must have zero effective and bounding capabilities. All existing
-identity, namespace, seccomp, mount and lifecycle checks remain required. A
-validator correction needs new source/gate evidence and fresh installed runs;
-unchanged package or asset bytes retain their original build provenance.
-
-Caddy listener evidence preserves raw kernel family/address rows. Native paths
-remain on their configured IPv4 loopback origin. Within the rootless container,
-the private proof admits only TCP with optional UDP at either IPv4 wildcard
-`0.0.0.0:8443` or IPv6 wildcard `[::]:8443`, without mixing or normalizing families.
-Rows have closed fields/types and unique protocols/kernel inodes. This does not
-change the outer host's `127.0.0.1` publication, strict private-CA/IP TLS checks,
-Caddy configuration or existing isolation/drain requirements. Missing historical
-observations stay missing; proof-validator changes need fresh source/gate and
-installed acceptance while unchanged artifacts retain their build provenance.
-
-Within the optional instrumented protocol, static-stream checks distinguish
-three observations: an ASGI send call returning,
-the original HTTP protocol submitting bytes, and the client receiving bytes.
-A normal return after disconnect may submit nothing. The fixture must retain raw
-call outcomes, passively bind the original protocol state and independently
-observe client cancellation/deadline behavior; it must not alter send/receive or
-transport-write behavior to fit a counter. Real stalled sends and exact resource
-drains remain required alongside those observations.
-
-When using this optional diagnostic during development, invocation without an
-acceptance selector retains an explicit pending-case list and produces partial
-evidence. Its existing `--require-through` selector remains strict for its
-selected ordered subset, requiring each selected case in all 18 instrumented
-profile/prefix/browser cells. `--final` requires all 95 cases in those cells; it
-cannot combine with the through selector. Missing, duplicate, unknown, failed or
-retried required evidence cannot pass. These rules do not make the optional
-runner the required installed acceptance path or promote partial mappings.
-
-To explicitly request the combined source gate and final instrumented diagnostic:
+To request the complete instrumented check with the source gate:
 
 ```bash
 HFCACHE_WEB_FUNCTIONAL_MANIFEST=/absolute/owned/fixture.json \
   scripts/check.sh --require-web --with-build --with-web-functional
 ```
 
-The flag still selects the runner's complete final mode and never accepts its
-partial mode. Unique reports and failed attempts remain in the selected owned
-workspace. Missing dependencies, malformed manifests, unknown resources,
-timeouts, unclosed roles and pending required cases fail honestly. Direct
-installed evidence is recorded separately and must not be relabelled as a
-passing invocation of this command. Synthetic ordinary-file fixtures establish
-local behavior, not live NAS or production acceptance.
+The flag selects all profiles and strict final mode. Partial reports, failed
+attempts and missing prerequisites cannot pass. Direct installed workflow
+evidence is recorded separately; it is not a passing invocation of this runner.
+Synthetic local storage proves no live NAS or production acceptance.
 
 ### Protected host-reader validation
 
@@ -642,7 +516,7 @@ with visibly failed archive work, timer persistence, Enforcing SELinux without
 unexplained AVCs, DNS/TLS/NFS/hash/Xet under hardening, and rollback. Inspect the
 actual verifier's no-IP and credential masks, actual API-container peer access,
 TLS/firewall and state-retaining drain. Repository tests cannot supply those
-observations. See [recorded deployment restrictions](deployment-status.md).
+observations. See the [deployment acceptance checklist](deployment-centos-stream-10.md#acceptance-checklist).
 
 Distinguish socket refusal from packet filtering when proving verifier network
 isolation. A bounded TCP timeout or missing errno alone proves neither denial
@@ -698,3 +572,15 @@ base/server/MCP dependency closure in uv's offline cache. Installed package byte
 are compared with the selected old sources before behavior is tested. Synthetic
 mount tables and temporary state establish only offline behavior; no archive
 initialization command, real mount, service, credential or Hub workload is used.
+
+## Repository map
+
+| Path | Contributor use |
+| --- | --- |
+| `src/hfcache/` | Domain services, authenticated client, CLI and optional REST/MCP transports |
+| `docs/` | Task guides, technical contracts and architectural rationale |
+| `web/` | React/TypeScript interface, frozen build inputs and bundled browser assets |
+| `packaging/` | Native/container units, configuration, image inputs and runtime templates |
+| `scripts/` | Build, install, diagnostic, test and consumer helpers; [catalog](scripts.md) |
+| `examples/` | Archive policy, independent copy helper and protected-file MCP client |
+| `tests/` | Offline fixtures, explicit opt-in system tests and durable-format goldens |

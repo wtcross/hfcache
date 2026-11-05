@@ -42,5 +42,5 @@ is added by context propagation.
 - [offline initialization](../../src/hfcache/offline.py)
 - [Decision 127](decision-127.md)
 
-Recorded installed scope and remaining acceptance are described in
-[deployment status](../deployment-status.md).
+Deployment prerequisites are defined in the
+[deployment guide](../deployment-centos-stream-10.md).

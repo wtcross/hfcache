@@ -1,13 +1,13 @@
 # Operating hfcache
 
-Use the authenticated API client for operational commands. Before running a
-workflow, check the [recorded deployment restrictions](deployment-status.md).
-The selected installation remains guarded/read-only: these procedures describe
-supported behavior and do not authorize NAS workloads, guard removal or schedules.
+Use the authenticated API client to inspect status, read reports and run
+authorized archive work. Select your installed profile and credential first.
+A held read-only guard denies archive jobs; a documented procedure does not
+grant permission to remove it, change schedules or start workloads.
 
 ## Choose the client and authority
 
-For the selected rootless writer host, use its fixed wrapper and protected
+For a provisioned rootless writer host, use its fixed wrapper and protected
 client settings. A shell array preserves argument boundaries:
 
 ```bash
@@ -22,12 +22,55 @@ HF=(hfcache --client-config "$HOME/.config/hfcache/client.toml" --json)
 ```
 
 Choose one definition. Native Unix clients use `/run/hfcache/api.sock`; the
-selected rootless endpoint is `/run/hfcache/api/api.sock`. Remote clients use
+rootless endpoint is `/run/hfcache/api/api.sock`. Remote clients use
 verified HTTPS with the configured public prefix. See [client setup](api-client.md).
 The settings select a protected REST bearer pathname or named API credential;
 never put its value in arguments. A reader needs no archive mount, archive TOML,
 Hub credential or service UID. Writer capability is required for mutation.
 MCP credentials grant only the separate [metadata tools](mcp.md).
+
+## Read status and inventory
+
+These reader commands perform authenticated HTTP and bounded archive metadata
+reads. They do not contact the Hub, hash payloads, take the archive lock or create
+operation receipts. Availability of the installed archive/policy is still required:
+
+```bash
+"${HF[@]}" status
+"${HF[@]}" list
+"${HF[@]}" list --revisions
+"${HF[@]}" verify --estimate
+```
+
+Inspect `data.archive` for reachability, unfinished transactions, unknown entries,
+quarantined bytes, deferred cleanup and degraded verification. A successful status
+query can report a degraded archive; it does not turn an integrity finding into
+exit 40. Confidence belongs to an exact SHA/publication instance. A reintroduced
+revision or repaired instance must not inherit another instance's confidence.
+
+Inventory includes archived unmanaged repositories; configuration removal never
+deletes their data. Explicit selectors filter the combined configured/published
+scope, including unmanaged rows. Status retains configured empty repositories.
+Collection walks either finish with consistent archive/policy/publication identity
+or fail explicitly at byte/page/scan bounds. They are not a global snapshot under
+concurrent publication. Do not treat a partial walk as a complete inventory.
+Reference locators are published-relative; manifest trees are archive-relative.
+Bulk transfer remains the independent [consumer workflow](consumers.md).
+
+Read a bounded page of domain run IDs, then inspect one returned ID:
+
+```bash
+"${HF[@]}" runs list --limit 20
+"${HF[@]}" runs show -- '<run-id-from-list>'
+```
+
+`runs list` returns one page. Its `Run read metadata:` notice on stderr includes
+`next_cursor`; pass a non-null value unchanged with `--cursor` for the next page.
+`runs show` reads the durable report for the exact domain run ID.
+Operation IDs identify admission/observation history; request IDs identify
+individual requests. Neither substitutes for a domain run ID. The equivalent
+HTTP resources are `GET /api/v1/runs` and `GET /api/v1/runs/{run_id}`.
+See [metadata reads](api.md#metadata-reads) and [report formats](schemas.md).
 
 ## Resolve uncertain work before starting more
 
@@ -67,39 +110,6 @@ operations and [drain/reconcile the API and verifier](server.md#restart-and-drai
 Keep the verifier available for API outcome handoff, then drain it. A free flock,
 PID, elapsed timeout or wrapper exit alone proves neither completion nor death.
 Preserve both operation stores, scheduled pending handles and original lock inodes.
-
-## Read status and inventory
-
-These reader commands perform authenticated HTTP and bounded archive metadata
-reads. They do not contact the Hub, hash payloads, take the archive lock or create
-operation receipts. Availability of the installed archive/policy is still required:
-
-```bash
-"${HF[@]}" status
-"${HF[@]}" list
-"${HF[@]}" list --revisions
-"${HF[@]}" verify --estimate
-```
-
-Inspect `data.archive` for reachability, unfinished transactions, unknown entries,
-quarantined bytes, deferred cleanup and degraded verification. A successful status
-query can report a degraded archive; it does not turn an integrity finding into
-exit 40. Confidence belongs to an exact SHA/publication instance. A reintroduced
-revision or repaired instance must not inherit another instance's confidence.
-
-Inventory includes archived unmanaged repositories; configuration removal never
-deletes their data. Explicit selectors filter the combined configured/published
-scope, including unmanaged rows. Status retains configured empty repositories.
-Collection walks either finish with consistent archive/policy/publication identity
-or fail explicitly at byte/page/scan bounds. They are not a global snapshot under
-concurrent publication. Do not treat a partial walk as a complete inventory.
-Reference locators are published-relative; manifest trees are archive-relative.
-Bulk transfer remains the independent [consumer workflow](consumers.md).
-
-Existing reports are authenticated resources `GET /api/v1/runs` and
-`GET /api/v1/runs/{run_id}` through the SDK/HTTP interface, not a `runs` CLI command.
-Use the exact domain run ID; operation and request IDs are different identities.
-See [metadata reads](api.md#metadata-reads) and [report formats](schemas.md).
 
 ## Plan, diagnose and synchronize
 
@@ -218,8 +228,8 @@ No recovery workflow initializes an existing archive.
 | --- | --- |
 | Usage exit 2 | Fix CLI grammar; no command callback ran |
 | 0 | Successful classified result, possibly warnings; inspect status and warning fields |
-| 10 | Invalid policy/invocation; inspect exact result and admission history before assuming no prior effects |
-| 20 | Safety, transport, protocol or observation refusal; retain handles, establish execution state and diagnose mount/sentinel/lock/limits |
+| 10 | Invalid policy/invocation or protocol identity failure (`HFAPI018`); inspect exact result and admission history before assuming no prior effects |
+| 20 | Safety, transport or observation refusal; retain handles, establish execution state and diagnose mount/sentinel/lock/limits |
 | 30 | Repository sync failure; inspect partial results and exact run report |
 | 40 | Integrity findings; preserve evidence and original expectations; use the recovery workflow |
 | 50 | Retention/repair failure; inspect transaction/audit evidence and preview recovery after quiescence |
@@ -276,9 +286,9 @@ not the published archive.
 
 ## Scheduling and capacity
 
-The selected guarded rootless deployment keeps legacy writers masked and the
-verification calendar disabled. Do not enable them as a documentation check.
-Native scheduled services retain observation handles and repeat finite windows;
+Enable schedules only after profile-specific startup, credentials and workload
+authority have been approved. Native scheduled services retain observation
+handles and repeat finite windows;
 stopping an observer preserves lookup-only recovery, never replay authority.
 
 The separately provisioned native [host APIs](api.md#fixed-host-actions-and-original-outcomes)
@@ -288,7 +298,8 @@ pause/resume change activation without changing enablement. Resume can trigger
 Persistent catch-up. A stopped observer leaves accepted API/worker work and its
 pending observation handle intact. After a lost reply, read the original keyed
 host outcome; do not replay changes or infer manager certainty from stored bytes.
-The current rootless deployment remains denied. See [Administration](web-ui/administration.md#schedule-observer-and-diagnostic-apis).
+Rootless schedule/observer controls remain denied when the installed profile
+has no proven system-manager binding. See [Administration](web-ui/administration.md#schedule-observer-and-diagnostic-apis).
 
 | Native timer | Calendar in America/New_York | Persistent | Random delay | Accuracy |
 | --- | --- | --- | --- | --- |
@@ -335,10 +346,10 @@ and guarded executor drain/backup procedure before rollback.
 Use existing protected client settings for local discovery and explicit backfill:
 
 ```bash
-hfcache search --scope configured --tag coding
-hfcache search --type dataset --tag science --format parquet
-hfcache catalog refresh --tags-only model:fictional/coding-model
-hfcache catalog refresh --technical-only --revision-scope retained
+"${HF[@]}" search --scope configured --tag coding
+"${HF[@]}" search --type dataset --tag science --format parquet
+"${HF[@]}" catalog refresh --tags-only model:fictional/coding-model
+"${HF[@]}" catalog refresh --technical-only --revision-scope retained
 ```
 
 The fictional selector illustrates scope; use an actual configured or retained
@@ -348,7 +359,7 @@ operation instead of issuing a new capture. Reads never refresh implicitly.
 Repair captures its replacement publication independently; prune/purge remove
 membership even when old metadata remains. See [rollback and backup](discovery.md#guarded-rollback-and-backup).
 
-The unreleased server also captures an independently versioned README record
+The server also captures an independently versioned README record
 during joined sync/repair and technical refresh. `--tags-only` leaves it alone.
 Missing README is normal; unsafe, unsupported, oversized or failed capture
 retains a bounded warning without undoing publication. Refresh observation counts

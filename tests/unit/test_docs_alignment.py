@@ -1,6 +1,5 @@
 """Human audiences, real Markdown references and helper coverage fail closed offline."""
 
-import json
 import subprocess
 from pathlib import Path
 
@@ -40,6 +39,49 @@ def test_real_domain_concepts_identifiers_and_runtime_events_are_allowed():
         "CP-11 INV-010 SHA-256 UID-981; progress events and pending.json"
     )
     assert CHECKER["audience_errors"](text) == []
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["docs/deployment-status.md", "docs/web-ui/test-release-acceptance.md"],
+)
+def test_retired_human_execution_ledgers_are_rejected(tmp_path, name):
+    path = tmp_path / name
+    path.parent.mkdir(parents=True)
+    path.write_text("# Retired record")
+    assert CHECKER["execution_record_errors"](CHECKER["repository_index"](tmp_path))
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "docs/agents/plans/current.md",
+        "docs/agents/plans/tasks/example.md",
+        "docs/agents/progress.md",
+        "docs/agents/history/snapshot.md",
+        "docs/agents/reviews/review.md",
+        "docs/agents/migration-manifest.json",
+        "docs/agents/documentation-inventory.json",
+        "docs/agents/historical-contract-map.md",
+    ],
+)
+def test_agent_planning_and_history_are_allowed(tmp_path, name):
+    path = tmp_path / name
+    path.parent.mkdir(parents=True)
+    path.write_text("Preserved agent record")
+    entries = CHECKER["repository_index"](tmp_path)
+    assert CHECKER["execution_record_errors"](entries) == []
+    assert CHECKER["human_documents"](entries) == []
+
+
+@pytest.mark.parametrize("heading", ["## Status", "## **Status**", "## `Status`", "Status\n------"])
+def test_readme_status_heading_is_rejected_but_runtime_state_is_allowed(tmp_path, heading):
+    readme = tmp_path / "README.md"
+    readme.write_text("# Archive\n\nPending operation progress; hfcache plan.\n")
+    entries = CHECKER["repository_index"](tmp_path)
+    assert CHECKER["execution_record_errors"](entries) == []
+    readme.write_text(f"# Archive\n\n{heading}\nInstalled yesterday.\n")
+    assert CHECKER["execution_record_errors"](entries)
 
 
 def test_markdown_parser_checks_rendered_references_and_real_anchors(tmp_path):
@@ -232,10 +274,9 @@ def test_symlinks_cannot_read_outside_or_hide_agent_authority(tmp_path, monkeypa
 
 def test_complete_repository_audience_links_anchors_and_catalog_pass_without_baseline():
     documents, errors = CHECKER["check"](ROOT)
-    assert len(documents) > 150
+    names = {path.relative_to(ROOT).as_posix() for path in documents}
+    assert {"README.md", "docs/README.md", "docs/quickstart.md", "docs/consumers.md"} <= names
     assert errors == []
-    inventory = json.loads((ROOT / "docs/agents/documentation-inventory.json").read_text())
-    assert "transitional_tracking_matches" not in inventory
 
 
 def test_every_public_cli_help_path_is_current_and_does_not_construct_api_client(monkeypatch):

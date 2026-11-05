@@ -67,7 +67,7 @@ control and the deferred private-network reconnect test.
 - [Object identity, completeness, and corruption tests](../../tests/unit/test_verification.py).
 - [Shipped verification service](../../packaging/systemd/hfcache-verify.service).
 - [Shipped quarterly timer and disabled-until-reviewed policy](../../packaging/systemd/hfcache-verify.timer).
-- [recorded deployment scope](../deployment-status.md).
+- [deployment prerequisites](../deployment-centos-stream-10.md).
 - [Offline-unit hardening probe](../../scripts/check-hardening.sh).
 
 ## guarded command services amendment (2026-10-17)
@@ -134,6 +134,8 @@ and executor-aware hardening acceptance remain operator deployment prerequisites
 existing confined PID1 process, with strict early inheritance audit and real
 container-proxied readiness. Native named-FD3 activation remains a separate strict
 mode. No secrets, Hub use, IP permission or verification algorithm is added;
-socket cleanup preserves unknown evidence and joins active work first. Production
-API-to-worker SELinux acceptance awaits installed listener acceptance, while all live NAS verification/
-report/catalog tests remain forbidden under the current data-preserving scope.
+socket cleanup preserves unknown evidence and joins active work first. Actual
+API-to-worker connectivity under SELinux and NFS verification/report/catalog
+persistence require profile-specific installed validation under the
+[server](../server.md) and [deployment](../deployment-centos-stream-10.md)
+prerequisites. Source protocol checks cannot establish those controls.

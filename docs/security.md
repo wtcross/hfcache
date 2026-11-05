@@ -330,9 +330,11 @@ five-entry version-2 value is checked through the pinned descriptor before and
 after content reading, with final metadata verification. All other ACL shapes
 refuse this alternative; ordinary group-authorized source policy remains.
 Authentication changes no ACL or permission. See
-[decision152](adr/decision-152.md). The unreleased source implements this
-policy with recorded owned native/rootless application acceptance; production
-provisioning remains separate. The API token grammar rejects Hub-style `hf_` values. Exact opaque
+[decision 152](adr/decision-152.md). Provision search access to each parent,
+read access to the leaf and the required SELinux access in the selected native
+or rootless role. The reader validates this provisioned access; it never adds
+ACL entries, changes ownership or weakens the sandbox. The API token grammar
+rejects Hub-style `hf_` values. Exact opaque
 values are registered for redaction; the registry keeps only fixed-size digests
 and constant-time comparisons over three slots. Distinct class values prevent
 cross-interface ambiguity. Bearer principals retain a nonsecret class label,
@@ -391,9 +393,9 @@ headers. Explicit trusted TLS proxy rules and one Unix/TCP lifespan are tested
 on disposable sockets. Shared no-follow reader/work budgets cover legacy local
 query paths too; unsafe derived catalogs retain unknown confidence and never
 grant repair authority. bounded runner and private verifier supplies the execution/protocol boundary; scheduled observation
-packages service hardening while installed enforcement remains operator
-acceptance. Recorded installed 0.2.1 peer connectivity has narrower scope than outstanding
-NAS/domain/other-host acceptance; see [deployment status](deployment-status.md). See
+packages service hardening; operators must independently verify actual peer
+connectivity and NAS/domain/other-host enforcement under the selected profile.
+See the [deployment guide](deployment-centos-stream-10.md),
 [decision 112](adr/decision-112.md) and [server policy](server.md).
 
 **Control-state boundary.** Local receipts bind admission to a fixed public
@@ -728,8 +730,8 @@ readers retain AD-21's whole-archive authorization, without per-repository ACLs.
 The [threat/control/test map](mcp.md#read-only-boundary)
 connects each acceptance claim to concrete mounted tests. It applies existing
 T-01/02/07/08/12 and INV-002/003/007/010/016; it adds no tool, role or command
-capability. The [recorded deployment scope](deployment-status.md)
-owns actual runs and separates repository proof from deployment assumptions.
+capability. The [deployment prerequisites](deployment-centos-stream-10.md)
+separate application checks from controls that require installed-host validation.
 
 | Security boundary | Required proof |
 | --- | --- |
@@ -762,7 +764,7 @@ authorized client. Locked dependencies and the unprivileged sandbox reduce but
 do not eliminate parser/SDK or host compromise risk. Actual TLS/proxy/socket/
 credential delivery and rotation, worker egress/source masking, cgroup/SELinux/
 NFS/workload/other-host/browser acceptance remain separately scoped by
-[deployment status](deployment-status.md). Local integration results never
+[deployment guide](deployment-centos-stream-10.md). Local integration results never
 authorize production changes or certify unrelated controls.
 
 
@@ -783,12 +785,12 @@ cover application behavior and unchanged credential-free/no-IP worker/timer
 policy, not actual installed enforcement. Client/socket tests use owned disposable
 fixtures. TLS/firewall/socket/source delivery, worker egress/custom masks,
 cgroup/SELinux/NFS and real drain/rollback each require applicable installed
-evidence; see [deployment status](deployment-status.md).
+evidence; see [deployment guide](deployment-centos-stream-10.md).
 
 
 ## Rootless runtime scope
 
-[Decision 127](adr/decision-127.md) changes the selected local deployment, not
+[Decision 127](adr/decision-127.md) defines rootless lifecycle without changing
 whole-archive roles or FS/TX/domain authority. Explicit user-manager rootless
 Podman services and a reviewed system target bridge use fixed immutable images
 and safe lifecycle argv. No rootful/privileged/host-PID/host-network/label-disable
@@ -927,13 +929,13 @@ and tools: isolation claims rely on actual fixed authority/confinement, not tool
 absence. No secret-bearing fetch, runtime package/pull, SELinux allow/label or
 executor/drain shortcut is added. Repeat actual UBI proof before clean rollout.
 
-### Installed peer-control acceptance (2026-10-18)
+### API-to-worker peer verification
 
-[Recorded deployment scope](deployment-status.md) includes actual
-installed API-container framed PROBE under Enforcing before/after drain/restart.
-No allow/process-label/seccomp/executor bypass is used;0.2.0 failure stays history.
-This accepts listener connectivity and inspected confinement, not live NAS
-verification/workload or other-host security acceptance.
+Verify actual API-container framed PROBE under SELinux Enforcing before and
+after drain/restart, without process-label, seccomp or executor bypass. This
+establishes listener connectivity and inspected confinement only. Real NAS
+verification, workload and other-host export checks require their own evidence;
+see [deployment prerequisites](deployment-centos-stream-10.md).
 
 ## Hub adapter boundary
 
@@ -1039,16 +1041,14 @@ authority and does not recognize unknown arbitrary secrets.
 
 ## Browser administration design
 
-Optional Basic authentication and bounded authenticated application assets are
-implemented in unreleased source under the boundaries below. Actual installed
-conformance remains separately required; source availability does not enable a
-running release. Host/configuration and card controls retain their separate
-implementation/acceptance requirements. Preserve bearer REST, separate read-only
-MCP, helper confinement and recorded deployment limits. Do not enable unsupported
-settings or host effects based on design or a Basic grant alone. See decisions
+Optional Basic authentication and bounded authenticated application assets obey
+the boundaries below. Host/configuration effects additionally require the
+independent protected helper grants; Basic login alone grants no host authority.
+Bearer REST, separate read-only MCP and helper confinement retain their own
+controls. See decisions
 [140](adr/decision-140.md), [141](adr/decision-141.md),
 [142](adr/decision-142.md), [143](adr/decision-143.md),
-[UI status](web-ui/README.md) and [server bounds](server.md#web-ui-design-and-current-availability).
+[browser guide](web-ui/README.md) and [server bounds](server.md#web-ui-design-and-current-availability).
 
 Application-owned static serving uses the existing Caddy/TLS/Unix upstream.
 Assets are a bounded immutable indexed non-archive release root, authenticated
@@ -1496,8 +1496,8 @@ do not establish SELinux/namespace/container acceptance.
 Cards are untrusted derived presentation, separately bound to exact retained
 publication and immutable manifest/source identity. Writer-only bounded source
 SHA comparison checks the copied README alone and never raises integrity
-confidence. Capture and exact metadata-only reads are implemented in unreleased
-source; their inert Markdown is not an HTML response. Browser formatting has
+confidence. Exact metadata-only reads return inert Markdown rather than HTML.
+Browser formatting has
 its separate closed policy under [decision155](adr/decision-155.md). Registered/recognized secrets
 anywhere in the source withhold the whole presentation; non-present records retain no body or
 presentation digest. Safe link text stays inert, Markdown images become fixed

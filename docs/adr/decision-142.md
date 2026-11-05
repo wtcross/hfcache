@@ -1,7 +1,7 @@
 # Capture publication-bound inert README presentation records
 
 - Decision identity: 142.
-- Status: Accepted; writer capture, exact card reads and bounded browser rendering implemented in unreleased source; installed rendering acceptance remains required.
+- Status: Accepted; amended by the writer, read and renderer refinements below.
 - Date: 2026-10-20.
 
 ## Context and decision
@@ -66,10 +66,11 @@ unsupported structures, invalid UTF-8 and secret suppression yield explicit
 non-success card states while preserving valid publication success. Current
 curation, source-attributed declarations and integrity confidence remain separate.
 
-At baseline `6b8fae2e0997403ae5c716a2e92148af0a972af9`, card records,
-capture and card API are absent. This commit accepts their design; adversarial
-capture/read/render, exact retained/noncurrent/pruned/repaired identity, byte
-expansion, failure/crash and old-format compatibility evidence remains pending.
+Capture/read/render validation must cover retained, noncurrent, pruned and
+repaired identity, byte expansion, failure/crash boundaries and old-reader
+compatibility. The design was introduced in
+`c4dd806`; capture, reads and rendering were added in `c51cc5b`, `beebb7a`
+and `1ca6287`, respectively.
 
 ## Evidence and relationships
 
@@ -79,14 +80,12 @@ Amends [133](decision-133.md), [AD-12](ad-12.md), [AD-14](ad-14.md),
 See [schema](../schemas.md#181-repositorycard-schema-1),
 [API](../api.md#web-ui-and-administration-design),
 [security](../security.md#browser-administration-design),
-[web UI status](../web-ui/README.md). Introducing design is this commit;
-implementation evidence remains pending.
+[web guide](../web-ui/README.md).
 
 ## Writer capture amendment (2026-10-25)
 
-The preceding baseline and pending statements record the design's introduction.
-The independent card model, bounded no-follow source capture and atomic writer
-path are implemented in unreleased source. Joined sync/repair and existing
+The independent card model uses bounded no-follow source capture and an atomic
+writer path. Joined sync/repair and existing
 `technical=true` refresh request card capture without adding an endpoint, flag
 or field to old strict results. Observation rows and counts retain their original
 meanings. Card failures use bounded `HFWRN011`; normal absent README does not
@@ -96,7 +95,7 @@ Capture checks the complete original source for registered/recognized secrets
 before omissions; a match withholds the whole presentation. Leading YAML front
 matter is omitted, Markdown images become fixed placeholders, and raw HTML/MDX
 outside supported code is unsupported. Ordinary safe Markdown links,
-relative/fragment targets and HTTP(S) URLs remain inert source for the later
+relative/fragment targets and HTTP(S) URLs remain inert source for the
 pinned renderer; capture never follows them. Ambiguous/unsafe syntax refuses
 rather than falling back to a looser parser. The detailed subset and independent
 source, UTF-8, JSON-string, whole-record and shared-work ceilings are recorded in
@@ -106,15 +105,13 @@ the [capture guide](../web-ui/readme-cards.md) and
 Each replacement revalidates exact retained publication/manifest/source identity
 and preserves unknown or unsafe prior state under the original supplemental
 writer/preflight/journal guards. It widens no old observation, manifest, reference
-or public refresh schema. Source implementation alone does not establish
-old-binary rollback or installed acceptance; the actual compatibility drill and
-functional evidence must be recorded before acceptance. Exact card API reads
-and React rendering remain separate later work, with all originally accepted
-identity, no-payload and inert-rendering controls still required.
+or public refresh schema. Old-binary compatibility must be checked against the
+selected artifact and retained records. The API read and renderer
+retain the same identity, no-payload and inert-rendering controls.
 
 ## Exact read clarification (2026-10-25)
 
-The exact card GET is now implemented in unreleased source through the existing
+The exact card GET uses the existing
 authenticated metadata pool and request/worker lease. Its strict independent
 schema-1 projection is flat inside the unchanged read wrapper, with command
 `card read`. It preserves exact retained archive/repository/SHA/publication/
@@ -133,10 +130,8 @@ schema, refresh wrapper, MCP tool or CLI command and introduces no dependency.
 
 GET has no payload, Hub, credential-resolution, archive-lock, write, refresh or
 verification capability. It retains ordinary authentication, no-store/nosniff
-and bounded lease/drain behavior. Browser rendering and source-toggle UX remain
-later work with the original inert rendering requirements; the JSON API does
-not make those views available. Source implementation alone is not installed
-acceptance or production deployment.
+and bounded lease/drain behavior. The browser renderer and source toggle use
+this verified projection under the inert rendering requirements below.
 
 ## Bounded renderer amendment (2026-10-26)
 
@@ -145,5 +140,5 @@ selection, closed element/URL/ID rules and finite pre-parse/AST budgets. Renderi
 uses verified sanitized presentation only; it does not strip front matter again,
 change bytes under the digest, fetch assets or broaden card GET. A valid large
 card may offer Sanitized source while formatted rendering refuses locally.
-Implementation and actual three-browser conformance are recorded with WEB014;
-this amendment alone claims no passing acceptance or deployment.
+The implementation is in `1ca6287`; changing the bundled renderer still requires
+three-browser conformance against the selected artifact.

@@ -7,7 +7,6 @@
 - MCP transport amendment: [decision 124](decision-124.md).
 - Basic provider implementation contract: [decision146](decision-146.md).
 - Status: Amended; current scope includes the amendments referenced below.
-- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-17.
 
 ## Context, decision and rationale
@@ -59,8 +58,8 @@ read registry; native named delivery and rootless file-mounted delivery are dist
 - [Decision 118](decision-118.md)
 - [MCP](../mcp.md)
 
-Recorded installed scope and remaining acceptance are described in
-[deployment status](../deployment-status.md).
+Deployment prerequisites are defined in the
+[deployment guide](../deployment-centos-stream-10.md).
 
 - [HTTPX SSL verification](https://www.python-httpx.org/advanced/ssl/)
 
@@ -95,7 +94,7 @@ Recorded installed scope and remaining acceptance are described in
 ## Replacement UI design amendment (2026-10-20)
 
 [Decision 140](decision-140.md) amends this record for the accepted
-replacement design. Accepted Basic/internal-principal design preserves existing bearer classes and strict public schemas; the new provider and privileged capabilities are not implemented yet.
+replacement design. Accepted Basic/internal-principal design preserves existing bearer classes and strict public schemas; the concrete provider follows [decision 146](decision-146.md), while privileged effects require the protected helper.
 
 ## Authenticated asset and bootstrap amendment (2026-10-20)
 
@@ -103,8 +102,7 @@ replacement design. Accepted Basic/internal-principal design preserves existing 
 
 ## Source implementation clarification (2026-10-21)
 
-The earlier replacement-design amendment records its introduction-stage scope.
-Unreleased source now implements the bounded optional Basic provider and internal
+The application implements the bounded optional Basic provider and internal
 principal projection under [decision146](decision-146.md), plus explicitly enabled
 Basic-only indexed assets/bootstrap under [decision147](decision-147.md). Existing
 REST/MCP credential classes and strict public schemas remain unchanged. Internal
@@ -119,5 +117,5 @@ claims no installed release, production rollout or complete replacement conforma
 read-only effective-UID access ACL as an alternative to the ordinary
 readable-group membership check. It preserves explicit sources and every
 other credential/identity/lifetime rule, with descriptor ACL and metadata
-rechecks. Unreleased source implements this policy; installed application acceptance
-remains pending.
+rechecks. Provision parent search, credential-leaf read and selected-role SELinux access
+independently; the reader grants no permission.

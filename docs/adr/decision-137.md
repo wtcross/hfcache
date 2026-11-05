@@ -5,7 +5,7 @@ The superseded browser interface has been removed under
 remain governed by their current contracts.
 
 - Decision identity: 137.
-- Status: Accepted; source implementation and automated acceptance passed. Real disposable and installed acceptance remain separate.
+- Status: Accepted; amended as described below.
 - Date: 2026-10-20.
 
 ## Context and decision
@@ -41,8 +41,6 @@ would widen an existing protocol for presentation alone. Build-only public input
 identity and existing authenticated metadata provide useful comparisons while
 keeping unknown facts explicit. A package version or selected symlink is not
 sufficient evidence of the bytes a browser or running executor actually uses.
-
-## Consequences and relationships
 
 ## Shared query and original-operation state amendment (2026-10-26)
 

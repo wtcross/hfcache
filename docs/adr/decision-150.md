@@ -17,9 +17,10 @@ The replacement browser needs the former guarded administrator boundary without
 turning the online executor into a privileged host process. Decision141 fixes
 that separation. Add one direct foreground root helper, a fixed protected Unix
 endpoint, an independent six-category policy and selected-release index, and a
-separate bounded unprivileged client. This package implements status and safe
-configuration-base reads only. Every write operation remains denied until its
-owning package supplies its durable admission, effect and outcome contract.
+separate bounded unprivileged client. Status and safe configuration-base reads share this bounded reader. Fixed
+configuration and host writes require their separate durable admission, effect
+and outcome contracts in [decision 154](decision-154.md) and
+[decision 156](decision-156.md); displaying a policy bit enables no opcode.
 
 The [host administration contract](../host-administration.md) defines exact
 transport, peer, policy/index, budgets, failure and status requirements. The
@@ -73,7 +74,7 @@ discarded. Full exception logging would disclose untrusted diagnostics and is
 not permitted. These observations change no helper operation, protocol,
 endpoint, capability or SELinux permission and do not establish rootless support.
 
-WEB008 extends the same bounded logger to unexpected per-request failures,
+Guarded application extends the same bounded logger to unexpected per-request failures,
 including escaped inspection failures after an effect. Invalid-input/peer
 protocol refusals and already-answered policy denials remain quiet. Closing an
 exchange still preserves the original uncertain operation; logging neither
@@ -94,7 +95,7 @@ their independent security denials; fresh installed acceptance remains required.
 
 ### Fixed rootless manager session-bus transport (2026-10-24)
 
-The original isolated rootless33 run authenticated the browser and started
+An isolated rootless run authenticated the browser and started
 its API, but all three baseline browsers received unavailable host status.
 Matching Enforcing audit events identify denied writes to the private
 user-manager socket. Setting DBUS_SESSION_BUS_ADDRESS alone does not select
@@ -121,7 +122,7 @@ The later [message-authorization amendment](#session-broker-message-authorizatio
 supersedes only the prohibition on an unobserved broker `dbus send_msg` grant
 below; the connection decision and its original evidence remain unchanged.
 
-The retained isolated rootless34 run selected the session bus, but its baseline
+A subsequent isolated rootless run selected the session bus, but its baseline
 browsers still received unavailable host status. The bounded original audit
 window records seven Enforcing `unix_stream_socket connectto` denials from
 `hfcache_host_helper_t` to the stock `unconfined_dbusd_t` broker domain. Each
@@ -714,8 +715,7 @@ does not establish installed compatibility or authorize account/store migration.
 
 ## Original-intent and writer amendment (2026-11-03)
 
-Accepted design in [decision 164](decision-164.md), [decision 165](decision-165.md); implementation and installed conformance remain
-pending. The closed intent-review read checks actual helper cohorts and protected pending/history without archive payload access. Independent profile_evidence.archive_mode binds manual-writer to matching runtime schema 2, actual fixed role mounts, dedicated writer process labels and guard state. Default read-only behavior, metadata-only helper/observer authority and neverallows survive.
+Amended by [decision 164](decision-164.md), [decision 165](decision-165.md). The closed intent-review read checks actual helper cohorts and protected pending/history without archive payload access. Independent profile_evidence.archive_mode binds manual-writer to matching runtime schema 2, actual fixed role mounts, dedicated writer process labels and guard state. Default read-only behavior, metadata-only helper/observer authority and neverallows survive.
 See the [executable recovery contract](../job-recovery.md). Original rationale
 and unrelated requirements above remain in force.
 
@@ -796,9 +796,8 @@ authentication remains bound to its original container init and socket pidfd.
 
 ## Inert executable metadata refinement (2026-11-04)
 
-Installed source7 retirement passes the notify-worker join, then refuses an
-unused body read of an inert manager/broker executable. Those bytes never enter
-classification. Replace only this body read with fixed-path protected metadata:
+A body read of an inert manager/broker executable can be denied even after
+notify-worker identity proof. Those bytes never enter classification. Replace only this body read with fixed-path protected metadata:
 no-follow O_PATH ancestors and executable leaf, full inode identity/rejoin and
 unchanged exact process/argv/label/parent/cgroup/credential/birth checks. Bracket
 classification with executable-link, metadata and process revalidation, joining
@@ -816,8 +815,8 @@ installed retirement qualification.
 
 ## Non-dumpable PAM lineage refinement (2026-11-04)
 
-Installed source8 review authenticates the other inert executables, but the
-stock non-dumpable PAM child denies the ordinary UID observer's kernel exe link.
+The stock non-dumpable PAM child denies the ordinary UID observer's kernel
+executable link even when other inert executable identities are readable.
 Kernel ptrace read gates remain independent of SELinux file-getattr rights.
 Recognize only the exact `(sd-pam)` candidate through a separate protected stock
 user-manager/PAM lineage proof, before any link read. Bind the loaded vendor
@@ -836,9 +835,8 @@ retirement qualification remain independent of modeled source regressions.
 
 ## Detached authenticated keeper refinement (2026-11-04)
 
-Installed source9 review passes the closed PAM proof, then refuses the exact
-already engine-authenticated catatonit pause keeper solely because it is adopted
-by PID1 instead of parented by the active user manager. Cgroup placement does
+The already engine-authenticated catatonit pause keeper can be adopted by PID1
+instead of remaining parented by the active user manager. Cgroup placement does
 not establish parentage. Accept only those two specific parent identities, while
 joining captured process UID/GID arrays and maps to the existing prepared
 keeper. Preserve the fixed protected record, PID/birth, namespace owner/maps,

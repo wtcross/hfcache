@@ -14,14 +14,15 @@ No request starts a daemon/worker or falls back to local verification.
 | Guarded rootless | Fixed `/usr/local/libexec/hfcache-client` and container-service launcher; image Python/application under `/opt/hfcache/.venv/bin`; user API/worker/Caddy services behind system bridge/independent host guard | Unix-only API `/run/hfcache/api/api.sock` behind Caddy TLS; notify-ready worker-created `/run/hfcache/verification/verification.sock`; explicit Podman secret files, none in worker |
 | Native | Host release `.venv/bin`, system API/worker services and named socket activation | API `/run/hfcache/api.sock`, private `/run/hfcache/verification.sock`; systemd named credentials, worker receives none |
 
-The selected recorded rootless profile keeps NAS read-only, writer masks,
-disabled calendars, both operation stores, pending handles and original locks.
-Its API requires the ready worker **service**. The indexed rootless `.socket`
+The rootless API requires the ready worker **service**. The indexed rootless `.socket`
 artifact stays dormant with `RefuseManualStart=yes`; native named-FD3 activation
 remains supported. Native tools positively classify release layouts and refuse
 container/mixed/unknown targets. No identical unit name implicitly selects another
-manager. See [scripts](scripts.md), [containers](containers.md) and
-[recorded deployment restrictions](deployment-status.md).
+manager. Guarded and manual-writer activation have distinct permission and drain
+requirements; neither is enabled by choosing a listener. Preserve both operation
+stores, pending handles and original locks across profile changes. See
+[scripts](scripts.md), [containers](containers.md) and
+[host activation](host-administration.md).
 
 ## Public prefix and native Unix requests
 
@@ -36,8 +37,8 @@ all resource limits apply to either spelling.
 
 ## Server configuration
 
-[`ServerConfig`](../src/hfcache/server_config.py) independently of the archive
-TOML. `load_server_config` reads UTF-8 TOML and
+[`ServerConfig`](../src/hfcache/server_config.py) defines server settings
+independently of the archive TOML. `load_server_config` reads UTF-8 TOML and
 `validate_server_config_mapping` applies strict frozen models with unknown keys
 forbidden. There is no type coercion or literal-token field. Path values must be
 absolute normalized strings below `/`, with no `..`, trailing slash, backslash or
@@ -46,7 +47,7 @@ Validation exposes stable code/shape diagnostics without echoing input values,
 unknown caller-selected keys or raw TOML exception text. Existing HFCFG codes
 classify missing/unreadable files, malformed TOML, unknown fields, schema version
 and invalid constraints. The configuration model itself adds no durable JSON
-format; The independent local receipt schema is described separately below.
+format; the independent local receipt schema is described separately below.
 
 The server configuration default is `/etc/hfcache/server.toml`.
 [`packaging/server.toml`](../packaging/server.toml) is an example for this separate
@@ -66,6 +67,8 @@ the certificate/key before accepting connections.
 | `state_directory` | path, `/var/lib/hfcache/api` | Local service-private control state; outside publication trees |
 | `credentials` | required table | Required writer source and optional reader/MCP sources below |
 | `basic` | absent | Optional restart-only Basic administrator; exact HTTPS origin and protected administrator source below |
+| `web` | table, disabled by default | Matching immutable browser artifact; [settings below](#web-artifact-settings) |
+| `host_helper` | table, disabled by default | Fixed protected host helper opt-in; [settings below](#host-helper-settings) |
 | `listener` | table, defaults below | Unix/TCP/TLS and browser/proxy policy |
 | `limits` | table, defaults below | Bounded resource policy for metadata, command routes and runner |
 | `verification` | table, defaults below | Private executor client policy; no worker process is launched |
@@ -73,6 +76,37 @@ the certificate/key before accepting connections.
 | `interactive_docs` | bool, `false` | Enables authenticated `/api/v1/docs`; `/api/v1/openapi.json` is always authenticated |
 | `mcp_enabled` | bool, `false` | Optional MCP transport; requires installed `mcp` extra plus usable distinct `mcp_reader` source, restart-only |
 | `log_level` | str, `"info"` | `debug`, `info`, `warning` or `error`; startup-only |
+
+### Web artifact settings
+
+| `[web]` key | Default | Constraint |
+| --- | --- | --- |
+| `enabled` | `false` | Requires Basic plus both artifact fields when true |
+| `asset_root` | absent | Absolute normalized protected local artifact root |
+| `manifest_sha256` | absent | Exactly 64 lowercase hexadecimal characters when supplied |
+
+Enabled web also bounds `basic.origin` to 4,096 ASCII bytes and
+`listener.root_path` to 1,024 UTF-8 bytes. Disabled web retains validated optional
+artifact settings without opening assets or mount metadata. All settings require
+restart. See [asset capture](#authenticated-application-assets) for required
+release identity, containment, file formats and byte limits, and
+[web deployment](web-ui/deployment.md#select-a-matching-immutable-asset-artifact)
+for selecting the artifact.
+
+### Host helper settings
+
+| `[host_helper]` key | Default | Constraint |
+| --- | --- | --- |
+| `enabled` | `false` | Explicit opt-in; requires fixed `/etc/hfcache/config.toml` archive policy |
+| `profile` | absent | Required when enabled; `"native"` or `"rootless"` |
+| `deployment_sha256` | absent | Optional exact 64 lowercase hexadecimal deployment pin when enabled |
+| `api_host_gid` | absent | Integer `1`–`4294967294`; required when enabled |
+
+Disabled helper settings refuse all authority parameters; enabled settings
+require an explicit profile and measured host group. They are restart-only and
+grant no effect permission by themselves. See the
+[helper boundary](#narrow-administration-helper) for independent binding and
+execution proof, and [host administration](host-administration.md) for provisioning.
 
 ### Listener settings
 
@@ -219,8 +253,8 @@ value. Missing, inaccessible, unsupported, malformed or different ACLs refuse
 this alternative. Compare the ACL before and after bounded content reading,
 then recheck all descriptor metadata. Authentication changes no permissions and
 copies no delivered credential. See [decision152](adr/decision-152.md).
-The unreleased source reader implements this policy; installed application
-acceptance remains a separate deployment check.
+These file checks apply to bearer and Basic sources. Provisioning must also
+satisfy the service's actual DAC, ACL and SELinux access restrictions.
 
 Provision a high-entropy opaque token, alone in the file with at most one final
 LF. The token must have `32`–`4096` ASCII characters matching the RFC 6750 bearer
@@ -476,7 +510,7 @@ lane and strict route matrix preserve these boundaries.
 
 ## Bounded execution and private verification
 
-The accepted [original-intent protocol](job-recovery.md) adds permanent bounded
+The [original-intent protocol](job-recovery.md) supplies permanent bounded
 key closure under the existing store flock and a fixed local companion flock
 shared by API and worker. Independent shared leases cover admission, queue and
 real execution; exclusive reviewed retirement cannot race either process.
@@ -485,8 +519,7 @@ safely pinned store with missing/corrupt/future dispositions runs observation-
 only, preserving authenticated exact-ID reads; an unsafe parent/store lock
 refuses startup for operator review. Neither path recreates authority. Helper IPC
 occurs outside store/runner/domain/config locks. Existing operation schemas and
-the single service-owned archive flock remain unchanged. This design does not
-claim implementation or installed acceptance; [decision 164](adr/decision-164.md)
+the single service-owned archive flock remain unchanged. [Decision 164](adr/decision-164.md)
 defines compatibility and explicit first-activation/drain requirements.
 
 One heavyweight FIFO lane is separate from the bounded metadata pool. Admission
@@ -730,7 +763,7 @@ handle across repeated finite windows. Existing handles, including uncertain
 pre-POST crashes, permit lookup/observation only. Matching exact terminal evidence
 alone permits owned handle unlink/fsync. Rotation within the same class preserves
 lookup; malformed/future/mismatched history stays preserved at exit 20.
-The selected guarded rootless profile does not enable legacy schedules.
+Guarded rootless activation keeps legacy schedules disabled.
 
 Stopping a client never proves writer/verifier termination. Drain actual API work
 while private worker status/result handoff remains available, then drain private
@@ -753,17 +786,16 @@ does not certify installed NAS, egress, SELinux or other-host operation.
 
 ## Web UI design and current availability
 
-Unreleased source implements the optional Basic provider and authenticated
-application asset/bootstrap serving below. It remains disabled unless explicitly
-configured with a matching protected artifact. Administration composes existing
+Basic authentication is optional. Authenticated application asset/bootstrap
+serving defaults to disabled and requires Basic plus an explicitly configured
+matching protected artifact. Administration composes existing
 status/readiness/version reads, protected host observations, configuration,
 explicit diagnostics and fixed schedule/observer/journal controls. Opening or
 refreshing a read panel submits no operation. Basic grants, protected host
 permissions and each action's fresh execution proof remain independent; a Basic
 grant alone authorizes no host effect. These source capabilities do not change
-an installed release or permit adding unsupported
-settings to its server. Browser clients use the independent web interface.
-[UI status](web-ui/README.md) and
+an installed release or grant host permissions. Browser clients use the
+independent web interface. [Browser setup and tasks](web-ui/README.md) and
 decisions [140](adr/decision-140.md), [141](adr/decision-141.md),
 [142](adr/decision-142.md), [143](adr/decision-143.md) describe the replacement
 boundary. [Decision161](adr/decision-161.md) records repository removal of the
@@ -848,11 +880,10 @@ uncertainty and original operation handles; it never reloads or replays silently
 
 The [implemented optional provider](#basic-administrator) and decision146 retain
 bearer/MCP compatibility, finite verification work, exact subject/key ownership
-and post-authentication CSRF checks. This source boundary does not establish
-installed availability, authorize credential/service changes or make the future
-UI/static/helper settings available. Native browser challenge/deep-link/reuse and
-all three browser engines require actual acceptance; no per-request Authorization
-injection or TLS bypass substitutes for it.
+and post-authentication CSRF checks. Browser access requires explicit provider
+and artifact configuration plus credential delivery. Native browser
+challenge/deep-link/reuse must work with the deployed TLS and proxy policy;
+per-request Authorization injection or TLS bypass does not establish that.
 
 ### Narrow administration helper
 
@@ -894,7 +925,7 @@ key/ID support read-only reconciliation after interruption, never mutation repla
 Rootless schedule/observer permissions remain denied until their actual bindings
 are proved; same-named user units are not substitutes. Native positive controls
 must be accepted on an isolated supported profile. See the [API design](api.md#web-ui-and-administration-design)
-and [private record design](schemas.md#18-web-ui-and-administration-design-records).
+and [private records](schemas.md#18-web-ui-and-administration-records).
 
 ### Managed configuration read and preview
 

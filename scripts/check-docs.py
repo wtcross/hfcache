@@ -335,7 +335,7 @@ def inventory_errors(root, modes=None):
 def check(root):
     entries = repository_index(root)
     documents = human_documents(entries)
-    errors = []
+    errors = execution_record_errors(entries)
     for path in documents:
         if path.is_symlink():
             errors.append(f"{path.relative_to(root)}: unsupported human symlink")
@@ -365,6 +365,32 @@ def check(root):
             )
         )
     return documents, [*errors, *check_links(root, documents, entries), *inventory_errors(root)]
+
+
+def execution_record_errors(entries):
+    """Keep human entrypoints free of ledgers while allowing agent records."""
+    errors = []
+    retired = {
+        "docs/deployment-status.md",
+        "docs/web-ui/test-release-acceptance.md",
+    }
+    errors.extend(
+        f"{name}: retired execution record" for name in sorted(entries) if name in retired
+    )
+    readme = entries.get("README.md")
+    if readme is not None and not readme.is_symlink():
+        tokens = MarkdownIt("commonmark").parse(readme.read_text())
+        for index, token in enumerate(tokens):
+            if token.type != "heading_open":
+                continue
+            label = "".join(
+                child.content
+                for child in (tokens[index + 1].children or [])
+                if child.type in {"text", "code_inline", "image"}
+            )
+            if label.strip().casefold() == "status":
+                errors.append("README.md: retired Status section")
+    return errors
 
 
 def main(argv=None):

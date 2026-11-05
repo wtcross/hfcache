@@ -2,8 +2,7 @@
 
 - Decision identity: 127.
 
-- Status: Amended; current profile is qualified by the recorded deployment scope.
-- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
+- Status: Accepted; amended as described below.
 - Date: 2026-10-18.
 
 ## 2026-10-21 protected-reader amendment
@@ -58,7 +57,7 @@ than general NAS/isolation/other-host acceptance.
 
 ## Relationships and technical evidence
 
-See [deployment status](../deployment-status.md) for recorded scope and remaining acceptance.
+See [deployment guide](../deployment-centos-stream-10.md) for recorded scope and remaining acceptance.
 
 ## Replacement UI design amendment (2026-10-20)
 
@@ -67,8 +66,7 @@ replacement design. Accepted future narrow host helper preserves unprivileged AP
 
 ## Original-intent and writer amendment (2026-11-03)
 
-Accepted design in [decision 165](decision-165.md); implementation and installed conformance remain
-pending. A closed runtime schema-2 archive mode, immutable rendering/index and independently protected helper binding select fixed API/worker writer mounts and dedicated confined writer process domains. Schema 1 remains guarded-readonly; other roles, stores, images, account mappings and isolation remain unchanged.
+Accepted design in [decision 165](decision-165.md); A closed runtime schema-2 archive mode, immutable rendering/index and independently protected helper binding select fixed API/worker writer mounts and dedicated confined writer process domains. Schema 1 remains guarded-readonly; other roles, stores, images, account mappings and isolation remain unchanged.
 See the [executable recovery contract](../job-recovery.md). Original rationale
 and unrelated requirements above remain in force.
 

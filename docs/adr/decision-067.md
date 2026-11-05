@@ -37,4 +37,4 @@ Current governing documents: [docs/consumers.md](../consumers.md).
 Implementation or shipped-artifact evidence:
 [examples/copy-revision.py](../../examples/copy-revision.py).
 
-Recorded operational verification: [recorded deployment scope](../deployment-status.md). The source decision records independent damage drills for changed, missing, and extra files; there is no claim here that the later model-store script tests verify this original helper.
+Recorded operational verification: [deployment prerequisites](../deployment-centos-stream-10.md). The source decision records independent damage drills for changed, missing, and extra files; there is no claim here that the later model-store script tests verify this original helper.

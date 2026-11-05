@@ -1,19 +1,16 @@
 # Changelog
 
-Annotated release tags identify reviewed deployed states; application source and
-deployment commits may differ. This file summarizes user-visible changes and
-rollback constraints. Installation targets 0.1.0 and 0.1.1 were not releases.
+This file summarizes user-visible changes, compatibility and rollback constraints.
+Installation targets 0.1.0 and 0.1.1 were not releases.
 
-## 0.3.4 — 2026-11-05, compatibility release candidate
+## 0.3.4 — 2026-11-05
 
 Restore recognition of the exact successful committed prune-journal sequence
 written before container cleanup was added in July. Original journal bytes stay
 unchanged. New writer ordering and all unfinished/unknown refusals remain strict;
-no format, permission or dependency changes. The installed writer0.3.3 Sync
-pilot passes, but technical refresh is blocked by this compatibility defect.
-Matching0.3.4 deployment, successful refresh and bounded backfill remain required.
+no format, permission or dependency changes.
 
-## 0.3.3 — 2026-11-05, guarded local deployment
+## 0.3.3 — 2026-11-05
 
 - Correct original-request review for larger valid journal histories. Enumeration
   and reading receive separate accounting, with an explicit1024-journal limit
@@ -22,14 +19,9 @@ Matching0.3.4 deployment, successful refresh and bounded backfill remain require
 - Document the protected whole-host-history provisioning needed by review even
   when schedules and host-control permissions are disabled.
 
-No durable or wire format, dependency or permission changes. The guarded0.3.3
-release is installed. Genuine administrator UI review retires the original
-request with historical uncertainty and handles preserved, without job replay.
-Installed unavailable-job explanations pass. Writer transition/pilots and bounded
-backfill remain pending. No release
-tag, push or image publication is authorized.
+No durable or wire format, dependency or permission changes.
 
-## 0.3.2 — 2026-11-05, guarded local deployment with recovery holds
+## 0.3.2 — 2026-11-05
 
 - Explain why jobs are unavailable with accessible readiness information and
   actionable recovery controls. Bounded automatic recovery reads the original
@@ -38,8 +30,8 @@ tag, push or image publication is authorized.
   retirement installs a permanent disposition before another submission; unknown
   history remains unknown. Browser recovery records migrate without losing handles.
 - Support protected immutable guarded-readonly/manual-writer siblings and confined
-  rootless writer roles. Actual owned installed Sync/full Verify, restart and
-  guarded rollback checks pass under SELinux Enforcing with hardening intact.
+  rootless writer roles. Offline activation, full executor drain and independent
+  protected authority are prerequisites; selecting an artifact alone grants no writes.
 
 New disposition1/browser2/runtime2/manifest2 formats require capable readers.
 The exact0.3.1 predecessor refuses incompatible state/admission; rollback uses
@@ -48,32 +40,14 @@ credentials and original lock inodes. Archive/configuration/receipt formats are
 unchanged. See [recovery](docs/job-recovery.md) and
 [writer transition](docs/deployment-centos-stream-10.md#manual-writer-transition).
 
-Production selects0.3.2-guarded-readonly/source2d4c9cc. Installed automated
-read-only and genuine administrator UI/assets/helper/configuration GETs pass.
-The original request still needs the journal-accounting correction above before
-review can complete; selected Sync/metadata-refresh pilots and bounded metadata
-backfill remain separate acceptance work. Automatic schedules remain disabled and
-legacy native writers masked. No tag, push or image publication is authorized.
 
-## 0.3.1 — 2026-11-02, local release with workload holds
 
-The local host selects immutable release 0.3.1 from source `c23abba`, retaining 0.3.0 and
-all original state. Installed automated read-only acceptance passes.
-Genuine trusted-terminal administrator Basic, indexed UI assets, stable bootstrap
-identity, API-origin helper status and managed configuration reads pass in
-11 GETs, all HTTP 200, over verified TLS with the original permissions preserved.
-This validation runs no browser JavaScript, Apply, job or NAS workload.
+## 0.3.1 — 2026-11-02
 
-The explicit local publication scope retains the no-tag instruction: 0.3.1
-has no new release tag. Exact source/artifact identities identify this
-selection; existing tags remain unchanged.
-No archive, configuration, API, operation or receipt format changes. Preserve
-existing artifacts, target-compatible configuration/helper bindings and
-original handles for guarded rollback. Browser drafts remain in memory; no
-draft persistence or operation replay is added. NFS/workload/calendar/boot
-holds remain. Measured viewport and four-GET pagination evidence uses the
-exact canonical bundle on owned fixtures; it is not production latency or
-production browser/Apply acceptance.
+No archive, configuration, API, operation or receipt format changes. Browser
+drafts remain in memory; no draft persistence or operation replay is added.
+Preserve original handles and target-compatible helper/configuration bindings
+through rollback.
 
 - Require an explicit decision before reloading a dirty configuration draft.
   Preserve prepared edits and visible form values during pending or failed reads;
@@ -89,20 +63,12 @@ production browser/Apply acceptance.
   pagination uses at most four GETs; initial loads, changed filters, Refresh and
   incompatible evidence still obtain fresh facets. Bounds and exact joins remain.
 
-## 0.3.0 — 2026-11-02, local release with workload holds
+## 0.3.0 — 2026-11-02
 
-This version packages the completed web interface, REST API and read-only MCP
-server under a fresh immutable version. Disposable native/rootless acceptance
-and source validation remain distinct from the authorized production migration.
-The local host now selects 0.3.0. Installed TLS, administrator/UI/helper and
-configuration reads, REST, MCP and private-worker acceptance pass. The public
-Cockpit plugin entrypoint is retired with its original inode and old assets retained;
-see [deployment scope](docs/deployment-status.md).
+This version packages the web interface, REST API and read-only MCP server
+under an immutable version.
 
-Migration preserves the complete installed model/dataset configuration and local
-operation evidence, retains the predecessor and keeps NFS read-only, writers
-masked and calendars disabled. No archive transformation or workload is part of
-this release. Rollback to 0.2.2 requires its preserved server configuration:
+Rollback to 0.2.2 requires its preserved server configuration:
 that strict server rejects the newer `basic`, `web` and `host_helper` fields.
 Keep a compatible observer for any newer unresolved outcome and never remove
 archive or private records to force an older reader to accept them. See
@@ -114,8 +80,7 @@ strict helpers refuse the added home field; retain their matching bootstrap and
 index for rollback. Runtime and archive formats remain unchanged.
 
 - Remove the superseded interface source and documentation from the repository;
-  keep shared runtime safety and retained-code attribution. Installed services
-  and production state remain unchanged.
+  keep shared runtime safety and retained-code attribution.
 - Add an authenticated Library, exact model/dataset publication details,
   Operations, Maintenance and Administration through the existing shared Caddy
   endpoint. Static assets ship with the API; no separate frontend server or
@@ -133,18 +98,9 @@ index for rollback. Runtime and archive formats remain unchanged.
   durable-state and rollback limits. Keep unsupported/newer records, previous
   artifacts and compatible observation of unresolved outcomes; rollback never
   grants permission to delete evidence or weaken confinement.
-- Complete human build/provision/validation and migration guidance. Source and
-  fixture acceptance do not perform production migration, NAS workload
-  acceptance, production credential/service changes or remote publication.
+- Add build, provisioning, validation and migration guidance for the web profile.
 
-## 0.2.2 — 2026-10-20, local release with workload holds
-
-This release combines the changes below since previously deployed source `4088994`.
-The local installation now selects clean source `1c68501`, identified by local
-annotated `v0.2.2`. Actual installed acceptance passed for the indexed artifacts,
-TLS/authentication, private worker and fixed host client. Configuration, candidate,
-predecessor, locks, receipts, handles and secret identities remain intact. Existing
-NAS/workload holds remain; the tag has not been published to either remote.
+## 0.2.2 — 2026-10-20
 
 - Client error handling retains classified launcher, API and domain failures
   alongside original operation keys and IDs across interrupted observation.
@@ -162,11 +118,6 @@ NAS/workload holds remain; the tag has not been published to either remote.
   API identities.
 - The Unix HTTP adapter treats empty writes as a no-op, preventing a late empty
   end-of-message write from closing a valid response's socket prematurely.
-- Installed-wheel/private-socket and actual isolated rootless checks
-  passed, including exact configuration installation/confirmation and read-only
-  reconciliation after bridge interruption. These disposable checks remain
-  separate from actual installed acceptance and do not prove the original
-  installed browser symptom fixed. Its existing candidate is preserved.
 - Optional normalized configuration tags and current versus
   last-observed provenance are separate from operational policy and immutable
   publication/integrity identity.
@@ -185,21 +136,17 @@ NAS/workload holds remain; the tag has not been published to either remote.
   configuration and compatible observation of retained new operation kinds;
   rollback never authorizes deleting supplemental metadata or receipts.
 
-## 0.2.1 — 2026-10-18, local release with workload holds
+## 0.2.1 — 2026-10-18
 
 - Service images use pinned UBI 10 micro with authenticated portable Python and
-  verified executable/Red Hat CA donors. Application artifacts come from clean
-  source `4088994`; local annotated `v0.2.1` identifies deployment `156506f`.
+  verified executable/Red Hat CA donors.
 - The confined direct-PID1 worker creates its AF_UNIX listener and announces
-  readiness before API startup. Installed API-container peer access passes under
-  SELinux Enforcing, correcting the connection limitation recorded for 0.2.0.
+  readiness before API startup, correcting the rootless private-worker connection
+  limitation in 0.2.0 without weakening SELinux confinement.
   Native strict named-FD3 activation remains separate.
-- Recorded local TLS/REST/MCP/client, isolation and non-killing drain/restart
-  acceptance passed. NAS stays read-only, legacy writers masked and verification
-  scheduling disabled. Live storage jobs, other-host and full workload acceptance
-  are not claimed; see [deployment scope](docs/deployment-status.md).
 
-## 0.2.0 — 2026-10-18, local partial-acceptance release
+
+## 0.2.0 — 2026-10-18
 
 **Breaking change:** operational CLI commands require the authenticated REST API;
 there is no local execution fallback. Reader installations need no archive mount,
@@ -235,16 +182,13 @@ archive policy, Hub credential or optional server framework.
   budgets without losing terminal results or reconnect handles. Consumer export
   and durable archive formats remain compatible.
 
-Local annotated `v0.2.0` identifies deployment commit `11ddd55`; application
-artifacts use clean source `481fcc4`. TLS/authentication, registry/client and
-non-killing drain passed locally, but SELinux blocked API-container access to the
-private worker. Host-origin probes did not prove that connection. **Rollback to
-0.2.0 restores this limitation** unless separately corrected.
+**Rootless compatibility limit:** 0.2.0 cannot connect from the API container
+to the private worker under the supported SELinux policy. Rollback to 0.2.0
+restores this limitation unless separately corrected.
 
 Rollback retains the independent guard, original lock inodes, both operation
 stores, scheduled handles and reviewed manager bindings. A retained native
-0.1.10 tree is not an automatic rootless rollback target. This release did not
-clear NAS, calendar or other-host acceptance. Base and REST-only installations
+0.1.10 tree is not an automatic rootless rollback target. Base and REST-only installations
 remain supported independently of MCP. HTTPX/HTTPCore and optional transport
 packages use the locked dependency closure.
 
@@ -335,8 +279,8 @@ carries proven same-inode digest evidence instead of rereading every byte.
   WAN-idle hashing phase and its progress explicit in journald.
 - Sync and verification units bound page-cache pressure with `MemoryHigh=4G`;
   absolute dirty-page limits keep the writeback share reclaimable. Operations,
-  storage requirements, loopback quickstart, public-repository, and developer
-  documentation now describe the deployed system.
+  storage requirements, loopback quickstart, public-repository and developer
+  documentation describe this resource boundary.
 - A failed run report may retain warnings observed before a later failure.
   This is a schema-version-1 field-combination widening: **rollback to 0.1.3
   only when the newest sync report uses an older-valid combination, or after a
@@ -367,7 +311,7 @@ one file a consumer must read — is now a durable `HFVER008` finding at exit
 
 ## v0.1.2 — 2026-07-27
 
-First release. The writer is complete and deployed: it syncs public model and
+First release. The writer syncs public model and
 dataset repositories pinned to resolved full commit SHAs, SHA-256 hashes
 every new object before publication, publishes hardlink trees by atomic
 rename behind an atomically replaced `current.json`, retains five revisions
@@ -376,12 +320,6 @@ manifests, repairs without letting corrupt bytes become the expectation, and
 recovers every documented interrupted-transaction state — or stops and says
 why.
 
-At release: deployed on the writer VM against a TrueNAS NFSv4.2 export,
-SELinux enforcing with zero AVC denials, systemd hardening probed at 23 of 23
-on both service units, 1 585 tests by default plus the opt-in live, NFS, and
-build suites.
-
-Deliberately not done, and why this is 0.1.x and not 1.0.0: the read-only
-consumer export, snapshots and replication, the disjointness proof from a
-second client, reboot persistence, and the quarterly verification timer — separate operator
-acceptance requirements described in the deployment guide.
+Consumer export enforcement, storage snapshots and replication, second-client
+isolation, boot persistence and maintenance-calendar coordination require
+operator verification for each deployment; see the deployment guide.

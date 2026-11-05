@@ -59,7 +59,7 @@ archive`). The decision retains its rationale, alternatives and consequences.
 
 Current governing documents: [docs/recovery.md](../recovery.md),
 [docs/storage-requirements.md](../storage-requirements.md),
-[recorded deployment scope](../deployment-status.md).
+[deployment prerequisites](../deployment-centos-stream-10.md).
 
 Implementation or shipped-artifact evidence:
 [src/hfcache/storage.py](../../src/hfcache/storage.py),

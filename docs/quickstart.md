@@ -55,34 +55,46 @@ H() {
 H version --server
 H status
 H list --revisions
-H doctor --read-only   # admitted reader job; may contact Hub via installed credentials
 H verify --estimate
 ```
 
-Status/list/estimate are metadata reads; estimates do not verify archived bytes
-or create confidence. `doctor --read-only` is an admitted reader diagnostic job
-that may contact Hub using installed credentials, creates an operation receipt
-and performs no write probes. Its key/operation notices appear before the exact
-terminal result. Domain output is the exact server schema-1 Envelope, including
-failures, IDs and times. Do not infer integrity merely from HTTP success. No
-client setting selects a different server archive or grants write authority.
+Status, list and estimate read metadata; they do not verify archived bytes or
+create confidence. With `--json`, commands return the server schema-1 Envelope.
+Inspect `outcome`, `exit_code`, warnings and `data`, rather than HTTP success
+alone. No client setting selects a different server archive or grants authority.
 
-### Fixed rootless host client
+For example, these selected fields indicate a successful status query (this is
+an illustrative fragment, not a complete response):
 
-The selected rootless installation uses a different host entrypoint:
-
-```bash
-/usr/local/libexec/hfcache-client --json version --server
-/usr/local/libexec/hfcache-client --json status
+```json
+{"command": "status", "outcome": "success", "exit_code": 0}
 ```
 
-This fixed launcher supplies a protected rendered client configuration and the
-REST-writer Podman secret. It is a local operator client, not reader credential
-provisioning. Its nested API socket is `/run/hfcache/api/api.sock`; host native
-socket instructions above do not configure it. Use the provisioned HTTPS endpoint
-and distinct reader source for independent readers. See [container profiles](containers.md).
+Its `data.archive` describes archive health and unfinished work;
+a successful query can still report a degraded archive. `H list --revisions`
+then shows retained publications, identified by commit SHA and publication ID.
+Those identities matter because repair can replace a publication at the same SHA.
 
-## 3. Writer work and reconnect
+## 3. Search and inspect
+
+Keep using the same client configuration and protected reader credential:
+
+```bash
+H search --scope configured --tag coding
+H search --type model --format gguf --quantization Q4_K_M
+H tags --tag-source current_only
+H catalog show model:organization/model-name
+H catalog variants model:organization/model-name
+```
+
+Replace the repository placeholder with a result from your search. Configured
+tags include enabled, disabled and unpublished entries. Technical filters need
+retained publication observations; incomplete coverage means zero matches do not
+prove absence. [Discovery](discovery.md) explains scopes, coverage and predicates.
+For usable model files, continue with the independently verified
+[consumer copy workflow](consumers.md).
+
+## 4. Jobs and reconnect
 
 A writer uses its distinct provisioned REST-writer source and the same client
 contract. Follow [operations](operations.md#resolve-uncertain-work-before-starting-more)
@@ -108,7 +120,7 @@ be parsed as an option. Missing/expired history does not prove nonexecution.
 Do not replay with a new key, cancel execution or run recovery because an
 observer disappeared. See [uncertain outcomes](recovery.md#preserve-four-kinds-of-authority).
 
-## 4. Optional MCP metadata
+## 5. Optional MCP metadata
 
 MCP requires deliberate server enablement and a separate protected MCP-reader
 source; the REST credential above cannot authorize it. The
@@ -119,7 +131,7 @@ Whole-archive restricted metadata is visible to that capability; there is no
 repository ACL or OAuth provisioning flow. Copy and promotion still follow the
 [consumer contract](consumers.md).
 
-## 5. Provision a writer separately
+## 6. Provision a writer separately
 
 A disposable development writer still requires a real NFS/NFSv4 mount, its own
 archive UUID/paths, protected REST sources, separate server/client settings and
@@ -130,28 +142,8 @@ The [recovery rehearsal](recovery.md#rehearse-with-disposable-services)
 describes isolated disposable storage with its own identity. Do not create/delete shared `/run/hfcache`, mount/export paths,
 state or locks on an existing writer to follow a quickstart.
 
-Production rollout, credentials/TLS/firewall, actual worker no-IP/source masks,
-SELinux/NFS/hardening and drain/rollback require separate operator acceptance.
-The verification timer remains disabled pending calendar approval. Setup examples require the applicable operator authority; they are not run by
-the documentation checks.
-
-## Find configured tags and retained variants
-
-Use the protected REST reader configuration; no archive mount or Hub source is
-needed on this client:
-
-```bash
-hfcache --client-config /etc/hfcache/client.toml search --scope configured --tag coding
-hfcache --client-config /etc/hfcache/client.toml search --type model --format gguf --quantization Q4_K_M
-hfcache --client-config /etc/hfcache/client.toml tags --tag-source current_only
-hfcache --client-config /etc/hfcache/client.toml catalog show model:organization/model-name
-hfcache --client-config /etc/hfcache/client.toml catalog variants model:organization/model-name
-```
-
-Tags label enabled and disabled configuration entries immediately. Technical
-results require retained publication observations; incomplete coverage qualifies
-zero known matches. Human output labels representatives and historical tags;
-`--json` retains evidence. [Discovery](discovery.md) explains scopes and predicates.
-An explicitly selected writer credential can request `catalog refresh --tags-only`
-for offline historical capture; it is a keyed operation, never an implicit read
-side effect. Configuration installation remains the existing operator workflow.
+Writer provisioning requires the relevant operator authority and profile-specific
+TLS, credentials, SELinux, NFS, hardening and drain checks. Native and rootless
+local client/socket paths are described in [operations](operations.md#choose-the-client-and-authority).
+Scheduling is a separate operator decision. These setup procedures are not run
+by documentation checks.

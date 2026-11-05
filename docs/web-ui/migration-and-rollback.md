@@ -2,9 +2,8 @@
 
 The web interface uses the existing HTTPS endpoint and API. Migrating the
 interface must preserve original operations, configuration predecessors and
-archive evidence. Source implementation and disposable test results do not
-change the [installed production status](../deployment-status.md) or authorize
-a production switch. Follow the selected profile's
+archive evidence. A production switch requires operator authorization and
+profile-specific validation. Follow the selected profile's
 [deployment procedure](deployment.md) under separate operator authorization.
 
 ## Match existing workflows
@@ -55,90 +54,30 @@ obtain a clean-looking migration.
 
 ## Compatibility and backups
 
-The current local selection is 0.3.1 from source `c23abba`, physical index
-`93772b5c…`, with retained immediate predecessor 0.3.0 from source `3d6670d`. This update changes
-browser behavior and package version metadata, with byte-identical backend,
-helper/bootstrap, container templates and runtime dependency pins. Archive,
-configuration, API, operation, receipt and helper formats remain unchanged;
-no cross-format transformation or production rollback drill is claimed.
-Preserve the exact 0.3.0 artifacts, original configuration/state and matching
-deployment/index/policy bindings. A rollback still requires actual executor
-and helper drain, the original locks and independently verified target
-confinement. Never copy an old UI into the running release or replay an
-operation to prove compatibility. The current 0.3.1 selection is intentionally
-untagged under the explicit local publication scope; source/index hashes
-identify it. Existing tags and older rollback artifacts remain.
+Identify a rollback target by exact source, wheel, locked dependencies, UI
+manifest and indexed native/rootless release. Displayed package versions alone
+are insufficient; different builds can share a version. Preserve the complete
+predecessor bundle and its configuration, index, policy and confinement bindings.
 
-### Historical 0.2.2 compatibility evidence
+Older targets may parse a generic receipt yet lack the route or protected reader
+needed to settle its outcome. Validate these boundaries with the actual target
+binary against owned copies before selecting it:
 
-Displayed package versions are insufficient to identify a rollback target.
-The previous released application is source `1c68501` / version `0.2.2`; the
-retained wheel SHA-256 is
-`b88ffd0f8605d2410a16aa17379eb8a31362310f7143ca07dfab8ebf17bb6503`.
-Later web-feature builds also used `0.2.2` metadata. Identify the exact source,
-wheel, locked closure, UI manifest and indexed native/rootless release instead
-of rebuilding or relabelling an old artifact.
-
-The copied-state drill used that actual installed wheel against private copies
-exported from disposable native/rootless `0.2.78` / source `f829857e` fixtures.
-All 136 exported source files and both export manifests retained their original
-bytes. The following table
-distinguishes parser compatibility from a compatible running application; these
-results do not establish production readiness.
-
-| State or boundary | Observed result and operator consequence |
+| Boundary | Required compatibility check |
 | --- | --- |
-| Historical tags and structured observations | The old installed models accept the copied tag snapshot and all six publication observations. This preserves curation/interpretation readability; it does not verify publication payloads. |
-| Current and private predecessor/candidate archive configuration | All 44 copied TOML documents parse with the old archive configuration model. This is syntax evidence, not permission to install a predecessor or point the old server at a different archive. |
-| Generic private API receipts and results | The old installed models accept all 12 copied receipts and 12 exact Envelopes, including four `/api/v1/config/applications` receipts. Parsing the generic receipt does not supply the missing helper outcome reader or make its route supported by an old HTTP client. |
-| Cards and old archive inspection | The old installed catalog module has no card reader. On an independent copy with exported source modes restored and a simulated NFS mount table, the old inspector reports `HFMNT014` / `unusable` and 15 unknown entries, including cards and existing staging/quarantine/journal/publication/run paths. An earlier retained control without cards was also unusable; cards alone are not the whole refusal. No unknown state was removed. |
-| Private configuration and host outcomes | The old installed package has neither the configuration helper reader for 11 copied private outcomes nor the host-action reader for one copied sealed record. These are unavailable readers, not successful old-format reads. Keep a compatible observer whenever any outcome remains unresolved. |
-| Scheduled observation handle | The old installed scheduled model accepts the exact copied native pending handle. This is parse-only evidence: the original pending inode remains untouched and uncertain; no lookup, replay, completion or executor-termination claim follows. |
-| New server configuration | The old strict server model rejects `host_helper`, `basic` and `web` as unknown fields. Preserve the installed original and prepare a separate reviewed legacy-compatible server configuration. Never enable permissive parsing to force startup. |
-| Old reader/writer/MCP against the new server | The exact old installed CLI passes seven native checks over verified TLS: reader/writer status at both aliases, literal candidate validation, one original Plan and lookup of that same Plan. Rootless reader/writer status and candidate validation also pass; its two Plans refuse under the restricted fixture profile, as described below. The strict old MCP client accepts all 14 tools at each alias in each profile (28 calls per profile). Native reads genuine retained reports; rootless reads labelled synthetic report fixtures. These checks do not establish a new worker or browser run. |
-| Backend-only operation with UI disabled | Source integration starts a real backend lifespan and Unix HTTP server without UI/Basic configuration; disabled UI selects no assets and retains authenticated JSON 404 responses. Independent base/server/server-plus-MCP wheel installs also pass. These checks do not claim an installed daemon was switched to a disabled-UI profile. A legacy target still needs separately reviewed target-compatible server configuration. |
-| An already open browser during a release change | Earlier installed native three-engine checks detect the changed build, preserve original recovery records and unsaved Tags through Stay, and require explicit reload/reconnect without replay. Current unit/component checks additionally reject schema, source, wire and asset identity drift. Historical native checks do not establish a new rootless upgrade outcome. |
-| Native installed rollback and return | The disposable native installation completes indexed78 → 77 → 78 through its normal drain, matching bootstrap/configuration/helper binding and stock selection procedures. Trusted-TLS Chromium Library/bootstrap/reload checks pass on77 and restored78 with the same persistent browser profile. The exact old0.2.2 client looks up its original operation on77 and restored78, observing the same succeeded outcome without a new Plan. |
-| Rootless installed rollback and return | The disposable rootless installation completes indexed78 → 77 → 78. Target77 has read-only qualification of the original started roles, strict TLS and a passing Chromium Library/bootstrap/reload check. Return78 selection/binding/start stages and its final Chromium Library/bootstrap/reload check pass with the same persistent browser profile. The exact old0.2.2 client looks up its original failed operation on77 and restored78 without replay; its outcome remains failed. |
+| Archive configuration | Validate a separate target-compatible document. Strict older models can reject tags; preserve the tagged original and historical snapshots. |
+| Server configuration | Targets predating browser/host support can reject `host_helper`, `basic` and `web`. Prepare a reviewed compatible copy; never weaken strict parsing. |
+| Published metadata | Test tags, observations and cards separately. Readable ordinary inventory does not prove an older archive inspector or card reader accepts the optional namespace. Unknown records stay preserved. |
+| API receipts/results | Check route support and original key lookup as well as generic Envelope parsing. A readable terminal result does not implement a newer route. |
+| Protected outcomes | Keep a compatible configuration/host-outcome reader whenever a newer outcome is unresolved. Missing reader support blocks rollback if observation cannot be maintained. |
+| Scheduled pending handles | Validate the exact model and preserve the original inode. Successful parsing does not prove lookup, completion or executor termination. |
+| Browser assets and state | Select assets matching the target backend contract. Preserve handles and unsaved work before explicit reload/reconnect; never copy old assets into a running release. |
 
-The indexed predecessor77 is fixture `0.2.77` / source `004ea9e2`; the return
-target is fixture `0.2.78` / source `f829857e`. These are disposable indexed
-application/helper compatibility checks, distinct from the legacy0.2.2 parser
-refusals above and from production deployment. The predecessor retains its known
-configuration-read503 limitation; Library, TLS and original-handle checks do not
-establish its complete configuration workflow.
-
-Rootless target77 startup was qualified by read-only observation after failed
-collectors. Those original aggregates remain failed; binding publication and
-normal service starts were not replayed. Versioned worker seccomp paths were
-accepted only after both deployment-bound artifact indexes verified identical
-profile bytes; the other confinement checks remained exact. The drill does not
-demonstrate rollback with an unresolved newer helper outcome. Preserve its
-evidence and retain a compatible observer before selecting any target.
-
-After return78, the actual rootless roles retain host UID/GID983, zero capability
-sets, no-new-privileges, seccomp and SELinux confinement. The worker's IP denial
-and the exact renewed leaf over strict TLS 1.3 are observed independently.
-
-The initial native old-client attempt refused the expired fixture certificate
-chain before submitting a Plan. After a separately reviewed fixture CA/leaf
-renewal, strict TLS 1.3 qualification and the real-client checks above passed.
-The renewal's first post-start assertion failed without retaining its snapshot;
-that original aggregate remains failed. A separate read-only qualification
-observed the original started Caddy and preserved unit, hardening and original
-state without repeating the restart. This disposable fixture repair establishes
-neither production certificate rotation nor production migration acceptance.
-
-The first rootless Plan returns `HFARG002`: its literal candidate disables Hub
-tokens while that installed API explicitly selects a token file. Lookup observes
-the original failed operation. A separately reviewed candidate with optional
-tokens validates, but its distinct Plan returns `HFAPI007` because its authority
-does not match the restricted profile. Both refusals and their original handles
-remain preserved; no installed policy/configuration was changed to force a pass.
-The MCP checks use their normal HTTP transport, including POST requests, and
-submit no Plan, Apply or replay. Rootless strict TLS 1.3 qualification passes;
-the original drain/start/earlier qualification failures remain recorded without
-repeating those service actions.
+The compatibility tests exercise retained old source objects with isolated
+installed wheels; see [development validation](../development.md#examples-and-documentation).
+Their offline scope does not establish a live NAS, production migration or
+complete installed workflow. A legacy target's unavailable configuration reader
+cannot be inferred working from successful Library or TLS reads.
 
 Backups must include historical tag snapshots, publication observations and
 card adjuncts beneath `published/metadata/`, as well as immutable publication

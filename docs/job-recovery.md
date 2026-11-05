@@ -1,8 +1,10 @@
 # Job readiness and original-intent recovery
 
-This contract specifies the next recovery and rootless writer behavior. It is
-implemented server and browser protocol with source validation; the installed release's capabilities and deployment checkpoint
-remain authoritative until implementation and installed acceptance complete.
+This contract defines job readiness, permanent original-request closure and
+browser recovery for administrators and integrators. The server and browser
+implement this protocol; deployment requires the offline activation, executor
+drain and protected runtime bindings described below. Check the selected
+release's capabilities before using these surfaces.
 Existing operation receipts, domain journals and protected outcomes retain their
 independent meanings. [Decision 164](adr/decision-164.md) explains recovery;
 [decision 165](adr/decision-165.md) explains writer authority.
@@ -43,7 +45,7 @@ handle export remains available.
 
 ## Durable key closure
 
-Add one fixed `intent-dispositions.json` in the public API's existing protected
+The fixed `intent-dispositions.json` lives in the public API's existing protected
 local operation store. Its independent schema and quotas are defined in
 [schemas](schemas.md#133-original-intent-dispositions-schema-1). It is the sole
 authority for permanently closed keys. No request body, raw key, password,
@@ -123,7 +125,7 @@ or its entries. Admitted receipt retention remains unchanged.
 ## Wire surfaces and authorization
 
 Keep existing lookup, receipt, acceptance, result and problem schemas unchanged.
-Add these closed surfaces, each obeying existing prefix, authentication, Origin,
+These closed surfaces obey existing prefix, authentication, Origin,
 body, metadata-pool and response bounds:
 
 | Request | Meaning |

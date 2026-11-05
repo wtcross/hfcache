@@ -25,7 +25,8 @@ headers; separate inflight capacity and shared metadata leases remain bounded.
 SDK diagnostics preserve safe correlation/provenance without evaluating rejected
 messages/exceptions or echoing raw inputs.
 
-The transport delegates nine explicit typed reads through the separate curated
+The original transport delegated nine explicit typed reads;
+[decision 133](decision-133.md) extends the current set to fourteen. It delegates those reads through the separate curated
 registry; it does not convert REST OpenAPI into tools or expose writable dispatch.
 Upstream SDK features confer no hfcache authority. Handwritten protocol/session
 machinery and development static token verifiers were rejected. Dependency/parser/
@@ -59,8 +60,8 @@ fixture results do not certify installed isolation or NAS workloads.
 - [cost/refusal guidance](../mcp.md#resource-costs-and-troubleshooting)
 - [acceptance tests](../../tests/unit/test_mcp_acceptance.py)
 
-Recorded installed scope and remaining acceptance are described in
-[deployment status](../deployment-status.md).
+Deployment prerequisites are defined in the
+[deployment guide](../deployment-centos-stream-10.md).
 
 - [FastMCP 4.1.1 release metadata](https://pypi.org/pypi/fastmcp/4.1.1/json)
 

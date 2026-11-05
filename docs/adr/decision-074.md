@@ -58,4 +58,4 @@ Implementation or shipped-artifact evidence:
 [scripts/install-release.sh](../../scripts/install-release.sh).
 
 Verification or recorded operational evidence:
-[recorded deployment scope](../deployment-status.md).
+[deployment prerequisites](../deployment-centos-stream-10.md).

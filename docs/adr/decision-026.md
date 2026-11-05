@@ -10,8 +10,7 @@ Current contracts and later qualifications below govern.
 
 ## Decision, context, and consequences
 
-It is
-not durable — nothing on the archive is ever this shape — but it is a contract
+The CLI Envelope is not durable — nothing on the archive is ever this shape — but it is a contract
 with automation, and it was being assembled by hand at each call site with the
 `outcome`/`exit_code` agreement enforced by a conditional expression. It is
 now `reporting.Envelope`, which refuses an undocumented exit code, an

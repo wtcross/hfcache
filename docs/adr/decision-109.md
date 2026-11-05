@@ -32,8 +32,8 @@ configured retention. There is no crash-proof exactly-once claim.
 - [Decision 114](decision-114.md)
 - [Decision 115](decision-115.md)
 
-Recorded installed scope and remaining acceptance are described in
-[deployment status](../deployment-status.md).
+Deployment prerequisites are defined in the
+[deployment guide](../deployment-centos-stream-10.md).
 
 ## Fixed host-effect amendment (2026-10-27)
 

@@ -5,8 +5,7 @@ The superseded browser interface has been removed under
 remain governed by their current contracts.
 
 - Decision identity: 135.
-- Status: Amended; source and temporary fixture acceptance passed. Fixed-manager inspection is qualified below; disposable and installed acceptance remain separate.
-- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
+- Status: Accepted; amended as described below.
 - Date: 2026-10-20.
 
 ## 2026-10-21 protected-reader amendment
@@ -19,16 +18,16 @@ migration of legacy grants or change to historical acceptance follows.
 
 ## Context and decision
 
-Manual full sync and verification currently start legacy system services even
-though the fixed authenticated client already admits their REST jobs. Use that
+At adoption, manual full sync and verification started legacy system services even
+though the fixed authenticated client already admitted their REST jobs. Use that
 same client for manual `sync` and `verify --full`, with pre-send original keys,
 server receipts, bounded observation and exact terminal Envelopes. Scheduled
 observers remain distinct host objects. Their active state, exit status and
 journals never establish the outcome of a manually submitted operation.
 
 Amend CP-04 only: manual full jobs use the shared transient observer; scheduled
-services retain their existing lifecycle and private handles. The plugin no
-longer starts sync or verification services. Detaching a manual display never
+services retain their existing lifecycle and private handles. Manual interface
+actions submit keyed REST jobs instead of starting those services. Detaching a manual display never
 closes its process, cancels work or stops API/worker. An optional stop of the
 scheduled sync observer requires positive proof of its fixed observation-only
 binding and explicit host permission. Never redirect to a user manager.
@@ -45,7 +44,7 @@ approval independent of incidental host state.
 
 ## Consequences and limits
 
-The selected guarded installation stays restricted. Metadata and synchronous
+The guarded profile stays restricted. Metadata and synchronous
 validation remain distinct from keyed sizing/diagnostics and archive execution.
 Candidate file writes/install/discard retain the root configuration lock and
 exact-byte guards, with their own explicit host permission. Sync schedule changes
@@ -67,6 +66,11 @@ the loaded calendar or success of the interrupted manager operation.
 
 ## Relationships and evidence
 
+The [server execution and drain contract](../server.md),
+[protected host controls](../host-administration.md) and
+[browser operation guide](../web-ui/operations.md) describe current jobs and
+observer boundaries. The amendments below specialize their protected authority.
+
 ## Unit-specific manager properties (2026-10-20)
 
 Real systemd timer properties omit `MainPID`. Inspect only the five common fixed
@@ -80,7 +84,7 @@ relax guard identity or change the strict public inspection response schema.
 ## Replacement UI design amendment (2026-10-20)
 
 [Decision 141](decision-141.md) amends this record for the accepted
-replacement design. Accepted future helper transport retains separate manual REST jobs, scheduled observation and protected host permission proof; native positive and rootless denied conformance remains pending.
+replacement design. The helper transport retains separate manual REST jobs, scheduled observation and protected host permission proof; supported native positive paths and rootless denials require distinct tests.
 
 ## Fixed host-effect amendment (2026-10-27)
 

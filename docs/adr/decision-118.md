@@ -51,8 +51,8 @@ HTTP or borrowing server internals would undermine reader isolation.
 - [actual CLI socket integration](../../tests/unit/test_interface_integration.py)
 - [observer budget tests](../../tests/unit/test_cli_operation_helpers.py)
 
-Recorded installed scope and remaining acceptance are described in
-[deployment status](../deployment-status.md).
+Deployment prerequisites are defined in the
+[deployment guide](../deployment-centos-stream-10.md).
 
 - [Unix/custom transports](https://www.python-httpx.org/advanced/transports/)
 
@@ -64,7 +64,6 @@ Recorded installed scope and remaining acceptance are described in
 
 ## Original-intent and writer amendment (2026-11-03)
 
-Accepted design in [decision 164](decision-164.md); implementation and installed conformance remain
-pending. Visible freshly authenticated browser pages may automatically reconcile preserved original intent through bounded GETs. No client job POST retry, key replay or implicit retirement follows. CLI behavior and legacy conservative problems remain unchanged.
+Amended by [decision 164](decision-164.md). Visible freshly authenticated browser pages may automatically reconcile preserved original intent through bounded GETs. No client job POST retry, key replay or implicit retirement follows. CLI behavior and legacy conservative problems remain unchanged.
 See the [executable recovery contract](../job-recovery.md). Original rationale
 and unrelated requirements above remain in force.

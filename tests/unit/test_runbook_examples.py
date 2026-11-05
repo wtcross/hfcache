@@ -62,7 +62,7 @@ def test_runbooks_preserve_uncertainty_and_do_not_offer_direct_writer_aliases():
         assert not re.search(r"\$[HD]\b|/opt/hfcache/current/\.venv", text)
         assert "never" in text.lower()
         assert "new key" in text
-        assert "deployment-status.md" in text
+        assert "deployment-centos-stream-10.md" in text
         assert "operation" in text
         assert "verifier" in text
         assert "handles" in text

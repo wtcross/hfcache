@@ -406,6 +406,39 @@ different one.
 
 ## 10. Worked example
 
+The smallest valid archive policy supplies the schema and storage identity.
+This is writer policy, not the reader's client configuration. Replace the UUID
+with the provisioned archive identity; this example does not initialize storage.
+
+<!-- schema-example: archive-minimal -->
+```toml
+schema_version = 1
+
+[storage]
+archive_root = "/srv/hfcache"
+archive_id = "00000000-0000-0000-0000-000000000000"
+```
+
+Omitted tables use the defaults documented above. The empty repository list
+selects no downloads. To add a repository entry, append this focused extension,
+replacing the illustrative ID and enabling it only when intended:
+
+<!-- schema-example: archive-repository-extension -->
+```toml
+[[repositories]]
+id = "organization/model-name"
+type = "model"
+enabled = false
+tags = ["coding", "local-inference"]
+```
+
+Validate a saved candidate with `hfcache --config candidate.toml config validate
+--local`. Local validation reads policy and resolves its explicit Hub source;
+it performs no network, mount probe or archive mutation. Installed policy
+validation and API candidate assessment follow [their separate modes](cli.md#config-validate).
+
+The following complete example spells out defaults and adds a dataset:
+
 ```toml
 # /etc/hfcache/config.toml — owner root:hfcache, mode 0640
 schema_version = 1
@@ -454,8 +487,8 @@ enabled = true
 declared_dependencies = []
 ```
 
-A runnable version of this file, with the two small public test repositories
-chosen at implementation time, ships as `examples/config.toml`.
+A runnable version with two small public test repositories ships as
+[`examples/config.toml`](../examples/config.toml).
 
 ## 11. Separate server and client configuration
 
@@ -468,23 +501,14 @@ credentials have separate sources and authority. Independent client configuratio
 contains only connection/authentication settings and never grants archive access
 on the client host.
 
-The optional `[basic]` administrator and `[web]` artifact settings also belong
-only in this server configuration. `[web]` defaults to disabled. Enabling it
-requires Basic plus an explicit protected local `asset_root` and the lowercase
-SHA256 `manifest_sha256` of its canonical manifest. The captured artifact must
-match the installed application and wire authority; it cannot overlap archive,
-configuration, state, credential delivery, sockets, locks or configured TLS
-material. These settings are restart-only and do not select or install a release.
-See [web deployment](web-ui/deployment.md#select-a-matching-immutable-asset-artifact)
-for the complete procedure and limits. With web disabled, optional retained asset
-settings cause no asset or mount reads.
-
-`listener.root_path` refuses a leading `//`; the existing normalized-prefix rules
-otherwise remain. Enabled web additionally limits the prefix to 1,024 UTF-8 bytes
-and the Basic HTTPS origin to 4,096 bytes. Trusted redirect and acknowledgment
-Location headers encode accepted URL characters; operation links in JSON retain
-their original raw identity. This is not a configuration reload or a grant of
-new path support to an older client.
+The optional `[basic]` administrator, disabled-by-default `[web]` artifact and
+disabled-by-default `[host_helper]` opt-in also belong only in server TOML.
+Web requires Basic and a matching immutable protected artifact; host effects
+require independently protected deployment binding and permissions. Neither
+setting belongs in archive policy or a managed browser edit. The authoritative
+[server settings](server.md#server-configuration) define fields, defaults,
+validators and restart requirements; [web deployment](web-ui/deployment.md)
+and [host administration](host-administration.md) explain provisioning.
 
 Server transport and authentication are loaded at startup and change only after
 operator replacement and restart. Archive policy is loaded and validated afresh
@@ -512,19 +536,19 @@ unexpired bindings cannot be evicted for count caps, and interrupted/ambiguous/
 nonterminal state never ages out. Storage exhaustion refuses admission. See
 [decision 114](adr/decision-114.md) and [schema §13](schemas.md#13-service-private-operation-control-state).
 
-bounded runner and private verifier's separate `[verification]` table configures only the protected private
+The server's separate `[verification]` table configures only the protected private
 Unix-socket client, expected peer UID and bounded exchange/poll/frame policy.
 The socket defaults to `/run/hfcache/verification.sock`; omission of the peer UID
 uses the API process's effective UID. These settings require restart and cannot
 be overridden by an inbound request. They grant no process-launch, arbitrary
 configuration path or credential-forwarding authority. The dedicated worker's
 trusted service startup supplies its fixed archive config and separate private
-state root. scheduled observation packages socket/identity/no-IP policy; installed enforcement
-remains operator acceptance. See
+state root. Service isolation and socket provisioning must enforce this boundary
+in the selected deployment. See
 [server verifier settings](server.md#private-verifier-client-settings)
 and [decision 115](adr/decision-115.md).
 
-optional MCP transport uses the existing restart-only `mcp_enabled` and
+Optional MCP transport uses the existing restart-only `mcp_enabled` and
 `credentials.mcp_reader` fields, without a schema change. Disabled mode loads no
 MCP package or credential; enabled mode requires both optional dependencies and
 a protected distinct source. Do not reuse a REST/Hub secret or add a literal
@@ -536,9 +560,9 @@ See [MCP enablement](mcp.md#deployment-profiles) and
 ## 12. Candidate authority validation and planning
 
 [`services.candidates`](../src/hfcache/services/candidates.py) validates bounded
-candidate TOML content without loading a server-selected file. The pure command routes
-hooks now support API-backed reader CLI validation/planning; an explicit CLI `--config` for those
-commands reads at most 1 MiB of nonempty regular UTF-8 content on the CLI host,
+candidate TOML content without loading a server-selected file. For API-backed
+validation and planning, an explicit CLI `--config PATH`
+reads at most 1 MiB of nonempty regular UTF-8 content on the CLI host,
 checks stable descriptor metadata and uploads text. It never sends a pathname
 for the server to open. The total JSON request cap may refuse escaping/overhead
 independently. Other migrated API reads reject archive-config/Hub-token overrides.
@@ -687,6 +711,7 @@ strict five-field integer schema 1, matching host service identity and immutable
 image IDs. Fixed role paths and named secrets remain trusted helper policy,
 not request-supplied configuration. Read-only directory binds expose atomic
 installed policy replacements to fresh admissions while preserving admitted
-fingerprints. Source-store masks, secret separation and the no-NAS-write guard
-remain; see [decision 127](adr/decision-127.md). The selected rootless profile and its recorded acceptance limits are described
-in [deployment status](deployment-status.md). Native and rootless delivery differ.
+fingerprints. Source-store masks and secret separation remain; guarded activation
+also requires the no-NAS-write guard. See [decision 127](adr/decision-127.md) and
+the [container profiles](containers.md) for delivery and activation requirements.
+Native and rootless delivery differ.

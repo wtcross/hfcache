@@ -5,22 +5,18 @@ The superseded browser interface has been removed under
 remain governed by their current contracts.
 
 - Decision identity: 154.
-- Status: Amended; implemented with scoped guarded Apply and original-outcome acceptance.
+- Status: Accepted; amended as described below.
 - Date: 2026-10-25.
-- Introducing change: this commit.
+- Record introduced: `ad3275ab30ee7e3ea02b553e21d0b3518747c624`.
 - Amends [decision122](decision-122.md), [decision141](decision-141.md),
   [decision150](decision-150.md) and [decision153](decision-153.md).
 
-## Recorded implementation scope (2026-11-01)
+## Deployment and compatibility prerequisites
 
-[Human acceptance](../web-ui/test-release-acceptance.md) records owned native and
-guarded-rootless forms, validation, preview, Apply, exact installed bytes and
-observation of original outcomes after reload. The
-[migration guide](../web-ui/migration-and-rollback.md#compatibility-and-backups)
-records the separate compatible rollback limits. Earlier pending statements
-retain their historical scope. Original failed aggregates and uncertain outcomes
-remain preserved; unresolved helper outcomes acquire no rollback guarantee.
-Production and other-platform acceptance remain separate.
+Deployment requires independently protected profile bindings and validation.
+The [migration guide](../web-ui/migration-and-rollback.md#compatibility-and-backups)
+defines old-client/format refusals and compatible rollback. Preserve original
+failed or unknown outcomes; rollback cannot erase uncertainty.
 
 ## Context and decision
 
@@ -210,7 +206,6 @@ draft safeguard. See [configuration guidance](../web-ui/configuration-and-tags.m
 
 ## Original-intent and writer amendment (2026-11-03)
 
-Accepted design in [decision 164](decision-164.md); implementation and installed conformance remain
-pending. Generic original-intent retirement cannot confirm or clear unknown configuration effects. Fresh reviewed retirement refuses pending/corrupt/unknown protected outcomes; original-key configuration outcome confirmation remains separate and never becomes automatic.
+Amended by [decision 164](decision-164.md); Generic original-intent retirement cannot confirm or clear unknown configuration effects. Fresh reviewed retirement refuses pending/corrupt/unknown protected outcomes; original-key configuration outcome confirmation remains separate and never becomes automatic.
 See the [executable recovery contract](../job-recovery.md). Original rationale
 and unrelated requirements above remain in force.

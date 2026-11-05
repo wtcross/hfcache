@@ -2,13 +2,27 @@
 
 The superseded browser interface has been removed under
 [decision 161](decision-161.md). Shared backend, host-helper and web rules below
-remain governed by their current contracts.
+remain governed by their current contracts. This record preserves the superseded
+launcher rationale; it is not a procedure for the removed interface.
 
 - Decision identity: 092.
 
 - Original decision date: 2026-07-30.
 
 ## Decision, context, and consequences
+
+The original browser launcher could not inherit a credential that systemd
+exposed only inside service units. Passing through the privileged manager kept
+secret values out of browser/bridge arguments and applied the same memory,
+umask and service identity controls to selected jobs. Manager credential import
+also preserved optional-source absence without conditional source-path probing;
+relaxing expected-account checks to keep anonymous execution was rejected.
+
+Transient execution deliberately outlived the page waiter. Manager-provided
+stdout pipes preserved SELinux separation: redirecting PID1 output to a
+user-labelled file could be denied before a meaningful result arrived. The
+historical Hub-import design is superseded by the API-only credential amendment
+below; no current browser launcher receives a Hub credential.
 
 ## Later history and current interpretation
 
@@ -18,6 +32,11 @@ application refuses missing credentials. Transient-unit lifetime supersedes
 [decision 89](decision-089.md)'s tab-cancellation behavior.
 
 ## Provenance and governing evidence
+
+Original decision: [99ef932](https://github.com/wtcross/hfcache/commit/99ef93274a7119c662ed8a8a0eb4af0194e416d6).
+The historical rationale above is paraphrased from the pre-removal record at
+`c692d7ae4b866fefd8a743a21afdb729da0f39c4`. Current authority is defined by
+[the CLI](../cli.md), [API](../api.md) and [security](../security.md).
 
 ## 2026-10-18 historical API integration amendment
 

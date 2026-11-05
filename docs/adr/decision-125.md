@@ -53,8 +53,8 @@ acceptance remains distinct from hermetic registry, concurrency and client check
 - [cost/refusal guidance](../mcp.md#resource-costs-and-troubleshooting)
 - [acceptance tests](../../tests/unit/test_mcp_acceptance.py)
 
-Recorded installed scope and remaining acceptance are described in
-[deployment status](../deployment-status.md).
+Deployment prerequisites are defined in the
+[deployment guide](../deployment-centos-stream-10.md).
 
 - [FastMCP tool/typed output/annotation reference](https://gofastmcp.com/servers/tools)
 

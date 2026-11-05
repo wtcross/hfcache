@@ -103,6 +103,9 @@ goes further and refuses a repository that remains configured (`AD-20`).
 | `sync` | yes | Synchronize all or selected repositories |
 | `status` | no | Configured, retained, current, warning, and verification state |
 | `list` | no | Archived repositories and revisions |
+| `search`, `tags` | no | [Search the catalog or list tag facets](#catalog-discovery) across all bounded result pages |
+| `catalog show`, `catalog variants` | no | Inspect catalog entries and exact-publication model observations |
+| `catalog refresh` | supplemental metadata | Capture offline tags, technical observations and README cards under the writer lock |
 | `runs list`, `runs show` | no | One authenticated inventory page or one exact durable run report |
 | `verify` | report/catalog except `--estimate` | Integrity verification in one of four modes |
 | `prune` | yes with `--apply` | Retention cleanup |
@@ -1054,11 +1057,12 @@ assembly changes only entries, retaining the first Envelope's identity/times.
 Quiet retains warnings, errors and uncertainty handles. API unavailability never
 falls back to an archive mount, local Hub source or model runtime.
 
-With the matching unreleased server, technical refresh also captures bounded,
+Technical refresh also captures bounded,
 publication-pinned README presentation records. This includes `--technical-only`
 and the default refresh; `--tags-only` does not read README sources. The narrow
 README source-digest comparison establishes provenance only, without changing
 verification confidence. Existing observation counts and JSON fields stay the
 same; `HFWRN011` exposes incomplete card capture through the normal partial-result
-rules. Card display and a card read API are separate subsequent work. See
+rules. The REST card-read endpoint and browser display use the same exact
+publication identity; the CLI has no card-display command. See
 [README capture and limits](web-ui/readme-cards.md).

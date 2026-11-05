@@ -27,7 +27,7 @@ decision text above preserves the complete reasoning in the current historical
 log, including its recorded alternatives and consequences.
 
 Current governing documents: [docs/schemas.md](../schemas.md),
-[recorded deployment scope](../deployment-status.md).
+[deployment prerequisites](../deployment-centos-stream-10.md).
 
 Implementation or shipped-artifact evidence:
 [src/hfcache/models.py](../../src/hfcache/models.py).

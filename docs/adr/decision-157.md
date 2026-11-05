@@ -1,10 +1,9 @@
 # Reuse parsed metadata only after reading identical authoritative bytes
 
 - Decision identity: 157.
-- Status: Accepted and implemented in unreleased source; final matching
-  installed performance and profile acceptance remain separately required.
+- Status: Accepted; amended as described below.
 - Date: 2026-10-27.
-- Introducing change: this commit.
+- Record introduced: `c199c4af1d05356d56abe5a0b7b7c9b8f860ce48`.
 
 ## Context and decision
 
@@ -65,11 +64,7 @@ that read. Separate bounded parser functions retain the two frozen model familie
 current publication and observation joins remain in their callers. Product
 [fresh-byte regressions](../../tests/unit/test_catalog_authority_cache.py) and
 [read-boundary regressions](../../tests/unit/test_catalog_read_boundaries.py)
-exercise these constraints. The complete product gate passes 9039 tests with
-52 opt-in deselections; the final code is built into native 0.2.66 and rootless 0.2.67
-artifacts. Product validation and installed acceptance remain distinct.
-
-Historical Source9 performance measurements and the isolated candidate comparison
-retain their original source scope. They are not relabelled as native 0.2.66/rootless 0.2.67
-performance evidence. Final matching browser, memory, native/rootless and remaining
-workflow acceptance still require their own actual results.
+exercise these constraints. The implementation was introduced in `c199c4a`.
+Domain timing comparisons above do not establish browser latency, retained memory
+or native/rootless installed performance; those require measurements against
+the selected artifact and declared fixture.

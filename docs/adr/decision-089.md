@@ -2,13 +2,26 @@
 
 The superseded browser interface has been removed under
 [decision 161](decision-161.md). Shared backend, host-helper and web rules below
-remain governed by their current contracts.
+remain governed by their current contracts. This record preserves the superseded
+launcher rationale; it is not a procedure for the removed interface.
 
 - Decision identity: 089.
 
 - Original decision date: 2026-07-30.
 
 ## Decision, context, and consequences
+
+The original interface followed the existing CLI instead of expanding archive
+authority to fit buttons. Publication belonged inside complete `sync`; repair
+was the only replacement operation. A separate publish action was rejected.
+Fixed service execution preserved memory, hardening and journal identity for
+long work, while target shutdown, archive initialization, verification-calendar
+activation and credential editing remained outside ordinary browser authority.
+
+The original page-owned selector process was accepted as an interruption shape;
+[decision 92](decision-092.md) superseded that lifetime with a transient unit.
+Current API execution is owned by the server/private worker, so loss of the
+browser or its observer cannot cancel accepted work or prove recovery safe.
 
 ## Later history and current interpretation
 
@@ -18,6 +31,11 @@ waiter/envelope rather than cancelling the job. The CLI-defined surface and
 excluded actions remain.
 
 ## Provenance and governing evidence
+
+Original decision: [ebc112f](https://github.com/wtcross/hfcache/commit/ebc112f30995e70a1ad3c6d214ee53b803f43b7f).
+The historical rationale above is paraphrased from the pre-removal record at
+`c692d7ae4b866fefd8a743a21afdb729da0f39c4`. Current authority is defined by
+[the CLI](../cli.md), [API](../api.md) and [security](../security.md).
 
 ## 2026-10-18 historical API integration amendment
 

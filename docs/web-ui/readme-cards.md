@@ -1,13 +1,59 @@
 # Archived README capture, reads and display
 
-Writer capture and the exact card read API are implemented in unreleased source.
-Capture stores a bounded,
-sanitized presentation of an archived root `README.md`, separately from technical
-declarations. The bounded browser card view is implemented in unreleased source; use these
-procedures only with a release containing that view.
-There is no raw-source download or separate card refresh button.
-Installing a release and granting archive write authority remain separate
-operator actions. See [interface availability](README.md).
+Open **Overview** in an exact [repository publication](repository-details.md)
+to read its archived README. **Rendered README** formats a bounded sanitized
+presentation; **Sanitized source** shows that derivative as text. Neither loads
+external images, fetches a live README or executes upstream code.
+
+A matching enabled backend/interface is required. Missing capture, absent README
+and rejected content have different explanations below. Reopening the view does
+not capture data; a new capture requires an explicit authorized writer job.
+
+## Read a card in repository details
+
+Open an exact model or dataset publication in [repository details](repository-details.md)
+and choose **Overview**. Keep its full SHA, publication ID and generation visible.
+**Rendered README** displays the verified sanitized presentation; **Sanitized
+source** shows that exact derivative text escaped as text, with no HTML execution.
+It does not retrieve the archived original or a live Hub copy. Source and
+presentation digests remain separately labelled, as do capture time, presentation
+version and fixed diagnostics. Upstream claims remain unverified declarations.
+
+Formatting supports ordinary paragraphs, lists, quotes, headings, emphasis,
+strikethrough, inert code and bounded GFM tables. Code never runs and uses no
+remote syntax highlighter. Task-list and footnote constructs become inert content
+or pinned upstream navigation. There is no raw HTML/MDX, SVG, script, form,
+embedded frame or card-provided style. Media are labelled placeholders; displaying
+a card never downloads images, fonts or scripts or proxies an asset URL.
+
+Safe relative, root-relative and fragment links refer to the selected repository
+and immutable commit, including the dataset path when applicable. Root-relative
+means the repository root, not the management server root. Dot segments cannot
+escape that root. A link cannot select a management API route or change the
+application's publication fragment. Explicit HTTP(S) navigation uses
+`noopener noreferrer` and `no-referrer`; unsafe, ambiguous, userinfo, network-path
+and encoded/control-character targets are refused. An absolute link to the
+management origin is inert as well, including a management API URL. Review the actual destination
+before deliberately following an upstream link; capture and display never follow it.
+
+Heading identifiers come from the validated publication and an ordinal rather
+than untrusted names. Source attributes are not copied onto arbitrary DOM elements.
+YAML front matter was already omitted during capture; the renderer does not strip
+a legitimate leading horizontal rule or change the source under its digest.
+
+A present card can exceed the smaller rendering budget while still satisfying
+capture and API bounds. In that case the view refuses formatted rendering locally
+and retains **Sanitized source**; it does not truncate the body into successful
+full content. Renderer errors do not clear operation handles or break the other
+repository tabs. Rendering performs reads only and never starts refresh work.
+
+`absent` means capture found no manifest-listed root README; `not_captured` means
+no adjunct exists for an otherwise retained publication. Unsafe, unsupported,
+oversize and failed captures remain distinct and provide no body. A vanished
+selected publication is unavailable, with no latest fallback. For a deliberate
+new capture, use the existing [writer refresh procedure](#refresh-existing-publications)
+with appropriate authority and preserve its original operation handle; repeatedly
+opening Overview cannot create a missing capture.
 
 ## Publication provenance
 
@@ -185,52 +231,6 @@ These bytes are not approved HTML. The browser applies its separate closed
 rendering policy below. Capture and authenticated JSON reads do not themselves
 prove browser rendering conformance.
 
-## Read a card in repository details
-
-Open an exact model or dataset publication in [repository details](repository-details.md)
-and choose **Overview**. Keep its full SHA, publication ID and generation visible.
-**Rendered README** displays the verified sanitized presentation; **Sanitized
-source** shows that exact derivative text escaped as text, with no HTML execution.
-It does not retrieve the archived original or a live Hub copy. Source and
-presentation digests remain separately labelled, as do capture time, presentation
-version and fixed diagnostics. Upstream claims remain unverified declarations.
-
-Formatting supports ordinary paragraphs, lists, quotes, headings, emphasis,
-strikethrough, inert code and bounded GFM tables. Code never runs and uses no
-remote syntax highlighter. Task-list and footnote constructs become inert content
-or pinned upstream navigation. There is no raw HTML/MDX, SVG, script, form,
-embedded frame or card-provided style. Media are labelled placeholders; displaying
-a card never downloads images, fonts or scripts or proxies an asset URL.
-
-Safe relative, root-relative and fragment links refer to the selected repository
-and immutable commit, including the dataset path when applicable. Root-relative
-means the repository root, not the management server root. Dot segments cannot
-escape that root. A link cannot select a management API route or change the
-application's publication fragment. Explicit HTTP(S) navigation uses
-`noopener noreferrer` and `no-referrer`; unsafe, ambiguous, userinfo, network-path
-and encoded/control-character targets are refused. An absolute link to the
-management origin is inert as well, including a management API URL. Review the actual destination
-before deliberately following an upstream link; capture and display never follow it.
-
-Heading identifiers come from the validated publication and an ordinal rather
-than untrusted names. Source attributes are not copied onto arbitrary DOM elements.
-YAML front matter was already omitted during capture; the renderer does not strip
-a legitimate leading horizontal rule or change the source under its digest.
-
-A present card can exceed the smaller rendering budget while still satisfying
-capture and API bounds. In that case the view refuses formatted rendering locally
-and retains **Sanitized source**; it does not truncate the body into successful
-full content. Renderer errors do not clear operation handles or break the other
-repository tabs. Rendering performs reads only and never starts refresh work.
-
-`absent` means capture found no manifest-listed root README; `not_captured` means
-no adjunct exists for an otherwise retained publication. Unsafe, unsupported,
-oversize and failed captures remain distinct and provide no body. A vanished
-selected publication is unavailable, with no latest fallback. For a deliberate
-new capture, use the existing [writer refresh procedure](#refresh-existing-publications)
-with appropriate authority and preserve its original operation handle; repeatedly
-opening Overview cannot create a missing capture.
-
 ### Rendering limits
 
 [Decision155](../adr/decision-155.md) adds a smaller formatted-rendering admission
@@ -291,22 +291,3 @@ the [guarded compatibility procedure](../discovery.md#guarded-rollback-and-backu
 before using an older binary. An independent schema version alone does not prove
 that an old writer accepts the new namespace. Never delete unknown records to
 make rollback or recapture succeed.
-
-## Example screens
-
-These images show synthetic captured cards in an isolated installation of
-test build 0.2.24. They contain test metadata and inert hostile code examples,
-not live archive facts. Documentation images come from Chromium; the same
-rendering, source and keyboard checks also run in Firefox and WebKit.
-
-![Model README with capture provenance, inert code, omitted media and immutable upstream links](images/readme-rendered-desktop.png)
-
-Dataset cards use the same safe display policy while retaining their separate
-repository type and immutable upstream location.
-
-![Dataset README with its own exact publication and source digests](images/readme-dataset-desktop.png)
-
-The source view preserves the sanitized derivative exactly and keeps long text
-in an accessible scrolling region. It never restores omitted original content.
-
-![Narrow-screen sanitized source view with explicit derivative labels and provenance](images/readme-source-mobile.png)

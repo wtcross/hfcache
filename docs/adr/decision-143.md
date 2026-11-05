@@ -6,7 +6,7 @@ remain governed by their current contracts.
 
 - Decision identity: 143.
 - Asset/bootstrap refinement: [decision147](decision-147.md).
-- Status: Amended; strict source/build and scoped direct installed replacement acceptance recorded. Production releases and other-platform acceptance remain separate.
+- Status: Accepted; amended as described below.
 - Date: 2026-10-20.
 
 The acceptance-method amendment below governs current conformance. Earlier
@@ -89,49 +89,26 @@ exercise deliberate invalid TypeScript/unsafe assignments rather than accepting
 configuration flags alone. Combined new-source unit/component coverage must meet
 90% lines and 85% branches; existing Python coverage is not redefined.
 
-### Historical workspace-stage scope (2026-10-20)
-
-The following records the initial shell-only stage; the dated source-implementation
-clarification below describes current unreleased tooling.
+### Browser gate scope
 
 Browser dependency provisioning is explicit and separate from execution.
-The initial `test:browser` uses a production-built shell in pinned Chromium on
-an owned loopback fixture, with a clear development/ disconnected status and no
-API authentication or archive behavior. It must fail if Chromium is unavailable.
-This preliminary check is deliberately distinct from the required three-engine
-real Caddy/installed application/platform acceptance. The future
-`--with-web-functional` option is not yet implemented and currently remains an
-unknown argument, rather than a successful placeholder.
-
-Workspace/gate source conformance and actual command results are recorded when
-their checks run. This tooling amendment alone claims no passing test, Caddy
-integration, installed availability or production rollout. See the
-[development commands](../development.md#web-workspace),
-[web package](../../web/package.json), [license inventory](../../web/dependencies/licenses.json)
-and [user status](../web-ui/README.md).
-
-The workspace and preliminary gate implement the first part of this decision.
-Precise API wire schemas, authentication, application-owned static serving,
-immutable native/rootless release integration and full three-engine installed
-functional acceptance remain pending. Their requirements are unchanged by a
-successful shell-only check.
-
-## Evidence and relationships
+`test:browser` exercises a production-built shell in pinned Chromium on an
+owned loopback fixture and fails when Chromium is unavailable. This source
+check does not establish three-engine Caddy/application/platform behavior.
+The [functional test reference](../web-functional-testing.md) defines the
+optional application/platform runner and its strict evidence interpretation.
 
 ## Authenticated asset and bootstrap amendment (2026-10-20)
 
 [Decision147](decision-147.md) amends this record. This refinement fixes deterministic source/toolchain/license/member identity and a source digest computed from the actual installed backend. Prebundle compiled source identity avoids a circular manifest fingerprint. Native platform hashing validates context; final functional gating requires all95 scenarios through actual Caddy and installed native/rootless roles, while early profiles keep future cases pending. The UI ships inside the pinned UBI10micro API image without Node.
 
-## Source implementation clarification (2026-10-21)
+## Related implementation boundaries
 
-The preceding shell-stage unknown-option and pending-implementation statements
-remain historical. Unreleased source now includes precise wire contracts under
-[decision145](decision-145.md), bounded Basic under [decision146](decision-146.md)
-and deterministic indexed artifacts/bootstrap/static serving under
-[decision147](decision-147.md). The provider-neutral application/platform/all
-runner and `--with-web-functional` gate are implemented; their required installed
-inputs still fail closed. Early scoped runs report later cases pending; the final
-flag requires all95 scenarios and is not replaced by source or shell tests.
+Precise wire contracts follow [decision 145](decision-145.md), bounded Basic
+follows [decision 146](decision-146.md), and deterministic indexed artifacts,
+bootstrap and static serving follow [decision 147](decision-147.md). Missing
+installed runner inputs fail closed. Its final selection requires all 95 cases;
+source or shell checks cannot substitute for missing runtime observations.
 
 ## Installed acceptance execution clarification (2026-10-31)
 
@@ -215,7 +192,3 @@ immutable publication identity and production/NAS limits are unchanged.
 This amendment supersedes only the mandatory instrumented-runner and exhaustive
 cross-product execution method above. See the current
 [development acceptance procedure](../development.md#installed-shared-caddy-functional-fixture).
-
-## User-directed deprecation scope (2026-11-01)
-
-## Recorded final source and product acceptance (2026-11-01)

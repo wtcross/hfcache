@@ -1,9 +1,9 @@
 # Bind a preserved rootless service-account home to the protected index
 
 - Decision identity: 162.
-- Status: Accepted for source implementation; installed proof remains pending.
+- Status: Accepted; protected binding and installed-profile validation are prerequisites.
 - Date: 2026-11-01.
-- Introducing change: this commit.
+- Record introduced: `3d6670d8dd0e8f2c941991ce154ecca7ac63c73c`.
 
 ## Context and decision
 
@@ -71,8 +71,7 @@ policy, archive authority or native execution rule is relaxed.
 
 ## Original-intent and writer amendment (2026-11-03)
 
-Accepted design in [decision 165](decision-165.md); implementation and installed conformance remain
-pending. Closed rootless account-home selection and existing mapped identities remain unchanged. The independent writer archive-mode binding is additional protected authority, not a new home, engine selector or permission to migrate an account/store.
+Accepted design in [decision 165](decision-165.md); Closed rootless account-home selection and existing mapped identities remain unchanged. The independent writer archive-mode binding is additional protected authority, not a new home, engine selector or permission to migrate an account/store.
 See the [executable recovery contract](../job-recovery.md). Original rationale
 and unrelated requirements above remain in force.
 

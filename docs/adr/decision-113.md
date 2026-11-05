@@ -9,7 +9,6 @@
 - Foreground default-SIGTERM cleanup ordering: [decision149](decision-149.md).
 - Fresh-byte parser memoization: [decision157](decision-157.md).
 - Status: Amended; current scope includes the amendments referenced below.
-- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-17.
 Native Unix/public-prefix routing is amended by [decision 123](decision-123.md).
 
@@ -58,13 +57,13 @@ retains the same transport trust boundary with its separate read-only capability
 - [ephemeral Unix/TCP/TLS tests](../../tests/unit/test_server_bootstrap.py)
 - [MCP](../mcp.md)
 
-Recorded installed scope and remaining acceptance are described in
-[deployment status](../deployment-status.md).
+Deployment prerequisites are defined in the
+[deployment guide](../deployment-centos-stream-10.md).
 
 ## Replacement UI design amendment (2026-10-20)
 
 [Decision 140](decision-140.md) amends this record for the accepted
-replacement design. Accepted application-owned authenticated UI/static design retains this one lifespan and bounds; UI routing and assets are not implemented yet.
+replacement design. Accepted application-owned authenticated UI/static design retains this one lifespan and bounds; indexed UI routing and assets follow [decision 147](decision-147.md).
 
 ## Authenticated asset and bootstrap amendment (2026-10-20)
 
@@ -72,8 +71,7 @@ replacement design. Accepted application-owned authenticated UI/static design re
 
 ## Source implementation clarification (2026-10-21)
 
-The earlier replacement-design amendment records its introduction-stage scope.
-Unreleased source now implements authenticated indexed assets, bootstrap and
+The application implements authenticated indexed assets, bootstrap and
 recognized UI routing under [decision147](decision-147.md), composed with this
 same application lifespan and its original REST/MCP pools. The protected capture
 and finite stream budget do not add another application or worker. Actual
@@ -88,5 +86,5 @@ frozen metadata model families. It follows every fresh no-follow read and query
 charge, and leaves publication/policy joins and response leases unchanged. Raw
 key retention is bounded separately from decoded objects and active read memory;
 this memo never caches an authenticated response or filesystem authority.
-The refinement is implemented in unreleased source. Its product gate and
+The refinement is implemented. Its product gate and
 artifact builds remain distinct from final installed performance/profile results.

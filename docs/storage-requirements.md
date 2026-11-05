@@ -1,9 +1,9 @@
 # Storage requirements
 
-What the storage server must provide for `hfcache` to operate, stated for
-**any** NFSv4.2 server. The [TrueNAS settings](#truenas-settings) give a worked example, and `hfcache doctor` proves most of what this page requires
-from the writer, against the real mount, before anything relies on it
-(`docs/deployment-centos-stream-10.md` §11).
+Provision storage with the filesystem and export semantics required by
+`hfcache`. The [TrueNAS settings](#truenas-settings) give a worked example, and `hfcache doctor` proves most of what this page requires
+from the writer, against the real mount, before workloads depend on it.
+See the [deployment acceptance checklist](deployment-centos-stream-10.md#acceptance-checklist).
 
 The shape in one paragraph: one filesystem holds the whole archive; the writer
 reaches it over a read/write NFS export that only the writer can use, with
@@ -22,7 +22,7 @@ file modes or client goodwill (`docs/architecture.md` §2.1).
   before anything is downloaded.
 - Case-sensitive, with no name normalization (`docs/architecture.md` §5.3):
   the archive preserves upstream file names exactly.
-- NFSv4.2 is the deployed standard (the writer mounts `rw,hard`, `nconnect=4`
+- The packaged mount selects NFSv4.2 (the writer mounts `rw,hard`, `nconnect=4`
   — `packaging/systemd/srv-hfcache.mount`). Preflight accepts an `nfs`/`nfs4`
   mount and then proves the semantics it needs directly — hardlink, atomic
   rename over an existing file, reference replacement — rather than trusting
@@ -64,7 +64,7 @@ the entire read path (`docs/architecture.md` §5.2). On a Linux server:
 `ro,all_squash,anonuid=<read-uid>,anongid=<archive-gid>`.
 
 A consumer must be able to read, and must fail to create, modify, rename, and
-delete — at the server. Prove both from a real consumer host
+delete — at the server. Prove both from a real consumer host.
 Writer-side fixtures cannot establish consumer export enforcement.
 
 ## 4. Pre-creation and ownership
@@ -92,8 +92,8 @@ and capacity alerts on the server are the operator's backstop
 ## TrueNAS settings
 
 Use a dedicated child dataset, such as `<pool>/huggingface-archive`; do not
-export the pool root or create one dataset per repository. For TrueNAS
-25.10.5 the initial settings are:
+export the pool root or create one dataset per repository. Review these initial
+settings against your TrueNAS release and site policy:
 
 | Setting | Value |
 | --- | --- |

@@ -1,312 +1,96 @@
 # Releasing hfcache
 
-Interface-only instructions and source references have been omitted from this
-retained shared record. Exact original text remains in Git `c692d7ae4b866fefd8a743a21afdb729da0f39c4`;
-original document path SHA-256 `f34b70af482d09ae5b64b9e92f1cf547a6a98550d087e5e1fcd2bc1920447bd2`,
-original content SHA-256 `7d1c7be9292526a9d2b5174fe726bc300a5135510527af5bd47695503eda7526`.
-Historical proof hashes identify the original artifacts, not this edited record.
+For agents assisting a maintainer with an explicitly authorized release.
+[Deployment and rollback](../deployment-centos-stream-10.md) and the
+[container contract](../containers.md) own the detailed profile procedures.
+Implementation alone authorizes no deployment, tag, push or image publication.
 
-The rule everything else hangs on (decisions 75 and 79): **a version is tagged
-because it is deployed.** Deploying and tagging are one motion; nothing is
-tagged that is not running, and nothing stays deployed that is not tagged.
-`docs/deployment-centos-stream-10.md` §13–§14 is the operator authority this
-checklist compresses.
+## Prepare a reviewable release
 
-**2026-11-02 local rollout exception.** The user authorizes main publication to
-Forgejo/GitHub and this host's 0.3.1 deployment while retaining the explicit
-instruction not to tag releases. For this rollout only, preserve all existing
-tags, create/publish no tag, and record the exact clean artifact-source commit,
-release/UI/image/index hashes, actual acceptance and remaining holds. Main's
-later evidence commit does not replace the artifact source. This user-scope
-exception does not change the normal policy for future releases.
+1. Identify the supported profile, clean source commit, previous compatible
+   release and authorized deployment scope. Record artifact identities and
+   execution evidence externally or in the appropriate `docs/agents/` records.
+   Preserve existing plans, task evidence, progress logs and snapshots.
+2. Update `[project] version` in `pyproject.toml` and user-visible changes,
+   compatibility and migration in `CHANGELOG.md`. README remains orientation;
+   do not add a Status section, deployment ledger or progress report.
+3. Run `scripts/check.sh --with-build`; for a full browser release use
+   `--require-web` as well. Live/NFS checks need their own suitable environment
+   and scope. A stopped or partially scoped gate is not a pass.
+4. Commit the reviewed inputs, then build immutable artifacts from clean
+   committed source. Keep artifacts, provenance and logs outside that source
+   worktree. A later evidence-only commit does not change artifact identity.
 
-The [API-017 rollout checklist](../deployment-centos-stream-10.md#acceptance-checklist)
-is the current API/private-worker/state acceptance companion. Feature completion
-alone does not cut or deploy a release, create a tag or authorize any step below.
-Commit and wheel/sdist hashes identify
-an artifact; equal displayed versions do not. Actual previous-feature/baseline
-compatibility evidence must not be relabelled as a deployed previous release.
+## Durable compatibility
 
-## Selected-profile boundary
+For a durable format change, perform the cross-format drill on a throwaway
+archive with its own UUID, following [recovery](../recovery.md). Write the new
+shape and read it with the actual previous release binary. Record observed
+behavior as the release's rollback rule in the deployment guide. Apply the
+schema-version policy in [schemas](../schemas.md); do not assume compatibility
+from matching displayed versions. Scheduled handles, API/worker operation
+stores and configuration formats also need applicable old-reader checks.
 
-**2026-11-05 scoped0.3.3 rollout:** the user authorizes this plan's protected
-local deployment, controlled writer transition, selected pilots and bounded
-backfill after its safety prerequisites, while prohibiting tags, remote pushes
-and image publication. Exact source1652b8f identifies the artifact independently
-of later evidence commits. Actual guarded0.3.3 startup, installed automated
-read-only acceptance and genuine installed administrator recovery/disabled-job
-UI/helper/config checks pass. Original request is retired_unknown, historical
-uncertainty and handles preserved, zero job replay. Production writer transition/
-pilots/backfill remain pending. This scope supersedes older read-only-only holds
-for those planned actions, preserving every archive, drain, backup, original-lock,
-credential and hardening requirement. The current
-[checkpoint](../deployment-status.md#current-migration-checkpoint--2026-11-05)
-owns actual host state. Historical deployment facts below retain their dates.
+## Build and stage the selected profile
 
-The authorized 2026-11-02 migration has selected rootless 0.3.0 from source `3d6670d`
-and started the web/API/MCP stack with the confined host helper. Automated
-installed read-only and human administrator/helper/configuration acceptance pass.
-The old plugin entrypoint is retired, and complete separate executor/helper drain
-restores the user's inactive guard setting. The final strict gate passes and local
-annotated `v0.3.0` identifies exact artifact source `3d6670d`.
-The [current checkpoint](../deployment-status.md#current-migration-checkpoint--2026-11-05)
-owns those actual facts. Preserve the user's intentional inactive setting and
-the original local lock identities. No NFS write,
-workload, timer enablement or remote publication follows. The following 0.2.2
-record is predecessor evidence, not the actual selected version or guard state.
-Current-boot operation and a graceful restart are accepted. Unattended boot is
-not configured: disabled helper and bridge ordering require the documented root
-runtime-object provisioning, then helper READY before bridge/API after reboot.
-This explicit operator hold is not waived by the local tag.
+Native installation stages locked server dependencies; `--with-mcp` explicitly
+includes MCP. It does not provision credentials, enable transport or modify an
+existing switch target. Native tooling positively identifies source/current/
+target layout and refuses rootless, mixed or unknown layouts.
 
-The recorded selected deployment is guarded rootless 0.2.2 from clean artifact
-source `1c685018803a365bbb8b0c1aad4b94709f60e7d7`. Use the rootless
-installer, fixed host client, user-manager services and protected Podman file
-secrets documented in [scripts](../scripts.md) and [containers](../containers.md).
-API follows the notify-ready worker-created listener; keep the dormant socket
-binding. Preserve original locks, independent host guard, NAS read-only, writer
-masks, disabled schedules, stores and handles. The native commands below apply
-only to a separately selected supported native profile. Native tools positively
-validate source/current/target layout and refuse container/mixed/unknown releases.
-Their dry-run is static intent, not acceptance. No implementation task grants
-release/deployment authority. Earlier permission for final feature-branch pushes
-belonged to a historical documentation task and does not carry forward. Later
-2026-10-20 user instructions explicitly authorize merging the repair to main, pushing main to Forgejo/GitHub, then replacing this host's existing guarded
-rootless deployment. The main fast-forward and both pushes at cdc35a4 are complete.
-The immutable 0.2.2 release is now selected and actual host TLS/authentication,
-API-origin worker PROBE and confinement acceptance passed. Preserve the old 0.2.1
-release/backup and all original configuration, candidate, locks, stores and handles.
-The [rollout record](plans/support/host-rollout/acceptance-record.md) owns
-exact fixed-client, before/after preservation and local-tag outcomes; selection
-alone does not prove those checks. No production PAM/browser candidate flow or
-NAS workload has been accepted. Do not infer remote tag
-publication, registry operations, NAS writes/workloads, other-host changes, guard
-release for execution, schedule enablement or forced cleanup. This newer scoped
-maintenance instruction supplies the release window; historical authority below
-remains history, and every existing drain/hardening/archive gate still applies.
+Rootless releases require pinned UBI 10 micro base stages, verified interpreter,
+binary and CA inputs, exact wheel/locked dependency closure and immutable
+artifact indexes. Use the rootless installer and fixed host client. No runtime
+resolution, auto-update, forced executor cleanup or automatic state deletion.
+Only finite stateless observer clients may remove their own containers.
 
-## Historical data-preserving local release scope (OPS-014, 2026-10-18)
+Full browser releases use `scripts/build-web-release.py --output <new-path>`
+from clean committed source. Keep indexed UI/backend/helper artifacts and their
+captured source together. Follow [web deployment](../web-ui/deployment.md) for
+native index digests or rootless asset digests and web-input selection.
 
-The completed [local rollout plan](plans/2026-10-18-plan-local-rootless-rollout.md)
-authorized reviewed local release/deployment/tagging at that time while forbidding
-all NAS content/metadata writes and changes to other hosts. This is historical
-authority, not permission for another rollout. [Decision 126](../adr/decision-126.md)
-narrowly adapts acceptance: do not execute the historical supervised sync, live
-full verification, archive-writing hardening workload or automatic sync-timer
-resumption below. Their status remains NOT RUN, not passing. Actual local
-container/proxy/credential/isolation checks and disposable local fixtures provide
-explicit partial acceptance only. Preserve the read-only client mount, blocked
-writers, retained state and actual executor drain/lock guards.
+Stage non-secret runtime artifacts with readable directory/file permissions
+and verify them as the actual service UID/GID. Keep private manifests and
+backups protected. Preserve an unusable stage for diagnosis before any explained
+restage. Build success proves neither installed usability nor production scope.
 
-That scope required a local annotated tag to identify the actually deployed
-reviewed artifact and state these remaining restrictions. It excluded remote push,
-registry publication, ACME issuance and the historical publishing steps below.
-Version/profile/image selection and recorded outcomes do not renew that authority
-or bypass missing proof. Retain all outstanding no-write and workload restrictions.
+## Drain, select and verify
 
-## Preconditions
+Before any switch, pause authorized timers and retain original operation and
+scheduled handles. Prevent new API/private-worker activation, drain actual work,
+and prove zero service PIDs/cgroup tasks and complete container drain. Hold the
+noncreating original lock across the switch. Wrapper exit or an unlocked instant
+does not prove completion. Unknown state blocks selection; never unlink a lock,
+kill an executor or repeat an uncertain submission.
 
-- Working tree clean; every package in the release committed and tracked in
-  `docs/agents/progress.md`.
-- For an evidence-only local closure, a separate clean detached worktree of the
-  reviewed deployed tag target may establish this source precondition. Task/
-  release evidence outside that worktree is gated and committed after the actual
-  tag; it cannot change an application/image/profile or silently move the tag.
-- `scripts/check.sh --with-build` exits `0`.
-- Opt-in suites as the changes warrant: `-m live` if the Hub adapter changed,
-  `-m nfs` on the writer if storage changed.
+Back up required private state and configuration, retain predecessor artifacts,
+and follow the profile-specific installer. For guarded rootless deployment,
+transfer the original lock only after actual drain, preserving the independently
+proven host read-only barrier and writer masks. Writer mode requires separate
+protected authority and all supported startup prerequisites.
 
-## If a durable format changed
+Verify installed runtime identity, TLS, credential separation, listener readiness,
+actual worker isolation, applicable SELinux/NFS behavior, original-outcome
+observation and rollback compatibility. Execute live verification or writer
+pilots only within explicit scope. Record source tests, installed checks and
+missing environmental acceptance separately. Never promote a source fixture
+into installed or unattended-boot acceptance.
 
-Decision 65 makes this unconditional: perform the **cross-format drill** on a
-throwaway archive (`docs/recovery.md` §6 — its own UUID, never
-`/srv/hfcache`). Write the new shape, read it with the *previous release's*
-binary, and record what the old binary actually does. That observed behaviour
-becomes the release's rollback rule in `docs/deployment-centos-stream-10.md`
-§14 (0.1.3's null-SHA rule is the worked example). Bump `schema_version` per
-`docs/schemas.md` §1.1, or record which widening precedent (decision 78) lets
-the version stand.
+Static user-unit verification uses isolated runtime/bus/unit paths, never the
+live user manager's `XDG_RUNTIME_DIR`; see
+[container verification](../containers.md#static-user-unit-verification).
 
-## Cut
+## Tagging, publication and rollback
 
-1. Bump `[project] version` in `pyproject.toml` — the single source;
-   `hfcache.__version__` reads package metadata.
-2. Add the `CHANGELOG.md` entry and refresh README `Status`.
-3. Commit as a `REL-…` package; `scripts/check.sh --with-build` green.
+Normal policy tags the deployed, tested artifact with an annotated
+`v<version>` tag. Its note describes user-visible changes, compatibility,
+rollback constraints and the actual scope of acceptance. An explicit no-tag
+instruction takes precedence; preserve exact commit/artifact identities externally.
+Push to both remotes only within publication authority and after the gate passes.
+Keep previous releases as rollback targets.
 
-## Deploy (deployment §13, compressed)
-
-**API-014 amendment (2026-10-18, [decision 121](../adr/decision-121.md)).**
-The historical command block below predates API-backed execution. Follow the
-current [deployment quiescence procedure](../deployment-centos-stream-10.md#upgrade-and-drain):
-pause timers, retain scheduled/operation handles, prevent API reactivation and
-drain the actual API while private verifier status/result handoff stays available,
-then stop/drain private activation/service. Switch/rebuild requires timers,
-clients and actual API/worker sockets/services quiescent, including zero service
-PIDs and no cgroup tasks, plus a noncreating orphan-lock check held through the
-switch. Missing task accounting requires explicitly empty control-group evidence.
-The installer refuses unknown quiescence and never auto-stops/kills.
-Do not stop `hfcache.target`, unlink locks or treat client exit as termination.
-
-Writer installation provisions locked `server` dependencies. MCP-001 adds
-an explicit installer `--with-mcp` selection for both server/MCP dependencies;
-default staging remains server-only. The flag does not enable server config,
-provision a credential, change services or relax quiescence/rollback guards.
-See the [MCP contract](../mcp.md). Smoke parses actual
-archive TOML through the installed strict loader without credentials/archive/
-network, and exercises explicit CLI `config validate --local` against an owned
-synthetic disabled-token policy. Required Hub credentials are not imported into
-the installer; daemon-source validation remains operator/API preflight. Preserve
-pending handles, both operation stores and previous release trees through rollback.
-If `/var/lib/hfcache/scheduled` contains a pending handle, the installer refuses a
-target whose actual installed Python lacks `hfcache.scheduled_client`; state links
-also refuse. Trusted custom state layout uses `HFCACHE_CLIENT_STATE_DIRECTORY`.
-The new [handle schema](../schemas.md#14-scheduled-client-observation-handle)
-requires actual old/current binary compatibility drill in addition to archive
-format drills. Real socket/cgroup/no-IP/no-credential/SELinux/NFS and executor-aware
-hardening proof remain deployment prerequisites; repository fixtures do not pass
-them. No deploy/tag/push is authorized by implementation of this task.
-
-Rollback to a server-only/pre-MCP target requires deliberate disabled MCP config
-before startup; older binaries can parse the existing slot but refuse enablement.
-There is no migration or automatic transport fallback, and `--with-mcp` cannot
-add packages to an existing switch target. Preserve normal executor drain and
-state/lock guards. See [MCP rollback](../mcp.md#deployment-profiles).
-
-```bash
-sudo systemctl stop hfcache-sync.timer          # quiesce — never hfcache.target
-sudo scripts/install-release.sh --no-switch     # stage the new release
-sudo -u hfcache /opt/hfcache/releases/<v>/.venv/bin/hfcache config validate
-sudo scripts/install-release.sh --switch <v>    # atomic current-symlink switch
-sudo systemctl daemon-reload
-sudo systemctl start hfcache-sync.service       # one sync through the unit
-sudo systemctl start hfcache-sync.timer
-```
-
-The unit run must end `Result=success`; an idempotent skip is success.
-
-## Prove it
-
-As the service identity, on the live archive: `verify --full` clean; `status`
-exit `0` and not degraded; `recover --dry-run` actionable `0`, blocked `0`.
-Then explicitly scoped actual-executor acceptance using the diagnostic contract
-in `docs/security.md` (all applicable checks
-passing), `systemd-analyze verify` over the installed units (silent), and no
-new SELinux AVC records. `REL-004`'s tracker entry shows a complete worked
-run.
-
-Static user-unit verification must use fully owned isolated runtime, bus and
-unit/generator paths. **Never run `systemd-analyze --user verify` with a live
-`XDG_RUNTIME_DIR`**: systemd 257's test manager can replace the live private
-socket. Do not unlink a stale endpoint or blindly restart its manager. Follow
-the [verification and reviewed restoration boundary](../containers.md#static-user-unit-verification);
-static syntax success is not actual manager or executor health.
-
-## Tag and publish
-
-1. Annotated tag `v<version>`. The note is the complete release record:
-   headline, what changed and why, any durable-format change with its
-   rollback rule, state at release, and what deliberately remains. The
-   `v0.1.2` and `v0.1.3` notes are the pattern.
-2. `git push github main --follow-tags && git push forgejo main --follow-tags`.
-3. Previous releases stay under `/opt/hfcache/releases` as rollback targets.
-
-## Rollback
-
-`docs/deployment-centos-stream-10.md` §14 is the authority — the same tool and
-motion (`install-release.sh --switch <previous>`) plus the release-specific
-constraints that section records (the prune-in-flight rule; 0.1.3's null-SHA
-finding rule). A rollback that uses a different procedure than the install is
-a procedure nobody has tested.
-
-## Rootless artifact and drain requirements (OPS-015)
-
-The selected [rootless profile](../adr/decision-127.md) uses explicit user systemd
-units and a reviewed system bridge. Stage exact platform base/Caddy digests, built
-wheel and hashed locked closure into an immutable runtime image; no runtime
-resolution, auto-update, pull, replacement, init or persistent-role automatic
-container removal. Only finite stateless observer clients may auto-remove their
-own containers; accepted execution/state remains independently server-owned.
-The separate protected rootless installer validates its immutable manifest/current
-selector, read-only guards and actual container/libpod-cgroup drain; it does not
-silently reinterpret the historical native installer. Retain old artifacts/state.
-
-Unknown running containers or failed stop remain blocked, never a force cleanup
-or default timeout kill. Explicit infinite Podman/application drain and systemd
-stop timeout require real tests with running work. Account/peer mapping, FD3/PID1,
-secret separation, Caddy verified TLS/Unix proxy and worker no-IP must be proved
-in actual local containers, with no NAS bind during OPS-015. REL-010 commits
-reviewed 0.2.0 source; its dirty working-tree builds are previews. REL-012 builds
-final identified wheel/sdist/images from that clean committed source and records
-evidence without changing package inputs. Use a clean detached source worktree
-outside ignored repository parents (REL-012 uses /var/tmp/hfcache-rel-012-source)
-so type/test discovery is not silently excluded. Keep final production artifacts,
-contexts, provenance and logs outside that source checkout. Normal ignored gate
-outputs such as .venv and dist may be inside while tracked
-Git state stays clean.
-Main-workspace task/evidence edits cannot contaminate source provenance; source
-and evidence commits remain distinct. A stopped or incompletely scoped gate is
-not passing evidence even if its wrapper returns 0.
-
-Optional full web releases use `scripts/build-web-release.py --output <new-local-path>`
-from a clean committed detached source worktree. It records the exact source,
-pinned build tools, repeated wheel/sdist/UI byte comparisons and canonical
-`web-release.json` index. Keep its captured `source/`, UI, backend and helper
-closure together. The explicit native index-digest arguments and rootless
-asset-digest/web-input arguments in the [web deployment guide](../web-ui/deployment.md)
-stage this immutable material; Python-only profiles remain independent. Build
-results never authorize provisioning, selection or production execution. Retain
-the build-source worktree/commit with the final work-package evidence even when
-later evidence-only record changes create the finalized package commit.
-
-Stage non-secret immutable runtime artifacts with umask 022 and verify directory/
-file readability as the actual service UID/GID before selection. A root-only
-successful validation does not prove runtime readability. Keep private manifest/
-backup permissions separate; retain and verify a known unusable stage before any
-explained relocation/restage, never clean it automatically.
-
-During this readonly rollout, the permanent host notify guard is independent of
-current. Drain/quiesce actual executors before root transfers its original lock
-through the installer and back to READY guard ownership, with NAS-ro and writer
-masks maintained. The system bridge requires that READY state; user-default app
-autostart is forbidden. Keep the fixed host policy/effective drop-ins in rollback
-evidence separately from the selected app artifacts; no rollback may remove the
-write barrier or fabricate host-ro proof from a private mount namespace.
-Production enablement stays OPS-016; no tag or
-NAS/full-domain acceptance follows from packaging. Decision 126 restrictions remain.
-
-Detailed [rootless runtime/build/profile contract](../containers.md) owns the selected deployment boundaries and actual task evidence.
-
-## Worker-listener correction release boundary (OPS-017)
-
-[Decision 128](../adr/decision-128.md) changes the planned rootless listener to
-creation inside the confined PID1 worker with real container-proxied READY.
-Native inherited activation stays strict. Source fixtures do not close the
-deployed 0.2.0 API-to-worker SELinux hold: clean committed 0.2.1 artifacts, actual
-separate-container notify/peer/isolation proof and guarded installed PROBE must
-precede a corrected local release. No dependency or durable format change is
-intended; retain actual compatibility evidence rather than assume it.
-Join active work before exact-owned socket cleanup; stale/replacement evidence
-or unknown executors must refuse rather than trigger unlink, force or replay.
-Rollback to 0.2.0 returns to its documented worker hold. Keep independent host
-guard, NAS-ro, writer masks, both stores/observer handles and lock inodes. No NAS
-file I/O/jobs or remote publication is authorized by this correction.
-
-## Historical UBI 10 prerequisite for corrected artifacts (OPS-019)
-
-[Decision 129](../adr/decision-129.md) requires pinned UBI micro for every app/
-Caddy FROM stage and verified portable interpreter/binary/Red Hat CA inputs.
-Preserve initial REL-013 Debian build/proof/compatibility as superseded; its
-stopped gate is not passing and exported image is not promoted. REL-013 restarts
-from committed OPS-019, rebuilds both UBI service images and repeats clean runtime/
-domain/compatibility/stage/gate acceptance. Version stays pre-release 0.2.1.
-No production change or worker/NAS hold clearance follows from source packaging.
-
-### 0.2.1 deployment evidence (OPS-018, 2026-10-18)
-
-[OPS-018](plans/tasks/ops-018-container-worker-rollout.md) proves actual installed
-API-origin peer/TLS/drain acceptance from clean 4088994 UBI artifacts, closing
-hold 22 only. Completed REL-014 records actual annotated local v0.2.1 at reviewed
-deployment 156506f, distinct from artifact source 4088994. No remote push occurs.
-Retain0.2.0 rollback's connection limitation and all NAS/storage/calendar/other-host
-holds; clean artifact and connectivity evidence is not live workload acceptance.
+Rollback uses the same guarded profile installer and full drain procedure.
+Check the previous binary against retained durable state and pending handles.
+Disable MCP deliberately before selecting a server-only/pre-MCP target; there
+is no automatic fallback. Preserve original outcomes and write barriers.
+No rollback may invent execution certainty or silently restore old store bytes.

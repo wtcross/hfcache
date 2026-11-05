@@ -16,9 +16,10 @@ detail each tag plus the `REL` entries here — all true, none browsable
 from a repository listing, which starts to matter the moment the
 repository has one. `CHANGELOG.md` states in its preamble that the tags
 carry the complete notes and it is the summary, so there is one authority
-and one convenience rather than two authorities that can drift. README
-`Status` keeps the current version and state and points at the changelog
-and the operator handoff. The 0.1.0/0.1.1 non-releases are explained in
+and one convenience rather than two authorities that can drift. The original README `Status` policy is superseded: current documentation
+maintenance removes installed-state and agent handoff ledgers from maintained
+guides. README links to task guides; the changelog retains user-visible changes
+and compatibility rules. The 0.1.0/0.1.1 non-releases are explained in
 the preamble because a public reader who meets four version directories
 in the deployment doc deserves the explanation the `v0.1.2` tag already
 gives.
@@ -35,4 +36,4 @@ Implementation or shipped-artifact evidence: [CHANGELOG.md](../../CHANGELOG.md),
 [README.md](../../README.md).
 
 Verification or recorded operational evidence:
-[recorded deployment scope](../deployment-status.md).
+[deployment prerequisites](../deployment-centos-stream-10.md).

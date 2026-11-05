@@ -5,7 +5,6 @@
 
 - MCP transport amendment: [decision 124](decision-124.md).
 - Status: Amended; current scope includes the amendments referenced below.
-- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
 - Date: 2026-10-18.
 
 ## Context, decision and rationale
@@ -49,8 +48,8 @@ proxy/Unix acceptance remains profile-specific rather than implied by source tes
 - [strict examples/docs/cold-disabled process](../../tests/unit/test_rest_examples_gate.py)
 - [MCP](../mcp.md)
 
-Recorded installed scope and remaining acceptance are described in
-[deployment status](../deployment-status.md).
+Deployment prerequisites are defined in the
+[deployment guide](../deployment-centos-stream-10.md).
 
 ## Replacement UI design amendment (2026-10-20)
 

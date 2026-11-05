@@ -1,6 +1,6 @@
 # Configuration and tags
 
-The unreleased interface composes the existing configuration API into structured
+The interface composes the existing configuration API into structured
 repository and global-settings forms. It reads installed editable settings,
 validates managed edits, prepares a sizing preview and applies the exact assessed
 candidate through the protected helper. Validation and preview never install a
@@ -466,25 +466,3 @@ and authentication are also restart-only. Do not bypass this with an editable
 placeholder, alternate path, relaxed permission or automatic replay. See
 [candidate authority](../configuration.md#12-candidate-authority-validation-and-planning)
 and [deployment profiles](../deployment-centos-stream-10.md).
-
-## Screenshots
-
-These actual UI captures use synthetic model and dataset repositories in an
-isolated native test build 0.2.30. Names, identities and sizing figures are examples.
-
-![Reviewed model and dataset additions with normalized tags and complete original sizing preview](images/configuration-draft-desktop.png)
-
-The draft retains its exact installed base while validation and sizing describe
-the proposed entries. A complete preview makes **Apply reviewed changes**
-available; it does not install configuration.
-
-![Installed configuration confirmed separately from the original API receipt](images/configuration-confirmation-desktop.png)
-
-The original application and protected host outcome remain separate. This
-capture shows confirmed installation with no pending protected work.
-
-![Mobile comparison preserves a stale tab's unsaved tag intent and disables Apply](images/configuration-conflict-mobile.png)
-
-When another tab installs different tags, comparison preserves the stale draft
-and its original base. Copy any intent you need, then reload and re-edit against
-the new installed configuration before validating and previewing again.

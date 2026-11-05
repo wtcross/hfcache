@@ -1,6 +1,6 @@
 # Run, observe and recover operations
 
-The unreleased Operations workspace submits supported jobs through the existing
+The Operations workspace submits supported jobs through the existing
 API and observes their original receipts, results, events and run reports.
 Opening Operations performs no job submission; history and estimates are explicit
 reads. [API and CLI submissions](../api-client.md#submission-and-observation)
@@ -295,11 +295,10 @@ the profile is not backend cancellation. For a problem, share safe codes and
 validated handles; never share Authorization headers, tokens or configuration
 contents. See [troubleshooting](troubleshooting.md#original-operation-recovery).
 
-## Accepted readiness and recovery changes
+## Review an uncertain original request
 
-The [original-intent contract](../job-recovery.md) is implemented in browser
-source. Installed release capabilities and deployment acceptance remain separate;
-check the selected release before relying on these controls.
+The [original-intent contract](../job-recovery.md) defines how the interface
+reviews an uncertain request while preserving its original identity.
 Jobs reads bounded advisory action readiness on entry/change and offers Recheck.
 Known archive denial or read-only storage explains an unavailable Sync/refresh
 beside its disabled button. Unknown readiness is labelled unknown, and optional

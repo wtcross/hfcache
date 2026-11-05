@@ -19,9 +19,12 @@ from hfcache.config import (
     VerificationConfig,
 )
 from hfcache.server_config import (
+    HostHelperConfig,
     ListenerConfig,
+    ServerConfig,
     ServerLimits,
     VerificationExecutorConfig,
+    WebConfig,
     validate_server_config_mapping,
 )
 
@@ -39,7 +42,7 @@ def rows(text, heading):
             continue
         started = True
         cells = [cell.strip() for cell in re.split(r"(?<!\\)\|", line)[1:-1]]
-        if cells and re.fullmatch(r"`[a-z_][a-z_.]*`", cells[0]):
+        if cells and re.fullmatch(r"`[a-z_][a-z0-9_.]*`", cells[0]):
             key = cells[0].strip("`")
             assert key not in result
             result[key] = cells[1:]
@@ -212,6 +215,18 @@ def test_listener_and_verifier_defaults_match_models_and_documented_domains():
         assert_numeric_bounds(
             verifier[key], VerificationExecutorConfig.model_json_schema()["properties"][key]
         )
+
+
+def test_server_summary_covers_every_setting_and_optional_web_helper_defaults():
+    text = (ROOT / "docs/server.md").read_text()
+    assert set(rows(text, "| Top-level key |")) == set(ServerConfig.model_fields)
+    assert_defaults(rows(text, "### Web artifact settings"), WebConfig())
+    helper = rows(text, "### Host helper settings")
+    assert_defaults(helper, HostHelperConfig())
+    assert_numeric_bounds(
+        helper["api_host_gid"],
+        HostHelperConfig.model_json_schema()["properties"]["api_host_gid"]["anyOf"][0],
+    )
 
 
 def test_archive_policy_table_defaults_and_required_fields_match_models():

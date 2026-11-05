@@ -1,25 +1,32 @@
-# Human-document boundary
+# Documentation audiences
 
-Human documentation is every documentation file outside `docs/agents/`, except
-the explicit agent entrypoints `AGENTS.md` and its `CLAUDE.md` symlink.
-Public CLI help is also human-facing. Write current behavior, examples,
-prerequisites, supported profiles, security boundaries and compatibility limits.
-Never introduce work-package IDs, task/implementation-plan/progress links,
-agent workflow instructions, phase chronology or task-owned availability claims.
-Technical error codes, architectural/storage invariant IDs, operation states,
-schema versions and domain planning commands remain valid product concepts.
+For agents editing documentation or public help. Every retained human document
+has a primary reader and a useful task or reference purpose. Start with the
+reader's outcome and prerequisites, then link to deeper reference and rationale.
+Keep examples coherent and trace behavior to source and tests.
 
-Keep execution authorization, active selection, work-package evidence, process
-ADRs and historical transcripts here. Agents may cite human contracts; human
-guides must not depend on implementation tracking for technical authority.
+Human documentation includes every documentation file outside `docs/agents/`,
+except `AGENTS.md` and its `CLAUDE.md` symlink. Public CLI help has the same
+boundary: no task identifiers, agent tracking paths, execution chronology,
+handoffs or task-owned availability claims. Technical IDs, ADR status, schema
+versions, transaction checkpoints, runtime progress and `hfcache plan` remain
+valid product concepts.
 
-DOC-011 inventories the exact pre-existing tracking matches in
-`documentation-inventory.json`. Each row names a file, matched token and maximum
-count; no file-wide exemption is allowed. This is a shrinking transitional
-baseline, not a permanent policy exception. Subsequent packages remove matches
-within their scope. DOC-019 requires zero remaining matches and no exemptions.
-The inventory also records every original tracked document, executable/example
-surface and historical-authority citation. The migration manifest records old
-paths and original SHA-256 hashes at the reviewed git baseline. Mechanical
-reference repairs are distinct from the substantive extractions listed in the
-coverage map and task evidence.
+The agent directory is the home for agent instructions and retained planning
+and execution history. Preserve its implementation plans, task records,
+selectors, progress logs, inventories, reviews and historical snapshots.
+Human-document cleanup does not authorize removing those records. Short-lived
+coordination may stay in the external execution system. Human guides must remain
+understandable without depending on agent records.
+
+README orients readers and links to task guides; it has no Status section or
+replacement deployment ledger. Release notes describe user-visible changes and
+compatibility, without selected-host state or rollout instructions. Reusable
+deployment procedures state prerequisites and verification, never old permission
+as standing authority. Preserve licensing, attribution, safety and compatibility
+when consolidating content. Git retains original execution history.
+
+`scripts/check-docs.py` discovers documentation and checks links, audience
+boundaries and the helper catalog offline. It has no count quota or transitional
+tracking exemptions. Semantic review must also catch misleading examples,
+stale availability claims and unexplained terminology.

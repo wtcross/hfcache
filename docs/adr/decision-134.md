@@ -29,9 +29,22 @@ only bounded validated nonsecret session metadata may support lookup/observation
 
 ## Consequences
 
+Observation failures preserve original handles and classified failure evidence.
+They never authorize replay or establish whether a protected effect occurred.
+The current browser registry applies these rules independently of tab lifetimes.
+
 ## Evidence and relationships
 
+The [client contract](../api-client.md), [original-intent protocol](../job-recovery.md)
+and [browser recovery guide](../web-ui/operations.md) define the current boundaries.
+The amendments below retain the distinction between shared recovery rules and
+the superseded interface's transport mechanisms.
+
 ## Implemented boundary and connection behavior
+
+Clients preserve server authority and finite observation deadlines. Reconnection
+refreshes authenticated metadata; it does not repeat a mutation. See the
+[connection and recovery rules](../api-client.md).
 
 ## Implemented candidate reconciliation
 
@@ -158,7 +171,7 @@ evidence while preserving safe unresolved handles. Cross-tab notices are advisor
 only. Stop observing aborts reads, not execution; unknown or unconfirmed protected
 configuration effects remain distinct from generic API failure/interruption.
 
-Exact metadata and user procedures are in [schemas](../schemas.md#186-browser-recovery-metadata-schema-1)
+Exact metadata and user procedures are in [schemas](../schemas.md#187-browser-recovery-metadata-schema-1)
 and [browser recovery](../web-ui/operations.md). No new endpoint, server receipt,
 credential grant, cancellation or automatic recovery effect is introduced.
 

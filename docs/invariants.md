@@ -52,14 +52,14 @@ Read only the affected areas:
   It refuses existing archive identity, unknown content and symlinks; only the
   documented empty, correctly owned and moded `published/` and application-owned interrupted-init
   states may be adopted or retried. The sentinel is written last and never
-  rewritten. This deployment already exists: agents must never run init.
+  rewritten. Existing archives are inspected, never reinitialized.
 - **`AD-17`** — Exactly one host has archive write authority, enforced by the
   server's exact-host export. Mutation and verification share a local exclusive
   lock under `/run/hfcache`; there is no NFS lock or second writer host.
 
 Contract: [architecture §5–§7](architecture.md#5-filesystem-layout),
 [CLI initialization and doctor](cli.md#archive-init), and
-[recorded deployment scope](deployment-status.md).
+[deployment prerequisites](deployment-centos-stream-10.md).
 Enforcement: [storage](../src/hfcache/storage.py),
 [preflight](../src/hfcache/preflight.py),
 [initialization](../src/hfcache/archive.py), and
@@ -383,8 +383,9 @@ History: `synchronization` (`54e4671`), decision 94.
   metadata rechecks, and no added source discovery or permission grant;
   parent traversal uses no-follow `O_PATH` directory handles without directory
   reads or listings; the credential leaf retains its readable checked descriptor.
-  Unreleased source implements this policy with owned native/rootless
-  application conformance evidence. Production rollout remains separate. Hub authority stays
+  Provision parent search, leaf read and selected-role SELinux access
+  independently; authentication changes no ACL, ownership or sandbox.
+  Hub authority stays
   daemon-side and the page never handles a bearer.
   A reader resolves only its selected protected API file/named systemd source;
   no Hub/netrc/ambient token or anonymous fallback after source failure.
@@ -421,7 +422,7 @@ History: `synchronization` (`54e4671`), decision 94.
   or proxy-TLS checks. Missing/malformed local evidence fails closed.
   See [security §2–§5](security.md#2-trust-boundaries),
   [deployment](deployment-centos-stream-10.md), and
-  [recorded deployment scope](deployment-status.md).
+  [deployment prerequisites](deployment-centos-stream-10.md).
   scheduled observation packages no-IP/offline and credential-source masking around the actual
   private verifier; the AF_UNIX scheduled client uses API credentials separately.
   Custom source locations require explicit masks/probes, and repository unit/
@@ -433,12 +434,12 @@ History: `synchronization` (`54e4671`), decision 94.
   Evidence: [unit contracts](../tests/unit/test_systemd_units.py) and
   [probe fixtures](../tests/unit/test_hardening_probe.py), decision
   [121](adr/decision-121.md); installed acceptance remains separate.
-  **guarded deployment scoped rollout (2026-10-18, [decision 126](adr/decision-126.md)).**
-  That earlier local-host rollout required a persistent client read-only
-  NAS guard, blocked legacy writers and retained actual-executor/local-flock
-  quiescence proof. NAS content/metadata writes, relabel/chown/copyup and other-
-  host changes are forbidden; sync remains stopped and verify scheduling disabled.
-  Local disposable/container proofs do not pass forbidden real storage checks.
+  **Guarded deployment ([decision 126](adr/decision-126.md)).**
+  The guarded-readonly profile requires a persistent client read-only NAS guard,
+  blocked legacy writers, disabled calendars and actual-executor/local-flock
+  quiescence proof. It permits no NAS content/metadata writes or relabel/chown/
+  copyup. Manual writes require the separately protected transition below.
+  Disposable/container checks cannot establish real-storage enforcement.
   **rootless runtime profile (2026-10-18, [decision 127](adr/decision-127.md)).**
   Explicit rootless user services and a system target bridge use Caddy/one API/
   isolated FD3 worker and container clients. Immutable never-pull/no-replace/
@@ -461,10 +462,9 @@ History: `synchronization` (`54e4671`), decision 94.
   version or image bytes. Protected staging and selection retain the original
   noncreating flock and fresh NFS-ro executor/helper/cgroup/libpod drain. The
   companion preserves its independently provisioned label and service ownership;
-  normal startup never creates missing disposition authority. This source
-  implementation does not establish actual NFS or unattended-boot acceptance.
-  Actual disposable container proof binds
-  no NAS; packaging cannot clear installed or full storage acceptance holds.
+  normal startup never creates missing disposition authority. Actual NFS and
+  unattended-boot validation are independent requirements; a disposable
+  container fixture with no NAS cannot establish either.
   Finite stateless observer containers alone may auto-remove without canceling
   server execution or discarding receipts/handles. Exact protected execution
   bindings through current select one physical helper/profile/image/config tree;
@@ -490,14 +490,15 @@ History: `synchronization` (`54e4671`), decision 94.
   local-filesystem proof precede parent traversal/bind, with no realpath/NAS stat.
   Worker writable private directory/API read-only view and real
   container-proxied READY change no SELinux/seccomp/credential authority. Native
-  FD3 activation stays strict. Recorded 0.2.1 installed peer connectivity is distinct from outstanding NAS
-  workload acceptance; rollback to 0.2.0 retains its connection limitation.
+  FD3 activation stays strict. API-to-worker connectivity and real NAS workload
+  enforcement require independent checks. Rollback to 0.2.0 retains its
+  rootless worker-connection limitation.
   [Decision 148](adr/decision-148.md) separates explicitly configured socket-node
   ownership from the listener creator's kernel peer UID. Both exact checks remain
   mandatory; omitted owner configuration preserves the previous resolved-peer
   ownership rule. Native service-owned nodes and root-manager listener credentials
   do not identify the actual accepting worker and grant no fallback authority.
-  See [deployment status](deployment-status.md).
+  See [deployment guide](deployment-centos-stream-10.md).
   Enforcement/evidence: [owned listener](../src/hfcache/verification_listener.py),
   [bootstrap](../src/hfcache/verification_worker.py) and
   [kernel/cleanup tests](../tests/unit/test_verification_listener.py).
@@ -628,8 +629,10 @@ Correlation/diagnostic enforcement: [execution context](../src/hfcache/services/
 [event capture and copied workers](../src/hfcache/logging.py),
 [sync producer](../src/hfcache/sync.py), and
 [isolation tests](../tests/unit/test_execution_isolation.py).
-Durable shape, enum, and field-combination changes require the
-[recorded deployment scope](deployment-status.md); schema version 1 is not a
+Durable shape, enum and field-combination changes require the previous-binary
+compatibility drill and documented rollback constraints in the
+[deployment guide](deployment-centos-stream-10.md#rollback-compatibility);
+schema version 1 is not a
 blanket claim that old binaries accept every later widening.
 operation control state control-state enforcement: [receipt models/store](../src/hfcache/api/operations.py),
 [golden operation fixtures](../tests/fixtures/schemas/operation-receipt.json),
@@ -732,8 +735,8 @@ Authenticated REST uses typed query/command services, bounded receipt-backed
 execution and a separate private verifier. Public CLI and browser clients retain
 server authority and finite observation. Optional MCP exposes exactly fourteen read
 tools with no execution capability. [API](api.md), [server](server.md), [MCP](mcp.md)
-and [deployment status](deployment-status.md) define current behavior and the
-limits of recorded installed acceptance.
+define current behavior. The [deployment guide](deployment-centos-stream-10.md)
+defines checks that must validate actual installed enforcement.
 
 - **`INV-012` — Adapters share one domain implementation.** HTTP/MCP
   adapters call typed services, never Typer/public CLI callbacks or each other's
@@ -936,8 +939,8 @@ separate protected verifier only after REST acceptance. independent REST client'
   [private socket](../packaging/systemd/hfcache-verification.socket),
   [activation/bootstrap tests](../tests/unit/test_verification_worker_bootstrap.py)
   and [unit contracts](../tests/unit/test_systemd_units.py); decision
-  [121](adr/decision-121.md). See [deployment status](deployment-status.md) for
-  recorded installed peer/confinement scope and outstanding NAS/other-host work.
+  [121](adr/decision-121.md). See [deployment guide](deployment-centos-stream-10.md)
+  for installed peer/confinement, NAS and other-host validation prerequisites.
   [Decision 128](adr/decision-128.md) adds a distinct PID1-only container-listener
   mode without a native bind fallback. Early inherited-FD/activation/credential
   audit precedes owned resources and shared imports; parent/instance ownership
@@ -947,9 +950,9 @@ separate protected verifier only after REST acceptance. independent REST client'
   no credentials, exact private protocol/results and no replay remain. Rootless
   API Requires+After worker.service; dormant .socket/native activation remain
   separate. Source fixtures and host probes do not prove actual container peer access.
-  [Recorded 0.2.1 scope](deployment-status.md) includes the installed peer path
-  under Enforcing before/after drain/restart. Live NAS verification/workload acceptance remains unrun; rollback to
-  0.2.0 restores its recorded connection limitation.
+  [Rootless deployment requirements](containers.md) require the actual peer path
+  under Enforcing before/after drain/restart, with separate live NAS verification/
+  workload checks. Rollback to 0.2.0 restores its worker-connection limitation.
 - **`INV-016` — MCP has no mutation or job path.** Only explicitly registered
   metadata reads through a narrow read-service interface; no Hub, probes,
   persistence, recovery, or operation admission. The optional transport registers exactly fourteen approved metadata tools, no resources/prompts or REST OpenAPI conversion; only the distinct
@@ -1101,8 +1104,7 @@ helper proof; Python-only installation remains independent of frontend inputs.
   exact manifest-listed root README and perform its bounded source-copy digest
   check; it never changes publication verification confidence. Card reads open
   adjunct/authoritative metadata only, preserve exact retained identity and do
-  not fall back. Writer capture and exact metadata-only reads are implemented in
-  unreleased source; the renderer remains separate. Missing capture is explicit,
+  not fall back. Writer capture and exact metadata-only reads are implemented; the renderer remains separate. Missing capture is explicit,
   vanished retained identity is404, and corrupt/unsafe records refuse. GET shares
   the bounded metadata lease through encoding/send/disconnect, creates no files
   and takes no archive writer lock. Existing observations, public refresh
@@ -1171,29 +1173,26 @@ Old goldens remain identical; unknown adjuncts never restore membership or
 confidence. Target-specific config/layout/client refusals require preservation
 and guarded validation, not deletion or a universal compatibility assumption.
 
-## Replacement browser UI design
+<a id="replacement-browser-ui-design"></a>
 
-The following are accepted requirements with explicit conformance boundaries.
-Optional Basic and authenticated SPA/static serving are implemented in unreleased
-source, preserving existing REST bearer and fourteen read-only MCP behavior.
+## Browser UI
+
+Optional Basic and authenticated SPA/static serving preserve existing REST
+bearer and fourteen read-only MCP behavior.
 Protected host status and fresh Basic job proof are implemented under
 [decision150](adr/decision-150.md); configuration and fixed host writes retain
 their separate guarded contracts.
 The API pins helper-address directories with no-follow `O_PATH` handles, requiring
 search access without directory reads or listings; binding-leaf and peer guards
 remain mandatory.
-Source availability alone does not establish installed behavior. See
-[UI status](web-ui/README.md) and decisions [140](adr/decision-140.md)–
-[143](adr/decision-143.md). [Decision 161](adr/decision-161.md) removes the
-superseded interface source and documentation after replacement acceptance;
-production migration remains separately authorized.
+See the [browser guide](web-ui/README.md) and decisions
+[140](adr/decision-140.md)–[143](adr/decision-143.md) for the corresponding
+application, authentication, content and artifact boundaries.
 
-Recorded source and owned native/rootless acceptance is summarized in
-[human acceptance](web-ui/test-release-acceptance.md), with exact source/profile,
-retained failure and current read-only observation limits. Earlier design-time
-pending notes do not claim unperformed production migration or broader platform
-acceptance. [Compatibility](web-ui/migration-and-rollback.md) retains actual
-old-reader/rollback refusals and unknown original state.
+Deployment must satisfy the selected profile's
+[validation requirements](web-ui/deployment.md).
+[Compatibility](web-ui/migration-and-rollback.md) governs old-reader refusals,
+rollback prerequisites and preservation of unknown original outcomes.
 
 - **`INV-019` — Authenticate browser presentation inside the application.** The
   existing Caddy/TLS/Unix upstream serves one API-owned SPA; no global edge Basic
@@ -1478,8 +1477,9 @@ old-reader/rollback refusals and unknown original state.
 Detailed required behavior and fixed bounds: [server](server.md#web-ui-design-and-current-availability),
 [API](api.md#web-ui-and-administration-design),
 [security](security.md#browser-administration-design),
-[record families](schemas.md#18-web-ui-and-administration-design-records).
-No enforcement or acceptance is claimed from these new register entries alone.
+[record families](schemas.md#18-web-ui-and-administration-records).
+Enforcement is established by the corresponding implementation and tests;
+installed confinement requires the selected profile's validation.
 
 
 ## Original intent closure

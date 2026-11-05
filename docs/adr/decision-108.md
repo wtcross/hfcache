@@ -19,7 +19,7 @@ add security and correctness risk without new domain authority.
 Queries and guarded commands remain transport-neutral. Adapters never invoke
 Typer callbacks, parse CLI stdout or duplicate domain engines. The bounded lane
 and private verifier preserve the local flock; optional MCP delegates exactly
-nine typed reads and adds no execution capability. No workflow engine, broker,
+fourteen typed reads under the [decision 133](decision-133.md) extension and adds no execution capability. No workflow engine, broker,
 database, scheduler or journal-driven normal execution is introduced.
 
 ## Relationships and technical evidence
@@ -34,5 +34,5 @@ database, scheduler or journal-driven normal execution is introduced.
 - [Decision 118](decision-118.md)
 - [MCP](../mcp.md)
 
-Recorded installed scope and remaining acceptance are described in
-[deployment status](../deployment-status.md).
+Deployment prerequisites are defined in the
+[deployment guide](../deployment-centos-stream-10.md).

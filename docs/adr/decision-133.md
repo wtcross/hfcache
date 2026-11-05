@@ -1,8 +1,7 @@
 # Separate curation from publication authority
 
 - Decision identity: 133.
-- Status: Amended contract; corresponding interfaces require implementation.
-- Replacement design: see the 2026-10-20 amendment below; executable conformance remains pending.
+- Status: Accepted; amended as described below.
 - Date: 2026-10-19.
 
 ## Context and decision
@@ -36,8 +35,8 @@ capabilities. Technical predicates bind the same complete eligible variant; miss
 observations stay unknown. Rows come from configuration and retained references. Retained references gate
 publication matches, so leftover records cannot resurrect deleted publications. Back up historical labels. Preserve old
 fingerprint goldens, candidate byte comparisons and existing strict read wrappers.
-REST/client acceptance precedes five explicit additive MCP tools; existing nine
-remain the current registered set until implemented. Whole-archive trust remains.
+The original nine MCP reads gained five explicit catalog tools under this
+decision, for fourteen read-only tools. Whole-archive trust remains.
 
 New tags/layout/operation kinds may block old binaries. Actual disposable-fixture
 compatibility tests must establish rollback barriers; never delete state to force
@@ -143,19 +142,19 @@ new state and validate a reviewed rollback target under actual executor drain.
 ## Replacement UI design amendment (2026-10-20)
 
 [Decision 142](decision-142.md) amends this record for the accepted
-replacement design. Accepted card adjunct design extends only the approved optional metadata namespace and bounded writer-owned README source-copy check; existing records, integrity confidence and read-only transport authority remain unchanged. Card conformance is pending.
+replacement design. Accepted card adjunct design extends only the approved optional metadata namespace and bounded writer-owned README source-copy check; existing records, integrity confidence and read-only transport authority remain unchanged.
 
 ## Independent card capture clarification (2026-10-25)
 
 [Decision 142](decision-142.md#writer-capture-amendment-2026-10-25) now implements
-writer capture in unreleased source. It adds independent cards under the approved
+writer capture in the application. It adds independent cards under the approved
 optional namespace without placing presentation in structured observations or
 widening old request/result schemas. `technical=true` requests both outputs under
 shared invocation limits; observation rows, statuses and counts remain truthful
 to observations. Card failures add existing bounded `HFWRN011` warnings, while
 absent README remains normal. The bounded fresh README digest is source-copy
-provenance only and grants no verification confidence. Card API reads and display
-remain separate later work; old-format compatibility requires an actual target
+provenance only and grants no verification confidence. Card API reads and display retain separate bounded metadata and inert-rendering
+controls; old-format compatibility requires an actual target
 drill rather than inference from unchanged version numbers.
 
 ## Browser Library presentation amendment (2026-10-26)
@@ -184,7 +183,7 @@ refresh counts, writer guards, MCP tools and immutable archive authority remain.
 
 ## Exact-publication detail composition amendment (2026-10-26)
 
-WEB013 composes existing bounded reference, manifest, catalog/variant, card and
+Repository details compose existing bounded reference, manifest, catalog/variant, card and
 revision/history reads into type-aware repository detail pages. Resolve current
 separately and retain the selected exact pair/generation across all publication
 panels. Repair at the same SHA does not authorize adopting a different publication;
@@ -193,7 +192,7 @@ evidence leaves independently valid manifest/inventory useful, without increasin
 verification confidence. Model/dataset declarations retain source, status and
 coverage; loaded archive history is not a complete repository audit. This adds no
 writer, Hub, payload-serving or new durable-record authority. See the
-[detail guide](../web-ui/repository-details.md). README rendering remains WEB014.
+[detail guide](../web-ui/repository-details.md). README rendering follows [decision 155](decision-155.md).
 
 ## Structured current-curation editing clarification (2026-10-26)
 

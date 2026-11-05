@@ -53,13 +53,6 @@ and both are treated as "keep"; `ENOENT` is idempotence (`TX-04`); anything
 else propagates, because reporting a permission failure as though the
 directory had merely been busy would hide it forever.
 
-The live archive was brought into conformance in the same commit rather than
-left as a documented exception, because `operational tooling` documents this tree's shape
-next and a runbook describing a shape the archive contradicts is worse than
-either. The removal used `rmdir`, which cannot destroy content;
-`verify --full` afterwards read 23 unique objects across 6 revisions and
-reported `clean`.
-
 ## Later history and current interpretation
 
 The container-cleanup boundary and empty-directory-only rule remain applicable.

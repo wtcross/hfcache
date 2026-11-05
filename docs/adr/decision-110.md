@@ -32,5 +32,5 @@ durable expectations, clearing rules or publication identity.
 - [verification lock/merge regression tests](../../tests/unit/test_command_locking.py)
 - [command guard and refusal tests](../../tests/unit/test_command_services.py)
 
-Recorded installed scope and remaining acceptance are described in
-[deployment status](../deployment-status.md).
+Deployment prerequisites are defined in the
+[deployment guide](../deployment-centos-stream-10.md).

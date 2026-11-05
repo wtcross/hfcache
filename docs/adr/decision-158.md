@@ -3,7 +3,7 @@
 - Decision identity: 158.
 - Status: Accepted; installed conformance remains separately required.
 - Date: 2026-10-29.
-- Introducing change: this commit.
+- Record introduced: `2c44f2d57c44ed348d3feac58b04c2652dc48cc1`.
 
 ## Context and decision
 

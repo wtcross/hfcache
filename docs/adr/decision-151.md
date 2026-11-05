@@ -1,9 +1,9 @@
 # Retain mapped-inode read and search only inside the verified engine USER namespace
 
 - Decision identity: 151.
-- Status: Accepted; implemented and proved in owned native/rootless fixtures.
+- Status: Accepted; amended as described below.
 - Date: 2026-10-21.
-- Introducing change: this commit.
+- Record introduced: `9af58cb23776302793271f86e01007f676c92a8e`.
 - Supersedes only the SYS_ADMIN-only engine capability-retention rule in
   [decision150](decision-150.md#revised-engine-capability-boundary-2026-10-21).
 
@@ -132,7 +132,7 @@ This decision amends only the engine capability-retention policy in
 bounded inspection, native observer, mixed-ID guard and mandatory SELinux
 contracts remain in force. See the [current host contract](../host-administration.md#managed-startup-and-fixed-engine-observation),
 [security contract](../security.md) and [invariant register](../invariants.md).
-The introducing implementation is this commit. The relevant source and tests
+The relevant source and tests
 are [the indexed peer module](../../src/hfcache/host_peer.py),
 [engine proof tests](../../tests/unit/test_host_engine.py),
 [engine runtime tests](../../tests/unit/test_host_engine_runtime.py) and

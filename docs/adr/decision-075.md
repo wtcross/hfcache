@@ -18,8 +18,8 @@ rewriting one selector. Retain at least the predecessor.
 A 1.0 claim would have overstated unfinished consumer export, data protection,
 other-host disjointness/copying, reboot and calendar acceptance. An annotated tag
 records the tested scope; a version number does not certify outstanding operator
-work. Current release/acceptance status belongs to the changelog and dated
-deployment status, not this historical selection rationale.
+work. Release changes belong in the changelog; actual installed evidence belongs in
+the operator's deployment context, not this historical selection rationale.
 
 ## Provenance and governing evidence
 
@@ -36,7 +36,7 @@ Implementation or shipped-artifact evidence:
 [pyproject.toml](../../pyproject.toml).
 
 Verification or recorded operational evidence:
-[recorded deployment scope](../deployment-status.md).
+[deployment prerequisites](../deployment-centos-stream-10.md).
 
 ## 2026-10-18 data-preserving local rollout amendment
 
