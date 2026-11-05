@@ -23,7 +23,31 @@ apply wherever the archive mount exists.
 
 ## The deployment, in facts
 
-**2026-11-05 current checkpoint:** selected guarded0.3.3/source1652b8f,
+**2026-11-05 completed current checkpoint:** manual-writer0.3.4/source9756c70/
+app418edbe7/UI40c4324a/indexbea2840d, NFSRW/Enforcing. Protected backup/full drain/
+original-lock RO install window and restored RW pass, existing keeper434678 and
+persistent override unchanged. Genuine selected installed UI/API Sync and
+technical refresh succeed. One bounded backfill writes156 bound observations:
+7 complete,27 partial,8 unsupported,114 failed interpretations; all diagnostics
+retained, zero observation-write failures. Raw manifests/current/retained/
+verification inventory and old journals are unchanged. Original request remains
+retired_unknown without replay; original credentials/config/stores/lock inodes,
+predecessors/masks/calendars/unrelated grants preserved. Final host6c739daa and
+coveragee6a0ca95 pass. The [deployment status](../deployment-status.md) and
+[completed task](plans/tasks/ops-029-enable-manual-archive-jobs.md) own exact
+evidence and independent holds. Current-boot manual startup only; no boot claim.
+The0.3.3 and earlier statements below retain their historical scope.
+
+**2026-11-05 writer transition checkpoint:** selected manual-writer0.3.3,
+source1652b8f/app661da09f/UIc9df46e1/indexa638f833. Fresh backup/full actual
+drain/original-lock selection, local NFSRW remount and reviewed inert namespace
+handoff pass; old pause63:60 retained, engineDB byte-identical. New keeper434678
+has authenticated RW namespace. Archive-only grant true, other grants unchanged;
+helper READY then worker/API/Caddy and actual writer storage preflight pass.
+SELinux Enforcing/masks/calendars/inactive guard+bridge intact. Pilots/backfill
+remain pending; no full-plan completion. The guarded acceptance below is earlier.
+
+**Earlier guarded checkpoint:** selected guarded0.3.3/source1652b8f,
 app661da09f/UIc9df46e1/indexf1c55ed2, measured helperindexae3bc6ab/policy058b53d0.
 Fresh backup/full actual drain/original-lock handoff and installed29-case checks
 pass. Genuine administrator installed UI retires original request as

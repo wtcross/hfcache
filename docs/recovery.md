@@ -296,7 +296,9 @@ any separately authorized switch; no evidence deletion or automatic replay.
 ## Retire historical original intent
 
 The accepted [original-intent protocol](job-recovery.md) adds a narrowly reviewed
-Basic-own-key retirement path, pending implementation and installed acceptance.
+Basic-own-key retirement path. Its actual installed acceptance is recorded in
+[deployment status](deployment-status.md); the original historical request is
+retired with its uncertainty and handles preserved.
 A missing receipt still means unknown. Only fresh actual-executor, worker,
 protected-effect and original-lock proof can fence an old key; unavailable or
 ambiguous proof remains Needs review with a concrete operator next step. A

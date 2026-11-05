@@ -2,7 +2,106 @@
 
 ## Current migration checkpoint — 2026-11-05
 
-The selected release is **0.3.3-guarded-readonly**, clean source
+The selected protected release is **0.3.4-manual-writer**, clean source
+`9756c70f939f0a94aae28eb6c1a2d776c886b0e9`, app
+`418edbe7e0f0e08c75a4d95ff75c5070d68c1a00f50afb7b912cee347ed1dc18`, UI
+`40c4324a1cee1eb89f179b1902440da2c6905af12a3d1d7554443034d0bdb329`,
+writer index `bea2840db9d3efdfead64ccd57c03cc066c50f98c9c157f05cc24433f95298a0`.
+The protected evidence below records the original operation/run IDs, exact
+receipts and installed UI screenshots.
+
+Fresh protected backup/drain/original-lock handoffs, temporary connected RO
+staging/selection, matching helper binding, restored RW and ordered startup pass.
+Existing namespace434678 and persistent RW override are unchanged; no repeated
+activation or migration. Actual both-role storage/UUID/config165/retention3/
+capacity preflight, API-origin worker PROBE and confined-role checks pass.
+
+Genuine installed administrator UI and original API results prove selected
+Sync817691c1 and technical refresh807f0c5e succeed. Sync is already current,
+downloads/prunes0 and preserves its publication; HFWRN011 stays visible. Refresh
+writes one exact bound partial observation. Its HTTP202 body was lost by the
+observer; exact original-key GET and supported UI observation recover the same
+operation/result, with no submission replay.
+
+One scoped backfill covers all156 current publications: the selected pilot plus
+five explicit batches32/32/32/32/27. Actual installed SDK fresh binding and raw
+manifest checks pass; current/232-retained/verification inventory and both old
+prune journal bytes remain unchanged. All156 observations are written:7 complete,
+27 partial,8 unsupported,114 failed interpretations with diagnostics, zero
+observation-write failures. The149 incomplete records have exact diagnostic
+operator actions in the protected handoff; configured work/read/source/header
+limits and unsupported formats remain visible. No inferred optional fields,
+weights download/load, verification promotion or additional backfill follows.
+Coverage receipt e6a0ca95 and incomplete-actions0e257d50 are under
+`/opt/hfcache/deployment/20261105-job-recovery-0.3.4/backfill-final-acceptance1/`.
+
+Original request762c47c1/key695b24c7 remains **retired_unknown** with its historical
+uncertainty, handles and original12 store bytes/inodes preserved. Its original
+refresh was never replayed. The existing browser can reconcile through normal
+reload/authenticated original observation; do not clear browser storage.
+
+Final host receipt6c739daa proves NFSRW/SELinux Enforcing/unchanged kernel policy,
+helper READY/fixed confined roles, original lock inodes/credentials/configuration/
+predecessors, archive/configuration/Hub grants true and control/observer/schedule
+false. Calendars remain disabled, legacy native writers masked and guard/bridge
+deliberately inactive. Acceptance is current-boot manual startup only; unattended
+boot, other-host, NAS-side and unrelated maintenance/configuration/all-phase
+companion holds remain separate. No push, tag or image publication occurred.
+
+
+### Protected current acceptance evidence
+
+All paths below are relative to
+`/opt/hfcache/deployment/20261105-job-recovery-0.3.4/`; the root-protected files
+retain full hashes, original handles/results and screenshots. Earlier releases
+and failed observer evidence are preserved. Rollback requires the reviewed
+[complete drain and compatible guarded selection](deployment-centos-stream-10.md#manual-writer-transition),
+not a selector change while jobs run or restoration of old stores.
+
+| Evidence | SHA-256 |
+| --- | --- |
+| release-preparation1/backup1.json | c35fcc9e5ba814fa5e2fa4a22677bcfc7a18a6199374bd5db94e6b2c948c24bf |
+| release-preparation1/drain1.json | eb1ba640198cac3430c68821527965bccad7866472d5bced6c720c7e21ecdf64 |
+| stage1/result.json | 7fcccee7fcb663d4bd5236120c2b6d41f3f3dd0915688c89b768ab74b1a3f8c1 |
+| writer-select-bind1/result.json | 402f117f9076c07411b8509911755aa1acce975903ebb0529b99d8fe2a1ccec4 |
+| writer-resume-rw1/result.json | f885aeb2ed6bf1c5cd1060ff5cef4da52028ff704db798bee886decb175fc4f1 |
+| writer-start1/result.json | 1fcca26d0d7866b3300f7fee460bf1216abb39c24a9cc67e345eb4b789af35e0 |
+| writer-installed-preflight1/result.json | 014ae06cb4ca7c1dab4ead0db3364e84be857015f435ffffd658d3a8957cf9bb |
+| selected-pilot-checkpoint1/result.json | 7ac0214cea563c72d26c2db7ca4ea04e8bb94e0948d3a1490ad2c7277d30080d |
+| backfill-final-acceptance1/result.json | e6a0ca95d8c650b0ecdaa5807b8e9bd7f636eb6c6ed8d7884ad6a43a8787c964 |
+| backfill-final-acceptance1/incomplete-observation-actions.json | 0e257d50c22d77034f0779ee50559633957b56c62c0c685f184b32bf883bcfe6 |
+| final-host-observation1/result.json | 6c739daa7d61d97e5aad7969a9aaccf35b7bebd172f3c0bdc2fa7126607964c6 |
+
+Selected Sync operation `817691c13ea8fcc5845bd6f9239c48e8`/run
+`3b4b3ba0af1842538829386bcb6a1f07`; selected refresh operation
+`807f0c5e5494d00cabcc6f0196eeec64`/run `304b118f7bea428aac0f6b0085c6717f`.
+Backfill operations `ec64615d037e566ce511be8019a1c4a9`,
+`81da4f9ec7723572693418ac5bf90acd`, `3eca2adc2c6a07421968e2675a557ca2`,
+`3af49d9c91a562eaae2ed32b56c0a7e3`, `2ee65600db9bbf7235489abed20939d3`
+retain their exact original results/domain runs in the protected browser ledger.
+
+## Historical writer0.3.3 transition — 2026-11-05
+
+**Writer transition checkpoint:** the protected selection is now
+`0.3.3-manual-writer`, same clean source/app/UI below, physical index
+`a638f833c3cf692cb72b5e7e5f5c162518ffec5b8964e7a2c590e53ee5a067df`.
+Fresh backup/full actual drain/original-lock selection preceded the persistent
+local NFS read/write remount and reviewed inert rootless namespace handoff.
+Original pause record inode63:60 is retained; no workloads were terminated by
+namespace maintenance and the engine database stayed byte-identical. New keeper
+434678 has independently authenticated maps/namespace ownership and NFS RW view.
+Archive permission alone is now true; other grants are unchanged. Helper READY
+preceded writer worker/API/Caddy. Actual application preflight passes both roles
+for UUID, config165, retention3 and reserve/capacity; writer domain/RW mounts,
+worker offline/secret masks and IP socket denial remain enforced. No Sync,
+metadata-refresh or backfill job has run yet. The genuine selected pilots and
+single bounded backfill remain acceptance prerequisites. SELinux is Enforcing,
+calendars disabled/native writers masked; guard/bridge stay deliberately inactive.
+The guarded acceptance below precedes this separately authorized transition.
+
+## Historical guarded0.3.3 qualification — 2026-11-05
+
+The selected release was **0.3.3-guarded-readonly**, clean source
 `1652b8f1df0d4b10f6b790c7225b3e7b8fdad0b5`, app image
 `661da09f26d773a11808c8cc5c1d727c4dd5f0d230c041831b17bfba835bce7b`,
 UI manifest `c9df46e1526ec1010e921658a1ebc4558d071dace3116abc1ed7637772528970`,

@@ -1,20 +1,21 @@
 # Rootless container runtime
 
 The selected local profile uses rootless Caddy, an API server and a separately
-confined private verifier. The archive remains read-only. See the dated
-[deployment status](deployment-status.md) before any operational change; source
-and fixture checks do not authorize NAS workloads or lifting the host guard.
-[Runtime rationale](adr/decision-127.md) explains the isolation/lifecycle choices.
-The selected physical release is 0.3.1 from clean source
-`c23abba45f8967d058983043b96843bef62e899a`. Runtime readiness, current guard
-state and positive administrator acceptance are separate recorded observations.
+confined private verifier. The default `guarded-readonly` profile and installation
+windows keep the archive read-only. The separately protected `manual-writer`
+profile permits fixed application-role archive writes after the reviewed
+transition and per-job authorization. See the dated
+[deployment status](deployment-status.md) for actual selected source, mode,
+confinement and production acceptance; fixture checks alone do not authorize
+NAS workloads. [Runtime rationale](adr/decision-127.md) explains the isolation
+and lifecycle choices.
 
 ## Roles and lifecycle
 
 | Role | Boundary |
 | --- | --- |
 | Caddy | Rootless TLS on 8443, existing protected certificate/key, Unix API upstream; no ACME/admin/file server/raw-header logging |
-| API | One application/registry/pool/lifespan, intended Hub/REST/MCP sources, local stores/cache; NAS read-only |
+| API | One application/registry/pool/lifespan, intended Hub/REST/MCP sources, local stores/cache; NAS read-only by default, writable only in the protected writer profile |
 | Private worker | Separate Network=none, baseline-preserving Unix-only socket creation, Python PID1, worker-created listener and peer proof; no secrets or host credential stores |
 | Runtime client | Finite API-only rootless observer; exact CLI results/handles, no host operation/scheduled-state mounts or cancellation |
 
@@ -22,9 +23,13 @@ state and positive administrator acceptance are separate recorded observations.
 
 Host service UID/GID come from protected runtime metadata and the helper caller.
 `keep-id` maps them to container `981:981`; 981 is not a universal host UID.
-Persistent roles run under the service account's user manager, reached through
-the protected system bridge. The finite client is launched by the fixed host
+Persistent roles run under the service account's user manager. The protected
+system bridge is one startup path; the qualified current-boot manual writer
+procedure keeps bridge/targets inactive and starts fixed roles individually. The finite client is launched by the fixed host
 wrapper running under the selected service identity.
+
+The following matrix describes the default guarded profile; the writer section
+below defines the only archive-mount difference.
 
 | Role | Network | Secrets | Executable | Persistent/writable state |
 | --- | --- | --- | --- | --- |
@@ -135,8 +140,8 @@ recorded separately from that companion.
 
 [Decision 165](adr/decision-165.md) accepts a closed `manual-writer` mode beside
 the default `guarded-readonly`. The source implements profile selection;
-installed and actual NFS qualification remain separate. The selected deployment
-facts above remain read-only. Existing
+installed and actual NFS qualification remain separate and are recorded in
+[deployment status](deployment-status.md). Existing
 runtime schema 1 means guarded-readonly. Writer runtime schema 2 requires
 `archive_mode:"manual-writer"`, with the same fixed image/UID/GID fields and
 no generic paths/options. The immutable release/index/rendered profile and

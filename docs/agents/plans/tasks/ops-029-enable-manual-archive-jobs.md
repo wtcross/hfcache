@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | in_progress |
+| Status | completed |
 | Plan | [Job recovery and archive writes](../2026-11-03-plan-job-recovery-and-archive-writes.md) |
 | Depends on | OPS-028, REL-020 and recorded production-write/pilot authority |
 | Execution | `gpt-6.1-sol` / `high`; explicit task-agent setting required |
@@ -25,13 +25,13 @@ Record exact reviewed IDs, amendments and any new decision before completion.
 
 | Requirement | Smallest meaningful check | Required gate/evidence | Current result |
 | --- | --- | --- | --- |
-| Writer transition prerequisites | Completed genuine OPS028 recovery; fresh original configuration/store/disposition/credential/artifact backup and complete actual executor/helper drain; same original flock handoff | `scripts/check.sh` plus actual protected receipts | OPS028 complete; fresh writer-specific backup/drain next |
-| Guarded-to-writer selection | Select already qualified writer sibling while NFSRO; exact index/runtime/source/image and matching helper authority/grants | Same gate plus official switch/retained originals | Matching0.3.3 sibling staged/indexa638f833; not selected |
-| Local mount and namespace transition | Reviewed persistent local mount override/remount without disconnect; proc1 and retained rootless namespace identity/rights; fully drained normal namespace handoff if stale | Actual current-boot mount/namespace receipts; original locks/guard preserved | Current host and pause namespace NFSRO; no turnover or RW remount |
-| Actual writer preflight | Application sentinel UUID, exact writer host/export, mapped ownership, reserve/capacity, Enforcing role rights, helper READY before ordered roles | Installed application read-only preflight and fixed role/confinement checks | Pending writer selection; no manual write probe or init |
-| Selected genuine UI/API pilots | Review one repository/upstream target/size/retention effects, then one distinct new Sync and one technical-refresh request; retain exact original operations/results/run/publication evidence | Actual administrator browser workflow and API original results | Genuine administrator authenticated; writer preflight and pilots pending |
-| One bounded metadata backfill | Enumerate current publications; finite batches within256-repository/512-publication/shared extraction budgets; every eligible publication bound or explicit actionable failure | One authorized execution with retained inventory/operations/results/coverage evidence | Read-only preparation only; no refresh/backfill submitted |
-| NFS scope and final handoff | Only required opted-in application NFS checks within approved scope; actual writer state/rollback and remaining independent holds documented | Scoped NFS result, repository gate, factual docs checks, WP commit | Pending; no interruption/disconnect/NAS-side effects |
+| Writer transition prerequisites | Completed genuine OPS028 recovery; fresh original configuration/store/disposition/credential/artifact backup and complete actual executor/helper drain; same original flock handoff | `scripts/check.sh` plus actual protected receipts | PASS: original transition705edb6a/35d55b87; fresh0.3.4 backupc35fcc9e/drain eb1ba640, actual pidfd/cgroup/UID closure and original27:3904 handoffs |
+| Guarded-to-writer selection | Select already qualified writer sibling while NFSRO; exact index/runtime/source/image and matching helper authority/grants | Same gate plus official switch/retained originals | PASS: both official0.3.4 stages7fcccee7, writer selection/binding402f117f; original selector/index/policy whole inodes retained |
+| Local mount and namespace transition | Reviewed persistent local mount override/remount without disconnect; proc1 and retained rootless namespace identity/rights; fully drained normal namespace handoff if stale | Actual current-boot mount/namespace receipts; original locks/guard preserved | PASS: initial reviewed installed6.0.2 turnover/newkeeper434678;0.3.4 temporary same-connectionRO window thenRWf885aeb2, persistent override and existing namespace unchanged |
+| Actual writer preflight | Application sentinel UUID, exact writer host/export, mapped ownership, reserve/capacity, Enforcing role rights, helper READY before ordered roles | Installed application read-only preflight and fixed role/confinement checks | PASS: actual installed both-role SDK014ae06c, API-origin worker PROBE23a42f9b, worker IP denialb27cdf5a; ordered startup1fcca26d and finalhost6c739daa |
+| Selected genuine UI/API pilots | Review one repository/upstream target/size/retention effects, then one distinct new Sync and one technical-refresh request; retain exact original operations/results/run/publication evidence | Actual administrator browser workflow and API original results | PASS: genuine installed UI selected Sync817691c1 and technical refresh807f0c5e, original results/screenshots root-protected7ac0214c; refresh response-body loss recovered by exact-key GET, zero replay |
+| One bounded metadata backfill | Enumerate current publications; finite batches within256-repository/512-publication/shared extraction budgets; every eligible publication bound or explicit actionable failure | One authorized execution with retained inventory/operations/results/coverage evidence | PASS: one pilot plus five distinct UI batches32/32/32/32/27;156 bound observations, zero write failures; installed coverage/preservatione6a0ca95 and149 incomplete diagnostic actions0e257d50 |
+| NFS scope and final handoff | Only required opted-in application NFS checks within approved scope; actual writer state/rollback and remaining independent holds documented | Scoped NFS result, repository gate, factual docs checks, WP commit | PASS: six scoped read-only actual NFS checks2.20s; default gate12d17fdf and strict gate79c38bf1 cover final technical inputs; final factual docs checks recorded below; no disconnect/NAS change |
 
 Every commit requires `rtk scripts/check.sh`; web changes require `--require-web`;
 release acceptance requires `--require-web --with-build`. Preserve raw failures.
@@ -47,7 +47,118 @@ permitted; unattended boot acceptance remains separate.
 
 ## Completion evidence
 
-Pending. Source and unit tests alone do not establish installed acceptance.
+Completed 2026-11-05. All original eight-package observable acceptance criteria
+are met through the recorded source, owned installed and actual production
+evidence. This is current-boot manual operation, not unattended boot acceptance.
+
+Production selected `0.3.4-manual-writer`, source
+`9756c70f939f0a94aae28eb6c1a2d776c886b0e9`, app
+`418edbe7e0f0e08c75a4d95ff75c5070d68c1a00f50afb7b912cee347ed1dc18`, UI
+`40c4324a1cee1eb89f179b1902440da2c6905af12a3d1d7554443034d0bdb329`,
+writer47-file index `bea2840db9d3efdfead64ccd57c03cc066c50f98c9c157f05cc24433f95298a0`.
+Helper index `91d8e4ede6f09198db84ecb9ba33ec3ac1073f9a4fb7a67d28ee5bf9bc739020`,
+policy `343378f26468786461d4991206fc017aaf02dbe698f5a68f4a22de051b7fcc05`.
+Original grants archive/configuration/Hub true; control/observer/schedule false.
+
+Fresh0.3.4 backup/drain/rollback preparation precedes all protected effects.
+The complete API-first actual executor drain, noncreating original-lock handoffs,
+temporary connected NFSRO stages/selection, exact18 leaf labels and measured
+matching helper binding pass. Existing persistent RW override, authenticated
+keeper434678/user4026532694/mnt4026532695, engine locks and kernel policy are
+unchanged. Same-connection RW restoration passes; no repeated namespace migration,
+module install or first intent activation. Helper READY precedes worker/API/Caddy.
+Both fixed writer roles prove actual RW export/dev0:70/writer_t/separate MCS,
+zero capabilities/NNP/seccomp; worker networknone/IP socket denied ENOSYS38 and
+secret isolation retained. Caddy has no archive. Original config, candidates,
+credentials and unrelated grants retain original bytes/inodes.
+
+The selected0.3.4 sizing precedes reviewed Sync
+`817691c13ea8fcc5845bd6f9239c48e8`/run `3b4b3ba0af1842538829386bcb6a1f07`:
+upstream1886570b/current, eight files1030096B, estimated new bytes0 and max3/one
+retained. Genuine installed UI and original API result succeed/up-to-date;
+download/prune0, publicationb4d95efd/gen1 preserved. HFWRN011 stays visible.
+Technical refresh `807f0c5e5494d00cabcc6f0196eeec64`/run
+`304b118f7bea428aac0f6b0085c6717f` writes the exact Morino GGUF observation,
+partial/exit0. The observer lost the HTTP202 body; preserved Basic key
+725c0738-d9f0-483c-be50-06aeaae4beaa recovered that exact admission/result via
+GET, then supported operation-ID import shows installed UI completion. One POST
+only; both observer failures are retained, no replay or product-source change.
+Earlier original failed4050dbaa and retired_unknown historical request remain.
+
+One finite backfill reuses that exact pilot and covers155 remaining current
+publications through five distinct explicit installed UI submissions. Original
+results and screenshots are retained; each was observed by GET only afterwards.
+
+| Batch | Publications | Operation ID | Domain run ID |
+| --- | --- | --- | --- |
+| 1 | 32 | ec64615d037e566ce511be8019a1c4a9 | 2be13ea0644b4c04aa2f2c2bfd269354 |
+| 2 | 32 | 81da4f9ec7723572693418ac5bf90acd | 530b295213364348b887f80746a16889 |
+| 3 | 32 | 3eca2adc2c6a07421968e2675a557ca2 | 33ea0fe1d6e64f08b5cc2848d70bf237 |
+| 4 | 32 | 3af49d9c91a562eaae2ed32b56c0a7e3 | b057fef7c2054d1ea32ee6ac487ffc1b |
+| 5 | 27 | 2ee65600db9bbf7235489abed20939d3 | d2ab2b2b30c146c3b261fe16e2bde002 |
+
+Independent actual installed SDK reads freshly bind all156 observations to exact
+original manifest hashes/generations/timestamps. All156 raw manifest bytes and
+both historical prune journal bytes are unchanged; current refs/232 retained
+publications/verification inventory compare exactly. Original12 operation-store
+bytes/inodes and permanent retirementb5217fb9 are unchanged. Counts:7 complete,
+27 partial,8 unsupported,114 failed interpretations; zero observation-write
+failures. Every149 incomplete record has exact diagnostics and an actionable
+handoff, primarily configured work/read/source/header limits and unsupported
+formats/dtypes. Unknown optional fields stay unknown; no weights downloaded or
+loaded, integrity promotion, larger budgets or cleaner-report replay. No second
+backfill is authorized by this completion.
+
+Protected evidence under
+`/opt/hfcache/deployment/20261105-job-recovery-0.3.4/`:
+
+| Receipt | SHA-256 |
+| --- | --- |
+| release-preparation1/backup1.json | c35fcc9e5ba814fa5e2fa4a22677bcfc7a18a6199374bd5db94e6b2c948c24bf |
+| release-preparation1/drain1.json | eb1ba640198cac3430c68821527965bccad7866472d5bced6c720c7e21ecdf64 |
+| stage1/result.json | 7fcccee7fcb663d4bd5236120c2b6d41f3f3dd0915688c89b768ab74b1a3f8c1 |
+| writer-select-bind1/result.json | 402f117f9076c07411b8509911755aa1acce975903ebb0529b99d8fe2a1ccec4 |
+| writer-resume-rw1/result.json | f885aeb2ed6bf1c5cd1060ff5cef4da52028ff704db798bee886decb175fc4f1 |
+| writer-start1/result.json | 1fcca26d0d7866b3300f7fee460bf1216abb39c24a9cc67e345eb4b789af35e0 |
+| writer-installed-preflight1/result.json | 014ae06cb4ca7c1dab4ead0db3364e84be857015f435ffffd658d3a8957cf9bb |
+| selected-pilot-checkpoint1/result.json | 7ac0214cea563c72d26c2db7ca4ea04e8bb94e0948d3a1490ad2c7277d30080d |
+| backfill-final-acceptance1/result.json | e6a0ca95d8c650b0ecdaa5807b8e9bd7f636eb6c6ed8d7884ad6a43a8787c964 |
+| backfill-final-acceptance1/incomplete-observation-actions.json | 0e257d50c22d77034f0779ee50559633957b56c62c0c685f184b32bf883bcfe6 |
+| final-host-observation1/result.json | 6c739daa7d61d97e5aad7969a9aaccf35b7bebd172f3c0bdc2fa7126607964c6 |
+
+The failed observer reports and original metadata failure are preserved. User.env
+credentials were parsed as data/in memory, never logged/staged/copied into these
+artifacts; original user browser storage remains untouched. Original uncommitted
+draft SHA2b823aae remains exact. No pushes/tags/registry publication, init, manual
+archive writes, reboot/disconnect/NAS change/other-host action occurs.
+
+Final technical inputs, including the repaired supported-SDK NFS test helper,
+pass OPS029 default gate9935/backend/build/three profiles (12d17fdf,1358.63s)
+and REL020 strict gate9948/backend plus all strict web/browser/build/profile
+checks (79c38bf1,1671.58s/1287 frozen inputs unchanged). Six selected read-only
+actual NFS checks pass2.20s; application production jobs are separate evidence.
+Only factual documentation changed after the strict gate. Final focused
+documentation alignment passes217 human documents/29 helpers;69 focused checks
+pass8.11s. Raw log `cd08f419f8b427dd2e9c9585e01ead52538e418e7918fdbcdde28bb8497f5cbe`;
+private NAS shadow/login1000. The first factual docs check correctly refused
+public links to internal task records; public evidence now lives directly in
+deployment status. Original failed docs log is preserved.
+
+Reviewed FS02/19/21–23, AD16/17, TX03–07, INV003/007/018/020/021/023 and
+ADR121/150/159/164/165/166. Existing contracts/decisions govern these actions;
+no new authority, dependency, durable format or decision is introduced. Human
+container/recovery/deployment guides and current host checkpoint are reconciled.
+Enforcing/kernel policy, original locks/engine metadata/credentials/predecessors,
+disabled calendars/masked writers and inactive guard/bridge are freshly proved.
+Manual current-boot startup and compatible drained guarded rollback remain the
+supported scope; unattended boot, NAS settings, other-host/all-phase companion
+and unrelated maintenance/configuration workflows remain independent holds.
+
+### Historical execution notes
+
+The following dated checkpoints retain their original scope; completion evidence
+above owns the final state.
+
 
 
 2026-11-05 dependency preparation only: OPS028 guarded startup and automated

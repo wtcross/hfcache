@@ -35,6 +35,32 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Job recovery and manual archive writes (2026-11-03)
 
+- [x] OPS-029 Complete actual manual writer, selected UI/API pilots and one bounded backfill
+  (2026-11-05, this commit — [task](plans/tasks/ops-029-enable-manual-archive-jobs.md)).
+  Fresh0.3.4 backupc35fcc9e/full actual draineb1ba640, official47-file stages7fcccee7,
+  original-lock selection/binding402f117f, restoredRWf885aeb2 and orderedstartup
+  1fcca26d pass. Existing434678 namespace/persistent override retained; no repeated
+  activation/migrate/module. Actual SDK014ae06c/workerPROBE23a42f9b/IPdenialb27cdf5a
+  and finalhost6c739daa pass. Genuine selected Sync817691c1 and refresh807f0c5e
+  succeed, protectedscreens/results7ac0214c; lost202body recovered by original-key
+  GET and supported UI, onePOST/no replay. Single five-batch32/32/32/32/27 backfill
+  pluspilot covers156, independent installed binding/preservatione6a0ca95 passes.
+  Observations7complete/27partial/8unsupported/114failedinterpretations, allwritten,
+  zero writefailures;149 exact diagnostic actions0e257d50 retained. No unsupported
+  metadata claim, weights download/load or verification promotion. Original156
+  manifest bytes/current/232retained/verification/oldjournals/original12stores/
+  retirement/locks/credentials/predecessors preserved. Original historical request
+  stays retired_unknown. Enforcing/kernelpolicy/grants/masks/disabledcalendars and
+  deliberate inactiveguard/bridge intact. Scoped sixNFS checks pass2.20s; final
+  technical inputs pass default gate12d17fdf and strict79c38bf1/9948backend/allweb/
+  build/threeprofiles,1287frozeninputs unchanged. Factual closing docs alignment
+  passes217human/29helpers and69 focused checks8.11s; original failed public-link
+  check retained. Reviewed FS02/19/21–23/AD16/17/TX03–07/INV003/007/018/020/021/023 and
+  ADR121/150/159/164/165/166; no new authority/format/dependency/decision. Human
+  guides/currenthost/task/plan reconciled; original draft2b823aae intact.
+  All eight observable packages complete/currentselectorclosed; manualcurrentboot
+  only, independent boot/other-host holds remain. No push/tag/imagepublication.)
+
 - [x] REL-020 Restore exact historical committed prune compatibility and prepare0.3.4
   (2026-11-05, this commit — two actual July26 prune records match producer53afd690,
   before next-day cleanup checkpoint. Exact committed10-step/nullerror/completion
@@ -3074,6 +3100,25 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-05 final completed checkpoint: all original eight packages and necessary
+REL019/020 follow-ups complete. Actual manual-writer0.3.4/source9756c70/app418edbe7/
+UI40c4324a/indexbea2840d, NFSRW/Enforcing. Genuine selected Sync817691c1 and refresh
+807f0c5e succeed; original-key GET recovers lost202body without replay. Single
+bounded backfill156 bound observations,7complete/27partial/8unsupported/114failed
+interpretations, zero writefailures;149 incomplete exact diagnostic actions are
+protected at `/opt/hfcache/deployment/20261105-job-recovery-0.3.4/backfill-final-acceptance1/incomplete-observation-actions.json`.
+No second backfill or larger budgets follow. Original request762c47c1 is permanently
+retired_unknown, handles/historical uncertainty/userbrowser storage preserved;
+normal authenticated reload/original observation reconciles it. Currenthost6c739daa
+and coveragee6a0ca95 retain original manifests/oldjournals/stores/lockinodes/config/
+credentials/predecessors. Schedules disabled/nativewriters masked/unrelatedgrants
+unchanged; guard+bridge inactive. Current-boot manual startup/compatible drained
+guarded rollback only. Unattended boot, other-host/NAS/all-phase companion and
+unrelated configuration/maintenance workflows remain independent holds. Earlier
+authentication/metadata/activation blocks below are historical, not pending work.
+No active plan/backlog/push/tag/imagepublication.
+
 
 2026-11-05 actual metadata hold: genuine selected Sync943f7560 succeeds/up-to-date
 with original publication preserved and HFWRN011. Genuine metadata pilot4050dbaa

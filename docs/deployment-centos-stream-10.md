@@ -699,3 +699,17 @@ its new PID/birth/maps/namespace, preserve the old evidence and supersede the ol
 actor snapshot explicitly. Rejoin actual mount flags before helper READY and
 ordered role startup. A mount change is not a durable-format activation or
 permission grant; do not repeat disposition provisioning or replay any job.
+
+
+2026-11-05 actual local acceptance: the
+[protected deployment evidence](deployment-status.md#protected-current-acceptance-evidence)
+records current-boot manual-writer0.3.4 selection and genuine UI/API jobs. The
+initial writer transition reviewed installed Podman6.0.2-1.el10 independently of
+the6.1 source example above: full actual drain precedes its one no-option migrate,
+original pause inode63:60 is retained whole and the engine database stays
+byte-identical. New keeper434678 is authenticated; the subsequent0.3.4 upgrade
+retains that namespace and persistent RW override through a temporary connected
+RO install window, freshly proving VFS/superblock RW before ordered roles. No
+additional migrate, intent activation or CIL load occurs. The
+[current deployment status](deployment-status.md) records exact writer/pilot/
+backfill acceptance and remaining independent holds; no unattended boot claim.

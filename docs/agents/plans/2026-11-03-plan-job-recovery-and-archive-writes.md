@@ -2,11 +2,11 @@
 
 | Field | Value |
 | --- | --- |
-| Status | active |
+| Status | completed |
 | Created | 2026-11-03 |
 | Authorization | User instruction 2026-11-03: implement all eight packages, protected local deployment, controlled writer transition, selected pilots and bounded backfill after safety prerequisites |
 | Execution model | `gpt-6.1-sol`, with explicit per-task effort below; no implicit client default |
-| Tracker | [Current plan](current.md); this plan is selected |
+| Tracker | [Current plan](current.md); completed plan retained |
 | Starting source | Clean `main` at `7fceb8d`; recorded deployed application source `c23abba`, release 0.3.1 |
 
 ## Outcome
@@ -544,3 +544,16 @@ historical evidence collection is a deliverable.
   writer boundaries and current checkpoint ordering remain. OPS029 resumes
   protected compatibility deployment, fresh affected installed Sync/refresh and
   one bounded backfill. Original eight acceptance criteria remain unchanged.
+
+- 2026-11-05: OPS029 completes actual manual-writer0.3.4 protected deployment,
+  genuine selected Sync/technical-refresh UI/API results and one bounded backfill.
+  All156 current publications have freshly bound observations:7 complete,
+  27 partial,8 unsupported,114 failed interpretations, zero observation-write
+  failures; every incomplete record retains diagnostic actions. All raw manifest,
+  current/retained/verification, old journal and original operation/store/lock/
+  credential evidence remains. Original request retired_unknown, no replay;
+  Enforcing/masks/disabledcalendars/unrelated grants preserved. Strict gate and
+  actual installed/production acceptance meet all nine observable clauses above;
+  original eight packages and necessary REL019/REL020 follow-ups are complete.
+  Current-boot manual operation only; independent boot/other-host holds remain.
+  Close selector without activating backlog. No push/tag/registry publication.

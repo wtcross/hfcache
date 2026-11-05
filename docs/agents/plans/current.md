@@ -2,16 +2,23 @@
 
 | Field | Value |
 | --- | --- |
-| State | active |
-| Active plan | [Job recovery and archive writes](2026-11-03-plan-job-recovery-and-archive-writes.md) |
-| Current task | [OPS-029](tasks/ops-029-enable-manual-archive-jobs.md) |
-| Blocker | None for next authorized step. REL-020 strict gate and matching0.3.4 artifacts pass. OPS-029 resumes fresh protected backup/drain/temporary RO stage+selection, matched writer startup/preflight, successful affected Sync/refresh and one bounded backfill. Production currently writer0.3.3/RW/Enforcing; original retired_unknown preserved |
-| Last completed plan | [Ignore root Node dependencies](2026-11-02-plan-root-node-ignore.md) |
+| State | none |
+| Active plan | None |
+| Current task | None |
+| Blocker | None |
+| Last completed plan | [Job recovery and archive writes](2026-11-03-plan-job-recovery-and-archive-writes.md) (completed 2026-11-05) |
+| Last completed task | [OPS-029](tasks/ops-029-enable-manual-archive-jobs.md) (this commit) |
 | Branch | main |
 | Updated | 2026-11-05 |
 
-The user authorizes all eight packages including protected deployment and scoped
-production jobs after the plan's safety prerequisites. Preserve archive identity,
-original locks/state/handles/credentials, predecessor artifacts and hardening.
-Schedules stay disabled and legacy writers masked. No pushes, tags, registry
-publication, reboot, NFS disconnection, NAS changes or other-host work.
+All original eight packages and necessary REL019/REL020 follow-ups are complete.
+Actual installed manual-writer0.3.4 UI/API Sync and technical refresh succeed;
+one bounded backfill writes156 exact bound observations with truthful incomplete
+diagnostics. Original request remains retired_unknown, preserving handles and
+historical uncertainty without replay. The completed task owns protected receipts.
+
+NFSRW/Enforcing, original locks/stores/credentials/predecessors, disabled calendars,
+masked native writers and unrelated permissions remain. Acceptance is current-boot
+manual startup; independent boot/other-host/NAS/companion/unrelated workflow holds
+remain. No backlog, additional backfill, automatic schedule, push, tag or image
+publication is activated.

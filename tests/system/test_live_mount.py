@@ -1,27 +1,15 @@
-"""`doctor --read-only` against the real NFS archive on this writer.
+"""Opt-in application SDK storage checks against the actual NFS mount.
 
-Marked `nfs` and deselected by default. Run it with `pytest -m nfs`.
+The public CLI is API-only: --config is a candidate input, not a local doctor
+transport. These tests exercise the same supported storage-check SDK used by
+server diagnostics, in a separate process against the kernel mount table.
+Read-only cases skip every write probe and acquire no lock. Mutating cases
+require the caller's access to the existing original runtime lock and use the
+application's guarded storage-preflight path; they never initialize an archive.
 
-Every other test in the suite substitutes a temporary directory and a fabricated
-mountinfo line for the archive. That substitution is what makes the suite
-portable, and it is also exactly what a mount proof must not rely on: a parser
-that agrees with a line this repository wrote proves nothing about the line the
-kernel writes. So this file reads `/proc/self/mountinfo` for real, against the
-real `nas.lab.example.com:/mnt/tank/huggingface-archive` mount, and checks
-that `docs/cli.md` §2 rows 2-5 pass on it.
-
-`--read-only` is not a convenience here, it is the whole safety argument: the
-archive is live, and initialization is authorized exactly once at the §29 rollout
-checkpoint. Nothing in the read-only half of this file writes, and one test
-asserts that by comparing the mount's contents before and after.
-
-The file runs against a deployment in either state. Before the checkpoint the
-archive is uninitialized and the checks that need a sentinel skip; after it they
-are the ones that matter most, because docs/storage-requirements.md effective writability means
-effective
-writability and the three the doctor capability contract publication capabilities cannot be
-established on
-this export any other way than by performing them.
+The production plan selects only the read-only cases here. Actual rootless
+writer transactions and metadata writes are accepted through separately retained
+genuine administrator UI jobs, not inferred from this host SDK test process.
 """
 
 import json
@@ -96,10 +84,35 @@ def config_file(tmp_path_factory: pytest.TempPathFactory) -> Path:
     return path
 
 
+_STORAGE_SCRIPT = r"""
+import json
+import sys
+from pathlib import Path
+
+from hfcache.config import load_config
+from hfcache.paths import ArchiveLayout
+from hfcache.preflight import guarded, storage_checks
+
+config = load_config(Path(sys.argv[1]))
+layout = ArchiveLayout(config.storage.archive_root)
+if sys.argv[2] == "read-only":
+    checks = storage_checks(layout, storage=config.storage, read_only=True)
+else:
+    # Supported application path retains the common original lock before probes.
+    with guarded(layout, storage=config.storage, command="doctor", lock_wait_seconds=0) as held:
+        checks = list(held)
+failed = any(check.outcome == "fail" for check in checks)
+print(json.dumps({"data": {"checks": [check.as_entry() for check in checks]}}))
+raise SystemExit(2 if failed else 0)
+"""
+
+
 def run(config_file: Path, *arguments: str) -> subprocess.CompletedProcess[str]:
-    """Invoke the CLI out of process, so nothing this suite patched can apply."""
+    """Use the application SDK; no API job, Hub call or retired CLI option."""
+    assert arguments in (("doctor",), ("doctor", "--read-only"))
+    mode = "read-only" if "--read-only" in arguments else "guarded-probes"
     return subprocess.run(
-        [sys.executable, "-m", "hfcache", "--json", "--config", str(config_file), *arguments],
+        [sys.executable, "-I", "-B", "-c", _STORAGE_SCRIPT, str(config_file), mode],
         check=False,
         capture_output=True,
         text=True,
