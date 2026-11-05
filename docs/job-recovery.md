@@ -389,3 +389,23 @@ The protected installer/runtime renderer must supply that exact fixed invocation
 original/companion mounts and coordination label before installed activation.
 This source module is not startup auto-provisioning or an installed acceptance
 claim. Recreated runtime objects still require independently reviewed quiescence.
+
+
+## Bounded archive journal review
+
+Historical retirement validates the sentinel and every transaction journal while
+holding the original archive flock. Review admits at most1024 journal entries,
+with a1MiB per-artifact ceiling and8MiB aggregate metadata ceiling, including
+the sentinel. Enumeration and each artifact read are separately charged; the
+shared work budget is2049 operations, not1024 operations for both passes.
+The explicit1024-journal ceiling is checked before reading journal bodies.
+Unknown/non-JSON, malformed or unfinished journals and exhausted byte/work
+budgets refuse closure without changing history or publishing a fence. No
+journal is skipped because it is old, and no archive file is modified by review.
+
+Whole protected-effect history also needs the independently root-provisioned
+original host-action guard and packaged empty history roots, even with native
+schedule/observer grants disabled. Missing prerequisites refuse read-only;
+provision only after fresh backup/full actual drain/original-lock handoff,
+preserving existing history/guards and applying exact labels. Empty history
+directories do not enable schedules, create a timer expression or grant effects.

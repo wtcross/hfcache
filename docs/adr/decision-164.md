@@ -266,3 +266,19 @@ manager-control permission is added.
 Every existing neverallow and capability/namespace limit remains unchanged.
 The failed component and original API refusal remain evidence; metadata-component
 success, copied policy compatibility and full installed retirement are distinct.
+
+
+## Archive journal accounting conformance (2026-11-05)
+
+Actual guarded production review reaches621 resolved transaction journals but
+its1024 shared MetadataReader operations cover both enumeration and reading,
+so it refuses despite only2.9MB of metadata. State the intended logical bound
+explicitly: at most1024 fully validated journals and one sentinel, charged as
+2049 work operations with unchanged1MiB artifact/8MiB total ceilings. Check the
+journal count before journal reads. Unknown, corrupt, unfinished and over-budget
+histories remain blocking; no checkpoint subset, journal cleanup, unbounded scan
+or manual fence is accepted. This preserves INV023 and existing architectural
+choice, introduces no format/dependency/grant, and requires fresh gated matching
+release and actual retirement acceptance. Independently provisioned root history
+coordination and all packaged history roots are a separate host prerequisite;
+read-only review cannot initialize missing objects or enable native effects.

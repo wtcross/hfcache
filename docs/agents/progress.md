@@ -35,6 +35,20 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Job recovery and manual archive writes (2026-11-03)
 
+- [x] REL-019 Correct bounded original-review journal accounting and prepare0.3.3
+  (2026-11-05, this commit — actual621-journal QueryLimitError reproduced;
+  explicit1024-journal limit and2049 enumeration/read/sentinel budget preserve
+  full validation and1MiB/8MiB ceilings. Focused77 checks pass. Strict source/
+  web/build gate PASS9935 backend,179 wire,3809/4169 web,16 built browser,
+  actual200% zoom, real API React,16 wheel and three locked profiles;1284 frozen
+  names/hashes unchanged. Gate raw log fec7fe00,1645.03s. Matching clean source
+  1652b8f, wheel a9cba884/UIc9df46e1/app661da09f and immutable mode inputs,
+  renders/OCI prepared; new-image foundation passes23.98s.93 dependency pins
+  and124 other application members unchanged; worker/Caddy/CIL proof reuse
+  is scoped, never counted as new installation. INV023/ADR164/contracts updated.
+  OPS-028 next owns protected deployment and actual original-key retirement;
+  original eight-package acceptance and OPS-029 pilots/backfill remain.)
+
 - [x] REL-018 Prepare0.3.2 matching immutable recovery/writer artifacts
   (2026-11-05, this commit — [task](plans/tasks/rel-018-job-recovery-writer-release.md),
   [plan](plans/2026-11-03-plan-job-recovery-and-archive-writes.md)).
@@ -3027,6 +3041,78 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-05 current resumed handoff: user authorizes genuine administrator
+credentials from ignored.env; no human authentication blocker remains. Stable
+Basic subject archive-admin verified independently of HTTP username. Full
+host-history prerequisites were provisioned under backed-up complete drains;
+actual621-journal accounting defect is fixed and REL-019 strict gate/matching
+0.3.3 artifacts pass. OPS-028 resumes protected deployment before original-key
+installed UI retirement. Original authority remains empty, no original refresh
+replay. Production still guarded0.3.2/NFSRO/Enforcing/archive=false. OPS-029
+writer/pilots/backfill remain pending; earlier blocked audits are historical.
+
+
+2026-11-05 human validation update: user ran the prepared trusted-terminal
+validator successfully. Actual root-protected receipt20cbb254 and bound host-
+statusdaab65b4 are independently verified. All11 genuine Basic/UI/assets/stable
+bootstrap/helper/configuration GETs pass200/TLS; original grants remain and no
+job/mutation/JavaScript/NAS payload read occurs. OPS-028 resumes in_progress for
+this evidence; its earlier blocked audit remains historical. Original browser
+recovery is still pending and authority empty. User has been asked to use the
+existing Operations record's fresh admission observation or explicit reviewed
+retirement without losing handles or historical uncertainty. No original replay,
+writer transition, pilot/backfill or repeated green harness follows from this
+terminal success. OPS-029 remains pending original-request recovery.
+
+2026-11-05 blocker audit: OPS-028 now blocked on the exact trusted-terminal and
+existing-browser action below after three consecutive checks. No human receipt
+or validator process exists; intent authority remains empty. Independent work
+is recorded; six packages committed, OPS-028 incomplete/uncommitted and OPS-029
+pending. Thread goal is being marked blocked, never complete. NFSRO/Enforcing
+and archive=false remain; do not loop on green tests or repeat completed host
+phases. Resume from actual human receipt/browser disposition evidence.
+
+2026-11-05 current OPS-028 handoff (in progress, not completion): actual guarded
+0.3.2/source2d4c9cc selection, fresh backups/full drain/original-lock handoffs,
+matching helper CIL/code/labels/index/policy, first isolated intent preparation
+and helper-before-worker/API/Caddy startup pass. Actual installed read-only
+receipt9af02b20 passes29 TLS/API cases, API-origin worker PROBE, credential
+separation/MCP14, UI bytes and five original operation/result reads. NFSRO/
+Enforcing, archive=false, configuration/Hub=true, remaining grants=false,
+legacy masks and disabled calendars remain. New current-boot global27:3904 and
+companion27:4393 are originals to preserve; actual API27:1761 was present and
+is preserved, correcting the older missing-API statement below. The legacy0.3.1
+official stop removed its exited Caddy CID; retain its available journal/image/
+durable directories and do not claim CID preservation. Task records full facts.
+
+Genuine authentication is now the required human step. In the operator's own
+terminal run:
+
+```bash
+rtk sudo /usr/bin/python3 -I -B /opt/hfcache/deployment/20261105-job-recovery-0.3.2/run-validate-administrator.py --phase inactive1
+```
+
+The protected wrapper pins actual source/UI/deployment and connects the hidden
+password prompt only to the controlling terminal;11 verified-TLS GETs, no jobs,
+mutation or JavaScript. Then use the existing browser profile's original
+Operations record762c47c1 at
+`https://hfcachewriter.lab.cross.solutions:8443/ui/`. Observe an admission as-is;
+if original observation remains unknown, use Review original request and its
+explicit reviewed retirement. Preserve handles and historical uncertainty. Do
+not send credentials to the agent, replay the original refresh, clear browser
+storage or substitute a fixture principal. User prompted; receipt/action pending.
+
+Independent writer preparation reads156 archived repositories/232 retained and
+156 current publications through the installed reader API. Proposed five bounded
+backfill batches32/32/32/32/28 are prepared, not executed. Smallest observed
+configured candidate is Cudecnik/Qwen3.8-Flash-Next-refusal-projection (~1MiB,
+8files, one retained revision); current upstream target, actual capacity and
+retention effects still require fresh review before a selected Sync. OPS-029
+remains pending: no writer selection, RW remount, permission change, Sync,
+technical refresh or backfill. No further green harness matrix is needed while
+authentication is pending; continue only independent prerequisite work.
+
 
 2026-11-05: REL-018 completes and selects OPS-028 after strict release gate4.
 Exact retained artifact source2d4c9cc supplies0.3.2 guarded/manual inputs; task

@@ -39,6 +39,7 @@ if TYPE_CHECKING:
 
 PREFIX = "/api/v1"
 MAX_INTENT_RESPONSE_BYTES = 65536
+MAX_ARCHIVE_REVIEW_JOURNALS = 1024
 
 
 class RetirementRequest(DurableModel):
@@ -103,7 +104,9 @@ def _archive_review(root: Path, archive_id: str) -> None:
     reader = MetadataReader(
         root,
         QueryBounds(
-            maximum_entries=1024, maximum_artifact_bytes=1048576, maximum_total_bytes=8388608
+            maximum_entries=1 + 2 * MAX_ARCHIVE_REVIEW_JOURNALS,
+            maximum_artifact_bytes=1048576,
+            maximum_total_bytes=8388608,
         ),
     )
     layout = ArchiveLayout(root)
@@ -113,7 +116,11 @@ def _archive_review(root: Path, archive_id: str) -> None:
     if sentinel.archive_id != archive_id:
         msg = "Archive identity changed; protected operator review required"
         raise unavailable(msg)
-    for entry in reader.entries(layout.transactions, missing_ok=False):
+    entries = reader.entries(layout.transactions, missing_ok=False)
+    if len(entries) > MAX_ARCHIVE_REVIEW_JOURNALS:
+        msg = "Archive journal review limit exceeded; protected operator review required"
+        raise unavailable(msg)
+    for entry in entries:
         if not entry.path.name.endswith(".json"):
             msg = "Unclassified archive journal; operator review required"
             raise unavailable(msg)

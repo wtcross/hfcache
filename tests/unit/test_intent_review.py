@@ -5,6 +5,7 @@ import json
 import os
 import threading
 import time
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from typing import Any, cast
 
@@ -15,8 +16,9 @@ from hfcache import locking
 from hfcache.api.intent_routes import _retire
 from hfcache.api.intents import IntentInterlock, unavailable
 from hfcache.api.runner import OperationRunner
-from hfcache.errors import OperationError
+from hfcache.errors import HfcacheError, OperationError
 from hfcache.locking import exclusive_lock
+from hfcache.models import TransactionJournal
 from hfcache.paths import ArchiveLayout
 from hfcache.services.context import ServiceResult
 from hfcache.verification_executor import VerificationWorker
@@ -240,3 +242,78 @@ def test_failed_enqueue_keeps_lease_until_interrupted_receipt_and_never_runs(
     assert runner.interlock is not None
     with runner.interlock.acquire(exclusive=True):
         pass
+
+
+def _review_journals(request: Request, count: int, *, padding: int = 0) -> dict[str, bytes]:
+    layout = ArchiveLayout(request.app.state.policy.root)
+    snapshot = request.app.state.policy.snapshot()
+    original = {}
+    for index in range(count):
+        journal = TransactionJournal(
+            schema_version=1,
+            archive_id=request.app.state.policy.archive_id,
+            config_fingerprint=snapshot.fingerprint,
+            created_at=datetime(2026, 11, 5, tzinfo=UTC),
+            operation="sync",
+            run_id="a" * 32,
+            state="committed",
+            transaction_id=f"{index:032x}",
+        )
+        body = json.dumps(journal.model_dump(mode="json")).encode()
+        body += b" " * max(0, padding - len(body))
+        path = layout.transactions / f"{index:032x}.json"
+        path.write_bytes(body)
+        original[str(path)] = body
+    return original
+
+
+@pytest.mark.parametrize("count", [621, 1024])
+def test_whole_journal_retirement_counts_enumeration_and_reads_separately(review_context, count):
+    request, _, helper, _ = review_context
+    original = _review_journals(request, count)
+    response = json.loads(bytes(_retire(request, "historical").body))
+    assert response["state"] == "retired_unknown"
+    assert response["operation"] is None
+    assert helper.calls == 1
+    assert request.app.state.operations.list() == ()
+    for name, body in original.items():
+        assert request.app.state.policy.root.joinpath(name).read_bytes() == body
+
+
+def test_excess_journal_history_refuses_without_retiring_or_changing_it(review_context):
+    request, _, _, _ = review_context
+    original = _review_journals(request, 1025)
+    with pytest.raises(HfcacheError):
+        _retire(request, "historical")
+    assert request.app.state.operations.intent(
+        BASIC, "historical", request.app.state.policy.archive_id
+    ) == (None, None)
+    for name, body in original.items():
+        assert request.app.state.policy.root.joinpath(name).read_bytes() == body
+
+
+def test_unfinished_final_journal_still_blocks_a_large_history(review_context):
+    request, _, _, _ = review_context
+    original = _review_journals(request, 621)
+    last = request.app.state.policy.root.joinpath(sorted(original)[-1])
+    content = json.loads(last.read_bytes())
+    content["state"] = "needs_operator"
+    last.write_text(json.dumps(content))
+    with pytest.raises(OperationError, match="Unfinished archive journal"):
+        _retire(request, "historical")
+    assert request.app.state.operations.intent(
+        BASIC, "historical", request.app.state.policy.archive_id
+    ) == (None, None)
+
+
+@pytest.mark.parametrize(("count", "padding"), [(1, 1048577), (129, 65536)])
+def test_journal_byte_ceilings_still_refuse_without_retiring(review_context, count, padding):
+    request, _, _, _ = review_context
+    original = _review_journals(request, count, padding=padding)
+    with pytest.raises(HfcacheError):
+        _retire(request, "historical")
+    assert request.app.state.operations.intent(
+        BASIC, "historical", request.app.state.policy.archive_id
+    ) == (None, None)
+    for name, body in original.items():
+        assert request.app.state.policy.root.joinpath(name).read_bytes() == body

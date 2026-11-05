@@ -71,17 +71,18 @@ See [discovery](docs/discovery.md) for provenance, incomplete coverage and rollb
 
 ## Status
 
-Version **0.3.2** is being prepared with accessible job readiness, bounded
-GET-only recovery of original requests and protected rootless writer profiles.
-Owned native/rootless installed acceptance includes actual application writes
-and preserving guarded rollback. Production deployment, recovery of the existing
-historically uncertain request, selected write pilots and bounded metadata
-backfill remain pending. See [deployment status](docs/deployment-status.md).
+Version **0.3.3** is being prepared to correct bounded original-request review
+for larger journal histories. The installed **0.3.2-guarded-readonly** release,
+clean source `2d4c9cc`, supplies accessible job readiness, bounded GET-only
+recovery and protected rootless writer profiles. Installed read-only and genuine
+administrator UI/assets/helper/configuration reads pass. The original request
+still needs the accounting correction before review can complete; writer pilots
+and bounded metadata backfill remain pending. The archive is read-only.
+See [deployment status](docs/deployment-status.md) and
+[release notes](CHANGELOG.md) for actual state and acceptance limits.
 
-
-The local host selects **0.3.1**, clean source `c23abba`, with draft-safe
-configuration reloads, compact Library browsing and compatible facet reuse.
-See [release notes](CHANGELOG.md) for user-visible behavior.
+Owned native/rootless0.3.2 qualification includes actual application writes and
+preserving guarded rollback; that evidence retains its original scope.
 
 The following completed0.3.1 acceptance is historical; the active plan records
 the current-boot runtime prerequisites. At that acceptance the API, private

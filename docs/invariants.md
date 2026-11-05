@@ -1515,6 +1515,9 @@ No enforcement or acceptance is claimed from these new register entries alone.
   The already engine-authenticated pause keeper accepts only PID1 adoption or
   its authenticated manager as parent, with captured owner/maps joined to the
   prepared namespace proof and unchanged exact executable/argv/domain checks.
+  Archive review validates at most1024 whole journals plus the sentinel, charging
+  enumeration and reads separately within2049 work operations and unchanged
+  1MiB artifact/8MiB aggregate ceilings; exhausted or unfinished evidence refuses.
   Prior uninterlocked executors require actual reviewed deployment drain. Retirement
   preserves historical uncertainty and handles; no job replay, cleanup or
   protected-effect confirmation follows. Original refusal fields never change;

@@ -238,7 +238,8 @@ explicit task ownership and nonoverlapping file scopes in the active records.
 | 4 | OPS-027 — [ops-027-explicit-rootless-writer-profile.md](tasks/ops-027-explicit-rootless-writer-profile.md) | WEB-031 | `gpt-6.1-sol` / `high` | Supported protected writer runtime, role mounts/startup/helper/SELinux changes, read-only defaults and reversible selection procedure; qualify changed authority boundaries |
 | 5 | WEB-033 — [web-033-job-recovery-and-writer-acceptance.md](tasks/web-033-job-recovery-and-writer-acceptance.md) | API-019, WEB-032, OPS-027 | `gpt-6.1-sol` / `medium` | Close named acceptance gaps using direct installed job/recovery workflows and the affected format/profile drills; reuse valid unchanged evidence and update human guides, without building a new harness |
 | 6 | REL-018 — [rel-018-job-recovery-writer-release.md](tasks/rel-018-job-recovery-writer-release.md) | WEB-033 | `gpt-6.1-sol` / `medium` | Clean committed source and reproducible immutable matching backend/UI/image/helper artifacts; documented rollback compatibility using existing release tooling |
-| 7 | OPS-028 — [ops-028-install-job-recovery-release.md](tasks/ops-028-install-job-recovery-release.md) | REL-018 | `gpt-6.1-sol` / `high` | Guarded local installation while NFS stays read-only; actual Basic/UI/helper negative-permission behavior and reviewed recovery of the reported key |
+| 6a | REL-019 — [rel-019-original-review-journal-accounting.md](tasks/rel-019-original-review-journal-accounting.md) | REL-018 | existing coordinator | Necessary actual-host conformance fix: count at most1024 fully validated journals with separate enumeration/read accounting; prepare matching immutable0.3.3 release, preserving the original eight-package acceptance scope |
+| 7 | OPS-028 — [ops-028-install-job-recovery-release.md](tasks/ops-028-install-job-recovery-release.md) | REL-018 and REL-019 | `gpt-6.1-sol` / `high` | Guarded local installation while NFS stays read-only; actual Basic/UI/helper negative-permission behavior and reviewed recovery of the reported key |
 | 8 | OPS-029 — [ops-029-enable-manual-archive-jobs.md](tasks/ops-029-enable-manual-archive-jobs.md) | OPS-028 and recorded production-write/pilot authority | `gpt-6.1-sol` / `high` | Controlled writer transition, selected real metadata/Sync pilots, one bounded backfill of existing current publications and final operational handoff |
 
 No push, release tag, registry publication, schedule activation, other-host work,
@@ -501,3 +502,20 @@ historical evidence collection is a deliverable.
   Caddy and WEB-033 compatibility/workflow evidence retain their explicit scopes.
   OPS-028 is next; protected production stages/deployment, genuine old-key
   recovery, writable transition and scoped pilots/backfill remain pending.
+
+
+- 2026-11-05: Actual OPS-028 retirement reaches full protected review after
+  documented host-history provisioning, then exposes a source work-accounting
+  defect:621 resolved JSON journals/2875196B exceed a1024 shared enumeration+
+  read budget despite fitting the byte limits. Add necessary release follow-up
+  REL-019 before completing OPS-028. This corrects bounded journal accounting
+  and supplies immutable0.3.3 artifacts; every original eight-package criterion
+  remains. User authorizes genuine administrator credentials in ignored.env;
+  no credential contents, original job replay, format change or new grant.
+
+- 2026-11-05: REL-019 completes bounded journal accounting and matching clean
+  immutable0.3.3 artifacts. Strict gate passes9935 backend/all strict web/build
+  stages with1284 frozen inputs unchanged; focused red/green and limit tests
+  retain whole-history refusal and byte bounds. Unchanged worker/Caddy proofs
+  retain their original scopes. OPS-028 resumes fresh protected deployment and
+  actual original-key UI retirement; original eight criteria remain in force.

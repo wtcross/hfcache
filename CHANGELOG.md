@@ -4,7 +4,21 @@ Annotated release tags identify reviewed deployed states; application source and
 deployment commits may differ. This file summarizes user-visible changes and
 rollback constraints. Installation targets 0.1.0 and 0.1.1 were not releases.
 
-## 0.3.2 — 2026-11-05, release candidate
+## 0.3.3 — 2026-11-05, release candidate
+
+- Correct original-request review for larger valid journal histories. Enumeration
+  and reading receive separate accounting, with an explicit1024-journal limit
+  and unchanged1MiB per-file/8MiB total metadata limits. Unfinished, malformed,
+  unknown and over-budget history still refuses retirement without replay.
+- Document the protected whole-host-history provisioning needed by review even
+  when schedules and host-control permissions are disabled.
+
+No durable or wire format, dependency or permission changes. The guarded0.3.2
+release remains installed while matching0.3.3 artifacts are prepared. Original
+request recovery, writer pilots and bounded backfill remain pending. No release
+tag, push or image publication is authorized.
+
+## 0.3.2 — 2026-11-05, guarded local deployment with recovery holds
 
 - Explain why jobs are unavailable with accessible readiness information and
   actionable recovery controls. Bounded automatic recovery reads the original
@@ -23,8 +37,10 @@ credentials and original lock inodes. Archive/configuration/receipt formats are
 unchanged. See [recovery](docs/job-recovery.md) and
 [writer transition](docs/deployment-centos-stream-10.md#manual-writer-transition).
 
-Production still selects0.3.1/sourcec23abba. Production deployment, genuine
-administrator recovery, selected Sync/metadata-refresh pilots and bounded metadata
+Production selects0.3.2-guarded-readonly/source2d4c9cc. Installed automated
+read-only and genuine administrator UI/assets/helper/configuration GETs pass.
+The original request still needs the journal-accounting correction above before
+review can complete; selected Sync/metadata-refresh pilots and bounded metadata
 backfill remain separate acceptance work. Automatic schedules remain disabled and
 legacy native writers masked. No tag, push or image publication is authorized.
 
