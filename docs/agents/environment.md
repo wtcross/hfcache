@@ -23,6 +23,21 @@ apply wherever the archive mount exists.
 
 ## The deployment, in facts
 
+**2026-11-05 current checkpoint:** selected guarded0.3.3/source1652b8f,
+app661da09f/UIc9df46e1/indexf1c55ed2, measured helperindexae3bc6ab/policy058b53d0.
+Fresh backup/full actual drain/original-lock handoff and installed29-case checks
+pass. Genuine administrator installed UI retires original request as
+retired_unknown, preserving handles/historical uncertainty, zero job replay;
+original user browser storage remains untouched. Disabled-job UI/helper/config
+GET checks pass. OPS029 now owns fresh writer transition/pilots/backfill;
+NFSRO/Enforcing/archivefalse remains. Original global27:3904/companion27:4393,
+API27:1761/worker64768:69642176/config64768:138322689/hostguard64768:138519863
+must remain. Never rerun activation, remove permanent dispositions/backups or
+restore old store bytes. Guard/bridge inactive, calendars disabled/writers masked.
+See [current checkpoint](../deployment-status.md#current-migration-checkpoint--2026-11-05)
+and [completed guarded acceptance](plans/tasks/ops-028-install-job-recovery-release.md).
+The following0.3.1 facts are historical.
+
 As of 2026-11-02 the selected physical release is rootless 0.3.1, clean source
 `c23abba45f8967d058983043b96843bef62e899a`, app image `716cb3c6…`, UI `bca416c4…` and physical index `93772b5c…`.
 The API, private worker, Caddy and confined host helper are ready.
@@ -51,7 +66,7 @@ startup ordering or boot acceptance.
 The explicit local publication scope retains the no-tag instruction: 0.3.1
 has no new release tag. Exact source/artifact identities identify this
 selection; existing tags remain unchanged.
-The current [deployment checkpoint](../deployment-status.md#current-migration-checkpoint--2026-11-02)
+The current [deployment checkpoint](../deployment-status.md#current-migration-checkpoint--2026-11-05)
 and selected task own current scope. Historical facts below cannot establish
 current guard, runtime or permission state.
 

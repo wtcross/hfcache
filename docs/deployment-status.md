@@ -1,6 +1,108 @@
 # Recorded deployment status
 
-## Current migration checkpoint — 2026-11-02
+## Current migration checkpoint — 2026-11-05
+
+The selected release is **0.3.3-guarded-readonly**, clean source
+`1652b8f1df0d4b10f6b790c7225b3e7b8fdad0b5`, app image
+`661da09f26d773a11808c8cc5c1d727c4dd5f0d230c041831b17bfba835bce7b`,
+UI manifest `c9df46e1526ec1010e921658a1ebc4558d071dace3116abc1ed7637772528970`,
+guarded47-file index `f1c55ed249f430cbf8ec0aa0c068ed62b3fd2edd02c62e2240334cc098201adb`.
+The matching writer sibling is staged/indexa638f833 and remains unselected.
+Fresh coordinated backup, complete actual executor drain and original-lock
+handoffs preceded official staging/selection, exact leaf labels and measured
+helper binding. Helper READY preceded worker/API/Caddy. All predecessors,
+original guards, credentials and original operation bytes/inodes remain.
+
+Actual installed29-case read-only checks pass verified TLS, REST/MCP separation,
+14 tools, API-origin worker PROBE, client0.3.3, indexed UI assets, five original
+results and payload confinement. Genuine sandboxed administrator browser runs
+against the installed UI using authorized credentials held only in memory.
+TLS CA/hostname verification precedes browser pinning to the verified server SPKI.
+The supported original-request review succeeds: subsequent authenticated GET
+reports **retired_unknown**, disposition `f096fda0b50161c1df4678326dbbd31d`.
+Historical outcome remains unknown; original handles and the user's existing
+browser storage remain untouched. No Sync or refresh was replayed. A normal
+reload/authenticated original observation can reconcile the existing browser.
+Protected recovery receipt `1e5899003a9d4f0ed481aa3826027bafe557398dc10486f73f9557fac31309f0`
+binds the actual UI screenshots, original key and permanent disposition.
+
+A second genuine installed browser check proves Sync and metadata refresh show
+“Unavailable: archive writes are disabled.” and disable Submit job, with zero
+POSTs. Fresh helper/configuration/readiness/original observations pass200.
+NFS remains **read-only**, SELinux **Enforcing**, archive permission false;
+configuration/Hub true and control/schedule/observer false. Calendars remain
+disabled, native writers masked, guard/bridge deliberately inactive. Only
+current-boot individual-role startup is accepted. The controlled writer
+transition, selected genuine UI/API pilots and one bounded metadata backfill
+remain outstanding; no full production writer acceptance is claimed.
+
+## Historical guarded0.3.2 qualification — 2026-11-05
+
+The selected local release is **0.3.2-guarded-readonly**, clean artifact source
+`2d4c9cc0b279601e5519a09e563cd40804cdc4d4`, app image
+`ef3cb2e7b20c8116b128fdd7dc14603b8090b6a6965842b0b1f4f1a21d0e52a9`,
+unchanged Caddy `fa2a5634…`, physical47-file index
+`c74a08796867095391ddcc88932fdf84e63fb6504955baf37c2dc8de6dba6cda`,
+and UI manifest `4156b2d90db0d0462189aed60d2c0e57e789ee36fd2d708bc37d6f8bb5cf3a80`.
+The matching manual-writer sibling is protected-staged but has not been selected.
+Guarded deployment remains in progress; selection and startup do not establish
+full acceptance.
+
+On boot `45d3ce1d-735b-45cc-b731-e2f39860d65f`, fresh protected backup and
+full executor drain preceded original-lock handoffs, both official stages,
+guarded selection and matching helper policy/code/label/index installation.
+The original current symlink inode and predecessor releases/images remain.
+The deployed0.3.1 official Caddy stop removed its exited CID; that operational
+record is not reported preserved. Its durable directories, image, secret
+identities and available journal remain, along with four original proof CIDs.
+The removed CID is an explicit retention exception; the original runtime and
+durable state are reported separately.
+
+One official isolated no-network/no-NAS/no-credential first intent activation
+backs up both original stores and creates initially empty authority for the
+configured archive UUID. Every original store file remains byte-identical with
+its original inode. The new current-boot global lock is27:3904 and companion
+27:4393; original API runtime27:1761 and worker guard64768:69642176 remain.
+Historical global27:1728 does not establish continuity across reboot. Never
+recreate the new companion, delete authority/backups or repeat first activation.
+After a disposition is recorded, rollback must retain a capable recovery reader.
+
+Both managers were reloaded; confined helper NotifyREADY preceded individual
+worker/API/Caddy startup. Actual installed read-only receipt
+`9af02b20e5ca66c7db9b33267dd1e1f9843d614fdd922c689d89a6010e4dd60f`
+passes29 verified-TLS/API requests, REST/MCP separation and the fourteen-tool
+listing, API-origin private worker PROBE, installed client0.3.2, all UI bytes,
+unchanged original results for five operations, original local state preservation
+and actual payload capability/seccomp/root-mount/credential-mask observations.
+This sends no job POST, Hub request or NAS payload read. Existing unchanged
+PID1 syscall/alias-denial proofs retain their recorded scope; this receipt does
+not claim a new all-phase companion or unattended boot qualification.
+
+Genuine administrator validation now passes11 verified-TLS GETs, all HTTP200,
+through the actual UI/assets, stable Basic bootstrap, protected host-helper status
+and managed configuration. Receipt
+`20cbb254bcded869bf1b43c0ecb68da0deb1cc29135747a1d88882a54e7b9a03`
+binds host-status
+`daab65b4f0be385ba423676aa9a3ca32c4586968c4b8c4a8cd6607954d5f3ded`.
+The password stayed in the human controlling terminal. No job, mutation,
+browser JavaScript or NAS payload read is part of that validation.
+
+**Remaining acceptance:** recovery of the existing browser's original unknown
+request; its authority is still empty. Use that existing profile's supported
+review/retirement, preserving handles and historical uncertainty. No password
+reset, fabricated principal, request replay or browser-record deletion is
+authorized. The controlled writable transition, selected real UI/API pilots
+and single bounded metadata backfill remain pending; none has run yet.
+
+NFS remains **read-only**, SELinux **Enforcing**, archive permission false,
+configuration/Hub true, control/schedule/observer false. All165 model selections,
+credentials/HMAC, stores and handles remain. The deliberate guard and bridge
+are inactive; roles were started individually, without user default-target or
+calendar enablement. Legacy native writers remain masked. Current-boot manual
+startup is supported; automatic boot recovery remains unconfigured. No tag,
+remote push or image publication has occurred.
+
+## Historical 0.3.1 migration checkpoint — 2026-11-02
 
 **2026-11-04 post-boot hold.** Rootless0.3.1/source `c23abba` remains
 selected, but external host boots invalidate the earlier readiness observation.

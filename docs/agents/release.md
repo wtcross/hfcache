@@ -29,13 +29,27 @@ compatibility evidence must not be relabelled as a deployed previous release.
 
 ## Selected-profile boundary
 
+**2026-11-05 scoped0.3.3 rollout:** the user authorizes this plan's protected
+local deployment, controlled writer transition, selected pilots and bounded
+backfill after its safety prerequisites, while prohibiting tags, remote pushes
+and image publication. Exact source1652b8f identifies the artifact independently
+of later evidence commits. Actual guarded0.3.3 startup, installed automated
+read-only acceptance and genuine installed administrator recovery/disabled-job
+UI/helper/config checks pass. Original request is retired_unknown, historical
+uncertainty and handles preserved, zero job replay. Production writer transition/
+pilots/backfill remain pending. This scope supersedes older read-only-only holds
+for those planned actions, preserving every archive, drain, backup, original-lock,
+credential and hardening requirement. The current
+[checkpoint](../deployment-status.md#current-migration-checkpoint--2026-11-05)
+owns actual host state. Historical deployment facts below retain their dates.
+
 The authorized 2026-11-02 migration has selected rootless 0.3.0 from source `3d6670d`
 and started the web/API/MCP stack with the confined host helper. Automated
 installed read-only and human administrator/helper/configuration acceptance pass.
 The old plugin entrypoint is retired, and complete separate executor/helper drain
 restores the user's inactive guard setting. The final strict gate passes and local
 annotated `v0.3.0` identifies exact artifact source `3d6670d`.
-The [current checkpoint](../deployment-status.md#current-migration-checkpoint--2026-11-02)
+The [current checkpoint](../deployment-status.md#current-migration-checkpoint--2026-11-05)
 owns those actual facts. Preserve the user's intentional inactive setting and
 the original local lock identities. No NFS write,
 workload, timer enablement or remote publication follows. The following 0.2.2

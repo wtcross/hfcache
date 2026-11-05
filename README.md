@@ -71,15 +71,13 @@ See [discovery](docs/discovery.md) for provenance, incomplete coverage and rollb
 
 ## Status
 
-Version **0.3.3** is being prepared to correct bounded original-request review
-for larger journal histories. The installed **0.3.2-guarded-readonly** release,
-clean source `2d4c9cc`, supplies accessible job readiness, bounded GET-only
-recovery and protected rootless writer profiles. Installed read-only and genuine
-administrator UI/assets/helper/configuration reads pass. The original request
-still needs the accounting correction before review can complete; writer pilots
-and bounded metadata backfill remain pending. The archive is read-only.
-See [deployment status](docs/deployment-status.md) and
-[release notes](CHANGELOG.md) for actual state and acceptance limits.
+Version **0.3.3** is installed in the guarded read-only profile, correcting
+bounded original-request review for larger journal histories. Genuine installed
+administrator UI recovery preserves original handles and historical uncertainty
+without replay; installed unavailable-job explanations and read-only checks pass.
+The protected writer profile is tested and staged. Actual writable transition,
+selected Sync/metadata-refresh pilots and bounded metadata backfill remain pending.
+See the [current deployment checkpoint](docs/deployment-status.md#current-migration-checkpoint--2026-11-05).
 
 Owned native/rootless0.3.2 qualification includes actual application writes and
 preserving guarded rollback; that evidence retains its original scope.

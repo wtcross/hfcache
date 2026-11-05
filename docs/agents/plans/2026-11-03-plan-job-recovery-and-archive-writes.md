@@ -519,3 +519,12 @@ historical evidence collection is a deliverable.
   retain whole-history refusal and byte bounds. Unchanged worker/Caddy proofs
   retain their original scopes. OPS-028 resumes fresh protected deployment and
   actual original-key UI retirement; original eight criteria remain in force.
+
+- 2026-11-05: OPS-028 completes actual guarded0.3.3 installation after fresh
+  protected backup/drain/original-lock handoffs. Matching helper binding/ordered
+  startup and installed29-case checks pass. Genuine administrator installed UI
+  reviews/retires original key as retired_unknown with historical uncertainty,
+  handles and original12 store bytes/inodes preserved, zero job replay. Genuine
+  disabled Sync/refresh UI and authenticated helper/config GETs pass. OPS-029
+  activates for fresh controlled writer transition/pilots/one bounded backfill;
+  production still NFSRO/Enforcing/archivefalse. No full-plan completion claim.

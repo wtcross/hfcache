@@ -4,7 +4,7 @@ Annotated release tags identify reviewed deployed states; application source and
 deployment commits may differ. This file summarizes user-visible changes and
 rollback constraints. Installation targets 0.1.0 and 0.1.1 were not releases.
 
-## 0.3.3 — 2026-11-05, release candidate
+## 0.3.3 — 2026-11-05, guarded local deployment
 
 - Correct original-request review for larger valid journal histories. Enumeration
   and reading receive separate accounting, with an explicit1024-journal limit
@@ -13,9 +13,11 @@ rollback constraints. Installation targets 0.1.0 and 0.1.1 were not releases.
 - Document the protected whole-host-history provisioning needed by review even
   when schedules and host-control permissions are disabled.
 
-No durable or wire format, dependency or permission changes. The guarded0.3.2
-release remains installed while matching0.3.3 artifacts are prepared. Original
-request recovery, writer pilots and bounded backfill remain pending. No release
+No durable or wire format, dependency or permission changes. The guarded0.3.3
+release is installed. Genuine administrator UI review retires the original
+request with historical uncertainty and handles preserved, without job replay.
+Installed unavailable-job explanations pass. Writer transition/pilots and bounded
+backfill remain pending. No release
 tag, push or image publication is authorized.
 
 ## 0.3.2 — 2026-11-05, guarded local deployment with recovery holds

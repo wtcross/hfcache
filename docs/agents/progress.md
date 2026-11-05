@@ -35,6 +35,25 @@ using `docs/invariants.md` and `docs/adr/README.md` progressively.
 
 ## Job recovery and manual archive writes (2026-11-03)
 
+- [x] OPS-028 Install guarded recovery release and resolve original request
+  (2026-11-05, this commit — actual0.3.3/source1652b8f/app661da09f/UIc9df46e1,
+  guardedindexf1c55ed2 and writerindexa638f833 staged. Fresh coordinated backup
+  fd6518aa/full actual API-first drain53313b6c, official stagesc8f6ec43, guarded
+  switch/labels/genuine binding792ec345 and ordered helper/roles107e4e10 pass.
+  Original locks/store bytes/credentials/predecessors retained; expected parent
+  timestamp and packaged Type=exec observer corrections preserve failures and
+  repeat no effects. Actual installed29-case receipt2514dbc1 passes TLS/auth/
+  MCP14/PROBE/client/UI/results/confinement. Genuine sandboxed installed UI424b0954
+  explicitly retires original key, freshGETretired_unknown, historical uncertainty
+  visible; original user browser storage untouched, zero job replay. Disposition
+  f096fda0/reviewfab7cf6f/authorityb5217fb9 and original12 store bytes/inodes
+  verified, protected1e589900. Genuine unavailable-job UI5ebbc4da proves readable
+  reason/disabled Submit/zeroPOST and helper/config GET200. Current strict runtime
+  gatefec7fe00 passes; factual alignment216 documents/29 helpers and69 focused
+  docs checks pass8.01s. INV023/ADR164/165 reviewed.
+  OPS-029 next; production remains guardedNFSRO/Enforcing/archivefalse, calendars
+  disabled/native writers masked. No full-plan completion, tag, push or registry.)
+
 - [x] REL-019 Correct bounded original-review journal accounting and prepare0.3.3
   (2026-11-05, this commit — actual621-journal QueryLimitError reproduced;
   explicit1024-journal limit and2049 enumeration/read/sentinel budget preserve
@@ -3041,6 +3060,18 @@ and a README, so publication and hashing are exercised over both profiles.
 item 1 for the separate production-list question that does need an operator.
 
 ## Operator handoff
+
+2026-11-05 latest actual checkpoint: OPS028 complete; selected guarded0.3.3,
+source1652b8f/app661da09f/UIc9df46e1, indexf1c55ed2/helperindexae3bc6ab/
+policy058b53d0. Actual installed29-case and genuine administrator browser
+recovery/availability/helper/configuration checks pass. Original key disposition
+retired_unknown/f096fda0 preserves historical uncertainty; original user's local
+storage untouched, next authenticated original GET can reconcile. No job replay.
+OPS029 activated for fresh writer backup/drain/transition then selected pilots
+and one bounded backfill. NFSRO/Enforcing/archivefalse, original guards/stores/
+credentials, disabled schedules/masked writers preserved. Earlier auth blocks
+and oldempty authority statements below are historical. No input blocker now.
+
 
 2026-11-05 current resumed handoff: user authorizes genuine administrator
 credentials from ignored.env; no human authentication blocker remains. Stable
